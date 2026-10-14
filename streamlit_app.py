@@ -20,23 +20,21 @@ DATA = ROOT / "workspace_data"
 DATA.mkdir(exist_ok=True)
 DB = ROOT / "team_tasks.db"
 CHATS = ROOT / "team_chat.db"
-# Fixed provider/model assignment for each of the nine agents.
-# All defaults have a free usage tier; rate limits vary by provider.
+# Every agent uses Gemini API only, with role-specific free-tier models.
+# Their usage shares the Gemini project quotas. No paid fallback provider.
 PROVIDERS = {
-    "Groq": ("GROQ_API_KEY", "https://api.groq.com/openai/v1"),
     "Gemini": ("GEMINI_API_KEY", "https://generativelanguage.googleapis.com/v1beta/openai/"),
-    "OpenRouter": ("OPENROUTER_API_KEY", "https://openrouter.ai/api/v1"),
 }
 ASSIGNMENTS = {
-    "Max": ("Groq", "openai/gpt-oss-120b"),
+    "Max": ("Gemini", "gemini-3.5-flash"),
     "Iris": ("Gemini", "gemini-3.5-flash-lite"),
-    "Remy": ("Groq", "openai/gpt-oss-20b"),
-    "Luna": ("OpenRouter", "nvidia/nemotron-3-super-120b-a12b:free"),
-    "Kai": ("OpenRouter", "nvidia/nemotron-3-super-120b-a12b:free"),
-    "Theo": ("Groq", "openai/gpt-oss-20b"),
+    "Remy": ("Gemini", "gemini-3.5-flash-lite"),
+    "Luna": ("Gemini", "gemini-3.5-flash-lite"),
+    "Kai": ("Gemini", "gemini-3.5-flash"),
+    "Theo": ("Gemini", "gemini-3.5-flash-lite"),
     "Ella": ("Gemini", "gemini-3.5-flash-lite"),
-    "Nora": ("Groq", "openai/gpt-oss-20b"),
-    "Leon": ("Gemini", "gemini-3.5-flash-lite"),
+    "Nora": ("Gemini", "gemini-3.5-flash-lite"),
+    "Leon": ("Gemini", "gemini-3.5-flash"),
 }
 def provider_ready(name):
     provider, _ = ASSIGNMENTS[name]
@@ -169,7 +167,7 @@ def make_team():
       "Nora": ("Draft budgets, expense classifications and numeric spreadsheet analysis.", data),
       "Leon": ("Contract review checklists, legal risk flags and questions for qualified counsel.", [list_data_files,read_data_file])
     }
-    # Only register specialists whose provider key exists; no paid fallback.
+    # All enabled specialist and manager requests use the same Google Gemini project quota.
     team = {
         n: Agent(name=n, model=agent_model(n), instructions=GUIDE+"\n"+brief, tools=tools)
         for n, (brief, tools) in specs.items() if provider_ready(n)
@@ -200,7 +198,7 @@ st.markdown("""<style>
 password = os.getenv("TEAM_ACCESS_PASSWORD","")
 if not password or password in ("CHANGE_ME","SET_YOUR_PASSWORD_IN_RENDER"):
     st.title("🔐 AI Team OS — Setup required")
-    st.info("The owner must configure TEAM_ACCESS_PASSWORD in Render → Environment, then set GROQ_API_KEY, GEMINI_API_KEY, and OPENROUTER_API_KEY to enable each AI provider. This site is locked until the access password is set.")
+    st.info("The owner must configure TEAM_ACCESS_PASSWORD and GEMINI_API_KEY in Render → Environment. This site is locked until the access password is set.")
     st.stop()
 if not st.session_state.get("authenticated",False):
     st.title("🤖 AI Team OS")
@@ -233,9 +231,9 @@ with st.sidebar:
             st.success(provider+" · connected")
         else:
             st.warning(provider+" · set "+key_var)
-    st.caption("Free-tier API use still consumes tokens and has rate limits.")
+    st.caption("All agents use Gemini API; free-tier calls still consume tokens and share project quotas.")
     with st.expander("🔎 Diagnose Gemini API (no token generation)"):
-        st.caption("Check access for Iris, Ella and Leon with two read-only model requests. API keys are never displayed.")
+        st.caption("Check Gemini API model access using two read-only model requests. API keys are never displayed. Successful metadata checks do not guarantee chat generation access.")
         if st.button("Check Gemini permissions", key="gemini_diagnostics"):
             if not provider_ready("Iris"):
                 st.warning("Set GEMINI_API_KEY in Render Environment first.")
@@ -254,9 +252,9 @@ with st.sidebar:
                 n = result["Google native API"].get("http")
                 c = result["OpenAI compatible API"].get("http")
                 if n == 200 and c == 200:
-                    st.info("Both model metadata endpoints work. A chat-specific permission or request parameter may be failing.")
+                    st.info("Model metadata requests work. This does not verify generateContent/chat permission, which can still be denied.")
                 elif n == 200 and c != 200:
-                    st.warning("Your key can access the native Gemini API but OpenAI compatibility fails. This can happen with new AQ.-type keys. Consider the official Google GenAI SDK.")
+                    st.warning("Gemini native model lookup worked, but the OpenAI-compatible endpoint did not. Check your Gemini key permissions and the compatibility API.")
                 elif n in (401, 403):
                     st.warning("The Gemini key or its Google project lacks permission, or the key is blocked. Rotate the key in AI Studio and check project access.")
                 elif n == 404:
@@ -264,7 +262,7 @@ with st.sidebar:
     st.caption("Demo: files and tasks may disappear after instance restarts.")
 st.caption("YOUR OWN AI WORKFORCE")
 st.title("Meet your AI team.")
-st.caption("9 roles · 3 API providers · One dedicated model per agent")
+st.caption("9 roles · Google Gemini only · Flash / Flash-Lite")
 tab_chat,tab_workspace,tab_about=st.tabs(["🤖 Team & Chat","🗂 Workspace","⚙️ About"])
 with tab_chat:
     names=list(ROLES)
@@ -301,7 +299,9 @@ with tab_chat:
                         output=Runner.run_sync(st.session_state.agents[current],prompt,session=memory,max_turns=15)
                         response=str(output.final_output)
                 except Exception as exc:
-                    response=f"Agent request failed ({type(exc).__name__}). Check provider key, free quota and model availability in Render logs."
+                    response=(f"Gemini request failed ({type(exc).__name__}). "
+                              "Check GEMINI_API_KEY, account/model permissions and free-tier quota. "
+                              "Use the Gemini API diagnostic in the sidebar; model-list success does not guarantee inference access.")
             st.markdown(response)
         st.session_state.messages[current].append({"role":"assistant","text":response})
 with tab_workspace:
@@ -328,6 +328,6 @@ with tab_workspace:
 with tab_about:
     st.markdown("**Architecture:** User → Max → relevant specialists → Max → User")
     st.info("AI Team OS is a prototype. Agents can draft, analyze CSV and save local tasks, but cannot independently send email, publish posts, generate finished art, or deploy websites.")
-    st.caption("Each agent uses one assigned AI provider. The 3 API keys are kept in Render environment variables, never exposed in the browser.")
-    st.caption("Free Gemini API usage may be used to improve Google's products. Avoid uploading sensitive data.")
+    st.caption("All 9 agents now use Gemini API only. Only GEMINI_API_KEY is required for AI calls, stored in Render Environment.")
+    st.caption("Free-tier Gemini API requests consume quota and may be used to improve Google's products. Do not upload sensitive data.")
     st.caption("Password protects a single-owner demo, not a full multi-user production system. SQLite and uploaded files aren't permanent on free hosting.")
