@@ -7,6 +7,7 @@ import sqlite3
 import uuid
 from pathlib import Path
 import streamlit as st
+import httpx
 from openai import AsyncOpenAI
 from agents import Agent, Runner, SQLiteSession, function_tool, OpenAIChatCompletionsModel, set_tracing_disabled
 
@@ -48,6 +49,44 @@ def agent_model(name):
     key = os.environ[key_var]
     client = AsyncOpenAI(api_key=key, base_url=endpoint, timeout=45, max_retries=1)
     return OpenAIChatCompletionsModel(model=model_name, openai_client=client)
+
+def _probe_model(url, headers):
+    """Read-only model metadata request. Does not generate text or spend inference tokens."""
+    try:
+        with httpx.Client(timeout=12.0) as client:
+            resp = client.get(url, headers=headers)
+        details = {}
+        if resp.status_code >= 400:
+            try:
+                err = resp.json().get("error", {})
+                details["provider_status"] = str(err.get("status", ""))[:60]
+                reasons = [
+                    d.get("reason", "") for d in err.get("details", [])
+                    if isinstance(d, dict) and d.get("reason")
+                ]
+                details["reason"] = ", ".join(reasons)[:120]
+            except (ValueError, AttributeError, TypeError):
+                pass
+        return {"http": resp.status_code, **details}
+    except (httpx.HTTPError, ValueError):
+        return {"status": "Network check failed"}
+
+def diagnose_gemini():
+    """Compare native Google API and OpenAI-compat auth without revealing any secret."""
+    key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not key:
+        return None
+    model = ASSIGNMENTS["Iris"][1]
+    native = _probe_model(
+        f"https://generativelanguage.googleapis.com/v1beta/models/{model}",
+        {"x-goog-api-key": key}
+    )
+    compat = _probe_model(
+        f"https://generativelanguage.googleapis.com/v1beta/openai/models/{model}",
+        {"Authorization": f"Bearer {key}"}
+    )
+    return {"Google native API": native, "OpenAI compatible API": compat}
+
 ROLES = {
     "Max": ("MANAGER", "#fbbf24", "🤖", "Splits the work · Reports back"),
     "Iris": ("MARKETING", "#ef4444", "📣", "Social posts · Blog articles"),
@@ -195,6 +234,33 @@ with st.sidebar:
         else:
             st.warning(provider+" · set "+key_var)
     st.caption("Free-tier API use still consumes tokens and has rate limits.")
+    with st.expander("🔎 Diagnose Gemini API (no token generation)"):
+        st.caption("Check access for Iris, Ella and Leon with two read-only model requests. API keys are never displayed.")
+        if st.button("Check Gemini permissions", key="gemini_diagnostics"):
+            if not provider_ready("Iris"):
+                st.warning("Set GEMINI_API_KEY in Render Environment first.")
+            else:
+                result = diagnose_gemini()
+                for label, details in result.items():
+                    status = details.get("http", "?")
+                    if status == 200:
+                        st.success(f"{label}: HTTP 200 (model accessible)")
+                    else:
+                        st.error(f"{label}: HTTP {status}")
+                    if details.get("reason"):
+                        st.caption("Google error reason: " + details["reason"])
+                    elif details.get("provider_status"):
+                        st.caption("Google status: " + details["provider_status"])
+                n = result["Google native API"].get("http")
+                c = result["OpenAI compatible API"].get("http")
+                if n == 200 and c == 200:
+                    st.info("Both model metadata endpoints work. A chat-specific permission or request parameter may be failing.")
+                elif n == 200 and c != 200:
+                    st.warning("Your key can access the native Gemini API but OpenAI compatibility fails. This can happen with new AQ.-type keys. Consider the official Google GenAI SDK.")
+                elif n in (401, 403):
+                    st.warning("The Gemini key or its Google project lacks permission, or the key is blocked. Rotate the key in AI Studio and check project access.")
+                elif n == 404:
+                    st.warning("Model unavailable to this project; check your enabled model list in AI Studio.")
     st.caption("Demo: files and tasks may disappear after instance restarts.")
 st.caption("YOUR OWN AI WORKFORCE")
 st.title("Meet your AI team.")
