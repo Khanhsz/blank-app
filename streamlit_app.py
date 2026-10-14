@@ -7,7 +7,11 @@ import sqlite3
 import uuid
 from pathlib import Path
 import streamlit as st
-from agents import Agent, Runner, SQLiteSession, function_tool
+from openai import AsyncOpenAI
+from agents import Agent, Runner, SQLiteSession, function_tool, OpenAIChatCompletionsModel, set_tracing_disabled
+
+# Avoid OpenAI tracing requests when using third-party model providers.
+set_tracing_disabled(True)
 
 st.set_page_config(page_title="AI Team OS", page_icon="🤖", layout="wide")
 ROOT = Path(__file__).parent
@@ -15,7 +19,35 @@ DATA = ROOT / "workspace_data"
 DATA.mkdir(exist_ok=True)
 DB = ROOT / "team_tasks.db"
 CHATS = ROOT / "team_chat.db"
-MODEL = os.getenv("AGENT_MODEL", "gpt-4.1-mini")
+# Fixed provider/model assignment for each of the nine agents.
+# All defaults have a free usage tier; rate limits vary by provider.
+PROVIDERS = {
+    "Groq": ("GROQ_API_KEY", "https://api.groq.com/openai/v1"),
+    "Gemini": ("GEMINI_API_KEY", "https://generativelanguage.googleapis.com/v1beta/openai/"),
+    "OpenRouter": ("OPENROUTER_API_KEY", "https://openrouter.ai/api/v1"),
+}
+ASSIGNMENTS = {
+    "Max": ("Groq", "openai/gpt-oss-120b"),
+    "Iris": ("Gemini", "gemini-3.5-flash-lite"),
+    "Remy": ("Groq", "openai/gpt-oss-20b"),
+    "Luna": ("OpenRouter", "nvidia/nemotron-3-super-120b-a12b:free"),
+    "Kai": ("OpenRouter", "nvidia/nemotron-3-super-120b-a12b:free"),
+    "Theo": ("Groq", "openai/gpt-oss-20b"),
+    "Ella": ("Gemini", "gemini-3.5-flash-lite"),
+    "Nora": ("Groq", "openai/gpt-oss-20b"),
+    "Leon": ("Gemini", "gemini-3.5-flash-lite"),
+}
+def provider_ready(name):
+    provider, _ = ASSIGNMENTS[name]
+    key_var, _ = PROVIDERS[provider]
+    return bool(os.getenv(key_var, "").strip())
+
+def agent_model(name):
+    provider, model_name = ASSIGNMENTS[name]
+    key_var, endpoint = PROVIDERS[provider]
+    key = os.environ[key_var]
+    client = AsyncOpenAI(api_key=key, base_url=endpoint, timeout=45, max_retries=1)
+    return OpenAIChatCompletionsModel(model=model_name, openai_client=client)
 ROLES = {
     "Max": ("MANAGER", "#fbbf24", "🤖", "Splits the work · Reports back"),
     "Iris": ("MARKETING", "#ef4444", "📣", "Social posts · Blog articles"),
@@ -98,9 +130,21 @@ def make_team():
       "Nora": ("Draft budgets, expense classifications and numeric spreadsheet analysis.", data),
       "Leon": ("Contract review checklists, legal risk flags and questions for qualified counsel.", [list_data_files,read_data_file])
     }
-    team = {n:Agent(name=n,model=MODEL,instructions=GUIDE+"\n"+brief,tools=tools) for n,(brief,tools) in specs.items()}
-    delegates = [team[n].as_tool(tool_name="consult_"+n.lower(),tool_description="Consult "+n+" about "+ROLES[n][0]) for n in team]
-    team["Max"] = Agent(name="Max",model=MODEL,instructions=GUIDE+"\nYou manage 8 specialists; delegate relevant parts of multi-department tasks, reconcile findings and give one final answer. Never claim external action happened.",tools=delegates+[list_data_files,read_data_file,list_project_tasks,create_project_task])
+    # Only register specialists whose provider key exists; no paid fallback.
+    team = {
+        n: Agent(name=n, model=agent_model(n), instructions=GUIDE+"\n"+brief, tools=tools)
+        for n, (brief, tools) in specs.items() if provider_ready(n)
+    }
+    if provider_ready("Max"):
+        delegates = [
+            team[n].as_tool(tool_name="consult_"+n.lower(), tool_description="Consult "+n+" about "+ROLES[n][0])
+            for n in specs if n in team
+        ]
+        team["Max"] = Agent(
+            name="Max", model=agent_model("Max"),
+            instructions=GUIDE+"\nYou manage eight specialists. Delegate to available specialists only; explain clearly when an agent's provider is unconfigured. Reconcile outputs and answer. Never claim external work was done.",
+            tools=delegates+[list_data_files, read_data_file, list_project_tasks, create_project_task],
+        )
     return team
 st.markdown("""<style>
 .stApp {background:#0b1221;color:#eff4ff}
@@ -117,7 +161,7 @@ st.markdown("""<style>
 password = os.getenv("TEAM_ACCESS_PASSWORD","")
 if not password or password in ("CHANGE_ME","SET_YOUR_PASSWORD_IN_RENDER"):
     st.title("🔐 AI Team OS — Setup required")
-    st.info("The owner must configure TEAM_ACCESS_PASSWORD and OPENAI_API_KEY in Render → Environment. This site is locked until the access password is set.")
+    st.info("The owner must configure TEAM_ACCESS_PASSWORD in Render → Environment, then set GROQ_API_KEY, GEMINI_API_KEY, and OPENROUTER_API_KEY to enable each AI provider. This site is locked until the access password is set.")
     st.stop()
 if not st.session_state.get("authenticated",False):
     st.title("🤖 AI Team OS")
@@ -145,12 +189,16 @@ with st.sidebar:
         st.session_state.clear()
         st.rerun()
     st.divider()
-    st.success("OpenAI API configured") if os.getenv("OPENAI_API_KEY") else st.warning("OpenAI API key missing")
-    st.caption("Model: "+MODEL)
+    for provider, (key_var, _) in PROVIDERS.items():
+        if os.getenv(key_var, "").strip():
+            st.success(provider+" · connected")
+        else:
+            st.warning(provider+" · set "+key_var)
+    st.caption("Free-tier API use still consumes tokens and has rate limits.")
     st.caption("Demo: files and tasks may disappear after instance restarts.")
 st.caption("YOUR OWN AI WORKFORCE")
 st.title("Meet your AI team.")
-st.caption("9 roles · 1 manager · Shared workspace")
+st.caption("9 roles · 3 API providers · One dedicated model per agent")
 tab_chat,tab_workspace,tab_about=st.tabs(["🤖 Team & Chat","🗂 Workspace","⚙️ About"])
 with tab_chat:
     names=list(ROLES)
@@ -159,12 +207,16 @@ with tab_chat:
         for col,name in zip(cols,names[start:start+3]):
             role,color,emoji,tags=ROLES[name]
             with col:
-                st.markdown(f'<div class="card" style="--color:{color}"><div class="cardtop"><div class="face">{emoji}</div><div><div class="who">{name}</div><div class="job">{role}</div></div></div><div class="tagline">{tags}</div></div>',unsafe_allow_html=True)
+                provider, model_name = ASSIGNMENTS[name]
+                status = "Configured" if provider_ready(name) else "API key needed"
+                st.markdown(f'<div class="card" style="--color:{color}"><div class="cardtop"><div class="face">{emoji}</div><div><div class="who">{name}</div><div class="job">{role}</div></div></div><div class="tagline">{tags}</div><div style="font-size:11px;color:{color};margin-top:10px">{provider} · {model_name}<div style="color:#b5c0d5">{status}</div></div></div>',unsafe_allow_html=True)
                 if st.button("✓ Selected" if name==st.session_state.role else "Chat with "+name,key="card_"+name,use_container_width=True):
                     st.session_state.role=name
                     st.rerun()
     current=st.session_state.role
+    provider, model_name = ASSIGNMENTS[current]
     st.subheader("Chat with "+current)
+    st.caption(f"{provider} / {model_name}")
     for msg in st.session_state.messages[current]:
         with st.chat_message(msg["role"]):st.markdown(msg["text"])
     prompt=st.chat_input("Assign a task to "+current)
@@ -172,8 +224,9 @@ with tab_chat:
         st.session_state.messages[current].append({"role":"user","text":prompt})
         with st.chat_message("user"):st.markdown(prompt)
         with st.chat_message("assistant"):
-            if not os.getenv("OPENAI_API_KEY"):
-                response="OpenAI API key is not configured. Please set OPENAI_API_KEY in Render Environment."
+            if not provider_ready(current):
+                needed = PROVIDERS[ASSIGNMENTS[current][0]][0]
+                response=f"{current} uses {provider}. Set {needed} in Render → Environment to activate this agent."
             else:
                 try:
                     with st.spinner(current+" is working..."):
@@ -182,7 +235,7 @@ with tab_chat:
                         output=Runner.run_sync(st.session_state.agents[current],prompt,session=memory,max_turns=15)
                         response=str(output.final_output)
                 except Exception as exc:
-                    response=f"Agent error: {type(exc).__name__}: {exc}"
+                    response=f"Agent request failed ({type(exc).__name__}). Check provider key, free quota and model availability in Render logs."
             st.markdown(response)
         st.session_state.messages[current].append({"role":"assistant","text":response})
 with tab_workspace:
@@ -209,4 +262,6 @@ with tab_workspace:
 with tab_about:
     st.markdown("**Architecture:** User → Max → relevant specialists → Max → User")
     st.info("AI Team OS is a prototype. Agents can draft, analyze CSV and save local tasks, but cannot independently send email, publish posts, generate finished art, or deploy websites.")
+    st.caption("Each agent uses one assigned AI provider. The 3 API keys are kept in Render environment variables, never exposed in the browser.")
+    st.caption("Free Gemini API usage may be used to improve Google's products. Avoid uploading sensitive data.")
     st.caption("Password protects a single-owner demo, not a full multi-user production system. SQLite and uploaded files aren't permanent on free hosting.")
