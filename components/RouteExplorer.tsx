@@ -5,7 +5,8 @@ import { Bike, CarFront, CircleAlert, Clock3, ExternalLink, Footprints, MapPin, 
 import type { Activity, Trip } from '@/lib/types';
 import { approxDurationSeconds, directDistanceMeters, googleDirectionsUrl, hasCoordinates, osmDrivingRouteUrl, readableDistance, readableDuration, validateRoadRoute, type RoadRoute, type TravelMode } from '@/lib/routing';
 import TripMap from './TripMap';
-import PlaceDetails from './PlaceDetails';
+import ActivityPlacePanel from './ActivityPlacePanel';
+import type { FoodVenue } from './FoodRecommendations';
 
 const modes = [
   { id: 'walking', label: 'Walk', Icon: Footprints },
@@ -14,7 +15,7 @@ const modes = [
   { id: 'transit', label: 'Transit', Icon: TrainFront }
 ] as const;
 
-export default function RouteExplorer({ trip, dayIndex, setDayIndex, embedded = false }: {trip: Trip; dayIndex: number; setDayIndex: (n: number) => void; embedded?: boolean}) {
+export default function RouteExplorer({ trip, dayIndex, setDayIndex, onPickVenue, embedded = false }: {trip: Trip; dayIndex: number; setDayIndex: (n: number) => void; onPickVenue?:(activityId:string,venue:FoodVenue)=>void; embedded?: boolean}) {
   const day = trip.days[dayIndex];
   const located = useMemo(() => day.activities.filter(hasCoordinates), [day.activities]);
   const coordKey = located.map(a => `${a.id}:${a.lat},${a.lng}`).join('|');
@@ -92,7 +93,7 @@ export default function RouteExplorer({ trip, dayIndex, setDayIndex, embedded = 
           </div>)}
         </div>
         {selected && <div className="route-selected"><strong>{selected[0].title} → {selected[1].title}</strong><p>{mode === 'transit' ? 'Choose live public transport routes.' : `Distance: ${!isRoadRoute ? '≈ ' : ''}${readableDistance(displayLegs[selectedLeg!].distance || 0)}${displayLegs[selectedLeg!].seconds !== null ? ` · ${readableDuration(displayLegs[selectedLeg!].seconds!)}` : ''}`}</p>{googleDirectionsUrl(selected, mode) && <a href={googleDirectionsUrl(selected,mode)!} target="_blank" rel="noopener noreferrer">Navigate this leg <ExternalLink size={13}/></a>}</div>}
-        {inspected ? <PlaceDetails key={inspected.id} activity={inspected} destination={trip.destination} country={trip.country}/> : <p className="map-footnote"><CircleAlert size={14}/> Select a place or map marker to see sourced details without opening another page.</p>}
+        {inspected ? <ActivityPlacePanel key={inspected.id} activity={inspected} dayActivities={day.activities} destination={trip.destination} country={trip.country} onChoose={onPickVenue ? (id,venue)=>{onPickVenue(id,venue);setInspectedId(null);} : undefined}/> : <p className="map-footnote"><CircleAlert size={14}/> Select a place or map marker to see sourced details without opening another page.</p>}
         {day.activities.length > located.length && <p className="map-footnote"><CircleAlert size={14}/>{day.activities.length - located.length} stop(s) without map coordinates are excluded from route calculations.</p>}
         <p className="route-provider">Map data © OpenStreetMap contributors. Road routes provided for planning only; verify before departure.</p>
       </div>
