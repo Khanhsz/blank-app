@@ -52,3 +52,28 @@
 .route-legend-solid{display:block;width:23px;border-top:4px solid #246b58}.route-legend-dotted{display:block;width:23px;border-top:3px dashed #427aa4}
 @media(max-width:950px){.route-toolbar-caption{width:100%}.route-open-maps{margin-left:0}}
 @media(max-width:720px){.route-summary{gap:7px}.route-metric{padding:12px 9px}.route-metric>span{font-size:9px;gap:3px}.route-metric strong{font-size:17px}.route-metric small{font-size:9px}.route-toolbar{padding:12px}.route-modes{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.route-mode{justify-content:center;padding:11px 7px}.route-open-maps{width:100%}}
+
+/* Country-first search and destination suggestions in the New Trip form. */
+.country-location-fields{display:flex;flex-direction:column;gap:17px}
+.suggestion-field{position:relative;isolation:isolate;z-index:2}
+.suggestion-field:focus-within{z-index:8}
+.suggestion-field label{display:inline-block;cursor:default}
+.suggestion-field .required-star{color:#d48c73}
+.suggestion-input input{padding-right:42px}
+.suggestion-input input:disabled{background:#f1f3ef;cursor:not-allowed;color:#8a968b}
+.suggestion-input .suggestion-clear{position:absolute;right:8px;top:13px;background:transparent;border:0;color:#789084;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:7px}
+.suggestion-input .suggestion-clear:hover{background:#e8f1e9;color:#1c4d3d}
+.suggestion-input .suggestion-loading{position:absolute;left:auto;right:15px;top:19px;animation:spin 1s linear infinite;color:#628575}
+.suggestion-menu{position:absolute;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1px solid #dce8df;border-radius:12px;box-shadow:0 15px 38px rgba(30,61,48,.18);overflow-y:auto;max-height:252px;padding:6px;z-index:20}
+.suggestion-heading{padding:8px 10px 7px;color:#789286;letter-spacing:.6px;text-transform:uppercase;font-size:9px;font-weight:800}
+.suggestion-option{display:flex;align-items:center;gap:11px;width:100%;background:#fff;border:0;border-radius:7px;text-align:left;padding:10px 11px;color:#405c4e;font-size:12px;font-weight:600;min-height:38px}
+.suggestion-option svg{flex-shrink:0;color:#5f8a73}
+.suggestion-option:hover,.suggestion-option.highlighted{background:#edf5ed}
+.suggestion-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.suggestion-name small{display:block;color:#91a59b;font-size:10px;margin-top:3px;overflow:hidden;text-overflow:ellipsis}
+.suggestion-secondary{color:#8b9e92;font-size:10px;font-weight:500;white-space:nowrap}
+.suggestion-footer{border-top:1px solid #eef2eb;margin-top:4px;padding:10px;color:#98a79d;font-size:10px;line-height:1.45;font-weight:500}
+.suggestion-empty{padding:12px 10px;color:#829388;font-size:11px;font-weight:500;line-height:1.5}
+.suggestion-hint{color:#94a79b;font-size:10px;font-weight:500;margin-top:8px;line-height:1.5}
+
+.suggestion-footer a{color:#39775a;text-decoration:underline;text-underline-offset:2px}
