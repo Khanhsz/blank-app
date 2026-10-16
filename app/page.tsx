@@ -7,14 +7,14 @@ import LocationPicker from '@/components/LocationPicker';
 import { createDemoTrip, demoCities, daysBetween, sampleInput } from '@/lib/demo';
 import { Activity, CATEGORIES, CATEGORY_LABEL, Category, Currency, dateLabel, dateLong, money, Pace, Trip, TripInput, tripTotal, uuid } from '@/lib/types';
 
-type View = 'overview' | 'itinerary' | 'map' | 'budget' | 'saved' | 'discover';
+type View = 'overview' | 'itinerary' | 'budget' | 'saved' | 'discover';
 const INTERESTS = ['Culture','Food','Nature','Adventure','Art','Shopping','Photography','History','Relaxation'];
 const imageKyoto = 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=85';
 const styleIcon: Record<Category, typeof Landmark> = { sightseeing: MapPin, food: UtensilsCrossed, culture: Landmark, nature: Leaf, transport: TrainFront, stay: BedDouble, other: Sparkles };
 const categoryClass: Record<Category, string> = {sightseeing:'orange',food:'rose',culture:'purple',nature:'green',transport:'blue',stay:'yellow',other:'slate'};
 const sidebarItems: {key: View; label: string; Icon: typeof Compass}[] = [
  {key:'overview',label:'Overview',Icon:LayoutDashboard}, {key:'itinerary',label:'My itinerary',Icon:CalendarDays},
- {key:'map',label:'Explore map',Icon:MapPin}, {key:'budget',label:'Trip budget',Icon:Wallet},
+ {key:'budget',label:'Trip budget',Icon:Wallet},
  {key:'saved',label:'Saved trips',Icon:Bookmark}, {key:'discover',label:'Discover',Icon:Compass}
 ];
 const asNumber = (value: string) => {const n = Number(value);return Number.isFinite(n)?n:0;};
@@ -88,17 +88,25 @@ function ActivityForm({activity,currency,onClose,onSave}:{activity?:Activity;cur
 function DayNav({trip,dayIndex,setDayIndex}:{trip:Trip;dayIndex:number;setDayIndex:(n:number)=>void}) {
  return <div className="day-selector"><div className="day-selector-scroll">{trip.days.map((day,i)=><button key={day.date} className={`day-button ${dayIndex===i?'active':''}`} onClick={()=>setDayIndex(i)}><strong>Day {i+1}</strong><small>{dateLabel(day.date)}</small></button>)}</div><div className="day-arrows"><button aria-label="Previous day" disabled={dayIndex===0} onClick={()=>setDayIndex(dayIndex-1)}><ChevronLeft size={17}/></button><button aria-label="Next day" disabled={dayIndex===trip.days.length-1} onClick={()=>setDayIndex(dayIndex+1)}><ChevronRight size={17}/></button></div></div>;
 }
-function Itinerary({trip,dayIndex,setDayIndex,onActivity,onRemove,onMove,onMap,onExport}:{trip:Trip;dayIndex:number;setDayIndex:(n:number)=>void;onActivity:(activity?:Activity)=>void;onRemove:(id:string)=>void;onMove:(id:string,dir:number)=>void;onMap:()=>void;onExport:()=>void}) {
+function Itinerary({trip,dayIndex,setDayIndex,onActivity,onRemove,onMove,onExport}:{trip:Trip;dayIndex:number;setDayIndex:(n:number)=>void;onActivity:(activity?:Activity)=>void;onRemove:(id:string)=>void;onMove:(id:string,dir:number)=>void;onExport:()=>void}) {
+ const [detailTab,setDetailTab]=useState<'schedule'|'map'>('schedule');
+ useEffect(()=>setDetailTab('schedule'),[trip.id]);
  const day=trip.days[dayIndex];
  const dayCost=day.activities.reduce((s,a)=>s+a.cost,0);
  return <div className="screen-fade"><div className="section-top"><div><p className="kicker">YOUR PERSONALIZED ITINERARY</p><h2>{trip.destination} <span className="title-spark">✳</span></h2><p className="subheading"><CalendarDays size={15}/> {dateLabel(trip.startDate)} – {dateLabel(trip.endDate)} <span>·</span> {trip.days.length} days <span>·</span> {trip.travelers} travelers</p></div><button className="btn btn-outline top-action" onClick={onExport}><Download size={16}/> Export JSON</button></div>
  <div className="trip-intro"><div><span className="small-pill"><Sparkles size={13}/> {trip.mode==='ai'?'AI GENERATED':'DEMO PLAN'}</span><h3>Every great trip starts<br/>with a little wonder.</h3><p>{trip.summary}</p><div className="trip-intro-meta"><span><CalendarDays size={15}/>{trip.days.length} days</span><span><Users size={15}/>{trip.travelers} people</span><span><Wallet size={15}/>{money(trip.budget,trip.currency)} total budget</span></div></div><div className="trip-intro-visual"><span>✈</span></div></div>
- <div className="section-heading itinerary-heading"><div><h3>Your day-by-day adventure</h3><p>All the best moments, perfectly within reach</p></div><button className="btn btn-outline compact" onClick={onMap}><MapPin size={16}/> Map view</button></div>
+ <div className="section-heading itinerary-heading"><div><h3>Your day-by-day adventure</h3><p>Activities, map and transport in one place</p></div></div>
+ <div className="itinerary-view-tabs" role="tablist" aria-label="Itinerary views">
+  <button type="button" role="tab" aria-selected={detailTab==='schedule'} className={detailTab==='schedule'?'active':''} onClick={()=>setDetailTab('schedule')}><CalendarDays size={17}/> Daily itinerary</button>
+  <button type="button" role="tab" aria-selected={detailTab==='map'} className={detailTab==='map'?'active':''} onClick={()=>setDetailTab('map')}><MapPin size={17}/> Map & transport</button>
+ </div>
  <DayNav trip={trip} dayIndex={dayIndex} setDayIndex={setDayIndex}/>
  <div className="day-title-row"><div><p className="kicker">{dateLong(day.date).toUpperCase()}</p><h3>{day.theme}</h3></div><div className="day-cost"><span>Day estimate</span><strong>{money(dayCost,trip.currency)}</strong></div></div>
+ {detailTab==='map'?<RouteExplorer trip={trip} dayIndex={dayIndex} setDayIndex={setDayIndex} embedded/>:<>
  <div className="activities-list">{day.activities.map((a,i)=><div key={a.id} className="activity-row"><div className="timeline-time"><strong>{a.time}</strong><div className="timeline-stem"><span/></div></div><CategoryIcon category={a.category}/><div className="activity-details"><div className="activity-head"><div><p className="activity-type">{CATEGORY_LABEL[a.category]}</p><h4>{a.title}</h4></div><span className="activity-price">{money(a.cost,trip.currency)}</span></div><p className="activity-description">{a.description}</p><div className="activity-meta"><span><MapPin size={13}/>{a.location}</span><span><Clock3 size={13}/>{a.durationMinutes} min</span></div><div className="activity-actions"><button onClick={()=>onActivity(a)}><Pencil size={13}/> Edit</button><button onClick={()=>onMove(a.id,-1)} disabled={i===0}><ArrowUp size={13}/> Earlier</button><button onClick={()=>onMove(a.id,1)} disabled={i===day.activities.length-1}><ArrowDown size={13}/> Later</button><button className="action-danger" onClick={()=>onRemove(a.id)}><Trash2 size={13}/> Remove</button></div></div></div>)}
  <button className="add-activity" onClick={()=>onActivity()}><span><Plus size={20}/></span><div><strong>Add another activity</strong><small>Make this day uniquely yours</small></div><ArrowRight size={19}/></button></div>
  {trip.tips.length>0&&<div className="tips-card"><div className="tips-icon">✳</div><div><h4>A few friendly reminders</h4>{trip.tips.slice(0,3).map((t,i)=><p key={i}>· {t}</p>)}</div></div>}
+ </>}
  </div>;
 }
 function Budget({trip,onAddExpense,onRemoveExpense}:{trip:Trip;onAddExpense:(e:{title:string;amount:number;category:Category})=>void;onRemoveExpense:(id:string)=>void}) {
@@ -151,7 +159,7 @@ export default function Page() {
  {mobileNav&&<button className="mobile-scrim" aria-label="Close navigation" onClick={()=>setMobileNav(false)}/>}
  <div className="main-shell"><header className="topbar"><div className="topbar-left"><button className="icon-button hamburger" aria-label="Open navigation" onClick={()=>setMobileNav(true)}><Menu size={22}/></button><span className="topbar-breadcrumb">My workspace</span><ChevronRight size={15}/><strong>{sidebarItems.find(x=>x.key===view)?.label}</strong></div><div className="topbar-actions"><span className="topbar-greeting">Every journey begins somewhere <span>✳</span></span><button className="btn btn-primary topbar-plan" onClick={()=>setShowCreate(true)}><Plus size={17}/> New trip</button><div className="top-avatar">✳</div></div></header>
  <main className="content">
- {!ready?<div className="page-loading"><span className="spinner"/> Opening your travel space…</div>:view==='overview'?<Overview trips={trips} trip={selected} onCreate={()=>setShowCreate(true)} onChoose={choose} onView={nav}/>:view==='saved'?<SavedTrips trips={trips} onChoose={choose} onView={nav} onCreate={()=>setShowCreate(true)} onRemove={deleteTrip}/>:view==='discover'?<Discover onCreate={()=>setShowCreate(true)}/>:!selected?<EmptyTrips onCreate={()=>setShowCreate(true)}/>:view==='itinerary'?<Itinerary trip={selected} dayIndex={activeIndex} setDayIndex={setDayIndex} onActivity={a=>setEditing(a||'new')} onRemove={removeActivity} onMove={moveActivity} onMap={()=>nav('map')} onExport={exportTrip}/>:view==='map'?<RouteExplorer trip={selected} dayIndex={activeIndex} setDayIndex={setDayIndex}/>:<Budget trip={selected} onAddExpense={e=>updateTrip(t=>({...t,expenses:[...t.expenses,{...e,id:uuid()}]}))} onRemoveExpense={id=>updateTrip(t=>({...t,expenses:t.expenses.filter(e=>e.id!==id)}))}/>}
+ {!ready?<div className="page-loading"><span className="spinner"/> Opening your travel space…</div>:view==='overview'?<Overview trips={trips} trip={selected} onCreate={()=>setShowCreate(true)} onChoose={choose} onView={nav}/>:view==='saved'?<SavedTrips trips={trips} onChoose={choose} onView={nav} onCreate={()=>setShowCreate(true)} onRemove={deleteTrip}/>:view==='discover'?<Discover onCreate={()=>setShowCreate(true)}/>:!selected?<EmptyTrips onCreate={()=>setShowCreate(true)}/>:view==='itinerary'?<Itinerary trip={selected} dayIndex={activeIndex} setDayIndex={setDayIndex} onActivity={a=>setEditing(a||'new')} onRemove={removeActivity} onMove={moveActivity} onExport={exportTrip}/>:<Budget trip={selected} onAddExpense={e=>updateTrip(t=>({...t,expenses:[...t.expenses,{...e,id:uuid()}]}))} onRemoveExpense={id=>updateTrip(t=>({...t,expenses:t.expenses.filter(e=>e.id!==id)}))}/>}
  </main><footer className="site-footer">Made for the curious. <span>✳</span> TripMate MVP · Plans and estimates need independent verification.</footer></div>
  {showCreate&&<CreateTrip onClose={()=>setShowCreate(false)} onCreated={create}/>} {editing&&selected&&<ActivityForm activity={editing==='new'?undefined:editing} currency={selected.currency} onClose={()=>setEditing(null)} onSave={saveActivity}/>}</div>;
 }
