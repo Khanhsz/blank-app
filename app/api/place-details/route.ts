@@ -65,7 +65,7 @@ async function wikiLookup(name:string,destination:string,country:string,point:Po
   const pages=data?.pages||[];
   const ranked=pages.map(page=>{
     const relevance=score(name,page.title);
-    const context=/saigon|ho chi minh/i.test(destination)&&/saigon|ho chi minh/i.test(page.title+' '+(page.description||''))?.15:0;
+    const context=/saigon|ho chi minh/i.test(destination)&&/saigon|ho chi minh/i.test(page.title+' '+(page.description||'')) ? 0.15 : 0;
     return {title:page.title,relevance,weight:relevance+context};
   }).filter(p=>p.relevance>=.5).sort((a,b)=>b.weight-a.weight);
   for(const candidate of ranked.slice(0,2)){
