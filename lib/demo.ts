@@ -67,7 +67,7 @@ export function createDemoTrip(input: TripInput): Trip {
    })
  }));
  return {
-   id:uuid(), destination:input.destination.trim(), country:dataset?.country || 'Destination to explore',
+   id:uuid(), destination:input.destination.trim(), country:input.country || dataset?.country || 'Destination to explore',
    startDate:input.startDate, endDate:input.endDate, travelers:input.travelers, budget:input.budget,
    currency:input.currency, pace:input.pace, interests:input.interests, notes:input.notes, days,
    expenses:[], createdAt:new Date().toISOString(), mode:'demo',
@@ -75,7 +75,7 @@ export function createDemoTrip(input: TripInput): Trip {
    tips: ['This demo uses sample cost estimates, not live prices.', 'Check transport times, ticket requirements and opening hours before traveling.', 'Accommodation and flights are not included unless added to your budget.']
  };
 }
-export const sampleInput: TripInput = { destination:'Kyoto', startDate:'2026-11-10', endDate:'2026-11-13', travelers:2, budget:650, currency:'USD', pace:'balanced', interests:['Culture','Food','Nature'], notes:'' };
+export const sampleInput: TripInput = { country:'Japan', destination:'Kyoto', startDate:'2026-11-10', endDate:'2026-11-13', travelers:2, budget:650, currency:'USD', pace:'balanced', interests:['Culture','Food','Nature'], notes:'' };
 export const demoCities = [
  {name:'Kyoto', country:'Japan', caption:'Traditions & tranquil temples', symbol:'⛩️', tint:'pink'},
  {name:'Da Nang', country:'Vietnam', caption:'Coastal escapes & adventure', symbol:'🌴', tint:'blue'},
