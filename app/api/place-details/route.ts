@@ -15,13 +15,11 @@ type WikiSummary={title?:string;extract?:string;content_urls?:{desktop?:{page?:s
 
 const known=[
   {match:/saigon central post office|saigon post office|buu dien.*sai gon|central post office/i,
-   title:'Saigon Central Post Office',
-   extract:'Historic post office in central Ho Chi Minh City, built in the late nineteenth century and known for its French-influenced architecture.',
-   url:'https://en.wikipedia.org/wiki/Saigon_Central_Post_Office'},
+   title:'Saigon Central Post Office'},
   {match:/notre.?dame|nha tho duc ba|duc ba cathedral|saigon cathedral/i,
-   title:'Notre-Dame Cathedral Basilica of Saigon',
-   extract:'Cathedral in central Ho Chi Minh City, constructed in the nineteenth century and recognizable for its twin bell towers.',
-   url:'https://en.wikipedia.org/wiki/Notre-Dame_Cathedral_Basilica_of_Saigon'}
+   title:'Notre-Dame Cathedral Basilica of Saigon'},
+  {match:/independence palace|reunification palace|reunification hall|dinh doc lap|dinh thong nhat|hoi truong thong nhat/i,
+   title:'Independence Palace'}
 ];
 const valid=(s:unknown,max=160):s is string=>typeof s==='string'&&s.trim().length>=2&&s.trim().length<=max;
 function norm(s:string){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();}
@@ -31,7 +29,24 @@ function score(a:string,b:string){const tokens=terms(a),other=new Set(terms(b));
 function dist(a:Point,b:Point){const r=Math.PI/180,x=(b.lat-a.lat)*r,y=(b.lon-a.lon)*r,h=Math.sin(x/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(y/2)**2;return 12742*Math.asin(Math.sqrt(h));}
 function httpsUrl(s:unknown){if(typeof s!=='string')return null;try{const u=new URL(s);return u.protocol==='https:'?u.toString():null;}catch{return null;}}
 function isSaigon(destination:string,country:string){return /ho chi minh|sai gon|saigon|hcmc/i.test(destination)&&/viet\s?nam/i.test(country);}
-function stripVerb(name:string){return name.trim().replace(/^(?:visit|explore|see|discover|enjoy|lunch at|dinner at|breakfast at|morning at|walk through|stroll through)\s+/i,'').trim();}
+function localeMention(text:string,destination:string,country:string):boolean {
+  const hay=norm(text);
+  const dest=norm(destination);
+  const aliases=isSaigon(destination,country)?['ho chi minh','saigon','sai gon','hcmc']: [dest];
+  // A match to a country alone cannot disambiguate two landmarks within that country.
+  return aliases.some(a=>a.length>=3&&hay.includes(a));
+}
+function countryMention(text:string,country:string):boolean {
+  const hay=norm(text);
+  const val=norm(country);
+  return hay.includes(val) || (val==='vietnam' && hay.includes('viet nam')) || (val==='viet nam' && hay.includes('vietnam'));
+}
+function hasValidGeography(result:{description:string;coordinates?:Point|null},destination:string,country:string,point:Point|null):boolean {
+  if(point && result.coordinates) return dist(point,result.coordinates)<=25;
+  // No coordinates: require an explicit city reference rather than guessing from a shared word.
+  return localeMention(result.description,destination,country);
+}
+function stripVerb(name:string){return name.trim().replace(/^(?:visit|explore|see|discover|enjoy|lunch at|dinner at|breakfast at|morning at|walk through|stroll through)\s+/i,'').replace(/\s+(?:guided\s+visit|visit|guided\s+tour|tour|stop)\s*$/i,'').trim();}
 function splitNames(raw:string){
   const name=stripVerb(raw);
   // A real landmark name can contain "and"; split only if both sides look like full landmarks.
@@ -49,14 +64,18 @@ async function wikiSummary(title:string){
   if(!doc?.title||!doc.extract)return null;
   const article=httpsUrl(doc.content_urls?.desktop?.page);
   if(!article||new URL(article).hostname!=='en.wikipedia.org')return null;
-  return {name:doc.title,description:doc.extract.slice(0,650),wikipediaUrl:article};
+  return {name:doc.title,description:doc.extract.slice(0,650),wikipediaUrl:article,coordinates:doc.coordinates&&Number.isFinite(doc.coordinates.lat)&&Number.isFinite(doc.coordinates.lon)?{lat:doc.coordinates.lat,lon:doc.coordinates.lon}:null};
 }
 async function wikiLookup(name:string,destination:string,country:string,point:Point|null){
   // Prefer explicit canonical Wikipedia titles for common ambiguous Saigon landmarks.
   const canonical=isSaigon(destination,country)?known.find(k=>k.match.test(name)):undefined;
   if(canonical){
     const live=await wikiSummary(canonical.title);
-    return live||{name:canonical.title,description:canonical.extract,wikipediaUrl:canonical.url};
+    // Known aliases are tied to this city, but never substitute another article if unavailable.
+    if(!live)return null;
+    if(live.coordinates && point && dist(point,live.coordinates)>25)return null;
+    if(!countryMention(live.description,country)&&!localeMention(live.description,destination,country)&&!live.coordinates)return null;
+    return live;
   }
   const query=new URL('https://en.wikipedia.org/w/rest.php/v1/search/page');
   query.searchParams.set('q',name);
@@ -67,12 +86,12 @@ async function wikiLookup(name:string,destination:string,country:string,point:Po
     const relevance=score(name,page.title);
     const context=/saigon|ho chi minh/i.test(destination)&&/saigon|ho chi minh/i.test(page.title+' '+(page.description||'')) ? 0.15 : 0;
     return {title:page.title,relevance,weight:relevance+context};
-  }).filter(p=>p.relevance>=.5).sort((a,b)=>b.weight-a.weight);
-  for(const candidate of ranked.slice(0,2)){
+  }).filter(p=>p.relevance>=.85).sort((a,b)=>b.weight-a.weight);
+  for(const candidate of ranked.slice(0,3)){
     const summary=await wikiSummary(candidate.title);
     if(!summary)continue;
-    // Never use a Paris cathedral as a match for Ho Chi Minh City.
-    if(isSaigon(destination,country)&&/notre.?dame/i.test(name)&&!/saigon|ho chi minh/i.test(summary.name+' '+summary.description))continue;
+    // A name is not sufficient evidence: a matching location is mandatory.
+    if(!hasValidGeography(summary,destination,country,point))continue;
     return summary;
   }
   return null;
@@ -98,7 +117,7 @@ async function osmLookup(name:string,destination:string,country:string,point:Poi
     const coords=p.lat&&p.lon?{lat:Number(p.lat),lon:Number(p.lon)}:null;
     const distance=point&&coords&&Number.isFinite(coords.lat)&&Number.isFinite(coords.lon)?dist(point,coords):null;
     return {p,label,relevance,distance};
-  }).filter(c=>c.relevance>=.5&&(c.distance===null||c.distance<=18))
+  }).filter(c=>c.relevance>=.85&&(c.distance!==null?c.distance<=18:localeMention(c.p.display_name||'',destination,country)))
     .sort((a,b)=>b.relevance-a.relevance+(a.distance??0)/-100+(b.distance??0)/100);
   const match=ranked[0];
   if(!match)return null;
