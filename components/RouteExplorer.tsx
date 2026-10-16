@@ -58,7 +58,7 @@ export default function RouteExplorer({ trip, dayIndex, setDayIndex, embedded = 
   const totalSeconds = displayLegs.length && displayLegs.every(p => p.seconds !== null) ? displayLegs.reduce((sum, p) => sum + (p.seconds || 0), 0) : null;
   const directionsUrl = googleDirectionsUrl(located, mode);
   const selected = selectedLeg !== null && selectedLeg < located.length - 1 ? [located[selectedLeg], located[selectedLeg + 1]] : null;
-  const inspected = day.activities.find(a=>a.id===inspectedId) || located[0] || day.activities[0] || null;
+  const inspected = day.activities.find(a=>a.id===inspectedId) || null;
   const transportCaution = mode === 'transit'
     ? 'Transit routes, real-time departures and fares are not available here. Open Google Maps for local services and schedules.'
     : isRoadRoute
@@ -92,7 +92,7 @@ export default function RouteExplorer({ trip, dayIndex, setDayIndex, embedded = 
           </div>)}
         </div>
         {selected && <div className="route-selected"><strong>{selected[0].title} → {selected[1].title}</strong><p>{mode === 'transit' ? 'Choose live public transport routes.' : `Distance: ${!isRoadRoute ? '≈ ' : ''}${readableDistance(displayLegs[selectedLeg!].distance || 0)}${displayLegs[selectedLeg!].seconds !== null ? ` · ${readableDuration(displayLegs[selectedLeg!].seconds!)}` : ''}`}</p>{googleDirectionsUrl(selected, mode) && <a href={googleDirectionsUrl(selected,mode)!} target="_blank" rel="noopener noreferrer">Navigate this leg <ExternalLink size={13}/></a>}</div>}
-        {inspected && <PlaceDetails key={inspected.id} activity={inspected} destination={trip.destination} country={trip.country}/>}
+        {inspected ? <PlaceDetails key={inspected.id} activity={inspected} destination={trip.destination} country={trip.country}/> : <p className="map-footnote"><CircleAlert size={14}/> Select a place or map marker to see sourced details without opening another page.</p>}
         {day.activities.length > located.length && <p className="map-footnote"><CircleAlert size={14}/>{day.activities.length - located.length} stop(s) without map coordinates are excluded from route calculations.</p>}
         <p className="route-provider">Map data © OpenStreetMap contributors. Road routes provided for planning only; verify before departure.</p>
       </div>
