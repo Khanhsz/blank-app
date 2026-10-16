@@ -35,7 +35,7 @@ export type Trip = {
   createdAt: string;
   mode: 'demo' | 'ai';
 };
-export type TripInput = Pick<Trip, 'destination' | 'startDate' | 'endDate' | 'travelers' | 'budget' | 'currency' | 'pace' | 'interests' | 'notes'>;
+export type TripInput = Pick<Trip, 'country' | 'destination' | 'startDate' | 'endDate' | 'travelers' | 'budget' | 'currency' | 'pace' | 'interests' | 'notes'>;
 export const CATEGORIES: Category[] = ['sightseeing','food','culture','nature','transport','stay','other'];
 export const CATEGORY_LABEL: Record<Category, string> = {
   sightseeing: 'Sightseeing', food: 'Food & drink', culture: 'Culture', nature: 'Nature',
