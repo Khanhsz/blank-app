@@ -5,6 +5,7 @@ import { Bike, CarFront, CircleAlert, Clock3, ExternalLink, Footprints, MapPin, 
 import type { Activity, Trip } from '@/lib/types';
 import { approxDurationSeconds, directDistanceMeters, googleDirectionsUrl, hasCoordinates, osmDrivingRouteUrl, readableDistance, readableDuration, validateRoadRoute, type RoadRoute, type TravelMode } from '@/lib/routing';
 import TripMap from './TripMap';
+import PlaceDetails from './PlaceDetails';
 
 const modes = [
   { id: 'walking', label: 'Walk', Icon: Footprints },
@@ -21,8 +22,9 @@ export default function RouteExplorer({ trip, dayIndex, setDayIndex, embedded = 
   const [roadRoute, setRoadRoute] = useState<RoadRoute | null>(null);
   const [roadStatus, setRoadStatus] = useState<'idle' | 'loading' | 'ready' | 'unavailable'>('idle');
   const [selectedLeg, setSelectedLeg] = useState<number | null>(null);
+  const [inspectedId, setInspectedId] = useState<string | null>(null);
 
-  useEffect(() => { setSelectedLeg(null); }, [dayIndex, trip.id]);
+  useEffect(() => { setSelectedLeg(null);setInspectedId(null); }, [dayIndex, trip.id]);
   useEffect(() => {
     const controller = new AbortController();
     const url = osmDrivingRouteUrl(located);
@@ -56,6 +58,7 @@ export default function RouteExplorer({ trip, dayIndex, setDayIndex, embedded = 
   const totalSeconds = displayLegs.length && displayLegs.every(p => p.seconds !== null) ? displayLegs.reduce((sum, p) => sum + (p.seconds || 0), 0) : null;
   const directionsUrl = googleDirectionsUrl(located, mode);
   const selected = selectedLeg !== null && selectedLeg < located.length - 1 ? [located[selectedLeg], located[selectedLeg + 1]] : null;
+  const inspected = day.activities.find(a=>a.id===inspectedId) || located[0] || day.activities[0] || null;
   const transportCaution = mode === 'transit'
     ? 'Transit routes, real-time departures and fares are not available here. Open Google Maps for local services and schedules.'
     : isRoadRoute
@@ -84,15 +87,16 @@ export default function RouteExplorer({ trip, dayIndex, setDayIndex, embedded = 
         <div className="route-stops" aria-label="Journey legs">
           {located.length < 2 && <div className="route-placeholder">Add at least two activities with map coordinates to calculate travel distances.</div>}
           {located.map((stop, i) => <div className="route-stop-group" key={stop.id}>
-            <div className="route-stop"><span className="map-place-num">{day.activities.indexOf(stop) + 1}</span><div><strong>{stop.title}</strong><small>{stop.time} · {stop.location}</small></div></div>
-            {i < located.length - 1 && <button className={`route-leg ${selectedLeg === i ? 'active' : ''}`} onClick={() => setSelectedLeg(selectedLeg === i ? null : i)} aria-pressed={selectedLeg === i} type="button"><span className="route-leg-dash"/><span>{mode === 'transit' ? 'Check transit' : `${!isRoadRoute ? '≈ ' : ''}${readableDistance(displayLegs[i].distance || 0)}`} {displayLegs[i].seconds !== null ? ` · ${readableDuration(displayLegs[i].seconds!)}` : ''}</span><span className="route-leg-action">View leg</span></button>}
+            <button type="button" className={`route-stop route-stop-choice ${inspected?.id===stop.id ? "active" : ""}`} aria-pressed={inspected?.id===stop.id} onClick={()=>setInspectedId(stop.id)}><span className="map-place-num">{day.activities.indexOf(stop) + 1}</span><div><strong>{stop.title}</strong><small>{stop.time} · {stop.location}</small></div><span className="route-info-cue">Details</span></button>
+            {i < located.length - 1 && <button className={`route-leg ${selectedLeg === i ? 'active' : ''}`} onClick={() => {setSelectedLeg(selectedLeg === i ? null : i);setInspectedId(located[i+1].id);}} aria-pressed={selectedLeg === i} type="button"><span className="route-leg-dash"/><span>{mode === 'transit' ? 'Check transit' : `${!isRoadRoute ? '≈ ' : ''}${readableDistance(displayLegs[i].distance || 0)}`} {displayLegs[i].seconds !== null ? ` · ${readableDuration(displayLegs[i].seconds!)}` : ''}</span><span className="route-leg-action">View leg</span></button>}
           </div>)}
         </div>
         {selected && <div className="route-selected"><strong>{selected[0].title} → {selected[1].title}</strong><p>{mode === 'transit' ? 'Choose live public transport routes.' : `Distance: ${!isRoadRoute ? '≈ ' : ''}${readableDistance(displayLegs[selectedLeg!].distance || 0)}${displayLegs[selectedLeg!].seconds !== null ? ` · ${readableDuration(displayLegs[selectedLeg!].seconds!)}` : ''}`}</p>{googleDirectionsUrl(selected, mode) && <a href={googleDirectionsUrl(selected,mode)!} target="_blank" rel="noopener noreferrer">Navigate this leg <ExternalLink size={13}/></a>}</div>}
+        {inspected && <PlaceDetails key={inspected.id} activity={inspected} destination={trip.destination} country={trip.country}/>}
         {day.activities.length > located.length && <p className="map-footnote"><CircleAlert size={14}/>{day.activities.length - located.length} stop(s) without map coordinates are excluded from route calculations.</p>}
         <p className="route-provider">Map data © OpenStreetMap contributors. Road routes provided for planning only; verify before departure.</p>
       </div>
-      <div className="map-main"><TripMap activities={day.activities} destination={trip.destination} mode={mode} selectedIds={selected?.map(p => p.id) || []} routeLine={isRoadRoute ? roadRoute!.line : undefined}/></div>
+      <div className="map-main"><TripMap activities={day.activities} destination={trip.destination} mode={mode} onSelect={setInspectedId} selectedIds={Array.from(new Set([...(selected?.map(p => p.id) || []), ...(inspected?[inspected.id]:[])]))} routeLine={isRoadRoute ? roadRoute!.line : undefined}/></div>
     </div>
   </div>;
 }
