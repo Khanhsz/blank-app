@@ -115,3 +115,12 @@
 .route-info-cue{margin-left:auto;font-size:10px;font-weight:800;color:#2d8056;flex-shrink:0}
 .activity-actions .place-details-action{color:#2c7658}
 @media(max-width:720px){.place-card{margin:13px 10px;padding:13px}.place-top{flex-wrap:wrap}.route-info-cue{font-size:9px}}
+
+
+/* Separate source-backed landmarks within a multi-stop itinerary activity. */
+.place-count{font-size:11px;color:#517563;background:#eff6f0;border-radius:8px;padding:9px 11px;margin:13px 0;font-weight:700}
+.place-entry{padding:14px 0;border-bottom:1px solid #eaf0e9}
+.place-entry:last-of-type{border-bottom:0}
+.place-entry h5{color:#294e3e;font-size:14px;line-height:1.5;letter-spacing:-.01em;margin:0 0 7px;font-weight:800}
+.place-entry .place-verified{margin:7px 0 11px}
+.place-entry .place-source-links{margin-bottom:5px}
