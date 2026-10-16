@@ -77,3 +77,11 @@
 .suggestion-hint{color:#94a79b;font-size:10px;font-weight:500;margin-top:8px;line-height:1.5}
 
 .suggestion-footer a{color:#39775a;text-decoration:underline;text-underline-offset:2px}
+/* Unified itinerary + map view */
+.itinerary-view-tabs{display:flex;align-items:center;gap:8px;margin:5px 0 14px;padding:5px;background:#edf3ed;border:1px solid #dfebdf;border-radius:13px;max-width:445px}
+.itinerary-view-tabs button{appearance:none;flex:1;display:flex;align-items:center;justify-content:center;gap:8px;min-width:0;border:0;border-radius:9px;background:transparent;color:#748c7c;padding:12px 11px;font-weight:800;font-size:12px;transition:background .15s,color .15s,box-shadow .15s}
+.itinerary-view-tabs button:hover{color:#245747;background:#f8fbf8}
+.itinerary-view-tabs button.active,.itinerary-view-tabs button[aria-selected="true"]{background:#fff;color:#225b45;box-shadow:0 2px 8px #1d442010}
+.itinerary-view-tabs button:focus-visible{outline:2px solid #245747;outline-offset:2px}
+.route-embedded .route-toolbar{margin-top:4px}
+@media(max-width:480px){.itinerary-view-tabs{max-width:none;width:100%}.itinerary-view-tabs button{font-size:11px;padding:11px 7px;gap:5px}}
