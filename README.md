@@ -1,67 +1,61 @@
-# AI Tutor Studio – Web MVP
+# AI Tutor Studio – Knowledge Database 2.0
 
-**Tạo giáo trình · Bài giảng · Google Search grounding · Quiz · Gia sư AI**
+An offline-first curriculum builder with a **versioned SQLite reference database**.
 
-MVP chạy trên Node.js 20+ (không cần cài thư viện). Có giao diện tiếng Việt, tự thích ứng với di động và mẫu khóa Marketing sẵn để dùng thử.
+## What's available
 
-## Chạy thử ngay
+- **55 subjects** across 5 categories.
+- **550 curriculum units**, **1,651 indexed subtopics**, **14 subject-area reading-list links**.
+- **29 units contain original short explanations and worked examples**; other units are **outlines only**, not finished textbooks. App labels this distinction clearly.
+- Database-backed curriculum builder (2–12 weeks), unit-based lesson composer, classroom activities, basic topic-recognition quizzes, topic search and simple grounded offline Q&A.
+- No Gemini API key or Google Search calls are required for the database-based features. Data are static, not a live web index.
+- Example reading links (OpenStax, MDN, MIT OCW, CORE Econ, etc.) are pointers to read more, **not evidence that each statement was verified against those sites**. No copyrighted textbook prose is included in the DB.
 
-1. Cài [Node.js](https://nodejs.org/) phiên bản 20.12+.
-2. Mở Terminal tại thư mục này, chạy `npm start` và truy cập **http://localhost:3000**.
-3. Chưa có API key vẫn xem được giáo trình Marketing mẫu, bài giảng và làm quiz. Đây là **demo tĩnh**, không gọi Google hay AI.
+## Run locally
 
-## Bật Gemini + Google Search
+Requires Node **22.16+** (Render uses Node 26).
 
-1. Tạo Gemini API key tại https://aistudio.google.com/apikey . Không đưa key vào mã frontend, không commit key lên GitHub.
-2. Tạo `.env` từ `.env.example` rồi thay `GEMINI_API_KEY` bằng key thật. Ứng dụng tự đọc file `.env` qua Node 20.12+.
-3. Chạy lại `npm start`.
-4. Tạo giáo trình: nhập môn, mục tiêu, trình độ, số tuần, thời lượng mỗi buổi. Tick **Tra cứu Google** để tìm nguồn trước khi soạn giáo trình.
-5. Mở từng tuần → **Soạn bài học** → quiz → **Gia sư AI**. Tab **Nguồn học thuật** dùng Google Search grounding, hiển thị liên kết và truy vấn trả về.
+```bash
+npm install
+npm start
+```
 
-## Kiến trúc
+Then open http://localhost:3000. `npm start` compiles `data/catalog-seed.json` into a local SQLite file before starting the web server. It does not need Python, external API keys, or a paid database.
 
-- **Frontend:** Vanilla JS, CSS responsive, state lưu bằng `localStorage` của trình duyệt.
-- **Backend:** `server.js` Node HTTP server, không cần database/dependencies.
-- **Soạn giáo trình và bài giảng:** Gemini `gemini-3.5-flash-lite`, structured JSON output.
-- **Nghiên cứu Google:** Gemini `gemini-3.5-flash-lite`, `googleSearch` grounding; lấy `groundingMetadata.groundingChunks` để hiển thị nguồn xác minh.
-- **Luồng nghiên cứu → soạn:** 2 lượt API, nhằm giữ bước nghiên cứu tách khỏi đầu ra JSON.
-- **Gia sư:** Gemini nhận câu hỏi, bài giảng đang chọn và tối đa 8 tin nhắn gần nhất; không tự thực hiện Google Search.
+### Develop / test
 
-## Lưu ý về nguồn
-
-Chỉ liên kết do Google grounding trả về mới được hiển thị dưới dạng nguồn. Nếu grounding không trả về nguồn hoặc lỗi, giao diện báo rõ trạng thái; **AI vẫn có thể tạo giáo trình/bài giảng nhưng chưa được xác minh qua web**. Google Search grounding không phải trình thu thập toàn bộ trang Google Search hoặc tải PDF nguyên bản.
-
-## Chi phí
-
-- Gemini 3.5 Flash-Lite: có gói sử dụng miễn phí theo giới hạn quota, phụ thuộc tài khoản/dự án.
-- Theo bảng giá công khai tháng 10/2026, Gemini 2.5 Flash-Lite hỗ trợ Google Search grounding miễn phí tối đa 500 grounded prompts/ngày (gộp quota với 2.5 Flash); hạn mức có thể đổi và còn tùy tình trạng dự án.
-- Gemini 3.5 Flash-Lite **không hỗ trợ Google Search grounding ở API Free Tier**, vì vậy tách sang Gemini 2.5 Flash-Lite.
-- Không dùng Google Custom Search JSON API vì đã đóng đăng ký mới và dự kiến ngừng vào 01/01/2027.
-- Bật billing có thể phát sinh chi phí: đọc [bảng giá chính thức](https://ai.google.dev/gemini-api/docs/pricing).
-
-## Đưa lên Render
-
-1. Đưa mã nguồn lên repo GitHub **riêng tư** (không commit `.env`).
-2. Render → New → Blueprint → chọn repo và `render.yaml`, hoặc New → Web Service.
-3. Cấu hình biến môi trường `GEMINI_API_KEY` trong Render Dashboard (Secret/Environment), không nhập API key vào frontend.
-4. Build command: `npm install`; Start command: `npm start`; Instance: Free (nếu có).
-
-**Lưu ý:** Render Free có thể ngủ khi không có traffic; dữ liệu khóa học trong demo chỉ lưu theo trình duyệt và **không đồng bộ giữa các thiết bị**. Khi phát triển đa người dùng, nên thêm authentication + database như PostgreSQL/Supabase và hạn chế API rate limit theo tài khoản.
-
-## Test
-
-```sh
+```bash
+npm run build:db
 npm test
 ```
 
-## API
+The seed source of truth is `data/catalog-seed.json` (original structure and original brief content); `scripts/build_database.mjs` builds read-only SQLite schema and indexes. A Python source authoring script is kept in the development archive; production only needs JS and JSON.
 
-- `GET /api/health` – kiểm tra đã có key chưa.
-- `POST /api/plan` – tạo giáo trình, tùy chọn Google research.
-- `POST /api/research` – nghiên cứu chủ đề qua Google grounding.
-- `POST /api/lesson` – tạo bài giảng từ một module.
-- `POST /api/tutor` – gia sư trả lời theo ngữ cảnh.
+## HTTP endpoints
 
-## Điểm cần làm trước production
+- `GET /api/health`: service health, database totals, mode.
+- `GET /api/catalog` or `/api/catalog?q=marketing&category=...`: subject directory.
+- `GET /api/catalog/:id`: subject's units and suggested reading-list sources.
+- `POST /api/plan` with `{subject, goal, weeks, minutes, level}`: curriculum from matching database units.
+- `POST /api/lesson` with `{course:{subject,minutes,level}, module:{title,unitIds}}`: authored material where available; outlines otherwise.
+- `POST /api/research` with `{topic, level}`: searches the **local database**, does not call Google.
+- `POST /api/tutor` with `{question, context}`: retrieves relevant local lesson text; may say it cannot answer when material is absent.
 
-Phân quyền tài khoản, dữ liệu trên DB, bảo vệ quota bằng auth và rate limits lưu bền, kiểm soát nội dung theo lứa tuổi, thu thập phản hồi chỉnh sửa giáo trình, xuất PDF/DOCX chất lượng cao, map chi tiết từng mệnh đề với source/citation, kiểm định chất lượng học liệu và bản quyền tài liệu web.
+## Data boundaries and persistence
+
+SQLite is a **bundled reference knowledge base** re-created at startup. It is read-only while app runs. User-created course plans and lesson records are stored in **browser localStorage** as before; they do not sync between devices and are lost when browser data are cleared.
+
+Render Free's ephemeral disk is not a persistent database for user contributions. To support user uploads, instructor edits, multi-user sync or accumulated new educational content, add authenticated persistent Postgres and moderation/review workflow in a later phase. Do **not** store secrets or personal student records in the public seed.
+
+## Source and licensing note
+
+All brief explanations/outlines in the shipped seed were created for this app. The app links to third-party educational repositories but does not reproduce their chapter texts. Check source permissions and relevance before importing any external educational materials, and attribute each imported work explicitly. Legal, medical and rapidly changing information requires checking authoritative, current sources.
+
+## Deploy
+
+Existing Render Free web service: `ai-tutor-studio-khanhsz` in Singapore.
+
+- GitHub source branch: `deploy/ai-tutor-studio`.
+- Render build command: `npm install`.
+- Render start command: `npm start` (generates SQLite then starts Node server).
+- No environment key is needed. The legacy `GEMINI_API_KEY` (if present) is not used by current database endpoints and may be removed from Render separately.

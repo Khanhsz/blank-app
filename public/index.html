@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f6f7fb">
-  <meta name="description" content="AI Tutor Studio – tạo giáo trình, bài giảng, kiểm tra và tài liệu tham khảo có nguồn Google Search.">
+  <meta name="description" content="AI Tutor Studio – tạo giáo trình, bài giảng, kiểm tra và tài liệu đọc thêm từ kho tri thức SQLite.">
   <title>AI Tutor Studio · Giáo trình trong tầm tay</title>
-  <link rel="stylesheet" href="/style.css">
-  <script src="/app.js" type="module" defer></script>
+  <link rel="stylesheet" href="/style.css?v=2">
+  <script src="/app.js?v=2" type="module" defer></script>
 </head>
 <body>
 <div class="app-shell">
@@ -15,6 +15,7 @@
     <div class="brand"><span class="brand-icon">✳</span><span>tutor<span class="brand-muted">studio</span><small>AI LEARNING WORKSPACE</small></span></div>
     <div class="sidebar-section-label">KHÔNG GIAN HỌC TẬP</div>
     <button id="navHome" class="side-link selected"><span class="nav-ico">▦</span> Tổng quan</button>
+    <button id="navCatalog" class="side-link"><span class="nav-ico">▤</span> Kho tri thức</button>
     <button id="navNew" class="side-link"><span class="nav-ico">✦</span> Tạo giáo trình <span class="plus">+</span></button>
     <div class="sidebar-section-label recent-label">GIÁO TRÌNH CỦA BẠN <span id="courseCount">0</span></div>
     <div id="courseList" class="course-list"></div>
@@ -25,29 +26,29 @@
   </aside>
 
   <div class="content-shell">
-    <header class="topbar"><div class="crumb">Workspace <span>/</span> <strong id="breadcrumb">Tổng quan</strong></div><div class="top-actions"><span class="top-pill">✦ Powered by Gemini</span><button id="topNew" class="btn btn-primary btn-sm">+ Giáo trình mới</button></div></header>
+    <header class="topbar"><div class="crumb">Workspace <span>/</span> <strong id="breadcrumb">Tổng quan</strong></div><div class="top-actions"><span class="top-pill">▤ SQLite Knowledge Base</span><button id="topNew" class="btn btn-primary btn-sm">+ Giáo trình mới</button></div></header>
     <main id="view" class="main"></main>
   </div>
 </div>
 
 <div id="toast" role="status" aria-live="polite" class="toast"></div>
 <template id="homeTemplate">
-  <section class="hero"><div class="hero-orb orb1"></div><div class="hero-orb orb2"></div><div class="hero-copy"><div class="eyebrow">✧ YOUR PERSONAL AI TUTOR</div><h1>Biến bất kỳ chủ đề nào<br>thành <em>hành trình học tập.</em></h1><p>Lên giáo trình theo mục tiêu. Tạo bài giảng chi tiết. Tìm dữ liệu đáng tin cậy qua Google và luyện tập cùng gia sư AI.</p><button id="heroCreate" class="btn btn-white">✦ Bắt đầu tạo giáo trình <span>↗</span></button></div><div class="hero-visual" aria-hidden="true"><div class="visual-sheet"><div class="sheet-top"><span class="sheet-badge">COURSE PLAN</span><span>✦</span></div><div class="sheet-title">Your learning<br>roadmap</div><div class="sheet-line" style="width:72%"></div><div class="sheet-line" style="width:92%"></div><div class="sheet-line" style="width:61%"></div><div class="roadmap-dot">✓</div></div><div class="floating-pill">✧ AI LESSON READY</div></div></section>
+  <section class="hero"><div class="hero-orb orb1"></div><div class="hero-orb orb2"></div><div class="hero-copy"><div class="eyebrow">✧ DATABASE-FIRST TUTOR STUDIO</div><h1>Biến 55 môn học<br>thành <em>hành trình học tập.</em></h1><p>Kho tri thức có 550 chuyên đề và 1.651 chủ điểm. Xây dựng giáo trình theo tuần, soạn bài và luyện tập không cần Google Search hay quota Gemini.</p><button id="heroCreate" class="btn btn-white">✦ Bắt đầu tạo giáo trình <span>↗</span></button></div><div class="hero-visual" aria-hidden="true"><div class="visual-sheet"><div class="sheet-top"><span class="sheet-badge">COURSE PLAN</span><span>✦</span></div><div class="sheet-title">Your learning<br>roadmap</div><div class="sheet-line" style="width:72%"></div><div class="sheet-line" style="width:92%"></div><div class="sheet-line" style="width:61%"></div><div class="roadmap-dot">✓</div></div><div class="floating-pill">▤ DB LESSON READY</div></div></section>
   <div class="section-head"><div><div class="mini-label">CÁCH HOẠT ĐỘNG</div><h2>Từ ý tưởng đến bài học hoàn chỉnh</h2></div></div>
-  <div class="feature-grid"><div class="feature"><div class="feature-ico vio">▤</div><div class="feature-step">01 · PLAN</div><h3>Thiết kế giáo trình</h3><p>Nhập môn học, mục tiêu và số tuần. AI thiết kế lộ trình từ cơ bản đến nâng cao.</p></div><div class="feature"><div class="feature-ico blue">⌕</div><div class="feature-step">02 · RESEARCH</div><h3>Nghiên cứu có nguồn</h3><p>Kết nối Google Search để tìm kiến thức cập nhật và tài liệu tham khảo liên quan.</p></div><div class="feature"><div class="feature-ico orange">✎</div><div class="feature-step">03 · LEARN</div><h3>Học, thực hành, hỏi AI</h3><p>Tạo bài giảng, ví dụ, câu hỏi kiểm tra và gia sư giải đáp từng bước.</p></div></div>
+  <div class="feature-grid"><div class="feature"><div class="feature-ico vio">▤</div><div class="feature-step">01 · PLAN</div><h3>Thiết kế giáo trình</h3><p>Nhập môn học, mục tiêu và số tuần. Cơ sở dữ liệu sắp xếp các chuyên đề thành lộ trình từ cơ bản đến ứng dụng.</p></div><div class="feature"><div class="feature-ico blue">⌕</div><div class="feature-step">02 · RESEARCH</div><h3>Nghiên cứu có nguồn</h3><p>Tìm trong 1.651 chủ điểm và mở các nguồn đọc thêm theo môn; không cần Google API.</p></div><div class="feature"><div class="feature-ico orange">✎</div><div class="feature-step">03 · LEARN</div><h3>Học, thực hành, hỏi AI</h3><p>Tạo khung bài giảng, ví dụ, bài tập và quiz từ kiến thức đã lưu trong database.</p></div></div>
   <div class="section-head saved-head"><div><div class="mini-label">THƯ VIỆN</div><h2>Giáo trình gần đây</h2></div></div><div id="recentCourses" class="recent-grid"></div>
 </template>
 <template id="createTemplate">
-  <div class="page-header"><div class="mini-label">COURSE BUILDER</div><h1>Thiết kế giáo trình mới <span class="star">✳</span></h1><p>Cho AI biết bạn muốn học gì. Mọi thứ còn lại sẽ được sắp xếp thành lộ trình phù hợp.</p></div>
+  <div class="page-header"><div class="mini-label">COURSE BUILDER</div><h1>Thiết kế giáo trình mới <span class="star">✳</span></h1><p>Chọn môn từ kho tri thức và mục tiêu học tập. Ứng dụng sẽ tổ chức nội dung thành giáo trình có hệ thống.</p></div>
   <div class="builder-layout"><section class="panel builder-card"><form id="createForm">
     <div class="form-heading"><div class="number">01</div><div><h2>Thông tin khóa học</h2><p>Tùy chỉnh theo mục tiêu của người học</p></div></div>
-    <div class="field"><label for="subject">Môn học / Chủ đề <span>*</span></label><input id="subject" name="subject" maxlength="120" required placeholder="VD: Marketing căn bản, IELTS Writing, Python..." value="Marketing căn bản"></div>
+    <div class="field"><label for="subject">Môn học / Chủ đề <span>*</span></label><input id="subject" name="subject" maxlength="120" required placeholder="VD: Marketing căn bản, IELTS Writing, Python căn bản..." list="subjectsList" value="Marketing căn bản"><datalist id="subjectsList"></datalist><div style="margin-top:8px"><button class="small-btn" type="button" id="browseSubjects">▤ Xem danh mục 55 môn học</button></div></div>
     <div class="field"><label for="goal">Mục tiêu học tập <span>*</span></label><textarea id="goal" name="goal" maxlength="300" required rows="3" placeholder="Sau khóa học, bạn muốn làm được điều gì?">Nắm vững các khái niệm marketing và biết xây dựng một kế hoạch marketing thực tế.</textarea></div>
     <div class="field-row"><div class="field"><label for="level">Trình độ</label><select id="level" name="level"><option>Mới bắt đầu</option><option>Trung cấp</option><option>Nâng cao</option></select></div><div class="field"><label for="weeks">Thời lượng khóa học</label><select id="weeks" name="weeks"><option value="2">2 tuần</option><option value="4" selected>4 tuần</option><option value="6">6 tuần</option><option value="8">8 tuần</option><option value="12">12 tuần</option></select></div></div>
     <div class="field"><label for="minutes">Thời gian mỗi bài học</label><select id="minutes" name="minutes"><option value="30">30 phút</option><option value="45">45 phút</option><option value="60" selected>60 phút</option><option value="90">90 phút</option></select></div>
-    <label class="toggle-row"><input type="checkbox" name="findSources" id="findSources" checked><span class="switch"></span><span><strong>Tra cứu Google trước khi soạn</strong><small>AI tham khảo nguồn web và hiển thị liên kết được tìm thấy</small></span></label>
-    <button class="btn btn-primary btn-lg" id="submitCreate" type="submit">✦ Tạo giáo trình bằng AI <span>→</span></button>
-  </form></section><aside class="builder-aside"><div class="aside-illustration"><div class="spark">✳</div><div class="mock-window"><div class="mock-heading"></div><div class="mock-heading short"></div><div class="mock-item"><span>01</span><div></div><b>✓</b></div><div class="mock-item"><span>02</span><div></div><b>✓</b></div><div class="mock-item"><span>03</span><div></div><b>↗</b></div></div></div><h3>Một lộ trình, mọi tài nguyên.</h3><p>Giáo trình được chia theo tuần với mục tiêu cụ thể, bài giảng thực hành và quiz đánh giá kiến thức.</p><div class="aside-note">⚑ Chỉ những liên kết do Google Search trả về mới được đánh dấu là nguồn tham khảo. Luôn kiểm tra lại nguồn quan trọng.</div></aside></div>
+    <div class="aside-note" style="margin-bottom:20px">▤ Giáo trình được tạo trực tiếp từ SQLite. Dữ liệu gồm khung kiến thức và bài giảng chọn lọc; không gọi Google hay Gemini.</div>
+    <button class="btn btn-primary btn-lg" id="submitCreate" type="submit">▤ Xây dựng giáo trình từ database <span>→</span></button>
+  </form></section><aside class="builder-aside"><div class="aside-illustration"><div class="spark">✳</div><div class="mock-window"><div class="mock-heading"></div><div class="mock-heading short"></div><div class="mock-item"><span>01</span><div></div><b>✓</b></div><div class="mock-item"><span>02</span><div></div><b>✓</b></div><div class="mock-item"><span>03</span><div></div><b>↗</b></div></div></div><h3>Một lộ trình, mọi tài nguyên.</h3><p>Giáo trình được chia theo tuần với mục tiêu cụ thể, bài giảng thực hành và quiz đánh giá kiến thức.</p><div class="aside-note">⚑ Các đường dẫn là nguồn đọc thêm theo lĩnh vực, chưa xác minh từng luận điểm. Những chương ghi “khung” cần bổ sung tài liệu học thuật.</div></aside></div>
 </template>
 </body>
 </html>

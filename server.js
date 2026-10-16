@@ -3,6 +3,7 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { catalog, stats, subjectInfo, createDatabasePlan, createDatabaseLesson, searchKnowledge, tutorFromDatabase } from './knowledge.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 try { process.loadEnvFile(path.join(HERE, '.env')); } catch { /* Render uses environment variables, demo needs none. */ }
@@ -183,22 +184,29 @@ async function handler(req, res) {
   res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'self'; frame-ancestors 'none'");
   const url = new URL(req.url, 'http://localhost');
   if (url.pathname === '/api/health' && req.method === 'GET') {
-    return sendJSON(res, 200, { ok: true, hasKey: !!API_KEY, generateModel: GENERATE_MODEL, searchModel: SEARCH_MODEL });
+    return sendJSON(res, 200, { ok: true, hasKey: !!API_KEY, mode:'database', database:stats(), generateModel: GENERATE_MODEL, searchModel: SEARCH_MODEL });
+  }
+  if (url.pathname === '/api/catalog' && req.method === 'GET') {
+    return sendJSON(res,200,{subjects:catalog(url.searchParams.get('q')||'',url.searchParams.get('category')||''),stats:stats()});
+  }
+  if (url.pathname.startsWith('/api/catalog/') && req.method === 'GET') {
+    const id=url.pathname.slice('/api/catalog/'.length);
+    const subject=subjectInfo(id);
+    return subject?sendJSON(res,200,{subject}):sendJSON(res,404,{error:'Không tìm thấy môn học trong kho.'});
   }
   if (url.pathname.startsWith('/api/') && req.method === 'POST') {
-    if (!API_KEY) return sendJSON(res, 503, { error: 'Chưa cấu hình GEMINI_API_KEY. Bạn vẫn có thể thử bản demo.' });
     if (!allowRequest(req.socket.remoteAddress || 'unknown')) return sendJSON(res, 429, { error: 'Đã đạt giới hạn yêu cầu. Vui lòng thử lại sau.' });
     try {
       const args = await readBody(req);
       let data;
-      if (url.pathname === '/api/plan') data = await createPlan(args);
-      else if (url.pathname === '/api/research') data = await research(clean(args.topic, 240), clean(args.level, 80));
-      else if (url.pathname === '/api/lesson') data = await createLesson(args);
-      else if (url.pathname === '/api/tutor') data = await tutorChat(args);
+      if (url.pathname === '/api/plan') data = createDatabasePlan(args);
+      else if (url.pathname === '/api/research') data = searchKnowledge(clean(args.topic, 240), clean(args.level, 80));
+      else if (url.pathname === '/api/lesson') data = createDatabaseLesson(args);
+      else if (url.pathname === '/api/tutor') data = tutorFromDatabase(args);
       else return sendJSON(res, 404, { error: 'Không tìm thấy API.' });
       return sendJSON(res, 200, data);
     } catch (err) {
-      const clientError = /nhập|thiếu|không hợp lệ|quá dài|Không tìm thấy/.test(err.message);
+      const clientError = /nhập|thiếu|không hợp lệ|quá dài|Không tìm thấy|Chủ đề chưa có/.test(err.message);
       console.error('API error:', err.message);
       return sendJSON(res, clientError ? 400 : 502, { error: err.message });
     }
@@ -212,7 +220,7 @@ async function handler(req, res) {
   if (!file.startsWith(PUBLIC + path.sep)) return sendJSON(res, 403, { error:'Forbidden' });
   try {
     const data = await fs.readFile(file);
-    res.writeHead(200, { 'Content-Type': `${contentTypes[path.extname(file)] || 'application/octet-stream'}; charset=utf-8`, 'Cache-Control': 'public, max-age=600' });
+    res.writeHead(200, { 'Content-Type': `${contentTypes[path.extname(file)] || 'application/octet-stream'}; charset=utf-8`, 'Cache-Control': 'public, max-age=60' });
     res.end(req.method === 'HEAD' ? undefined : data);
   } catch { sendJSON(res, 404, { error: 'Not found' }); }
 }
