@@ -12,4 +12,4 @@ services:
       - key: GENERATE_MODEL
         value: gemini-3.5-flash-lite
       - key: SEARCH_MODEL
-        value: gemini-2.5-flash-lite
+        value: gemini-3.5-flash-lite

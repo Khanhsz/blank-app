@@ -10,7 +10,7 @@ const PUBLIC = path.join(HERE, 'public');
 const PORT = Number(process.env.PORT || 3000);
 const API_KEY = process.env.GEMINI_API_KEY || '';
 const GENERATE_MODEL = process.env.GENERATE_MODEL || 'gemini-3.5-flash-lite';
-const SEARCH_MODEL = process.env.SEARCH_MODEL || 'gemini-2.5-flash-lite';
+const SEARCH_MODEL = process.env.SEARCH_MODEL || 'gemini-3.5-flash-lite';
 const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/';
 const limiter = new Map();
 

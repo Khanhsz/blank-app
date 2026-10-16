@@ -23,7 +23,7 @@ MVP chạy trên Node.js 20+ (không cần cài thư viện). Có giao diện ti
 - **Frontend:** Vanilla JS, CSS responsive, state lưu bằng `localStorage` của trình duyệt.
 - **Backend:** `server.js` Node HTTP server, không cần database/dependencies.
 - **Soạn giáo trình và bài giảng:** Gemini `gemini-3.5-flash-lite`, structured JSON output.
-- **Nghiên cứu Google:** Gemini `gemini-2.5-flash-lite`, `googleSearch` grounding; lấy `groundingMetadata.groundingChunks` để hiển thị nguồn xác minh.
+- **Nghiên cứu Google:** Gemini `gemini-3.5-flash-lite`, `googleSearch` grounding; lấy `groundingMetadata.groundingChunks` để hiển thị nguồn xác minh.
 - **Luồng nghiên cứu → soạn:** 2 lượt API, nhằm giữ bước nghiên cứu tách khỏi đầu ra JSON.
 - **Gia sư:** Gemini nhận câu hỏi, bài giảng đang chọn và tối đa 8 tin nhắn gần nhất; không tự thực hiện Google Search.
 
