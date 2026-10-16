@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Bookmark, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, Clock3, Compass, Download, ExternalLink, Heart, Landmark, LayoutDashboard, Leaf, MapPin, Menu, MoreHorizontal, Navigation, Pencil, Plus, Search, Settings2, Sparkles, Trash2, Users, UtensilsCrossed, Wallet, WandSparkles, X, TrainFront, BedDouble, Sunrise, Globe2 } from 'lucide-react';
 import RouteExplorer from '@/components/RouteExplorer';
+import LocationPicker from '@/components/LocationPicker';
 import { createDemoTrip, demoCities, daysBetween, sampleInput } from '@/lib/demo';
 import { Activity, CATEGORIES, CATEGORY_LABEL, Category, Currency, dateLabel, dateLong, money, Pace, Trip, TripInput, tripTotal, uuid } from '@/lib/types';
 
@@ -41,12 +42,12 @@ function Overview({trips,trip,onCreate,onChoose,onView}:{trips:Trip[];trip?:Trip
 function DestinationCards({onCreate}:{onCreate:()=>void}) {return <div className="destination-grid">{demoCities.map(c=><button onClick={onCreate} key={c.name} className={`destination-card dest-${c.tint}`}><span className="destination-symbol">{c.symbol}</span><div><small>{c.country}</small><strong>{c.name}</strong><span>{c.caption}</span></div><span className="destination-arrow"><ArrowRight size={17}/></span></button>)}</div>}
 
 function CreateTrip({onClose,onCreated}:{onClose:()=>void;onCreated:(trip:Trip)=>void}) {
- const [form,setForm] = useState<TripInput>({...sampleInput,interests:[...sampleInput.interests]});
+ const [form,setForm] = useState<TripInput>({...sampleInput,country:'',destination:'',interests:[...sampleInput.interests]});
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState('');
  const patch=<K extends keyof TripInput>(key:K,value:TripInput[K])=>setForm(prev=>({...prev,[key]:value}));
  const duration=daysBetween(form.startDate,form.endDate);
- function validate() {if(form.destination.trim().length<2) return 'Enter a destination with at least 2 characters.';if(!form.startDate||!form.endDate||form.endDate<form.startDate) return 'Check your travel dates.';if(duration>14) return 'The MVP supports journeys up to 14 days.';if(form.budget<=0||!Number.isFinite(form.budget)) return 'Enter a positive trip budget.';return '';}
+ function validate() {if(!form.country.trim()) return 'Choose a country from the suggestions first.';if(form.destination.trim().length<2) return 'Enter a destination with at least 2 characters.';if(!form.startDate||!form.endDate||form.endDate<form.startDate) return 'Check your travel dates.';if(duration>14) return 'The MVP supports journeys up to 14 days.';if(form.budget<=0||!Number.isFinite(form.budget)) return 'Enter a positive trip budget.';return '';}
  async function generate(ai:boolean) {
    const problem=validate(); if(problem){setError(problem);return;}setError('');
    if (!ai){onCreated(createDemoTrip(form));return;}
@@ -58,7 +59,7 @@ function CreateTrip({onClose,onCreated}:{onClose:()=>void;onCreated:(trip:Trip)=
    finally {setBusy(false);}
  }
  return <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)onClose()}}><div className="create-modal" role="dialog" aria-modal="true" aria-label="Create a trip"><div className="modal-header"><div><div className="modal-overline"><Sparkles size={14}/> YOUR PERSONAL TRAVEL DESIGNER</div><h2>Where to next?</h2><p>Tell us what you love. We’ll take care of the first draft.</p></div><button aria-label="Close" className="icon-button" onClick={onClose} disabled={busy}><X size={20}/></button></div>
- <div className="modal-content"><label className="field-label">Destination <span>*</span><div className="input-icon"><MapPin size={18}/><input maxLength={100} value={form.destination} onChange={e=>patch('destination',e.target.value)} placeholder="e.g. Kyoto, Japan" autoFocus/></div></label>
+ <div className="modal-content"><LocationPicker country={form.country} destination={form.destination} onCountrySelect={name=>setForm(prev=>({...prev,country:name,destination:''}))} onDestinationChange={name=>patch('destination',name)}/>
   <div className="form-grid-2"><label className="field-label">Start date <span>*</span><input type="date" value={form.startDate} onChange={e=>patch('startDate',e.target.value)}/></label><label className="field-label">End date <span>*</span><input type="date" min={form.startDate} value={form.endDate} onChange={e=>patch('endDate',e.target.value)}/></label></div>
   <div className="form-grid-2"><label className="field-label">Total trip budget <span>*</span><div className="split-input"><select value={form.currency} onChange={e=>patch('currency',e.target.value as Currency)}><option>USD</option><option>VND</option><option>EUR</option><option>JPY</option></select><input type="number" min="1" max="1000000000" value={form.budget} onChange={e=>patch('budget',asNumber(e.target.value))}/></div></label><label className="field-label">Travelers <span>*</span><div className="stepper"><button onClick={()=>patch('travelers',Math.max(1,form.travelers-1))}>−</button><strong>{form.travelers}</strong><button onClick={()=>patch('travelers',Math.min(20,form.travelers+1))}>+</button></div></label></div>
   <div className="field-label">Your travel pace<div className="choice-row">{(['relaxed','balanced','packed'] as Pace[]).map(p=><button key={p} className={`choice ${form.pace===p?'active':''}`} onClick={()=>patch('pace',p)}>{p==='relaxed'?'🌿':p==='balanced'?'☀️':'⚡'} {p[0].toUpperCase()+p.slice(1)}</button>)}</div></div>
