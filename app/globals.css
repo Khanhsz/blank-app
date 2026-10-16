@@ -85,3 +85,34 @@
 .itinerary-view-tabs button:focus-visible{outline:2px solid #245747;outline-offset:2px}
 .route-embedded .route-toolbar{margin-top:4px}
 @media(max-width:480px){.itinerary-view-tabs{max-width:none;width:100%}.itinerary-view-tabs button{font-size:11px;padding:11px 7px;gap:5px}}
+
+
+/* In-app place information from Google Places, kept outside the OpenStreetMap canvas. */
+.google-place-card{border:1px solid #dce7de;background:#fff;border-radius:13px;margin:15px 12px;padding:17px;box-shadow:0 2px 10px #2446370a;min-width:0}
+.activity-details>.google-place-card{margin:17px 0 0}
+.google-place-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.google-place-top h4{font-size:15px;font-weight:800;color:#2b4639;letter-spacing:-.3px;margin:4px 0 0;line-height:1.35}
+.google-place-kicker{font-size:9px;font-weight:800;letter-spacing:1.1px;color:#7b9a87}
+.google-source{flex-shrink:0;background:#f3f7fc;border:1px solid #dfebf8;color:#31669e;border-radius:7px;padding:6px 8px;font-size:11px;font-weight:800;white-space:nowrap}
+.google-place-status{display:flex;align-items:center;gap:9px;font-size:12px;color:#75867b;line-height:1.6;margin:16px 0}
+.google-place-status .spinner{height:17px;width:17px;flex-shrink:0}
+.google-place-rating{display:flex;align-items:center;flex-wrap:wrap;gap:7px 12px;padding:13px 0 9px;border-bottom:1px solid #f0f4f0}
+.google-rating-number{display:inline-flex;align-items:center;gap:6px;font-size:23px;font-weight:800;color:#a86a13}
+.google-rating-number small{font-size:11px;color:#8a968c;font-weight:500}
+.google-rating-count{font-size:11px;color:#859589}
+.google-place-type{font-size:11px;color:#56806a;margin:11px 0 7px;font-weight:700}
+.google-place-detail{display:flex;align-items:flex-start;gap:8px;color:#586d60;font-size:11px;line-height:1.6;margin:9px 0;min-width:0}
+.google-place-detail svg{color:#719a7e;flex-shrink:0;margin-top:1px}
+.google-place-detail a,.google-place-attribution a,.google-place-source-note a{color:#287557;text-decoration:underline;text-underline-offset:2px}
+.google-place-detail small{font-size:10px;color:#879c8f}
+.google-hours-toggle{font-size:11px;font-weight:800;padding:8px 0;border:0;background:none;color:#2b7454}
+.google-hours-list{padding:0 0 0 17px;font-size:10px;line-height:1.8;color:#688075;margin:5px 0 12px}
+.google-place-attribution{font-size:10px;color:#87958a;margin:8px 0}
+.google-place-source-note{border-top:1px solid #f0f3ee;padding-top:10px;margin-top:13px;font-size:10px;line-height:1.65;color:#819589}
+.route-stop-choice{width:100%;text-align:left;cursor:pointer;border:0;border-radius:10px;background:transparent;padding:9px 8px;transition:background .15s}
+.route-stop-choice:hover{background:#f2f7f1}
+.route-stop-choice.active{background:#e6f3e9}
+.route-stop-choice:focus-visible{outline:2px solid #307555;outline-offset:2px}
+.route-info-cue{margin-left:auto;font-size:10px;font-weight:800;color:#2d8056;flex-shrink:0}
+.activity-actions .place-details-action{color:#2c7658}
+@media(max-width:720px){.google-place-card{margin:13px 10px;padding:13px}.google-place-top{flex-wrap:wrap}.route-info-cue{font-size:9px}}
