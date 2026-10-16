@@ -13,7 +13,7 @@ const modes = [
   { id: 'transit', label: 'Transit', Icon: TrainFront }
 ] as const;
 
-export default function RouteExplorer({ trip, dayIndex, setDayIndex }: {trip: Trip; dayIndex: number; setDayIndex: (n: number) => void}) {
+export default function RouteExplorer({ trip, dayIndex, setDayIndex, embedded = false }: {trip: Trip; dayIndex: number; setDayIndex: (n: number) => void; embedded?: boolean}) {
   const day = trip.days[dayIndex];
   const located = useMemo(() => day.activities.filter(hasCoordinates), [day.activities]);
   const coordKey = located.map(a => `${a.id}:${a.lat},${a.lng}`).join('|');
@@ -64,8 +64,8 @@ export default function RouteExplorer({ trip, dayIndex, setDayIndex }: {trip: Tr
         ? (roadStatus === 'loading' ? 'Fetching a road route. Numbers below may update.' : 'Driving route unavailable. Only straight-line distances are shown; no driving ETA is provided.')
         : 'Straight-line distance and speed-based time estimate only — not a walkable/cyclable route. Open Google Maps for real directions.';
 
-  return <div className="screen-fade">
-    <div className="section-top"><div><p className="kicker">PLAN THE JOURNEY</p><h2>Explore {trip.destination}</h2><p className="subheading">Explore stops, compare transport options and preview distances between activities.</p></div></div>
+  return <div className={embedded ? "route-embedded" : "screen-fade"}>
+    {!embedded && <div className="section-top"><div><p className="kicker">PLAN THE JOURNEY</p><h2>Explore {trip.destination}</h2><p className="subheading">Explore stops, compare transport options and preview distances between activities.</p></div></div>}
     <div className="route-toolbar" aria-label="Choose transport mode">
       <div className="route-toolbar-caption"><Navigation size={17}/><span>How will you get around?</span></div>
       <div className="route-modes">{modes.map(({id,label,Icon}) => <button key={id} className={`route-mode ${mode === id ? 'active' : ''}`} type="button" onClick={() => {setMode(id);setSelectedLeg(null);}} aria-pressed={mode === id}><Icon size={17}/>{label}</button>)}</div>
@@ -79,8 +79,8 @@ export default function RouteExplorer({ trip, dayIndex, setDayIndex }: {trip: Tr
     <div className="route-notice" role="note"><CircleAlert size={16}/><span>{transportCaution} Place pins may be AI-generated; verify stops before travel.</span></div>
     <div className="map-view-layout">
       <div className="map-plan-panel">
-        <div className="map-sidebar-head"><h3>Daily travel route</h3><p>Select a day or a journey leg to explore its distance.</p></div>
-        <div className="map-day-options">{trip.days.map((d,i) => <button key={d.date} className={i === dayIndex ? 'active' : ''} onClick={() => setDayIndex(i)}>Day {i + 1}</button>)}</div>
+        <div className="map-sidebar-head"><h3>Daily travel route</h3><p>{embedded ? "Select a journey leg to see its distance and directions." : "Select a day or a journey leg to explore its distance."}</p></div>
+        {!embedded && <div className="map-day-options">{trip.days.map((d,i) => <button key={d.date} className={i === dayIndex ? 'active' : ''} onClick={() => setDayIndex(i)}>Day {i + 1}</button>)}</div>}
         <div className="route-stops" aria-label="Journey legs">
           {located.length < 2 && <div className="route-placeholder">Add at least two activities with map coordinates to calculate travel distances.</div>}
           {located.map((stop, i) => <div className="route-stop-group" key={stop.id}>
