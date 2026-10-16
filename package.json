@@ -1,0 +1,9 @@
+{
+  "name": "ai-tutor-studio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AI Tutor: giáo trình, bài giảng, Google Search grounding, bài tập và chat gia sư",
+  "engines": {"node": ">=20"},
+  "scripts": {"start": "node server.js", "dev": "node --watch server.js", "test": "node --test"}
+}
