@@ -4,9 +4,9 @@ export default function Privacy(){
    <a href="/" style={{color:'#27694e'}}>← Back to TripMate</a>
    <h1>Privacy information</h1>
    <p>TripMate is a prototype travel planner. Trips you save in the app are stored locally in your browser, not synchronized to a TripMate account. Clearing your browser data can remove your saved trips.</p>
-   <p>When you request an AI itinerary, your trip preferences are sent through our server to Google's Gemini service. When you select a place to retrieve Google Maps ratings, the place name, locality and optional approximate coordinates are sent through our server to Google Places API (New). Ratings are fetched on demand, and we do not add Google Places results to your saved trips.</p>
+   <p>When you request an AI itinerary, your trip preferences are sent through our server to Google's Gemini service only when that feature is configured. When you explicitly select a stop for place details, its name, locality and optional approximate coordinates are sent through our server to the Wikipedia/Wikimedia APIs and the OpenStreetMap Nominatim service. Responses can be cached for up to twelve hours to limit repeat requests; sourced data is not added to your saved trips. No Google Places API, billing key, or rating API is needed.</p>
    <p>The app also uses map tiles and routing providers to show maps and estimated distances. Hosting and third-party providers may process standard request and technical logs.</p>
-   <p>Learn about Google's <a href="https://policies.google.com/privacy" style={{color:'#27694e'}}>Privacy Policy</a> and <a href="https://maps.google.com/help/terms_maps/" style={{color:'#27694e'}}>Google Maps Terms</a>.</p>
+   <p>Learn about <a href="https://foundation.wikimedia.org/wiki/Policy:Privacy_policy" style={{color:'#27694e'}}>Wikimedia's privacy policy</a> and <a href="https://osmfoundation.org/wiki/Privacy_Policy" style={{color:'#27694e'}}>OpenStreetMap Foundation's privacy policy</a>. External directions links may open another provider if you choose them.</p>
    <p>This MVP should not be used to store passwords, identity documents or sensitive personal information in trip notes.</p>
  </main>
 }
