@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { Activity } from '@/lib/types';
-import { googleDirectionsUrl, hasCoordinates, type TravelMode } from '@/lib/routing';
+import { hasCoordinates, type TravelMode } from '@/lib/routing';
 
 function markersIcon(number: number, highlighted: boolean) {
   return L.divIcon({ className: 'pin-icon-wrapper', html: `<div class="pin-icon${highlighted ? ' pin-icon-selected' : ''}">${number}</div>`, iconSize: [30, 36], iconAnchor: [15, 34] });
@@ -20,12 +20,13 @@ function SyncMap({points}:{points:Activity[]}) {
   }, [map,key]);
   return null;
 }
-export default function TripMapCanvas({activities, destination, mode, routeLine, selectedIds}: {
+export default function TripMapCanvas({activities, destination, mode, routeLine, selectedIds, onSelect}: {
   activities: Activity[];
   destination: string;
   mode: TravelMode;
   routeLine?: [number, number][];
   selectedIds: string[];
+  onSelect?: (activityId:string)=>void;
 }) {
   const points = useMemo(() => activities.filter(hasCoordinates), [activities]);
   const directLine: [number, number][] = points.map(p => [p.lat!,p.lng!]);
@@ -39,9 +40,9 @@ export default function TripMapCanvas({activities, destination, mode, routeLine,
         ? <Polyline positions={routeLine} pathOptions={{color:'#246b58',weight:5,opacity:.8}}/>
         : directLine.length >= 2 && mode !== 'transit' ? <Polyline positions={directLine} pathOptions={{color:'#427aa4',weight:3,opacity:.75,dashArray:'6 9'}}/> : null}
       {selectedLine.length === 2 && <Polyline positions={selectedLine} pathOptions={{color:'#e38b30',weight:5,opacity:.95,dashArray:'9 5'}}/>}
-      {points.map((a,i) => <Marker key={a.id} position={[a.lat!,a.lng!]} icon={markersIcon(activities.indexOf(a)+1,selectedIds.includes(a.id))}><Popup><strong>{a.title}</strong><br/>{a.location}<br/><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.title+', '+destination)}`} target="_blank" rel="noopener noreferrer">Verify place in Google Maps ↗</a>{i > 0 && <><br/><a href={googleDirectionsUrl([points[i-1],a],mode) || '#'} target="_blank" rel="noopener noreferrer">Directions from previous stop ↗</a></>}</Popup></Marker>)}
+      {points.map(a => <Marker key={a.id} position={[a.lat!,a.lng!]} icon={markersIcon(activities.indexOf(a)+1,selectedIds.includes(a.id))} eventHandlers={{click:()=>onSelect?.(a.id)}} />)}
     </MapContainer>
-    {!points.length && <div className="map-empty">No coordinates available for this plan. Verify a place in Google Maps to explore it.</div>}
+    {!points.length && <div className="map-empty">No coordinates available for this plan. Add valid location coordinates to view the stop on the map.</div>}
     {points.length >= 2 && <div className="route-map-legend"><span className={routeLine && mode === 'driving' ? 'route-legend-solid' : 'route-legend-dotted'}/>{routeLine && mode === 'driving' ? 'Driving road route' : mode === 'transit' ? 'Select a stop for directions' : 'Straight-line guide (not navigable)'}</div>}
   </div>;
 }
