@@ -148,6 +148,6 @@ export async function POST(req:NextRequest) {
   const result:PlaceResponse={place,...(!place?{message:'No reliable matching record found in Wikipedia or OpenStreetMap. Check the attraction name and map coordinates.'}:{})};
   if(responses.size>250)for(const [k,v] of responses)if(v.expiry<now)responses.delete(k);
   if(responses.size>300)responses.delete(responses.keys().next().value!);
-  responses.set(key,{expiry:now+CACHE_TTL,body:result});
+  responses.set(key,{expiry:now+(place ? (osm && wiki ? CACHE_TTL : 10 * 60 * 1000) : 2 * 60 * 1000),body:result});
   return NextResponse.json(result,{headers:{'Cache-Control':'private, no-store'}});
 }
