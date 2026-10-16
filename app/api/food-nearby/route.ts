@@ -50,7 +50,7 @@ function parseVenue(item:OsmElement,lat:number,lng:number):Venue|null {
   const category=shop==='bakery'?'bakery':amenity;
   if(!Object.hasOwn(categoryLabels,category))return null;
   // Not recommending bars, pubs, wine shops or any alcohol-focused venue.
-  if(tag.bar||tag.pub||tag.brewery||tag['shop']==='alcohol')return null;
+  if(tag.bar||tag.pub||tag.brewery||tag['shop']==='alcohol'||/\b(?:bar|pub|wine|beer|brewery|cocktail|nightclub|liquor)\b/i.test(name)||/\b(?:bar|pub|wine|beer|brewery|cocktail|nightclub|liquor)\b/i.test(tag.description||''))return null;
   if(typeof item.id!=='number'||!['node','way','relation'].includes(item.type))return null;
   const y=item.lat??item.center?.lat,x=item.lon??item.center?.lon;
   if(typeof x!=='number'||typeof y!=='number'||!Number.isFinite(x)||!Number.isFinite(y))return null;
