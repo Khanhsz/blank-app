@@ -108,7 +108,7 @@ test("Brickhouse media is composed at runtime rather than permanently baked into
  assert.match(source,/getObjectByName/);
  assert.match(source,/BRICKHOUSE_AD_SLOT_IDS/);
  assert.match(integration,/b\.id==="office-brick"\?<BrickhouseCampaignMedia/);
- assert.match(integration,/OutdoorCampaignDisplay b=\{b\}/);
+ assert.match(integration,/<CityCampaignMedia b=\{b\}/);
 });
 
 
