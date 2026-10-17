@@ -3,7 +3,7 @@ name: Marketing Tycoon Agency Pricing
 on:
   push:
     branches:
-      - feature/agency-pricing-advisor-20261018
+      - deploy/marketing-tycoon-lovable-world
   pull_request:
     branches:
       - deploy/marketing-tycoon-lovable-world
