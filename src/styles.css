@@ -16,3 +16,23 @@
 .computer-instruction strong{font-size:12px;color:#332a25}.computer-instruction span{font-size:11px;color:#9a624e;line-height:1.4}
 .fallback-computer{margin-top:30px;background:#bd694a;color:white;font-weight:800;border-radius:13px;padding:16px 22px}
 @media(max-width:750px){.computer-instruction{bottom:151px;left:8px;padding:10px 12px;max-width:242px}.computer-instruction strong{font-size:11px}.computer-instruction span{font-size:10px}}
+
+/* Marketing Tycoon Phase 1 — living diegetic spaces and functional location modules. */
+.quest-progress{font-size:10px;color:#aa7154;font-weight:800;margin:9px 0 3px;text-transform:uppercase;letter-spacing:.06em}
+.npc-card{display:flex;align-items:flex-start;gap:12px;background:linear-gradient(120deg,#f8ede0,#fff9f2);padding:15px;border-radius:16px;border:1px solid #f0e1d2}
+.npc-portrait{display:grid;place-items:center;flex:0 0 51px;height:51px;border-radius:13px;background:#b67456;color:#fff;font:italic 28px Georgia,serif}
+.npc-copy{flex:1}.npc-copy h3{font:23px Georgia,serif;margin:6px 0 8px;color:#302822}.npc-copy p{font-size:12px;line-height:1.65;color:#67574d}
+.npc-talk{display:inline-flex;gap:5px;font-weight:850;font-size:11px;color:#aa5a40;margin-top:8px;border-radius:8px;background:white;padding:8px 10px;border:1px solid #e9d1c0}.npc-talk:hover{background:#fce5d4}.world-known{font-size:10px;color:#558266;font-weight:800}
+.world-tip{border-left:3px solid #b66d4c;padding:6px 0 6px 12px;font-size:12px;line-height:1.6;color:#785e51;background:#faf3e9}
+.world-lab-tools{background:#fffaf4;border:1px solid #e9ddce;border-radius:14px;padding:15px;display:flex;gap:10px;align-items:center;justify-content:space-between}
+.world-lab-tools b{font-size:13px}.world-lab-tools p{font-size:11px;color:#8b7e71;line-height:1.5;margin-top:4px}
+.world-section-title{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5d5c6;padding:10px 0;gap:10px;font-size:10px;font-weight:850;color:#98684c;letter-spacing:.11em}
+.world-section-title b{font-size:12px;color:#302822;letter-spacing:0}
+.world-mission{border:1px solid #ebdfd2;background:#fbf5ed;padding:18px;border-radius:15px;line-height:1.5}.world-mission h3{font:24px/1.15 Georgia,serif;margin:9px 0 11px}.world-mission p{font-size:12px;color:#867367;margin-top:10px}
+.world-requirement{display:flex;justify-content:space-between;align-items:center;font-size:11px;border-top:1px solid #eaded2;padding:10px 0;gap:9px}.world-requirement b{white-space:nowrap}
+.world-action{background:#bd694a;border-radius:10px;color:white;padding:11px 15px;font-weight:800;font-size:12px;margin-top:17px}
+.mission-progress{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:12px}.mission-progress span{background:#eee4d8;border-radius:7px;text-align:center;color:#a99a8d;padding:6px 3px;font-size:9px}.mission-progress span.completed{background:#e2eee3;color:#41684d;font-weight:800}
+.phone-contacts{display:flex;flex-direction:column;margin-top:13px}.phone-contacts>div{display:flex;justify-content:space-between;gap:15px;font-size:12px;border-bottom:1px solid #e9d8c6;padding:10px 1px}.phone-contacts small{color:#9f765e}
+.directory button{align-items:center;gap:14px;text-align:left}.directory button span{flex:1}.directory button small{display:block;font-size:10px;font-weight:450;color:#9b8b7e;margin-top:5px;line-height:1.45}.directory button:disabled{background:#eee9e2}
+.room-small-label{background:#fff9efec;border-radius:8px;padding:7px 10px;color:#382c25;font-weight:850;font-size:10px;letter-spacing:.05em;border:1px solid #e5cbad;box-shadow:0 4px 14px #33271d2a}.room-small-label:hover{background:#ba7152;color:white}
+@media(max-width:750px){.npc-card{padding:12px}.npc-portrait{flex-basis:39px;height:39px}.npc-copy h3{font-size:21px}.world-lab-tools{flex-wrap:wrap}.quest-progress{display:none}}
