@@ -24,11 +24,11 @@ export function LODManager({x,z,quality,selected,onLOD}:{x:number;z:number;quali
  });
  return null;
 }
-function ModelGeometry({id,lod,dimensions,height}:{id:string;lod:0|1;dimensions:[number,number,number];height:number}){
+function ModelGeometry({id,lod,dimensions,height,tier=1}:{id:string;lod:0|1;dimensions:[number,number,number];height:number;tier?:number}){
  // useGLTF delegates loading to GLTFLoader and caches by exact versioned URL.
  const src=AssetRegistry.get(id);
  if(!src)throw Error("Unregistered asset "+id);
- const gltf=useGLTF(AssetRegistry.url(id,lod));
+ const gltf=useGLTF(AssetRegistry.url(id,lod,tier));
  const scene=useMemo(()=>gltf.scene.clone(true),[gltf.scene]);
  const scale:[number,number,number]=[dimensions[0]/src.width,height/src.height,dimensions[2]/src.depth];
  return <primitive object={scene} scale={scale} dispose={null}/>;
@@ -40,7 +40,7 @@ export function BuildingInteraction({b,selected,onSelect,quality}:{b:District;se
  useEffect(()=>()=>{document.body.style.cursor="auto"},[]);
  return <group position={[b.x,0,b.z]}>
   <LODManager x={b.x} z={b.z} quality={quality} selected={selected} onLOD={next=>setLod(prev=>prev===next?prev:next)}/>
-  <ModelGeometry id={b.id} lod={lod} height={b.h} dimensions={[b.w,b.h,b.d]}/>
+  <ModelGeometry id={b.id} lod={lod} tier={b.tier} height={b.h} dimensions={[b.w,b.h,b.d]}/>
   {b.id==="office-brick"?<BrickhouseCampaignMedia b={b} lod={lod} onSelect={onSelect}/>:<CityCampaignMedia b={b} lod={lod} onSelect={onSelect}/>}
   {/* Invisible raycast collider. Game interaction is routed through the original b.id. */}
   <mesh name={"GAMEPLAY_HITBOX_"+b.id} position={[0,b.h*.5+.25,0]} onClick={e=>{e.stopPropagation();onSelect(b.id)}}
