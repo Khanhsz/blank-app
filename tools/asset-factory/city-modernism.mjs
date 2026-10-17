@@ -89,7 +89,7 @@ export function cityBuildingPlan(a){
 export function cityMediaSlots(a){
  const p=cityBuildingPlan(a),ids=a.advertisingSlots||[];
  return ids.map(id=>{
-  const kind=id.includes(":dooh:")?"dooh":id.includes(":ooh:")?"ooh":id.includes(":iooh:")?"iooh";
+  const kind=id.includes(":dooh:")?"dooh":id.includes(":ooh:")?"ooh":"iooh";
   const surf=kind==="dooh"?p.dooh:kind==="ooh"?p.roof:null;
   return {id,kind,anchor:kind==="dooh"?"ANCHOR_DOOH_Facade":kind==="ooh"?"ANCHOR_OOH_Parapet":"ANCHOR_Activation",
     width:surf?.width??.58,height:surf?.height??1.2,content:kind==="iooh"?"interactive":"dynamic"};
