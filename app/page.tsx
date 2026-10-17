@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Bookmark, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, Clock3, Compass, Download, ExternalLink, Heart, Landmark, LayoutDashboard, Leaf, MapPin, Menu, MoreHorizontal, Navigation, Pencil, Plus, Search, Settings2, Sparkles, Info, Trash2, Users, UtensilsCrossed, Wallet, WandSparkles, X, TrainFront, BedDouble, Sunrise, Globe2 } from 'lucide-react';
 import RouteExplorer from '@/components/RouteExplorer';
 import GlobalPlaceExplorer from '@/components/GlobalPlaceExplorer';
+import SmartTripAssistant from '@/components/SmartTripAssistant';
+import {reorderByIds} from '@/lib/itinerary-intelligence';
 import type {PlaceSelection} from '@/components/PlaceDetails';
 import ActivityPlacePanel from '@/components/ActivityPlacePanel';
 import type { FoodVenue } from '@/components/FoodRecommendations';
@@ -92,7 +94,7 @@ function ActivityForm({activity,currency,onClose,onSave}:{activity?:Activity;cur
 function DayNav({trip,dayIndex,setDayIndex}:{trip:Trip;dayIndex:number;setDayIndex:(n:number)=>void}) {
  return <div className="day-selector"><div className="day-selector-scroll">{trip.days.map((day,i)=><button key={day.date} className={`day-button ${dayIndex===i?'active':''}`} onClick={()=>setDayIndex(i)}><strong>Day {i+1}</strong><small>{dateLabel(day.date)}</small></button>)}</div><div className="day-arrows"><button aria-label="Previous day" disabled={dayIndex===0} onClick={()=>setDayIndex(dayIndex-1)}><ChevronLeft size={17}/></button><button aria-label="Next day" disabled={dayIndex===trip.days.length-1} onClick={()=>setDayIndex(dayIndex+1)}><ChevronRight size={17}/></button></div></div>;
 }
-function Itinerary({trip,dayIndex,setDayIndex,onActivity,onRemove,onMove,onPickVenue,onConfirmPlace,onExport}:{trip:Trip;dayIndex:number;setDayIndex:(n:number)=>void;onActivity:(activity?:Activity)=>void;onRemove:(id:string)=>void;onMove:(id:string,dir:number)=>void;onPickVenue:(activityId:string,venue:FoodVenue)=>void;onConfirmPlace:(activityId:string,place:PlaceSelection)=>void;onExport:()=>void}) {
+function Itinerary({trip,dayIndex,setDayIndex,onActivity,onRemove,onMove,onReorder,onPickVenue,onConfirmPlace,onExport}:{trip:Trip;dayIndex:number;setDayIndex:(n:number)=>void;onActivity:(activity?:Activity)=>void;onRemove:(id:string)=>void;onMove:(id:string,dir:number)=>void;onReorder:(ids:string[])=>void;onPickVenue:(activityId:string,venue:FoodVenue)=>void;onConfirmPlace:(activityId:string,place:PlaceSelection)=>void;onExport:()=>void}) {
  const [detailTab,setDetailTab]=useState<'schedule'|'map'>('schedule');
  const [openPlaceId,setOpenPlaceId]=useState<string|null>(null);
  useEffect(()=>{setDetailTab('schedule');setOpenPlaceId(null);},[trip.id]);
@@ -107,6 +109,7 @@ function Itinerary({trip,dayIndex,setDayIndex,onActivity,onRemove,onMove,onPickV
  </div>
  <DayNav trip={trip} dayIndex={dayIndex} setDayIndex={setDayIndex}/>
  <div className="day-title-row"><div><p className="kicker">{dateLong(day.date).toUpperCase()}</p><h3>{day.theme}</h3></div><div className="day-cost"><span>Day estimate</span><strong>{money(dayCost,trip.currency)}</strong></div></div>
+ <SmartTripAssistant trip={trip} dayIndex={dayIndex} onReorder={onReorder} onPickVenue={onPickVenue}/>
  {detailTab==='map'?<RouteExplorer trip={trip} dayIndex={dayIndex} setDayIndex={setDayIndex} onPickVenue={onPickVenue} onConfirmPlace={onConfirmPlace} embedded/>:<>
  <div className="activities-list">{day.activities.map((a,i)=><div key={a.id} className="activity-row"><div className="timeline-time"><strong>{a.time}</strong><div className="timeline-stem"><span/></div></div><CategoryIcon category={a.category}/><div className="activity-details"><div className="activity-head"><div><p className="activity-type">{CATEGORY_LABEL[a.category]}</p><h4>{a.title}</h4></div><span className="activity-price">{money(a.cost,trip.currency)}</span></div><p className="activity-description">{a.description}</p><div className="activity-meta"><span><MapPin size={13}/>{a.location}</span><span><Clock3 size={13}/>{a.durationMinutes} min</span></div><div className="activity-actions"><button onClick={()=>onActivity(a)}><Pencil size={13}/> Edit</button><button onClick={()=>onMove(a.id,-1)} disabled={i===0}><ArrowUp size={13}/> Earlier</button><button onClick={()=>onMove(a.id,1)} disabled={i===day.activities.length-1}><ArrowDown size={13}/> Later</button><button className="action-danger" onClick={()=>onRemove(a.id)}><Trash2 size={13}/> Remove</button><button type="button" className="place-details-action" aria-expanded={openPlaceId===a.id} onClick={()=>setOpenPlaceId(openPlaceId===a.id?null:a.id)}><Info size={13}/> {a.category==='food'?'Find places to eat & drink':'Place details & sources'}</button></div>{openPlaceId===a.id && <ActivityPlacePanel key={a.id} activity={a} dayActivities={day.activities} destination={trip.destination} country={trip.country} onConfirm={onConfirmPlace} onChoose={(id,venue)=>{onPickVenue(id,venue);setOpenPlaceId(null);}}/>}</div></div>)}
  <button className="add-activity" onClick={()=>onActivity()}><span><Plus size={20}/></span><div><strong>Add another activity</strong><small>Make this day uniquely yours</small></div><ArrowRight size={19}/></button></div>
@@ -161,6 +164,11 @@ export default function Page() {
     ...a,lat:place.lat??a.lat,lng:place.lng??a.lng,
     verifiedPlace:{...place}
   }:a)}:d)}));
+ const smartReorder=(order:string[])=>updateTrip(t=>({...t,days:t.days.map((d,i)=>{
+    if(i!==activeIndex)return d;
+    const reordered=reorderByIds(d.activities,order);
+    return reordered?{...d,activities:reordered}:d;
+  })}));
  const moveActivity=(id:string,dir:number)=>updateTrip(t=>({...t,days:t.days.map((d,i)=>{
    if(i!==activeIndex)return d;
    const activities=[...d.activities],index=activities.findIndex(a=>a.id===id),to=index+dir;
@@ -176,7 +184,7 @@ export default function Page() {
  {mobileNav&&<button className="mobile-scrim" aria-label="Close navigation" onClick={()=>setMobileNav(false)}/>}
  <div className="main-shell"><header className="topbar"><div className="topbar-left"><button className="icon-button hamburger" aria-label="Open navigation" onClick={()=>setMobileNav(true)}><Menu size={22}/></button><span className="topbar-breadcrumb">My workspace</span><ChevronRight size={15}/><strong>{sidebarItems.find(x=>x.key===view)?.label}</strong></div><div className="topbar-actions"><span className="topbar-greeting">Every journey begins somewhere <span>✳</span></span><button className="btn btn-primary topbar-plan" onClick={()=>setShowCreate(true)}><Plus size={17}/> New trip</button><div className="top-avatar">✳</div></div></header>
  <main className="content">
- {!ready?<div className="page-loading"><span className="spinner"/> Opening your travel space…</div>:view==='overview'?<Overview trips={trips} trip={selected} onCreate={()=>setShowCreate(true)} onChoose={choose} onView={nav}/>:view==='saved'?<SavedTrips trips={trips} onChoose={choose} onView={nav} onCreate={()=>setShowCreate(true)} onRemove={deleteTrip}/>:view==='discover'?<Discover onCreate={()=>setShowCreate(true)} trip={selected}/>:!selected?<EmptyTrips onCreate={()=>setShowCreate(true)}/>:view==='itinerary'?<Itinerary trip={selected} dayIndex={activeIndex} setDayIndex={setDayIndex} onActivity={a=>setEditing(a||'new')} onRemove={removeActivity} onMove={moveActivity} onPickVenue={pickFoodVenue} onConfirmPlace={confirmPlace} onExport={exportTrip}/>:<Budget trip={selected} onAddExpense={e=>updateTrip(t=>({...t,expenses:[...t.expenses,{...e,id:uuid()}]}))} onRemoveExpense={id=>updateTrip(t=>({...t,expenses:t.expenses.filter(e=>e.id!==id)}))}/>}
+ {!ready?<div className="page-loading"><span className="spinner"/> Opening your travel space…</div>:view==='overview'?<Overview trips={trips} trip={selected} onCreate={()=>setShowCreate(true)} onChoose={choose} onView={nav}/>:view==='saved'?<SavedTrips trips={trips} onChoose={choose} onView={nav} onCreate={()=>setShowCreate(true)} onRemove={deleteTrip}/>:view==='discover'?<Discover onCreate={()=>setShowCreate(true)} trip={selected}/>:!selected?<EmptyTrips onCreate={()=>setShowCreate(true)}/>:view==='itinerary'?<Itinerary trip={selected} dayIndex={activeIndex} setDayIndex={setDayIndex} onActivity={a=>setEditing(a||'new')} onRemove={removeActivity} onMove={moveActivity} onReorder={smartReorder} onPickVenue={pickFoodVenue} onConfirmPlace={confirmPlace} onExport={exportTrip}/>:<Budget trip={selected} onAddExpense={e=>updateTrip(t=>({...t,expenses:[...t.expenses,{...e,id:uuid()}]}))} onRemoveExpense={id=>updateTrip(t=>({...t,expenses:t.expenses.filter(e=>e.id!==id)}))}/>}
  </main><footer className="site-footer">Made for the curious. <span>✳</span> TripMate MVP · Plans and estimates need independent verification. <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></footer></div>
  {showCreate&&<CreateTrip onClose={()=>setShowCreate(false)} onCreated={create}/>} {editing&&selected&&<ActivityForm activity={editing==='new'?undefined:editing} currency={selected.currency} onClose={()=>setEditing(null)} onSave={saveActivity}/>}</div>;
 }
