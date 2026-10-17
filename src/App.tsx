@@ -1,11 +1,12 @@
 
-import {useEffect,useRef,useState} from "react";
+import {useEffect,useRef,useState,Suspense,lazy} from "react";
 import {AnimatePresence,motion,useReducedMotion} from "motion/react";
 import {Toaster} from "sonner";
 import {ArrowRight,BriefcaseBusiness,Clock3,Compass,Home,LockKeyhole,Map,Pause,Play,Settings2,Users,X,ChevronLeft,ChevronRight,ZoomIn,ZoomOut,RotateCcw,Save,Flag,Trophy,Star,Headphones,Glasses,BookOpen,Camera,CheckCircle2,Mail,LayoutDashboard} from "lucide-react";
 import {toast} from "sonner";
 import GameSettings from "./components/game/GameSettings";
-import {WorldScene,hasWebGL,type District} from "./components/game/WorldScene";
+import type {District} from "./components/game/WorldScene";
+const WorldScene=lazy(()=>import("./components/game/WorldScene").then(m=>({default:m.WorldScene})));
 import {CampaignWorkspace,CEOCommandCenter,LocationPanel} from "./components/game/Panels";
 import {initStore,useGame,act,getState} from "./game/store";
 import * as K from "./game/ceo";
@@ -69,9 +70,19 @@ export default function App(){
  const transitionTimer=useRef<number|null>(null);
  const reduceMotion=useReducedMotion();
  const clock=useRef(0);
- useEffect(()=>{initStore();setWebgl(hasWebGL());return()=>{if(transitionTimer.current!==null)window.clearTimeout(transitionTimer.current)}},[]);
+ const previousMilestones=useRef({phase:getState().campaign.phase,history:getState().history.length,agency:getState().agencyUnlocked});
+ useEffect(()=>{initStore();try{const cvs=document.createElement("canvas");setWebgl(!!(cvs.getContext("webgl2")||cvs.getContext("webgl")))}catch{setWebgl(false)}return()=>{if(transitionTimer.current!==null)window.clearTimeout(transitionTimer.current)}},[]);
  useEffect(()=>{const handle=window.setInterval(()=>{const v=getState();if(!v.agencyUnlocked||!v.ceo?.speed)return;clock.current+=v.ceo.speed*.25; if(clock.current>=2.2){const n=Math.min(4,Math.floor(clock.current/2.2));clock.current%=2.2;act((d,fx)=>K.ceoTick(d,fx,n));}},250);return()=>clearInterval(handle)},[]);
  useEffect(()=>{if(s.agencyUnlocked&&panel==="campaign")setPanel("ceo")},[s.agencyUnlocked,panel]);
+ useEffect(()=>{if(panel!=="ceo"||!s.agencyUnlocked)return;const board=!!(s.ceo?.pitch||s.ceo?.negotiation);if(board&&s.scene!=="boardroom")act(d=>{d.scene="boardroom"});else if(!board&&s.scene==="boardroom")act(d=>{d.scene="office"})},[panel,s.agencyUnlocked,!!s.ceo?.pitch,!!s.ceo?.negotiation,s.scene]);
+ useEffect(()=>{const p=previousMilestones.current;let message="";
+  if(s.history.length>p.history)message="CAMPAIGN DELIVERED · PORTFOLIO UPDATED";
+  else if(!p.agency&&s.agencyUnlocked)message="AGENCY FOUNDED · CEO JOURNEY UNLOCKED";
+  else if(p.phase!==s.campaign.phase&&s.campaign.phase==="results")message="RESULTS ARE READY";
+  else if(p.phase!==s.campaign.phase&&s.campaign.phase==="live")message="CAMPAIGN LAUNCHED";
+  p.phase=s.campaign.phase;p.history=s.history.length;p.agency=s.agencyUnlocked;
+  if(!message)return;setCelebrate(message);const id=window.setTimeout(()=>setCelebrate(null),2600);return()=>window.clearTimeout(id);
+ },[s.history.length,s.agencyUnlocked,s.campaign.phase]);
  const districts:District[]=buildings.map(b=>({...b,locked:!s.cityUnlocked||(b.id==="brand"&&!s.agencyUnlocked&&s.reputation<BRAND_HQ_REP)}));
  const change=(to:SceneId)=>{setSceneFocus(null);if(to==="city"&&!s.cityUnlocked)return;if((to==="office"||to==="boardroom")&&!s.agencyUnlocked)return;act(d=>{d.scene=to});setSelected(null);setPanel(to==="office"||to==="boardroom"?"ceo":"none")};
  const locate=(id:string)=>{setSelected(id);setPanel("location")};
@@ -91,7 +102,7 @@ export default function App(){
  const title=panel==="settings"?"Settings & Save Files":panel==="campaign"?"Campaign Workstation":panel==="ceo"?"CEO Command Center":panel==="avatar"?"Your Creative Identity":panel==="journal"?"Your Campaign Moodboard":panel==="phone"?"Your Messages":panel==="map"?"World Directory":panel==="location"?(buildings.find(b=>b.id===selected)?.name||"Location"):"Welcome to Marketing Tycoon";
  const projects=s.ceo?.projects.filter(p=>p.status==="active").length||0;
  return <div className="game">
-   <div className="world">{webgl&&!map2d?<WorldScene scene={s.scene} districts={districts} selected={selected} onSelect={locate} onComputerInteract={interactComputer} onRoomInteract={roomInteract} focus={sceneFocus} preview={!s.created||panel==="onboard"} avatarYaw={avatarYaw} avatarZoom={avatarZoom} character={s.character} room={s.room} staff={s.staff.length} quality={s.graphics}/>:<div className="fallback"><h2>WORLD DIRECTORY</h2><h1>{sceneName[s.scene]}</h1>{s.scene==="city"&&<div className="gridmap">{buildings.map(b=><button onClick={()=>locate(b.id)} key={b.id}>{b.name}</button>)}</div>}{s.scene==="room"&&s.created&&<button id="bedroom-computer-fallback" className="fallback-computer" onClick={interactComputer}>Use bedroom computer → Open client inbox</button>}</div>}</div>
+   <div className="world">{webgl&&!map2d?<Suspense fallback={<div className="mt-world-loader" role="status"><span className="mt-world-loader-spin"/><b>Building your world…</b><small>Preparing the 3D environment</small></div>}><WorldScene scene={s.scene} districts={districts} selected={selected} onSelect={locate} onComputerInteract={interactComputer} onRoomInteract={roomInteract} focus={sceneFocus} preview={!s.created||panel==="onboard"} avatarYaw={avatarYaw} avatarZoom={avatarZoom} character={s.character} room={s.room} staff={s.staff.length} quality={s.graphics}/></Suspense>:<div className="fallback"><h2>WORLD DIRECTORY</h2><h1>{sceneName[s.scene]}</h1>{s.scene==="city"&&<div className="gridmap">{buildings.map(b=><button onClick={()=>locate(b.id)} key={b.id}>{b.name}</button>)}</div>}{s.scene==="room"&&s.created&&<button id="bedroom-computer-fallback" className="fallback-computer" onClick={interactComputer}>Use bedroom computer → Open client inbox</button>}</div>}</div>
    <header className="header"><div className="brand"><span className="mark">m.</span><div><strong>MARKETING TYCOON</strong><small>FROM BEDROOM TO BOARDROOM</small></div></div><div className="worldlabel"><span className="live"/>{sceneName[s.scene]}<small>{s.agencyUnlocked?"04 / CEO":s.cityUnlocked?"02 / CITY":"01 / FREELANCE"}</small></div><div className="topactions"><button onClick={()=>setPanel("map")} aria-label="Map"><Map size={20}/></button><button onClick={()=>setPanel("settings")} aria-label="Settings and save games"><Settings2 size={20}/></button></div></header>
    {s.created&&<aside className="quest"><span className="eyebrow">YOUR OBJECTIVE</span><h2>{s.agencyUnlocked?"Lead your team. Win the next account.":s.cityUnlocked?"Make your mark in the city.":"Your first campaign awaits."}</h2><p>{s.agencyUnlocked?String(projects)+" active projects. Operations are handled by your staff.":s.cityUnlocked?"Explore the districts; return home and use your computer to view freelance briefs.":"Enter the bedroom and click the computer to check your client inbox."}</p><button id="quest-workstation-guide" onClick={()=>s.agencyUnlocked?setPanel("ceo"):approachComputer()}>{s.agencyUnlocked?"Open CEO dashboard":"Go to bedroom computer"} →</button></aside>}
    {s.created&&<div className="stats"><div>REPUTATION<strong>{s.reputation}</strong></div><div>EXPERTISE<strong>{s.expertise}</strong></div><div className="darkstat">CASH<strong>{money(s.agencyUnlocked?s.agencyCash:s.personalCash)}</strong></div></div>}
@@ -110,6 +121,7 @@ export default function App(){
    {panel==="phone"&&<div className="world-ambient-panel"><div className="eyebrow">MESSAGES & NETWORK</div><h3>Your professional life</h3><p>{s.agencyUnlocked?"Your Account Manager handles routine messages. Open CEO inbox for decisions that need you.":"A potential client is waiting in your email inbox. Check the computer to see the brief."}</p><button className="world-action" onClick={()=>s.agencyUnlocked?setPanel("ceo"):approachComputer()}>{s.agencyUnlocked?"Open CEO inbox":"Go to computer"} ↗</button></div>}
    {panel==="map"&&<div className="directory">{buildings.map(b=><button key={b.id} disabled={!s.cityUnlocked} onClick={()=>{if(s.cityUnlocked){change("city");locate(b.id)}}}><span>{b.name}</span>{s.cityUnlocked?"→":"Locked"}</button>)}</div>}
    </div></motion.section>}</AnimatePresence>
+   <AnimatePresence>{celebrate&&<motion.div role="status" className="mt-milestone" initial={{opacity:0,y:28,scale:.9}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:-12,scale:.95}} transition={{duration:reduceMotion?0:.42}}><Trophy size={22}/><div><small>CAREER MILESTONE</small><strong>{celebrate}</strong></div><Star size={18}/></motion.div>}</AnimatePresence>
    <Toaster position="top-center" richColors/>
  </div>
 }
