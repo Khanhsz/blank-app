@@ -1,0 +1,266 @@
+{
+  "domain": "Technology & AI",
+  "updated_at": "2026-10-17",
+  "stories": [
+    {
+      "id": "ST-20261017-901",
+      "title": "NVIDIA RTX Spark mở thêm lựa chọn chạy AI trên thiết bị",
+      "domain": "Technology & AI",
+      "date": "2026-10-16",
+      "summary": "NVIDIA giới thiệu và mở bán laptop RTX Spark với cấu hình công bố tối đa 128 GB unified memory; đây là số nhà sản xuất, chưa phải benchmark độc lập.",
+      "what": "NVIDIA giới thiệu và mở bán laptop RTX Spark với cấu hình công bố tối đa 128 GB unified memory; đây là số nhà sản xuất, chưa phải benchmark độc lập.",
+      "so_what": "Local inference có thể giúp một số workload giảm độ trễ hoặc tăng quyền kiểm soát dữ liệu, nhưng chưa chắc rẻ hơn cloud.",
+      "why_you": "Dùng làm bài kiểm thử cho hệ thống AI market research: so local vs cloud theo trích dẫn, độ trễ và chi phí.",
+      "action": "Theo dõi kiểm thử bên thứ ba và giá cấu hình tại Việt Nam.",
+      "confidence": "High · công bố sản phẩm",
+      "event_type": "AI technology / product",
+      "preview": false,
+      "tags": [
+        "AI",
+        "technology",
+        "agents",
+        "models"
+      ],
+      "sources": [
+        {
+          "publisher": "NVIDIA Newsroom",
+          "url": "https://nvidianews.nvidia.com/news/nvidia-rtx-spark-pcs-available-today-a-new-beginning-for-windows-pcs"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-302",
+      "title": "Meta công bố họ mô hình Muse Wonder để cạnh tranh nhóm frontier",
+      "domain": "Technology & AI",
+      "date": "2026-10-12",
+      "summary": "Meta giới thiệu Muse Wonder và Muse Wonder Full, công bố thế mạnh về tác vụ agent, coding và ghi nhớ; các chỉ tiêu do nhà phát triển tự đánh giá.",
+      "what": "Meta giới thiệu Muse Wonder và Muse Wonder Full, công bố thế mạnh về tác vụ agent, coding và ghi nhớ; các chỉ tiêu do nhà phát triển tự đánh giá.",
+      "so_what": "Nhiều lựa chọn frontier model có thể tạo cạnh tranh giá và khả năng tích hợp; chất lượng thực tế vẫn cần so bằng tác vụ độc lập.",
+      "why_you": "Khi chọn model cho multi-agent, thay benchmark marketing bằng tập test retrieval và multi-step case research.",
+      "action": "Theo dõi đánh giá độc lập và mức độ mở API/weights.",
+      "confidence": "Medium · báo cáo sản phẩm",
+      "event_type": "AI technology / product",
+      "preview": false,
+      "tags": [
+        "AI",
+        "technology",
+        "agents",
+        "models"
+      ],
+      "sources": [
+        {
+          "publisher": "Axios",
+          "url": "https://www.axios.com/2026/10/12/meta-new-ai-models-anthropic-openai"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-303",
+      "title": "Google DeepMind đưa Gemini 4 Argon vào thế hệ mô hình mới",
+      "domain": "Technology & AI",
+      "date": "2026-10-15",
+      "summary": "Google công bố Gemini 4 Argon và các năng lực giải quyết bài toán phức tạp; dữ liệu hiệu năng ban đầu là tuyên bố của hãng.",
+      "what": "Google công bố Gemini 4 Argon và các năng lực giải quyết bài toán phức tạp; dữ liệu hiệu năng ban đầu là tuyên bố của hãng.",
+      "so_what": "Cuộc đua model mở rộng, khiến chi phí/hiệu năng của các agent có thể thay đổi nhanh.",
+      "why_you": "Cần benchmark Gemini với mô hình đang dùng trên chi phí một báo cáo và độ tin cậy của nguồn.",
+      "action": "Theo dõi tài liệu API và kiểm thử công khai trước khi chuyển hệ thống.",
+      "confidence": "High · nguồn công bố gốc",
+      "event_type": "AI technology / product",
+      "preview": false,
+      "tags": [
+        "AI",
+        "technology",
+        "agents",
+        "models"
+      ],
+      "sources": [
+        {
+          "publisher": "Google Blog",
+          "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-argon/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-304",
+      "title": "Anthropic ra Claude Haiku 5.5, hướng tới tác vụ lặp lại chi phí thấp",
+      "domain": "Technology & AI",
+      "date": "2026-10-07",
+      "summary": "Anthropic ra mắt Haiku 5.5 cho tóm tắt, phân loại và truy vấn dữ liệu, đồng thời công bố mức chi phí vận hành thấp hơn phiên bản trước.",
+      "what": "Anthropic ra mắt Haiku 5.5 cho tóm tắt, phân loại và truy vấn dữ liệu, đồng thời công bố mức chi phí vận hành thấp hơn phiên bản trước.",
+      "so_what": "Nhóm model nhỏ có thể phù hợp cho các bước lặp trong workflow đa tác tử, nhưng cần đánh giá chính xác trên dữ liệu riêng.",
+      "why_you": "Một ứng viên cho agent lọc nguồn/dedupe trước khi gửi nhiệm vụ khó cho model lớn.",
+      "action": "Chạy bộ kiểm tra retrieval accuracy và cost/report.",
+      "confidence": "High · nguồn sản phẩm gốc",
+      "event_type": "AI technology / product",
+      "preview": false,
+      "tags": [
+        "AI",
+        "technology",
+        "agents",
+        "models"
+      ],
+      "sources": [
+        {
+          "publisher": "Anthropic",
+          "url": "https://www.anthropic.com/claude-haiku-5-5"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-305",
+      "title": "Anthropic mở quyền truy cập cho đơn vị đánh giá AI độc lập METR",
+      "domain": "Technology & AI",
+      "date": "2026-10-15",
+      "summary": "Anthropic cho phép METR tiếp cận sâu hơn hệ thống để đánh giá, với giới hạn dữ liệu và phạm vi bảo mật; đây là thỏa thuận được công bố.",
+      "what": "Anthropic cho phép METR tiếp cận sâu hơn hệ thống để đánh giá, với giới hạn dữ liệu và phạm vi bảo mật; đây là thỏa thuận được công bố.",
+      "so_what": "Chất lượng kiểm định AI phụ thuộc quyền truy cập, quyền công bố và khả năng lặp lại; 'độc lập' không đồng nghĩa không có hạn chế.",
+      "why_you": "Có thể áp dụng mô hình agent phản biện với quyền kiểm tra luận cứ và nhật ký nguồn.",
+      "action": "Đọc phạm vi METR được công bố trước khi xem kết quả là đánh giá toàn diện.",
+      "confidence": "High · bên tham gia xác nhận",
+      "event_type": "AI technology / product",
+      "preview": false,
+      "tags": [
+        "AI",
+        "technology",
+        "agents",
+        "models"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters",
+          "url": "https://www.reuters.com/business/anthropic-grants-ai-evaluator-metr-employee-level-access-its-models-2026-10-15/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-306",
+      "title": "Microsoft giới thiệu chip AI Maia 300 để giảm phụ thuộc GPU bên ngoài",
+      "domain": "Technology & AI",
+      "date": "2026-10-12",
+      "summary": "Microsoft công bố kế hoạch triển khai chip Maia 300 tự thiết kế cho dịch vụ AI, với mở rộng quy mô dự kiến từ 2027.",
+      "what": "Microsoft công bố kế hoạch triển khai chip Maia 300 tự thiết kế cho dịch vụ AI, với mở rộng quy mô dự kiến từ 2027.",
+      "so_what": "Tự thiết kế chip có thể thay đổi chi phí và năng lực mặc cả của hyperscaler; hiệu quả trên quy mô lớn chưa được quan sát.",
+      "why_you": "Một case build-versus-buy trong product và chiến lược công nghệ.",
+      "action": "Theo dõi khả năng triển khai và chỉ số cost per inference thực tế.",
+      "confidence": "High · công bố kế hoạch",
+      "event_type": "AI technology / product",
+      "preview": false,
+      "tags": [
+        "AI",
+        "technology",
+        "agents",
+        "models"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters / Microsoft",
+          "url": "https://www.reuters.com/business/microsoft-plans-huge-deployment-its-own-ai-chips-with-an-eye-saving-costs-2026-10-12/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-307",
+      "title": "NVIDIA cam kết tài nguyên tính toán hỗ trợ nghiên cứu an toàn AI tại Anh",
+      "domain": "Technology & AI",
+      "date": "2026-10-14",
+      "summary": "NVIDIA công bố khoản hỗ trợ tài nguyên AI trị giá 250 triệu USD trong năm năm cho hệ sinh thái đánh giá an toàn AI tại Anh.",
+      "what": "NVIDIA công bố khoản hỗ trợ tài nguyên AI trị giá 250 triệu USD trong năm năm cho hệ sinh thái đánh giá an toàn AI tại Anh.",
+      "so_what": "Các tổ chức kiểm định cần quyền tiếp cận năng lực tính toán; cam kết nguồn lực chưa phải kết quả nghiên cứu.",
+      "why_you": "Với AI Lab, chuẩn đánh giá chất lượng nên được xem như một tính năng sản phẩm chứ không chỉ bước cuối.",
+      "action": "Theo dõi nghiên cứu, benchmark và cơ chế công khai kết quả.",
+      "confidence": "High · thông báo tài trợ",
+      "event_type": "AI technology / product",
+      "preview": false,
+      "tags": [
+        "AI",
+        "technology",
+        "agents",
+        "models"
+      ],
+      "sources": [
+        {
+          "publisher": "The Guardian",
+          "url": "https://www.theguardian.com/technology/2026/oct/14/nvidia-donates-to-uk-ai-safety-research"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-308",
+      "title": "Anthropic khai trương văn phòng Singapore và ký hợp tác với chính phủ",
+      "domain": "Technology & AI",
+      "date": "2026-10-14",
+      "summary": "Anthropic công bố văn phòng Singapore cùng biên bản hợp tác nhằm mở rộng hoạt động tại khu vực.",
+      "what": "Anthropic công bố văn phòng Singapore cùng biên bản hợp tác nhằm mở rộng hoạt động tại khu vực.",
+      "so_what": "Thị trường Đông Nam Á trở nên quan trọng hơn đối với triển khai AI doanh nghiệp, nhưng MOU không tự đảm bảo đầu tư thực tế.",
+      "why_you": "Có thể theo dõi khả năng tiếp cận công cụ AI và cơ hội kỹ năng ở khu vực gần Việt Nam.",
+      "action": "Quan sát những chương trình triển khai cụ thể sau thỏa thuận.",
+      "confidence": "High · thông cáo chính thức",
+      "event_type": "AI technology / product",
+      "preview": false,
+      "tags": [
+        "AI",
+        "technology",
+        "agents",
+        "models"
+      ],
+      "sources": [
+        {
+          "publisher": "Anthropic Newsroom",
+          "url": "https://www.anthropic.com/news/singapore-office-opening"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-309",
+      "title": "Google giới thiệu EmbeddingGemma 2 cho embedding đa phương thức nhẹ",
+      "domain": "Technology & AI",
+      "date": "2026-10-15",
+      "summary": "Google DeepMind giới thiệu phiên bản EmbeddingGemma 2 hướng tới embedding đa phương thức với mô hình nhẹ; cần kiểm tra thông số và license trước triển khai.",
+      "what": "Google DeepMind giới thiệu phiên bản EmbeddingGemma 2 hướng tới embedding đa phương thức với mô hình nhẹ; cần kiểm tra thông số và license trước triển khai.",
+      "so_what": "Embedding nhỏ có thể giúp xây vector search chi phí thấp, nhưng khả năng với tài liệu tiếng Việt phải đo riêng.",
+      "why_you": "Đây là công nghệ liên quan trực tiếp chức năng tìm kiếm ngữ nghĩa trên kho market research.",
+      "action": "Benchmark recall@k trên 100 truy vấn Việt–Anh với nguồn đã gắn nhãn.",
+      "confidence": "High · giới thiệu từ hãng",
+      "event_type": "AI technology / product",
+      "preview": false,
+      "tags": [
+        "AI",
+        "technology",
+        "agents",
+        "models"
+      ],
+      "sources": [
+        {
+          "publisher": "Google Developers Blog",
+          "url": "https://blog.google/innovation-and-ai/technology/developers-tools/embeddinggemma-2/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-310",
+      "title": "Claude Sonnet 5.5 ra mắt với mục tiêu tăng tốc tác vụ doanh nghiệp",
+      "domain": "Technology & AI",
+      "date": "2026-09-28",
+      "summary": "Anthropic ra Sonnet 5.5, tuyên bố tốc độ cao hơn và chi phí thấp hơn ở một số workflow so với thế hệ trước.",
+      "what": "Anthropic ra Sonnet 5.5, tuyên bố tốc độ cao hơn và chi phí thấp hơn ở một số workflow so với thế hệ trước.",
+      "so_what": "Giá trị của model không chỉ nằm ở benchmark tổng; context, tool use và error rate mới quyết định chi phí.",
+      "why_you": "Dùng Sonnet 5.5 như lựa chọn đối chứng cho agent chiến lược và kiểm định nguồn.",
+      "action": "Thử mẫu phân tích market insight có thang đo chất lượng.",
+      "confidence": "High · nguồn sản phẩm gốc",
+      "event_type": "AI technology / product",
+      "preview": false,
+      "tags": [
+        "AI",
+        "technology",
+        "agents",
+        "models"
+      ],
+      "sources": [
+        {
+          "publisher": "Anthropic",
+          "url": "https://www.anthropic.com/claude-sonnet-5-5"
+        }
+      ]
+    }
+  ]
+}
