@@ -400,3 +400,28 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
  .mt-location-identity h3{font-size:26px}
  .mt-directory-filters button{font-size:9px}
 }
+
+
+/* Corporate clients — interactive city signage and real procurement panels */
+.world-building-label.client{
+ background:rgba(235,241,242,.94);
+ border-color:#b8cbd0;color:#385760;
+ box-shadow:0 8px 21px rgba(45,67,71,.18);
+}
+.world-building-label.client .map-pin{background:#658c93;box-shadow:0 0 0 3px #658c9329}
+.world-building-label.client small{color:#467d86}
+.world-building-label.client:hover,.world-building-label.client.selected{
+ background:#456a73;border-color:#b5d1d4;color:#fff
+}
+.world-building-label.client:hover small,.world-building-label.client.selected small{color:#d8edf0}
+.mt-client-status{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:11px 13px;border:1px solid #d3dfdd;border-radius:11px;background:#eef4f3}
+.mt-client-status span{font-size:9px;font-weight:900;letter-spacing:.12em;color:#749391}
+.mt-client-status strong{font-size:10px;font-weight:900;color:#426c68;letter-spacing:.04em;text-align:right}
+.mt-client-brief{padding:15px 17px;font:italic 15px/1.58 Georgia,serif;color:#5c6360;border-left:3px solid #94b4b0;background:#f4f7f5;border-radius:4px 11px 11px 4px}
+.mt-client-actions{display:flex;flex-direction:column;gap:10px}
+.mt-client-actions>button{min-height:44px}
+@media(max-width:750px){
+ .mt-client-brief{font-size:13px}
+ .mt-client-status{flex-wrap:wrap;gap:4px}
+ .world-building-label.client{font-size:10px}
+}
