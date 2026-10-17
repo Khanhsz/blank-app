@@ -125,8 +125,30 @@ function geometry(asset,lod){
    cuboid(0,2.35,d/2+.8,w*.8,.19,1.6,4);
   }
  }else{
-  // High fidelity facade is omitted but door/sign/roof anchors remain.
-  cuboid(0,h*.64,d/2+.11,w*.6,.45,.2,1);
+  // Distant LOD deliberately preserves each category's architectural silhouette.
+  // Otherwise upgraded GLBs look exactly like the legacy box buildings in city overview.
+  if(asset.class==="creative_agency"){
+   cuboid(-w*.32,h*.52,d/2+.19,w*.24,h*.72,.35,4);
+   cuboid(0,h+1.20,0,w*.75,1.0,d*.54,4);
+  }else if(asset.class==="media_facility"){
+   cuboid(0,h*.64,d/2+.27,w*.83,h*.34,.37,6);
+   cuboid(0,h+1.40,0,w*.70,1.1,d*.5,4);
+  }else if(asset.class==="rival_agency"){
+   cuboid(-w*.24,h*.75,-d*.12,w*.44,h*.43,d*.5,2);
+   cuboid(0,h+1.53,0,w*.77,1.5,d*.5,6);
+  }else if(asset.class==="corporate_client"){
+   cuboid(0,h*.67,d/2+.34,w*.76,h*.24,.35,4);
+   cuboid(0,h+1.60,0,w*.76,1.45,d*.52,3);
+  }else if(asset.class==="office_property"){
+   cuboid(0,h*.30,d/2+.25,w*.85,2.6,.42,1);
+   cuboid(0,h+1.02,0,w*.68,.56,d*.55,4);
+  }else if(asset.class==="residential"){
+   cuboid(0,h*.58,d/2+.22,w*.75,h*.60,.35,1);
+  }else if(asset.class==="retail_property"){
+   cuboid(0,h*.36,d/2+.46,w*.83,2.2,.55,3);
+  }else if(asset.class==="urban_infrastructure"){
+   cuboid(0,h+.92,0,w+1,.38,d+.8,4);
+  }
  }
  return {buckets,materials,triangles:buckets.reduce((n,b)=>n+b.triangles,0)};
 }
