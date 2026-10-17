@@ -14,6 +14,7 @@ test("AI pricing input uses actual media budget, staff cost and existing rival p
  const s=agency(),l=s.ceo!.leads.find(x=>x.id==="orion")!;
  const x=pricingContext(s,l);
  assert.equal(x.mediaBudget,l.value);
+ assert.equal(x.businessSize,l.businessSize);
  assert.equal(x.baselineFee,l.fee);
  assert.equal(x.scope,l.scope);
  assert.equal(x.duration,l.duration);
