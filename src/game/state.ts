@@ -98,6 +98,11 @@ export function migrate(raw: unknown): GameState {
   if (out.agencyUnlocked && out.ceo) {
     const base = newCEO(out.reputation);
     out.ceo = { ...base, ...out.ceo, reputation: { ...base.reputation, ...out.ceo.reputation, industries: out.ceo.reputation?.industries ?? {} } };
+    // New corporate clients appear in existing CEO saves without resetting
+    // relationships, negotiation outcomes, ongoing projects or cash history.
+    const priorLeads=Array.isArray(out.ceo.leads)?out.ceo.leads:[];
+    const knownIds=new Set(priorLeads.map(l=>l.id));
+    out.ceo.leads=[...priorLeads,...base.leads.filter(l=>!knownIds.has(l.id))];
   }
   return out;
 }
