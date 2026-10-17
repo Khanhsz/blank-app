@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "slice-2",
+  "version": "slice-3",
   "district": "Arts Quarter",
   "units": "m",
   "axes": "Y_UP",
@@ -119,7 +119,16 @@
         "roof",
         "footprint"
       ],
-      "gameplayId": "office-brick"
+      "gameplayId": "office-brick",
+      "archetype": "brickhouse-modernist-v1",
+      "massing": "three_offset_volumes",
+      "facade": "recessed_modular_glass",
+      "advertisingSlots": [
+        "brickhouse-dooh-main",
+        "brickhouse-ooh-parapet",
+        "brickhouse-activation"
+      ],
+      "architecturalMaster": true
     },
     {
       "id": "arts-residence-a",
