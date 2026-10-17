@@ -10,6 +10,7 @@ const WorldScene=lazy(()=>import("./components/game/WorldScene").then(m=>({defau
 import {CampaignWorkspace,CEOCommandCenter,LocationPanel} from "./components/game/Panels";
 import {initStore,useGame,act,getState} from "./game/store";
 import * as K from "./game/ceo";
+import {prepareNextBrief} from "./game/automaticBrief";
 import {money,BRAND_HQ_REP} from "./game/data";
 import type {SceneId} from "./game/state";
 
@@ -75,6 +76,9 @@ export default function App(){
  useEffect(()=>{initStore();try{const cvs=document.createElement("canvas");setWebgl(!!(cvs.getContext("webgl2")||cvs.getContext("webgl")))}catch{setWebgl(false)}return()=>{if(transitionTimer.current!==null)window.clearTimeout(transitionTimer.current)}},[]);
  useEffect(()=>{const handle=window.setInterval(()=>{const v=getState();if(!v.agencyUnlocked||!v.ceo?.speed)return;clock.current+=v.ceo.speed*.25; if(clock.current>=2.2){const n=Math.min(4,Math.floor(clock.current/2.2));clock.current%=2.2;act((d,fx)=>K.ceoTick(d,fx,n));}},250);return()=>clearInterval(handle)},[]);
  useEffect(()=>{if(s.agencyUnlocked&&panel==="campaign")setPanel("ceo")},[s.agencyUnlocked,panel]);
+ // Every unaccepted freelance brief begins with Gemini automatically, whether
+ // the player is looking at the bedroom or opening the computer.
+ useEffect(()=>{prepareNextBrief()},[s.created,s.agencyUnlocked,s.campaign.phase,s.campaign.briefId,s.campaign.aiStatus]);
  useEffect(()=>{if(panel!=="ceo"||!s.agencyUnlocked)return;const board=!!(s.ceo?.pitch||s.ceo?.negotiation);if(board&&s.scene!=="boardroom")act(d=>{d.scene="boardroom"});else if(!board&&s.scene==="boardroom")act(d=>{d.scene="office"})},[panel,s.agencyUnlocked,!!s.ceo?.pitch,!!s.ceo?.negotiation,s.scene]);
  useEffect(()=>{const p=previousMilestones.current;let message="";
   if(!p.city&&s.cityUnlocked)message="MARKETING CITY UNLOCKED";
