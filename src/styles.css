@@ -307,3 +307,31 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-city-pad-down{grid-column:2;grid-row:3}
 .mt-city-pad-right{grid-column:3;grid-row:2}
 @media(max-width:750px){.mt-city-controls{bottom:96px;right:10px;padding:7px}.mt-city-pad{width:110px;height:99px}}
+
+
+/* V4.5 AI Game Master — diegetic optional dynamic client briefs */
+.mt-ai-launcher{display:flex;flex-direction:column;gap:13px;padding:17px;background:linear-gradient(128deg,#f4f0e9,#eff4ee);border:1px solid #d4e2d8;border-radius:15px;box-shadow:0 10px 26px #3445350c}
+.mt-ai-launcher-top{display:flex;align-items:center;gap:10px}
+.mt-ai-spark{display:grid;place-items:center;background:#e0eae1;color:#54816a;width:38px;height:38px;border:1px solid #c6dac8;border-radius:11px;flex:0 0 38px}
+.mt-ai-launcher-top>div{flex:1;min-width:0}
+.mt-ai-launcher-top small{display:block;font-size:9px;letter-spacing:.15em;font-weight:900;color:#73907f}
+.mt-ai-launcher-top h3{font:23px/1.13 Georgia,serif;letter-spacing:-.03em;color:#334339;margin-top:4px}
+.mt-ai-state{font-size:9px;letter-spacing:.08em;font-weight:900;color:#867d6e;border:1px solid #dfd5c7;background:#f6f1e8;border-radius:7px;padding:6px 8px;white-space:nowrap}
+.mt-ai-state.ready{color:#4a8066;border-color:#c9dfce;background:#e6f2e7}
+.mt-ai-state.loading{color:#926a4e}
+.mt-ai-launcher>p{color:#617364;font-size:12px;line-height:1.6}
+.mt-ai-category{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.mt-ai-category label{font-size:9px;font-weight:900;letter-spacing:.11em;color:#597565}
+.mt-ai-category select{border:1px solid #d3dbd0;border-radius:9px;background:#fffdf9;color:#3d5142;padding:9px 11px;max-width:60%;min-width:160px;font-size:11px;font-weight:750;cursor:pointer}
+.mt-ai-generate{display:flex;align-items:center;justify-content:center;gap:9px;padding:13px 14px;color:#fff;background:#527c68;border:1px solid #3e745d;border-radius:10px;font-size:12px;font-weight:900;min-height:44px}
+.mt-ai-generate:not(:disabled):hover{background:#3a6651;transform:translateY(-1px)}
+.mt-ai-generate:disabled{background:#b1c0b2;border-color:#aabbad;cursor:not-allowed}
+.mt-ai-disclaimer{color:#8c9b8a;line-height:1.5;font-size:10px}
+.mt-ai-active,.mt-ai-error,.mt-ai-help{display:flex;gap:9px;align-items:flex-start;padding:10px 12px;border-radius:9px;font-size:11px;line-height:1.55}
+.mt-ai-active{background:#e5f0e5;border:1px solid #c3dac7;color:#4d7556}.mt-ai-active span{flex:1}.mt-ai-active small{display:block;font-size:10px}
+.mt-ai-error{background:#fff0e9;border:1px solid #ebc8b9;color:#a04c39}
+.mt-ai-help{background:#f8f3e7;border:1px solid #e9dbc6;color:#8a735b}
+.mt-ai-active svg,.mt-ai-error svg,.mt-ai-help svg{flex:0 0 16px;margin-top:2px}
+.mt-ai-spinner{animation:mt-load-spin .85s linear infinite}
+@media(max-width:750px){.mt-ai-launcher{padding:13px}.mt-ai-launcher-top h3{font-size:19px}.mt-ai-state{font-size:8px;padding:5px}.mt-ai-category{align-items:stretch;flex-direction:column;gap:6px}.mt-ai-category select{max-width:none;width:100%}}
+@media(prefers-reduced-motion:reduce){.mt-ai-spinner{animation:none}}
