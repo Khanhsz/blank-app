@@ -40,7 +40,7 @@ export function CityCampaignMedia({b,lod,onSelect}:{b:District;lod:0|1;onSelect:
  const slots=(registry?.advertisingSlots||[]).filter(Boolean);
  const week=useGame(s=>s.ceo?.weekly?.week??1);
  const campaign=useGame(s=>s.campaign.aiScenario?.brand||"City Campaign");
- const gltf=useGLTF(AssetRegistry.url(b.id,lod));
+ const gltf=useGLTF(AssetRegistry.url(b.id,lod,b.tier));
  const art=useMemo(()=>{
   const result:{[key:string]:THREE.CanvasTexture}={};
   for(const type of new Set(slots.filter(x=>x.includes(":dooh:")||x.includes(":ooh:")).map(x=>x.includes(":dooh:")?"dooh":"ooh"))){
