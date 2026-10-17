@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { toast } from "sonner";
-import { defaults, loadState, persist, type GameState } from "./state";
+import { defaults, loadState, persist, migrate, type GameState } from "./state";
 
 export interface Fx { toast: (msg: string) => void; log: (msg: string) => void }
 
@@ -32,6 +32,20 @@ export function act(fn: (s: GameState, fx: Fx) => void) {
   toasts.forEach((m) => toast(m));
 }
 
+/** Safe manual save loading, accepting migrated saves from previous versions. */
+export function restoreGame(raw:unknown){
+  if(!raw||typeof raw!=="object"||!("campaign" in raw)) throw new Error("This is not a Marketing Tycoon save.");
+  const next=migrate(raw);
+  if(!next.campaign||!next.character) throw new Error("Save data is incomplete.");
+  state=next;
+  persist(state);
+  listeners.forEach(l=>l());
+  toast.success("Game restored");
+}
+export function saveNow(){
+  persist(state);
+  toast.success("Game saved to this browser");
+}
 export function resetGame() {
   state = defaults();
   persist(state);
