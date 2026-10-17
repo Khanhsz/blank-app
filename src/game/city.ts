@@ -2,10 +2,10 @@ import {ceoRivalDefs,clamp} from "./data";
 import type {GameState} from "./state";
 import type {Fx} from "./store";
 
-export type DistrictKind="core"|"rival"|"office";
+export type DistrictKind="core"|"rival"|"office"|"client";
 export interface CityLot {
  id:string;name:string;kind:DistrictKind;x:number;z:number;w:number;d:number;h:number;color:string;
- rivalId?:string;district?:string;
+ rivalId?:string;clientId?:string;district?:string;
 }
 export const cityLots:CityLot[]=[
  {id:"research",name:"DeepFrame Research Lab",kind:"core",x:-48,z:-40,w:9,d:10,h:11,color:"#73929a",district:"Innovation Quarter"},
@@ -28,7 +28,13 @@ export const cityLots:CityLot[]=[
  {id:"office-tower",name:"Cobalt Tower",kind:"office",x:32,z:24,w:10,d:10,h:25,color:"#6e91a8",district:"Corporate Mile"},
  {id:"office-warehouse",name:"Warehouse 27",kind:"office",x:-16,z:40,w:11,d:9,h:10,color:"#b6937e",district:"Agency Row"},
  {id:"office-skyline",name:"Skyline One",kind:"office",x:48,z:40,w:11,d:11,h:30,color:"#8a96b0",district:"Corporate Mile"},
- {id:"office-boulevard",name:"Boulevard Suites",kind:"office",x:-16,z:-8,w:10,d:10,h:17,color:"#b29e8b",district:"Central Plaza"}
+ {id:"office-boulevard",name:"Boulevard Suites",kind:"office",x:-16,z:-8,w:10,d:10,h:17,color:"#b29e8b",district:"Central Plaza"},
+ {id:"client-orion",name:"ORION Electronics HQ",kind:"client",clientId:"orion",x:48,z:8,w:11,d:10,h:28,color:"#8295a5",district:"Corporate Mile"},
+ {id:"client-sora",name:"Sora Home Campus",kind:"client",clientId:"sora",x:0,z:-24,w:11,d:10,h:15,color:"#aa9d8e",district:"Central Plaza"},
+ {id:"client-vertex",name:"Vertex Mobility Tower",kind:"client",clientId:"vertex",x:32,z:-24,w:10,d:11,h:25,color:"#698c91",district:"Innovation Quarter"},
+ {id:"client-bloom",name:"Bloom Beauty House",kind:"client",clientId:"bloom",x:-32,z:-40,w:10,d:10,h:16,color:"#b59ca7",district:"Arts Quarter"},
+ {id:"client-apex",name:"Apex FMCG Center",kind:"client",clientId:"apex",x:16,z:40,w:11,d:10,h:24,color:"#94a18e",district:"Corporate Mile"},
+ {id:"client-northstar",name:"NorthStar Education Hub",kind:"client",clientId:"northstar",x:0,z:24,w:10,d:10,h:19,color:"#929ab2",district:"Innovation Quarter"}
 ];
 export interface OfficeOption {id:string;deposit:number;daily:number;minRep:number;capacity:number;prestige:number;description:string}
 export const starterOffice:OfficeOption={id:"agency",deposit:0,daily:160000,minRep:0,capacity:8,prestige:0,description:"Your first office. Suitable for a small team."};
@@ -66,4 +72,4 @@ export function leaseOffice(s:GameState,fx:Fx,id:string){
  fx.toast("New agency HQ · "+cityLots.find(l=>l.id===id)?.name);
  return true;
 }
-export const cityCounts={core:cityLots.filter(x=>x.kind==="core").length,rivals:cityLots.filter(x=>x.kind==="rival").length,offices:cityLots.filter(x=>x.kind==="office").length};
+export const cityCounts={core:cityLots.filter(x=>x.kind==="core").length,rivals:cityLots.filter(x=>x.kind==="rival").length,offices:cityLots.filter(x=>x.kind==="office").length,clients:cityLots.filter(x=>x.kind==="client").length};
