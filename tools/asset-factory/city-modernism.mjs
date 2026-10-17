@@ -159,7 +159,7 @@ export function buildCityModernist(box,a,lod=0){
   }
  }else{
   // Distant LOD must NOT turn back into windowless pastel blocks.
-  const volumes=p.volumes.filter(v=>v.height>h*.29).sort((a,b)=>b.top-a.top).slice(0,2);
+  const volumes=h>=7.5?p.volumes.filter(v=>v.height>h*.29).sort((a,b)=>b.top-a.top).slice(0,2):[];
   for(const v of volumes){
    const wy=v.bottom+v.height*.55;
    glass(v,"front",v.x,wy,v.width*.52,Math.min(1.05,v.height*.14));
