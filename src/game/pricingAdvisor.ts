@@ -21,7 +21,7 @@ export function pricingContext(s:GameState,l:Lead):PricingContext{
  };
 }
 export const pricingFingerprint=(x:PricingContext)=>JSON.stringify([
- x.leadId,x.mediaBudget,x.baselineFee,x.scope,x.duration,x.businessSize,x.estimatedCost,x.competitorIndex,x.staffCount
+ x.leadId,x.mediaBudget,x.baselineFee,x.scope,x.duration,x.businessSize,x.objective,x.preference,x.difficulty,x.target,x.intensity,x.estimatedCost,x.competitorIndex,x.staffCount
 ]);
 export function validatedAdvice(raw:unknown,x:PricingContext):PricingAdvice{
  if(!raw||typeof raw!=="object")throw Error("Invalid pricing advice");
