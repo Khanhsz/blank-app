@@ -4,6 +4,7 @@ import { newCampaign, newCEO, type CEO, type GameState, type Lead, type Negotiat
 import type { Fx } from "./store";
 import { scoreModel } from "./campaign";
 import { ceoRand } from "./data";
+import {currentOffice} from "./city";
 
 export const SECONDS_PER_DAY = 2.2;
 const OVERHEAD = 160000;
@@ -55,9 +56,10 @@ export function ceoTick(s: GameState, fx: Fx, days: number) {
 export function ceoDay(s: GameState, c: CEO, fx: Fx) {
   c.day++;
   const pay = dailyPayroll(s); s.agencyCash -= pay; c.totalPayroll += pay; ledger(c, "Daily payroll", -pay, "agency");
-  s.agencyCash -= OVERHEAD; ledger(c, "Office overhead", -OVERHEAD, "agency");
+  const officeCost=currentOffice(s).daily;
+  s.agencyCash -= officeCost; ledger(c, "Office overhead · "+s.officeId, -officeCost, "agency");
   const active = c.projects.filter((p) => p.status === "active");
-  for (const ap of active) { ap.payrollAllocated = (ap.payrollAllocated || 0) + pay / active.length; ap.overheadAllocated = (ap.overheadAllocated || 0) + OVERHEAD / active.length; }
+  for (const ap of active) { ap.payrollAllocated = (ap.payrollAllocated || 0) + pay / active.length; ap.overheadAllocated = (ap.overheadAllocated || 0) + officeCost / active.length; }
   if (c.day % 30 === 0) for (const pid of c.partners) { const sp = ceoPartners.find((x) => x.id === pid)!; s.agencyCash -= sp.monthly; ledger(c, "Partner retainer · " + sp.name, -sp.monthly, "agency"); }
   for (const p of c.projects) if (p.status === "active") { p.days++; progressProject(s, c, p, fx); }
   for (const x of c.ledger) if (x.status === "due" && (x.due ?? 0) <= c.day) { x.status = "paid"; s.agencyCash += x.value; c.totalPaid += x.value; issue(c, fx, "payment", x.lead + x.day, `Received ${money(x.value)} from ${x.lead}`, ["acknowledge"]); }
@@ -147,6 +149,7 @@ export function ceoMigrateLegacy(s: GameState, fx: Fx) {
 export function hire(s: GameState, fx: Fx, id: string) {
   const e = employees.find((x) => x.id === id);
   if (!e || s.staff.includes(id) || s.agencyCash < e.salary) return;
+  if (s.staff.length >= currentOffice(s).capacity) return fx.toast("Office desk capacity reached — move to a larger headquarters.");
   s.staff.push(id); fx.log(`Hired ${e.name} — ${e.role}`); fx.toast(`${e.name} joined the team`);
 }
 export function setSpeed(s: GameState, speed: number) { const c = ceoInit(s); if (c) c.speed = speed; }
@@ -169,7 +172,7 @@ export function presentPitch(s: GameState) {
   const evidence = p.evidence === "research" ? 11 : 5, focus = p.focus === l.pref ? 17 : 8;
   const team = p.team === "specialist" && s.staff.length >= 4 ? 12 : p.team === "balanced" ? 8 : 5;
   const scale = p.price === "discount" ? -2 : p.price === "premium" ? 4 : 8;
-  p.quality = clamp(27 + focus + evidence + team + cap * 0.31 + scale + s.reputation / 12 - l.difficulty * 0.17, 15, 98);
+  p.quality = clamp(27 + focus + evidence + team + cap * 0.31 + scale + s.reputation / 12 + currentOffice(s).prestige * 0.7 - l.difficulty * 0.17, 15, 98);
   p.step = "objection";
   p.objection = l.pref === "cost" ? "The CFO demands a fee cut of at least 10%." : l.pref === "creative" ? "The Brand Director doubts your creative differentiation." : "The Marketing Director wants clearer KPIs and measurement.";
   s.agencyCash -= 600000; ledger(c, "Pitch presentation & materials", -600000, l.brand); c.day += 2;
