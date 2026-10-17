@@ -1,5 +1,6 @@
 /** Read-only AI pricing intelligence. Client and game rules remain authoritative. */
 import {forecast} from "./ceo";
+import {buildPriceAdvice} from "../../marketing-tycoon-ai-api/pricing.mjs";
 import type {GameState,Lead,PricingAdvice} from "./state";
 
 const API="https://marketing-tycoon-ai-api.onrender.com";
@@ -37,6 +38,17 @@ export function validatedAdvice(raw:unknown,x:PricingContext):PricingAdvice{
  if(a.recommendedFee<Math.max(0,x.estimatedCost*.8))throw Error("Price is below viable delivery cost");
  return {...a,contextKey:pricingFingerprint(x)};
 }
+/** A fee quote is part of every lead and pitch, even when the AI service is offline.
+ * The same bounded formula runs on the server and in the browser.
+ */
+export function ensureLocalPricing(s:GameState,l:Lead):PricingAdvice{
+ const context=pricingContext(s,l),key=pricingFingerprint(context);
+ if(l.pricingAdvice?.contextKey===key)return l.pricingAdvice;
+ const local=validatedAdvice(buildPriceAdvice(context,null,"rules"),context);
+ l.pricingAdvice=local;
+ return local;
+}
+
 export async function requestPricingAdvice(x:PricingContext,signal?:AbortSignal):Promise<PricingAdvice>{
  const r=await fetch(API+"/api/pricing-advice",{
   method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(x),signal
