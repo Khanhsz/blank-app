@@ -1,3 +1,4 @@
+import fs from "node:fs";
 /**
  * Marketing Tycoon V5.3 — a single PBR material design system.
  * All low-poly materials are intentionally OPAQUE; reflective-looking glass is
@@ -13,27 +14,16 @@ export const MATERIAL_ROLE=Object.freeze({
  CURTAIN_WALL_GLASS:7,ALUMINUM_CLADDING:8,CONCRETE_PANEL:9,DOOH_HOUSING:10
 });
 export const MATERIAL_ROLE_NAMES=Object.freeze(Object.keys(MATERIAL_ROLE));
-const BASE={
- clay:["#b8a99b","#e4d8c9","#6e7577","#577d89","#b45f48","#8b8c85","#2d414d","#4d7988","#aab5b6","#b9afa2","#33414b"],
- rose:["#c1aab0","#e8dbd6","#727c82","#6b8798","#b98088","#b3a9a3","#334552","#527a8b","#b9c4c7","#c9b9b8","#303f49"],
- mauve:["#a6a6b3","#dedde2","#6b707b","#617f94","#9b819a","#858a94","#2f424f","#517488","#a9b9c3","#b7b7c2","#303e4b"],
- sand:["#c3beb3","#e8e3d9","#85837c","#65818b","#bc8864","#aba397","#344650","#4e7786","#adb8b7","#cec8b9","#374750"],
- sage:["#adb9ac","#e4e9df","#677b7d","#557f86","#7b947e","#919c94","#31484b","#4e8884","#a6b6b2","#b4bfb4","#314349"],
- slate:["#9baab4","#e0e6e9","#536574","#537c91","#718ba0","#87939a","#293f4d","#416d84","#a2b6c1","#a9b8c3","#283a47"]
-};
-const ROLE_PROPS=[
- ["structural concrete",.88,0],["architectural plaster",.89,0],
- ["roof concrete",.91,0],["blue grey architectural glass",.26,.035],
- ["accent cladding",.80,0],["stone podium",.80,0],
- ["graphite metal",.46,.74],["teal curtain glass",.30,.045],
- ["brushed aluminium",.41,.76],["precast concrete panel",.91,0],
- ["OOH graphite housing",.45,.72]
-];
+const specification=JSON.parse(fs.readFileSync(new URL("../../assets/specs/pbr-materials.json",import.meta.url),"utf8"));
+const BASE=specification.palettes;
+const ROLE_PROPS=specification.roles.map(r=>[r.name,r.roughness,r.metallic]);
+if(ROLE_PROPS.length!==MATERIAL_ROLE_NAMES.length||specification.roles.some((r,i)=>r.name!==MATERIAL_ROLE_NAMES[i]||r.index!==i))
+ throw Error("PBR canonical role index mismatch");
 export const ROLE_GROUPS={
  corporate:["client","corporate"],agency:["rival","agency","creative"],office:["office"],
  residential:["residential","decorative"],media:["media","broadcast","creator"]
 };
-export const MATERIAL_SYSTEM_VERSION="mt-pbr-v1";
+export const MATERIAL_SYSTEM_VERSION=specification.version;
 export function pbrColors(asset){
  const base=BASE[asset.palette];
  if(!base)throw Error("Unknown PBR palette "+asset.palette+" for "+asset.id);
@@ -59,7 +49,7 @@ export function srgbToLinear(hex){
 export function pbrMaterials(asset){
  const colors=pbrColors(asset);
  const result=ROLE_PROPS.map(([label,roughness,metallic],i)=>({
-  name:"MT_"+MATERIAL_ROLE_NAMES[i]+"_"+asset.palette,
+  name:"MT_"+MATERIAL_ROLE_NAMES[i]+"_"+asset.palette+"_"+(asset.class==="client"?"corporate":asset.class==="rival"?"rival":"base"),
   pbrMetallicRoughness:{
    baseColorFactor:[...srgbToLinear(colors[i]),1],
    metallicFactor:metallic,
