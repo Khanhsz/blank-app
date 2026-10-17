@@ -309,8 +309,8 @@ function CameraRig({scene,districts,selected,focus,preview,avatarZoom,player,pla
   const c=controls.current;if(!c)return;
   if(scene==="city"){
    const building=districts.find(b=>b.id===selected);
-   if(building)c.setLookAt(building.x+13,Math.max(15,building.h+12),building.z+16,building.x,building.h*.5,building.z,true);
-   else c.setLookAt(31,35,43,0,0,0,true);
+   if(building)c.setLookAt(building.x+14,Math.max(18,building.h+14),building.z+18,building.x,building.h*.45,building.z,true);
+   else c.setLookAt(78,73,86,0,0,0,true);
   }else if(scene==="room"){
    if(preview)c.setLookAt(2.5*(avatarZoom||1),3.5*(avatarZoom||1),6.3*(avatarZoom||1),0,1.2,1.35,true);
    else if(focus==="pc")c.setLookAt(-.8,3.2,1,-2.5,1.24,-3.75,true);
@@ -321,8 +321,8 @@ function CameraRig({scene,districts,selected,focus,preview,avatarZoom,player,pla
   }
   else c.setLookAt(19,14,19,0,1,0,true);
  },[scene,selected,districts,focus,preview,avatarZoom]);
- useFrame(()=>{if(scene==="city"&&playerActive.current&&!selected&&controls.current){const [x,z]=player.current;controls.current.setLookAt(x+26,31,z+32,x,1,z,false)}});
- return <CameraControls ref={controls} smoothTime={.7} maxPolarAngle={Math.PI/2.12} minDistance={5} maxDistance={scene==="city"?72:27} dollySpeed={.65} truckSpeed={.6} />;
+ useFrame(()=>{if(scene==="city"&&playerActive.current&&!selected&&controls.current){const [x,z]=player.current;controls.current.setLookAt(x+34,39,z+39,x,1,z,false)}});
+ return <CameraControls ref={controls} smoothTime={.7} maxPolarAngle={Math.PI/2.12} minDistance={5} maxDistance={scene==="city"?170:27} dollySpeed={.65} truckSpeed={.6} />;
 }
 export function WorldScene({scene,districts,selected,onSelect,onComputerInteract,onRoomInteract,character,room,staff,quality,focus,preview,avatarYaw,avatarZoom,moveInput=""}:{
  scene:SceneId;districts:District[];selected:string|null;onSelect:(id:string)=>void;onComputerInteract:()=>void;onRoomInteract:(x:RoomAction)=>void;character:Character;room:RoomStyle;staff:number;quality:"high"|"low";focus?:string|null;preview?:boolean;avatarYaw?:number;avatarZoom?:number;moveInput?:string;
@@ -330,11 +330,11 @@ export function WorldScene({scene,districts,selected,onSelect,onComputerInteract
  const city=scene==="city";
  const memoDistricts=useMemo(()=>districts,[JSON.stringify(districts)]);
  const playerPosition=useRef<[number,number]>([0,0]);const playerActive=useRef(false);
- return <Canvas key={scene} shadows={quality==="high"} dpr={quality==="high"?[1,1.65]:[1,1]} gl={{antialias:quality==="high",alpha:false,powerPreference:"high-performance"}} camera={{position:city?[31,35,43]:[11.4,10.7,13.8],fov:42,near:.1,far:180}}>
-  <color attach="background" args={["#f8eddf"]}/><fog attach="fog" args={["#f8eddf",city?80:36,city?150:70]}/>
+ return <Canvas key={scene} shadows={quality==="high"} dpr={quality==="high"?[1,1.65]:[1,1]} gl={{antialias:quality==="high",alpha:false,powerPreference:"high-performance"}} camera={{position:city?[78,73,86]:[11.4,10.7,13.8],fov:42,near:.1,far:260}}>
+  <color attach="background" args={["#f8eddf"]}/><fog attach="fog" args={["#f8eddf",city?150:36,city?235:70]}/>
   <hemisphereLight args={["#fff7e8","#b8aa97",1.55]}/>
   <ambientLight intensity={.45}/>
-  <directionalLight position={[25,37,16]} intensity={2.1} color="#ffeed9" castShadow={quality==="high"} shadow-mapSize-width={2048} shadow-mapSize-height={2048} shadow-camera-left={-52} shadow-camera-right={52} shadow-camera-top={52} shadow-camera-bottom={-52} shadow-bias={-.00014}/>
+  <directionalLight position={[25,37,16]} intensity={2.1} color="#ffeed9" castShadow={quality==="high"} shadow-mapSize-width={2048} shadow-mapSize-height={2048} shadow-camera-left={-75} shadow-camera-right={75} shadow-camera-top={75} shadow-camera-bottom={-75} shadow-bias={-.00014}/>
   <directionalLight position={[-12,9,-17]} intensity={.65} color="#aeced3"/>
   {city?<City districts={memoDistricts} selected={selected} onSelect={onSelect} c={character} touch={moveInput} position={playerPosition} active={playerActive}/>:scene==="room"?<Room r={room} c={character} onComputerInteract={onComputerInteract} onRoomInteract={onRoomInteract} preview={preview} avatarYaw={avatarYaw}/>:<Office c={character} staff={staff} board={scene==="boardroom"}/>}
   {quality==="high"&&!city&&scene==="room"&&<ContactShadows scale={14} opacity={.2} blur={2.8} far={8} position={[0,-.02,0]}/>}
