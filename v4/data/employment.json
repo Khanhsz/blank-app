@@ -1,0 +1,266 @@
+{
+  "domain": "Employment & Future of Work",
+  "updated_at": "2026-10-17",
+  "stories": [
+    {
+      "id": "ST-20261017-903",
+      "title": "Thất nghiệp nhóm 15–24 tuổi Việt Nam quý III ở mức 9,07%",
+      "domain": "Employment & Future of Work",
+      "date": "2026-10-03",
+      "summary": "Cục Thống kê công bố tỷ lệ thất nghiệp thanh niên 15–24 tuổi là 9,07%; tỷ lệ trong độ tuổi lao động là 2,22%. Hai chỉ số phản ánh nhóm dân số khác nhau.",
+      "what": "Cục Thống kê công bố tỷ lệ thất nghiệp thanh niên 15–24 tuổi là 9,07%; tỷ lệ trong độ tuổi lao động là 2,22%. Hai chỉ số phản ánh nhóm dân số khác nhau.",
+      "so_what": "Số liệu bình quân không mô tả đầy đủ khó khăn của nhóm mới tham gia thị trường; không suy ra số vị trí thực tập từ tỷ lệ này.",
+      "why_you": "Nên theo dõi kỹ năng và nhu cầu thực tế trong JD marketing, growth và market research.",
+      "action": "Thu thập 20 JD chính thức để phân tích kỹ năng và yêu cầu kinh nghiệm.",
+      "confidence": "High · số liệu chính thức",
+      "event_type": "Labor data / workforce analysis",
+      "preview": false,
+      "tags": [
+        "jobs",
+        "employment",
+        "skills",
+        "future of work"
+      ],
+      "sources": [
+        {
+          "publisher": "Cục Thống kê Việt Nam",
+          "url": "https://www.nso.gov.vn/tin-tuc-thong-ke/2026/10/thong-cao-bao-chi-ve-tinh-hinh-lao-dong-viec-lam-quy-iii-va-9-thang-nam-2026/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-702",
+      "title": "Netflix thông báo cắt giảm khoảng 6% lao động",
+      "domain": "Employment & Future of Work",
+      "date": "2026-10-14",
+      "summary": "Reuters đưa tin Netflix triển khai đợt cắt giảm khoảng 6% nhân sự, ảnh hưởng nhiều bộ phận gồm công nghệ và sản phẩm.",
+      "what": "Reuters đưa tin Netflix triển khai đợt cắt giảm khoảng 6% nhân sự, ảnh hưởng nhiều bộ phận gồm công nghệ và sản phẩm.",
+      "so_what": "Một doanh nghiệp nội dung phát triển không đồng nghĩa mọi nhóm chức năng đều tăng tuyển dụng; nguyên nhân tái cơ cấu cần phân tích riêng.",
+      "why_you": "Góc nhìn về sự dịch chuyển kỹ năng trong product, tech và media.",
+      "action": "Đối chiếu tuyển dụng mới với thay đổi bộ phận chức năng theo công bố công ty.",
+      "confidence": "Medium · báo cáo Reuters",
+      "event_type": "Labor data / workforce analysis",
+      "preview": false,
+      "tags": [
+        "jobs",
+        "employment",
+        "skills",
+        "future of work"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters",
+          "url": "https://www.reuters.com/business/world-at-work/netflix-cuts-about-6-jobs-wsj-reports-2026-10-14/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-703",
+      "title": "Kroger dự kiến cắt hàng nghìn vị trí văn phòng trong kế hoạch tái cơ cấu",
+      "domain": "Employment & Future of Work",
+      "date": "2026-10-12",
+      "summary": "Theo Reuters, Kroger dự kiến giảm khoảng 3.000 vai trò văn phòng trong nhiều năm song song mở rộng áp dụng AI; đây là kế hoạch, chưa phải toàn bộ việc làm đã mất.",
+      "what": "Theo Reuters, Kroger dự kiến giảm khoảng 3.000 vai trò văn phòng trong nhiều năm song song mở rộng áp dụng AI; đây là kế hoạch, chưa phải toàn bộ việc làm đã mất.",
+      "so_what": "Automation có thể thay đổi nhiệm vụ và cấu trúc quản lý, nhưng không nên quy mọi quyết định cắt giảm nhân sự chỉ cho AI.",
+      "why_you": "Có thể lập khung nghiên cứu task displacement khác với job displacement.",
+      "action": "Theo dõi con số thực tế, nhiệm vụ thay thế và đào tạo lại nhân viên.",
+      "confidence": "Medium · kế hoạch doanh nghiệp",
+      "event_type": "Labor data / workforce analysis",
+      "preview": false,
+      "tags": [
+        "jobs",
+        "employment",
+        "skills",
+        "future of work"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters",
+          "url": "https://www.reuters.com/business/kroger-plans-cut-about-third-corporate-roles-over-next-three-years-bloomberg-2026-10-12/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-704",
+      "title": "Việc làm Australia giảm trong tháng 9, thất nghiệp ở mức 4,7%",
+      "domain": "Employment & Future of Work",
+      "date": "2026-10-15",
+      "summary": "Số liệu tháng 9 của Australia ghi nhận giảm ròng khoảng 39.300 vị trí việc làm, trong khi tỷ lệ thất nghiệp ở mức 4,7%.",
+      "what": "Số liệu tháng 9 của Australia ghi nhận giảm ròng khoảng 39.300 vị trí việc làm, trong khi tỷ lệ thất nghiệp ở mức 4,7%.",
+      "so_what": "Số việc làm biến động theo cấu trúc toàn thời gian/bán thời gian; tỷ lệ thất nghiệp có thể phản ứng khác tốc độ thay đổi việc làm.",
+      "why_you": "Trường hợp minh họa cách đọc báo cáo lao động quốc tế theo nhiều chỉ tiêu cùng lúc.",
+      "action": "Đối chiếu các tháng sau trước khi khẳng định xu hướng kéo dài.",
+      "confidence": "High · dữ liệu thống kê",
+      "event_type": "Labor data / workforce analysis",
+      "preview": false,
+      "tags": [
+        "jobs",
+        "employment",
+        "skills",
+        "future of work"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters / ABS",
+          "url": "https://www.reuters.com/world/asia-pacific/australia-employment-slides-39300-september-jobless-47-2026-10-15/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-705",
+      "title": "Tỷ lệ thất nghiệp Ấn Độ tháng 9 được công bố ở mức 5%",
+      "domain": "Employment & Future of Work",
+      "date": "2026-10-15",
+      "summary": "Theo số liệu chính phủ được Reuters dẫn, tỷ lệ thất nghiệp nhóm từ 15 tuổi của Ấn Độ trong tháng 9 khoảng 5%.",
+      "what": "Theo số liệu chính phủ được Reuters dẫn, tỷ lệ thất nghiệp nhóm từ 15 tuổi của Ấn Độ trong tháng 9 khoảng 5%.",
+      "so_what": "So sánh quốc tế cần đồng nhất định nghĩa và mẫu điều tra, không đặt trực tiếp cạnh tỷ lệ thanh niên Việt Nam.",
+      "why_you": "Đây là bài tập đơn giản về data literacy khi đánh giá thị trường lao động các nước.",
+      "action": "Kiểm tra phương pháp thống kê trước khi dùng biểu đồ so sánh quốc gia.",
+      "confidence": "High · số liệu chính phủ",
+      "event_type": "Labor data / workforce analysis",
+      "preview": false,
+      "tags": [
+        "jobs",
+        "employment",
+        "skills",
+        "future of work"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters",
+          "url": "https://www.reuters.com/world/india/indias-september-unemployment-rate-5-2026-10-15/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-706",
+      "title": "Đơn xin trợ cấp thất nghiệp Mỹ vẫn thấp trong tuần đầu tháng 10",
+      "domain": "Employment & Future of Work",
+      "date": "2026-10-15",
+      "summary": "Bộ Lao động Mỹ ghi nhận số đơn xin trợ cấp thất nghiệp mới gần 199.000 trong tuần kết thúc 10/10, theo Reuters.",
+      "what": "Bộ Lao động Mỹ ghi nhận số đơn xin trợ cấp thất nghiệp mới gần 199.000 trong tuần kết thúc 10/10, theo Reuters.",
+      "so_what": "Số đơn thấp có thể cùng tồn tại với tuyển dụng chậm; thị trường 'low-hire, low-fire' cần đo cả số chỗ mở.",
+      "why_you": "Khi theo dõi thị trường việc làm công nghệ, đừng suy diễn layoffs thấp là cơ hội tìm việc cao.",
+      "action": "Quan sát số vị trí tuyển, độ dài thất nghiệp và các nhóm ngành.",
+      "confidence": "High · số liệu chính thức",
+      "event_type": "Labor data / workforce analysis",
+      "preview": false,
+      "tags": [
+        "jobs",
+        "employment",
+        "skills",
+        "future of work"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters / US Labor Department",
+          "url": "https://www.reuters.com/world/us/us-weekly-jobless-claims-rise-marginally-amid-low-layoffs-2026-10-15/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-707",
+      "title": "WEF: AI đang tái tổ chức công việc hơn là chỉ thay thế nghề",
+      "domain": "Employment & Future of Work",
+      "date": "2026-10-15",
+      "summary": "Bài phân tích của lãnh đạo Adecco trên World Economic Forum nhận định AI làm thay đổi cách phân chia công việc giữa con người và hệ thống tự động.",
+      "what": "Bài phân tích của lãnh đạo Adecco trên World Economic Forum nhận định AI làm thay đổi cách phân chia công việc giữa con người và hệ thống tự động.",
+      "so_what": "Đây là lập luận chuyên gia chứ không phải phép đo nhân quả cho mọi ngành; kết quả phụ thuộc đầu tư kỹ năng và thiết kế tổ chức.",
+      "why_you": "Gợi ý xác định phần research nào có thể ủy quyền AI, phần nào cần judgment con người.",
+      "action": "Lập bảng task map và yêu cầu kiểm tra đầu ra theo từng bước.",
+      "confidence": "Medium · bài phân tích chuyên gia",
+      "event_type": "Labor data / workforce analysis",
+      "preview": false,
+      "tags": [
+        "jobs",
+        "employment",
+        "skills",
+        "future of work"
+      ],
+      "sources": [
+        {
+          "publisher": "World Economic Forum / Adecco",
+          "url": "https://www.weforum.org/stories/jobs-and-the-future-of-work/ai-work-jobs-intelligence-era/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-708",
+      "title": "WEF phân tích những kỹ năng nhà tuyển dụng tìm ở người trẻ trong thời AI",
+      "domain": "Employment & Future of Work",
+      "date": "2026-09-16",
+      "summary": "WEF tóm tắt dữ liệu và các đánh giá cho thấy nhiều vị trí cấp đầu chịu ảnh hưởng AI; tính linh hoạt học hỏi và kỹ năng xã hội trở nên quan trọng.",
+      "what": "WEF tóm tắt dữ liệu và các đánh giá cho thấy nhiều vị trí cấp đầu chịu ảnh hưởng AI; tính linh hoạt học hỏi và kỹ năng xã hội trở nên quan trọng.",
+      "so_what": "Chứng chỉ AI đơn thuần không đảm bảo phù hợp; khả năng giải quyết vấn đề và kết quả thực hành cần được chứng minh.",
+      "why_you": "Khi chuẩn bị CV hoặc portfolio marketing, hãy bổ sung project minh họa quyết định và phương pháp nghiên cứu.",
+      "action": "Đọc JD chính thức và đưa kỹ năng vào ví dụ công việc đo được.",
+      "confidence": "Medium · tổng hợp phân tích",
+      "event_type": "Labor data / workforce analysis",
+      "preview": false,
+      "tags": [
+        "jobs",
+        "employment",
+        "skills",
+        "future of work"
+      ],
+      "sources": [
+        {
+          "publisher": "World Economic Forum",
+          "url": "https://www.weforum.org/stories/jobs-and-the-future-of-work/what-skills-do-employers-want-in-the-age-of-ai/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-709",
+      "title": "WEF nêu cơ hội việc làm từ startup kinh tế xanh",
+      "domain": "Employment & Future of Work",
+      "date": "2026-09-22",
+      "summary": "Bài phân tích WEF về các doanh nghiệp khởi nghiệp mảng chất thải, nước và tái chế nhấn mạnh việc làm có chất lượng và cơ chế hợp tác.",
+      "what": "Bài phân tích WEF về các doanh nghiệp khởi nghiệp mảng chất thải, nước và tái chế nhấn mạnh việc làm có chất lượng và cơ chế hợp tác.",
+      "so_what": "Số lượng việc làm tạo ra chưa nói hết mức thu nhập, sự ổn định và cơ hội tiến triển nghề nghiệp.",
+      "why_you": "Gợi ý nhìn cơ hội nghề nghiệp qua sự phát triển mô hình doanh nghiệp chứ không chỉ bảng tin tuyển dụng.",
+      "action": "Theo dõi các vị trí thật và chuẩn chất lượng việc làm trong từng doanh nghiệp.",
+      "confidence": "Medium · phân tích ngành",
+      "event_type": "Labor data / workforce analysis",
+      "preview": false,
+      "tags": [
+        "jobs",
+        "employment",
+        "skills",
+        "future of work"
+      ],
+      "sources": [
+        {
+          "publisher": "World Economic Forum",
+          "url": "https://www.weforum.org/stories/jobs-and-the-future-of-work/green-ventures-good-jobs-how-early-stage-innovation-is-building-an-inclusive-economy/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-710",
+      "title": "WEF đề xuất gắn chương trình phát triển kỹ năng với việc làm thực tế",
+      "domain": "Employment & Future of Work",
+      "date": "2026-09-24",
+      "summary": "Bài viết của đại diện ManpowerGroup trên WEF nhấn mạnh đào tạo gắn với mô tả công việc và hành trình từ học sang làm.",
+      "what": "Bài viết của đại diện ManpowerGroup trên WEF nhấn mạnh đào tạo gắn với mô tả công việc và hành trình từ học sang làm.",
+      "so_what": "Số khóa học hoàn thành không đảm bảo năng lực tìm việc; cần đo bằng kết quả portfolio và tính phù hợp vị trí.",
+      "why_you": "Có thể lập learning roadmap cho market research/growth dựa trên nhu cầu tuyển dụng thay vì chọn khóa học ngẫu nhiên.",
+      "action": "Xây skill-gap matrix giữa portfolio hiện tại và 15–20 JD thực.",
+      "confidence": "Medium · ý kiến chuyên gia",
+      "event_type": "Labor data / workforce analysis",
+      "preview": false,
+      "tags": [
+        "jobs",
+        "employment",
+        "skills",
+        "future of work"
+      ],
+      "sources": [
+        {
+          "publisher": "World Economic Forum / ManpowerGroup",
+          "url": "https://www.weforum.org/stories/education-and-skills/how-we-build-workforce-preparedness-for-the-industries-shaping-the-future/"
+        }
+      ]
+    }
+  ]
+}
