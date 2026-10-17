@@ -1,8 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {defaults,newCEO,migrate} from "../src/game/state";
-import {qualify,startPitch,pitchFee,applySuggestedFee,setPitch,beginNegotiation} from "../src/game/ceo";
+import {qualify,startPitch,pitchFee,presentPitch,applySuggestedFee,setPitch,beginNegotiation} from "../src/game/ceo";
 import {pricingContext,pricingFingerprint,validatedAdvice} from "../src/game/pricingAdvisor";
+import {readFileSync} from "node:fs";
 import type {Fx} from "../src/game/store";
 
 const fx:Fx={toast:()=>{},log:()=>{}};
@@ -26,6 +27,8 @@ test("proposal may be chosen in preparation; winning negotiation starts at selec
  const s=agency(),l=s.ceo!.leads.find(x=>x.id==="sora")!;
  qualify(s,fx,l.id);startPitch(s,fx,l.id);
  assert.equal(s.ceo!.pitch?.step,"prepare");
+ assert.equal(s.ceo!.pitch?.bidFee,l.pricingAdvice?.recommendedFee,"pitch starts with a real automatically calculated quote");
+ assert.equal(s.ceo!.pitch?.priceSelected,false);
  const x=pricingContext(s,l);
  l.pricingAdvice=validatedAdvice({
   leadId:l.id,brand:l.brand,mediaBudget:l.value,baselineFee:l.fee,
@@ -63,6 +66,41 @@ test("player preset overrides previous AI quote and invalid recommendation is re
  applySuggestedFee(s,fx,"balanced");
  assert.equal(s.ceo!.pitch!.bidFee,43000000);
  setPitch(s,"price","discount");
- assert.equal(s.ceo!.pitch!.bidFee,undefined);
- assert.equal(pitchFee(l,s.ceo!.pitch!),Math.round(l.fee*.92));
+ assert.equal(s.ceo!.pitch!.bidFee,l.pricingAdvice.options.competitive);
+ assert.equal(s.ceo!.pitch!.priceSelected,true);
+ assert.equal(pitchFee(l,s.ceo!.pitch!),l.pricingAdvice.options.competitive);
+});
+
+test("every qualification instantly produces pricing, and pitch submits a real fee without an extra Analyze click",()=>{
+ const s=agency(),l=s.ceo!.leads.find(x=>x.id==="orion")!;
+ assert.equal(l.pricingAdvice,undefined);
+ qualify(s,fx,l.id);
+ assert.equal(l.pricingAdvice?.source,"rules");
+ assert.ok(l.pricingAdvice!.recommendedFee>0);
+ assert.equal(l.pricingAdvice!.mediaBudget,l.value);
+ startPitch(s,fx,l.id);
+ const bid=s.ceo!.pitch!;
+ assert.equal(bid.bidFee,l.pricingAdvice!.recommendedFee);
+ presentPitch(s);
+ assert.equal(bid.step,"objection");
+ assert.equal(bid.bidFee,l.pricingAdvice!.recommendedFee);
+ assert.ok(s.agencyCash<1000000000);
+});
+test("pricing is integrated into pitch decisions instead of a separate optional feature",()=>{
+ const code=readFileSync("src/components/game/Panels.tsx","utf8");
+ assert.ok(code.includes("Submit priced pitch"));
+ assert.ok(code.includes("applySuggestedFee"));
+ assert.ok(!code.includes("AI Pricing Desk"));
+ assert.ok(!code.includes("Analyze and recommend fee"));
+});
+test("old prepared pitches without bidFee automatically become priced before submission",()=>{
+ const s=agency(),l=s.ceo!.leads.find(x=>x.id==="sora")!;
+ qualify(s,fx,l.id);startPitch(s,fx,l.id);
+ delete s.ceo!.pitch!.bidFee;
+ delete s.ceo!.pitch!.priceTier;
+ const saved=migrate(JSON.parse(JSON.stringify(s)));
+ const p=saved.ceo!.pitch!;
+ presentPitch(saved);
+ assert.equal(p.step,"objection");
+ assert.equal(p.bidFee,saved.ceo!.leads.find(x=>x.id===l.id)!.pricingAdvice!.recommendedFee);
 });
