@@ -8,6 +8,8 @@ import GameSettings from "./components/game/GameSettings";
 import type {District} from "./components/game/WorldScene";
 const WorldScene=lazy(()=>import("./components/game/WorldScene").then(m=>({default:m.WorldScene})));
 import {CampaignWorkspace,CEOCommandCenter,LocationPanel} from "./components/game/Panels";
+import {WeeklyNewspaper,WeekIndicator} from "./components/game/WeeklyNewspaper";
+import {endWeek,acknowledgeEdition} from "./game/weekly";
 import {initStore,useGame,act,getState} from "./game/store";
 import * as K from "./game/ceo";
 import {prepareNextBrief} from "./game/automaticBrief";
@@ -64,12 +66,11 @@ export default function App(){
  const [sceneFocus,setSceneFocus]=useState<string|null>(null);
  const [moveInput,setMoveInput]=useState("");
  const [celebrate,setCelebrate]=useState<string|null>(null);
+ const [reviewNews,setReviewNews]=useState<string|null>(null);
  const transitionTimer=useRef<number|null>(null);
  const reduceMotion=useReducedMotion();
- const clock=useRef(0);
  const previousMilestones=useRef({phase:getState().campaign.phase,history:getState().history.length,agency:getState().agencyUnlocked,city:getState().cityUnlocked,staff:getState().staff.length,projects:getState().ceo?.projects.length??0,upgrades:getState().upgrades.length});
  useEffect(()=>{initStore();try{const cvs=document.createElement("canvas");setWebgl(!!(cvs.getContext("webgl2")||cvs.getContext("webgl")))}catch{setWebgl(false)}return()=>{if(transitionTimer.current!==null)window.clearTimeout(transitionTimer.current)}},[]);
- useEffect(()=>{const handle=window.setInterval(()=>{const v=getState();if(!v.agencyUnlocked||!v.ceo?.speed)return;clock.current+=v.ceo.speed*.25; if(clock.current>=2.2){const n=Math.min(4,Math.floor(clock.current/2.2));clock.current%=2.2;act((d,fx)=>K.ceoTick(d,fx,n));}},250);return()=>clearInterval(handle)},[]);
  useEffect(()=>{if(s.agencyUnlocked&&panel==="campaign")setPanel("ceo")},[s.agencyUnlocked,panel]);
  // Every unaccepted freelance brief begins with Gemini automatically, whether
  // the player is looking at the bedroom or opening the computer.
@@ -115,7 +116,7 @@ export default function App(){
    <header className="header"><div className="brand"><span className="mark">m.</span><div><strong>MARKETING TYCOON</strong><small>FROM BEDROOM TO BOARDROOM</small></div></div><div className="worldlabel"><span className="live"/>{sceneName[s.scene]}<small>{s.agencyUnlocked?"04 / CEO":s.cityUnlocked?"02 / CITY":"01 / FREELANCE"}</small></div><div className="topactions"><button onClick={()=>setPanel("map")} aria-label="Map"><Map size={20}/></button><button onClick={()=>setPanel("settings")} aria-label="Settings and save games"><Settings2 size={20}/></button></div></header>
    {s.created&&<aside className="quest"><span className="eyebrow">YOUR OBJECTIVE</span><h2>{s.agencyUnlocked?"Lead your team. Win the next account.":s.cityUnlocked?"Make your mark in the city.":"Your first campaign awaits."}</h2><p>{s.agencyUnlocked?String(projects)+" active projects. Operations are handled by your staff.":s.cityUnlocked?"Explore the districts; return home and use your computer to view freelance briefs.":"Enter the bedroom and click the computer to check your client inbox."}</p><button id="quest-workstation-guide" onClick={()=>s.agencyUnlocked?setPanel("ceo"):approachComputer()}>{s.agencyUnlocked?"Open CEO dashboard":"Go to bedroom computer"} →</button></aside>}
    {s.created&&<div className="stats"><div>REPUTATION<strong>{s.reputation}</strong></div><div>EXPERTISE<strong>{s.expertise}</strong></div><div className="darkstat">CASH<strong>{money(s.agencyUnlocked?s.agencyCash:s.personalCash)}</strong></div></div>}
-   {s.agencyUnlocked&&s.ceo&&<div className="clock"><Clock3 size={16}/><strong>DAY {s.ceo.day}</strong>{([0,1,3] as const).map(v=><button key={v} className={s.ceo?.speed===v?"active":""} onClick={()=>act(d=>K.setSpeed(d,v))}>{v===0?<Pause size={14}/>:<><Play size={14}/>{v===3?"×3":""}</>}</button>)}</div>}
+   {s.agencyUnlocked&&s.ceo&&<WeekIndicator week={s.ceo.weekly?.week??Math.floor((s.ceo.day-1)/7)+1} day={s.ceo.day} count={s.ceo.weekly?.editions.length??0} unread={!!s.ceo.weekly?.editions.some(x=>!x.read)} onAdvance={()=>act((d,fx)=>endWeek(d,fx))} onReview={()=>setReviewNews(s.ceo?.weekly?.editions[0]?.id??null)}/>}
    {s.created&&<nav className="dock"><button onClick={()=>change("room")} className={s.scene==="room"?"active":""}><Home size={19}/>Home</button><button disabled={!s.cityUnlocked} onClick={()=>change("city")} className={s.scene==="city"?"active":""}>{s.cityUnlocked?<Compass size={19}/>:<LockKeyhole size={19}/>}City</button><button id="navigate-workstation" onClick={()=>s.agencyUnlocked?setPanel("ceo"):approachComputer()}><Map size={19}/>{s.agencyUnlocked?"Projects":"Computer"}</button><button disabled={!s.agencyUnlocked&&!s.cityUnlocked} onClick={()=>s.agencyUnlocked?change("office"):(change("city"),locate("agency"))}><BriefcaseBusiness size={19}/>Agency</button><button onClick={()=>setPanel("avatar")}><Users size={19}/>Avatar</button></nav>}
    {s.created&&!s.agencyUnlocked&&s.scene==="room"&&panel==="none"&&<div className="computer-instruction" role="status"><strong>{computerHint?"You are back in your bedroom.":"Your first client is waiting."}</strong><span>Click the glowing computer screen to open your inbox.</span></div>}
 
@@ -145,6 +146,7 @@ export default function App(){
    </div>}
    </div></motion.section>}</AnimatePresence>
    <AnimatePresence>{celebrate&&<motion.div role="status" className="mt-milestone" initial={{opacity:0,y:28,scale:.9}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:-12,scale:.95}} transition={{duration:reduceMotion?0:.42}}><Trophy size={22}/><div><small>CAREER MILESTONE</small><strong>{celebrate}</strong></div><Star size={18}/></motion.div>}</AnimatePresence>
+   {s.ceo?.weekly?.editions.find(x=>!x.read)||s.ceo?.weekly?.editions.find(x=>x.id===reviewNews)?<WeeklyNewspaper edition={(s.ceo.weekly!.editions.find(x=>!x.read)||s.ceo.weekly!.editions.find(x=>x.id===reviewNews))!} onClose={()=>{const unread=s.ceo?.weekly?.editions.find(x=>!x.read);if(unread)act(d=>acknowledgeEdition(d,unread.id));setReviewNews(null)}}/>:null}
    <Toaster position="top-center" richColors/>
  </div>
 }
