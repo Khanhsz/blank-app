@@ -1,178 +1,168 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyMatch, type Coord, type Verification, normalizeName } from '@/lib/place-verification';
 
-export const runtime = 'nodejs';
-// Human-initiated place lookups only; public OpenStreetMap Nominatim is throttled.
-const AGENT='TripMateTravelPlanner/0.4 (https://tripmate-ai-khanhsz.onrender.com/privacy)';
-const cache=new Map<string,{until:number;value:LookupResponse}>();
+export const runtime='nodejs';
+const AGENT='TripMateTravelPlanner/0.6 (https://tripmate-ai-khanhsz.onrender.com/privacy)';
+const cache=new Map<string,{until:number;result:Result}>();
 const usage=new Map<string,{until:number;count:number}>();
-let lastOsm=0;
-const TTL=12*60*60*1000;
-type Point={lat:number;lon:number};
-type Place={name:string;address:string|null;category:string|null;description:string|null;hours:string|null;website:string|null;osmUrl:string|null;wikipediaUrl:string|null;sources:string[]};
-type LookupResponse={places:Place[];unmatched:string[];message?:string};
-type WikiSearch={pages?:Array<{title:string;description?:string}>};
+let lastNominatim=0;
+type Candidate={
+ id:string;name:string;description:string|null;address:string|null;category:string|null;
+ hours:string|null;website:string|null;osmId:string|null;osmUrl:string|null;
+ wikipediaUrl:string|null;wikipediaTitle:string|null;lat:number|null;lng:number|null;
+ source:'OpenStreetMap'|'Wikipedia';
+ sourceUpdatedAt:null;checkedAt:string;verification:Verification;
+};
+type Result={places:Candidate[];unmatched:string[];message?:string};
 type WikiSummary={title?:string;extract?:string;content_urls?:{desktop?:{page?:string}};coordinates?:{lat:number;lon:number}};
-
-const known=[
-  {match:/saigon central post office|saigon post office|buu dien.*sai gon|central post office/i,
-   title:'Saigon Central Post Office'},
-  {match:/notre.?dame|nha tho duc ba|duc ba cathedral|saigon cathedral/i,
-   title:'Notre-Dame Cathedral Basilica of Saigon'},
-  {match:/independence palace|reunification palace|reunification hall|dinh doc lap|dinh thong nhat|hoi truong thong nhat/i,
-   title:'Independence Palace'}
+type WikiSearch={pages?:Array<{title:string;description?:string}>};
+type OsmResult={osm_type?:string;osm_id?:number;display_name?:string;name?:string;
+ lat?:string;lon?:string;type?:string;category?:string;namedetails?:Record<string,string>;
+ extratags?:Record<string,string>};
+const aliases=[
+ {re:/saigon central post office|saigon post office|buu dien.*sai gon|central post office/i,title:'Saigon Central Post Office'},
+ {re:/notre.?dame|nha tho duc ba|duc ba cathedral|saigon cathedral/i,title:'Notre-Dame Cathedral Basilica of Saigon'},
+ {re:/independence palace|reunification palace|reunification hall|dinh doc lap|dinh thong nhat/i,title:'Independence Palace'}
 ];
-const valid=(s:unknown,max=160):s is string=>typeof s==='string'&&s.trim().length>=2&&s.trim().length<=max;
-function norm(s:string){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();}
-const stop=new Set(['the','and','for','with','from','visit','explore','at','in','of','morning','afternoon','evening','walk','walking','tour','lunch','dinner','breakfast','see','discover','enjoy','near','to','on','or']);
-function terms(s:string){return norm(s).split(' ').filter(w=>w.length>=3&&!stop.has(w));}
-function score(a:string,b:string){const tokens=terms(a),other=new Set(terms(b));return tokens.length?tokens.filter(w=>other.has(w)).length/tokens.length:0;}
-function dist(a:Point,b:Point){const r=Math.PI/180,x=(b.lat-a.lat)*r,y=(b.lon-a.lon)*r,h=Math.sin(x/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(y/2)**2;return 12742*Math.asin(Math.sqrt(h));}
-function httpsUrl(s:unknown){if(typeof s!=='string')return null;try{const u=new URL(s);return u.protocol==='https:'?u.toString():null;}catch{return null;}}
-function isSaigon(destination:string,country:string){return /ho chi minh|sai gon|saigon|hcmc/i.test(destination)&&/viet\s?nam/i.test(country);}
-function localeMention(text:string,destination:string,country:string):boolean {
-  const hay=norm(text);
-  const dest=norm(destination);
-  const aliases=isSaigon(destination,country)?['ho chi minh','saigon','sai gon','hcmc']: [dest];
-  // A match to a country alone cannot disambiguate two landmarks within that country.
-  return aliases.some(a=>a.length>=3&&hay.includes(a));
+const isSaigon=(city:string,country:string)=>/ho chi minh|sai gon|saigon|hcmc/i.test(city)&&/viet\s?nam/i.test(country);
+function cityMention(value:string,city:string,country:string){
+ const hay=normalizeName(value);
+ const variations=isSaigon(city,country)?['ho chi minh','saigon','sai gon']: [normalizeName(city)];
+ return variations.some(x=>x.length>=3&&hay.includes(x));
 }
-function countryMention(text:string,country:string):boolean {
-  const hay=norm(text);
-  const val=norm(country);
-  return hay.includes(val) || (val==='vietnam' && hay.includes('viet nam')) || (val==='viet nam' && hay.includes('vietnam'));
+function valid(s:unknown,max:number):s is string{return typeof s==='string'&&s.trim().length>=2&&s.length<=max;}
+function safeUrl(v:unknown){if(typeof v!=='string')return null;try{const u=new URL(v);return u.protocol==='https:'?u.toString():null;}catch{return null;}}
+function stripActivityName(s:string){
+ return s.trim().replace(/^(?:visit|explore|see|discover|enjoy|walk through|stroll through)\s+/i,'')
+  .replace(/\s+(?:guided\s+visit|visit|guided\s+tour|tour|stop)$/i,'').trim();
 }
-function hasValidGeography(result:{description:string;coordinates?:Point|null},destination:string,country:string,point:Point|null):boolean {
-  if(point && result.coordinates) return dist(point,result.coordinates)<=25;
-  // No coordinates: require an explicit city reference rather than guessing from a shared word.
-  return localeMention(result.description,destination,country);
+function partsOf(s:string){
+ const name=stripActivityName(s);
+ const p=name.split(/\s+(?:and|&|\+)\s+/i).filter(x=>x.trim().split(/\s+/).length>=2);
+ return p.length>=2&&p.length<=3?p.map(x=>x.trim()):[name];
 }
-function stripVerb(name:string){return name.trim().replace(/^(?:visit|explore|see|discover|enjoy|lunch at|dinner at|breakfast at|morning at|walk through|stroll through)\s+/i,'').replace(/\s+(?:guided\s+visit|visit|guided\s+tour|tour|stop)\s*$/i,'').trim();}
-function splitNames(raw:string){
-  const name=stripVerb(raw);
-  // A real landmark name can contain "and"; split only if both sides look like full landmarks.
-  const parts=name.split(/\s+(?:and|&|\+)\s+/i).map(s=>s.trim()).filter(Boolean);
-  if(parts.length>=2&&parts.length<=3&&parts.every(p=>terms(p).length>=3))return parts;
-  return [name];
-}
-const generic=/^(explore the historic center|taste local specialties|visit a museum or gallery|find a scenic green space|discover a neighborhood|enjoy a memorable dinner)$/i;
-async function fetchJson(url:string):Promise<unknown|null>{
-  try{const res=await fetch(url,{headers:{'User-Agent':AGENT,'Accept':'application/json'},cache:'no-store',signal:AbortSignal.timeout(7000)});return res.ok?await res.json():null;}catch{return null;}
+async function json(url:string){
+ try{const r=await fetch(url,{headers:{'User-Agent':AGENT,'Accept':'application/json'},signal:AbortSignal.timeout(7000),cache:'no-store'});return r.ok?await r.json():null;}catch{return null;}
 }
 async function wikiSummary(title:string){
-  const url='https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(title.replace(/ /g,'_'));
-  const doc=await fetchJson(url) as WikiSummary|null;
-  if(!doc?.title||!doc.extract)return null;
-  const article=httpsUrl(doc.content_urls?.desktop?.page);
-  if(!article||new URL(article).hostname!=='en.wikipedia.org')return null;
-  return {name:doc.title,description:doc.extract.slice(0,650),wikipediaUrl:article,coordinates:doc.coordinates&&Number.isFinite(doc.coordinates.lat)&&Number.isFinite(doc.coordinates.lon)?{lat:doc.coordinates.lat,lon:doc.coordinates.lon}:null};
+ const u='https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(title.replace(/ /g,'_'));
+ const p=await json(u) as WikiSummary|null;
+ if(!p?.title||!p.extract)return null;
+ const article=safeUrl(p.content_urls?.desktop?.page);
+ if(!article||new URL(article).hostname!=='en.wikipedia.org')return null;
+ const coords=p.coordinates;
+ const point:Coord|null=coords&&Number.isFinite(coords.lat)&&Number.isFinite(coords.lon)?{lat:coords.lat,lng:coords.lon}:null;
+ return {name:p.title,description:p.extract.slice(0,700),wikipediaUrl:article,point};
 }
-async function wikiLookup(name:string,destination:string,country:string,point:Point|null){
-  // Prefer explicit canonical Wikipedia titles for common ambiguous Saigon landmarks.
-  const canonical=isSaigon(destination,country)?known.find(k=>k.match.test(name)):undefined;
-  if(canonical){
-    const live=await wikiSummary(canonical.title);
-    // Known aliases are tied to this city, but never substitute another article if unavailable.
-    if(!live)return null;
-    if(live.coordinates && point && dist(point,live.coordinates)>25)return null;
-    if(!countryMention(live.description,country)&&!localeMention(live.description,destination,country)&&!live.coordinates)return null;
-    return live;
-  }
-  const query=new URL('https://en.wikipedia.org/w/rest.php/v1/search/page');
-  query.searchParams.set('q',name);
-  query.searchParams.set('limit','6');
-  const data=await fetchJson(query.toString()) as WikiSearch|null;
-  const pages=data?.pages||[];
-  const ranked=pages.map(page=>{
-    const relevance=score(name,page.title);
-    const context=/saigon|ho chi minh/i.test(destination)&&/saigon|ho chi minh/i.test(page.title+' '+(page.description||'')) ? 0.15 : 0;
-    return {title:page.title,relevance,weight:relevance+context};
-  }).filter(p=>p.relevance>=.85).sort((a,b)=>b.weight-a.weight);
-  for(const candidate of ranked.slice(0,3)){
-    const summary=await wikiSummary(candidate.title);
-    if(!summary)continue;
-    // A name is not sufficient evidence: a matching location is mandatory.
-    if(!hasValidGeography(summary,destination,country,point))continue;
-    return summary;
-  }
-  return null;
+async function wikiCandidates(name:string,city:string,country:string){
+ const canon=isSaigon(city,country)?aliases.find(x=>x.re.test(name)):null;
+ const titles:string[]=[];
+ if(canon)titles.push(canon.title);
+ else{
+   const url=new URL('https://en.wikipedia.org/w/rest.php/v1/search/page');
+   url.searchParams.set('q',name+' '+city);url.searchParams.set('limit','5');
+   const result=await json(url.toString()) as WikiSearch|null;
+   for(const p of result?.pages||[])if(p.title)titles.push(p.title);
+ }
+ const summaries=[];
+ for(const title of titles.slice(0,3)){
+   const sum=await wikiSummary(title);
+   if(sum)summaries.push({...sum,knownAlias:!!canon&&title===canon.title});
+ }
+ return summaries;
 }
-type OsmResult={osm_type?:string;osm_id?:number;name?:string;display_name?:string;lat?:string;lon?:string;type?:string;category?:string;namedetails?:Record<string,string>;extratags?:Record<string,string>};
-async function osmLookup(name:string,destination:string,country:string,point:Point|null){
-  // Max one Nominatim public request across the single Render instance per 1.5 sec.
-  if(Date.now()-lastOsm<1500)return null;
-  lastOsm=Date.now();
-  const url=new URL('https://nominatim.openstreetmap.org/search');
-  url.searchParams.set('q',[name,destination,country].join(', ').slice(0,260));
-  url.searchParams.set('format','jsonv2');
-  url.searchParams.set('addressdetails','1');
-  url.searchParams.set('namedetails','1');
-  url.searchParams.set('extratags','1');
-  url.searchParams.set('limit','5');
-  if(point){url.searchParams.set('viewbox',[point.lon-.35,point.lat+.26,point.lon+.35,point.lat-.26].join(','));}
-  const raw=await fetchJson(url.toString());
-  if(!Array.isArray(raw))return null;
-  const ranked=(raw as OsmResult[]).map(p=>{
-    const label=p.name||p.namedetails?.name||p.display_name?.split(',')[0]||'';
-    const relevance=score(name,label);
-    const coords=p.lat&&p.lon?{lat:Number(p.lat),lon:Number(p.lon)}:null;
-    const distance=point&&coords&&Number.isFinite(coords.lat)&&Number.isFinite(coords.lon)?dist(point,coords):null;
-    return {p,label,relevance,distance};
-  }).filter(c=>c.relevance>=.85&&(c.distance!==null?c.distance<=18:localeMention(c.p.display_name||'',destination,country)))
-    .sort((a,b)=>b.relevance-a.relevance+(a.distance??0)/-100+(b.distance??0)/100);
-  const match=ranked[0];
-  if(!match)return null;
-  const p=match.p;
-  const osmType=p.osm_type&&['node','way','relation'].includes(p.osm_type)?p.osm_type:null;
-  const osmUrl=osmType&&typeof p.osm_id==='number'&&p.osm_id>0?'https://www.openstreetmap.org/'+osmType+'/'+p.osm_id:null;
-  return {name:match.label,address:p.display_name?.slice(0,240)||null,
-    category:p.type?.replace(/_/g,' ')||p.category?.replace(/_/g,' ')||null,
-    hours:p.extratags?.opening_hours?.slice(0,160)||null,
-    website:httpsUrl(p.extratags?.website)||httpsUrl(p.extratags?.['contact:website']),osmUrl};
+async function osmCandidates(name:string,city:string,country:string,point:Coord|null){
+ // Public Nominatim is deliberately only for an explicit place detail click.
+ // Single Render instance limit: <= 1 request / 1.5 seconds, plus per-user limit.
+ if(Date.now()-lastNominatim<1500)return [] as OsmResult[];
+ lastNominatim=Date.now();
+ const url=new URL('https://nominatim.openstreetmap.org/search');
+ url.searchParams.set('q',[name,city,country].join(', ').slice(0,250));
+ url.searchParams.set('format','jsonv2');url.searchParams.set('limit','5');
+ url.searchParams.set('addressdetails','1');url.searchParams.set('namedetails','1');
+ url.searchParams.set('extratags','1');
+ if(point)url.searchParams.set('viewbox',[point.lng-.3,point.lat+.24,point.lng+.3,point.lat-.24].join(','));
+ const items=await json(url.toString());
+ return Array.isArray(items)?items as OsmResult[]:[];
 }
-async function lookup(name:string,destination:string,country:string,point:Point|null,canUseOsm:boolean):Promise<Place|null>{
-  const [wiki,osm]=await Promise.all([wikiLookup(name,destination,country,point),canUseOsm?osmLookup(name,destination,country,point):Promise.resolve(null)]);
-  if(!wiki&&!osm)return null;
-  // A compound activity might have one coordinate corresponding only to the first venue.
-  return {
-    name:wiki?.name||osm?.name||name,
-    address:osm?.address||null,
-    category:osm?.category||null,
-    description:wiki?.description||null,
-    hours:osm?.hours||null,
-    website:osm?.website||null,
-    osmUrl:osm?.osmUrl||null,
-    wikipediaUrl:wiki?.wikipediaUrl||null,
-    sources:[...(osm?['OpenStreetMap']:[]),...(wiki?['Wikipedia']:[])]
-  };
+function asCandidate(
+ source:'Wikipedia'|'OpenStreetMap',inputName:string,city:string,country:string,
+ inputPoint:Coord|null,data:{
+ name:string;description?:string|null;address?:string|null;category?:string|null;
+ hours?:string|null;website?:string|null;osmId?:string|null;osmUrl?:string|null;
+ wikipediaUrl?:string|null;point:Coord|null;alias?:boolean
+ },checkedAt:string
+):Candidate{
+ const context=(data.description||'')+' '+(data.address||'');
+ const verify=verifyMatch({query:inputName,label:data.name,activityPoint:inputPoint,
+   candidatePoint:data.point,cityInSource:cityMention(context,city,country),knownAlias:!!data.alias});
+ return {id:source+':'+(data.osmId||data.wikipediaUrl||data.name),name:data.name,
+  description:data.description||null,address:data.address||null,category:data.category||null,
+  hours:data.hours||null,website:data.website||null,osmId:data.osmId||null,
+  osmUrl:data.osmUrl||null,wikipediaUrl:data.wikipediaUrl||null,
+  wikipediaTitle:source==='Wikipedia'?data.name:null,
+  lat:data.point?.lat??null,lng:data.point?.lng??null,
+  source,sourceUpdatedAt:null,checkedAt,verification:verify};
 }
-export async function POST(req:NextRequest){
-  if(Number(req.headers.get('content-length')||0)>3500)return NextResponse.json({error:'Request too large.'},{status:413});
-  let body:Record<string,unknown>;
-  try{body=await req.json();if(!body||Array.isArray(body)||typeof body!=='object')throw Error();}
-  catch{return NextResponse.json({error:'Invalid request.'},{status:400});}
-  const {title,location,destination,country,lat,lng}=body;
-  if(!valid(title,120)||!valid(location,140)||!valid(destination,100)||!valid(country,100))return NextResponse.json({error:'Invalid place details.'},{status:400});
-  if(generic.test(title.trim()))return NextResponse.json({places:[],unmatched:[title],message:'This is a suggested activity, not a confirmed venue. Rename it to a specific landmark to see sourced information.'},{headers:{'Cache-Control':'no-store'}});
-  const point:Point|null=typeof lat==='number'&&typeof lng==='number'&&Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180?{lat,lon:lng}:null;
-  const names=splitNames(title);
-  const key=[names.map(norm).join('&'),norm(destination),norm(country),point?.lat.toFixed(3)||'',point?.lon.toFixed(3)||''].join('|');
-  const stored=cache.get(key);
-  if(stored&&stored.until>Date.now())return NextResponse.json(stored.value,{headers:{'Cache-Control':'private, no-store'}});
-  const ip=(req.headers.get('x-forwarded-for')||'anonymous').split(',')[0].trim().slice(0,75);
-  const now=Date.now();
-  if(usage.size>1000)for(const [k,v]of usage)if(v.until<now)usage.delete(k);
-  const current=usage.get(ip);
-  if(current&&current.until>now&&current.count>=18)return NextResponse.json({error:'Too many place lookups. Please wait 15 minutes.'},{status:429});
-  usage.set(ip,current&&current.until>now?{until:current.until,count:current.count+1}:{until:now+15*60*1000,count:1});
-  // At most one public Nominatim query per user action, even for compound stops.
-  const results=await Promise.all(names.map((name,i)=>lookup(name,destination,country,i===0?point:null,i===0)));
-  const places=results.filter((v):v is Place=>!!v);
-  const unmatched=names.filter((_,i)=>!results[i]);
-  const value:LookupResponse={places,unmatched,
-    ...(!places.length?{message:names.length>1?'No confirmed sources found for the places in this activity.':'No reliable matching record found in Wikipedia or OpenStreetMap.'}:{})};
-  if(cache.size>300)for(const [k,v] of cache)if(v.until<now)cache.delete(k);
-  if(cache.size>350)cache.delete(cache.keys().next().value!);
-  // Only successful full matches stay cached for a long time; unavailable results expire quickly.
-  cache.set(key,{value,until:now+(places.length===names.length?TTL:2*60*1000)});
-  return NextResponse.json(value,{headers:{'Cache-Control':'private, no-store'}});
+async function candidatesFor(name:string,city:string,country:string,point:Coord|null,allowOsm:boolean,checkedAt:string){
+ const [wiki,osm]=await Promise.all([
+   wikiCandidates(name,city,country),
+   allowOsm?osmCandidates(name,city,country,point):Promise.resolve([] as OsmResult[])
+ ]);
+ const candidates:Candidate[]=[];
+ for(const item of wiki){
+   candidates.push(asCandidate('Wikipedia',name,city,country,point,{
+     name:item.name,description:item.description,wikipediaUrl:item.wikipediaUrl,
+     point:item.point,alias:item.knownAlias},checkedAt));
+ }
+ for(const item of osm){
+   const label=item.name||item.namedetails?.name||item.display_name?.split(',')[0]||'';
+   const lat=Number(item.lat),lng=Number(item.lon);
+   const pointOsm=Number.isFinite(lat)&&Number.isFinite(lng)?{lat,lng}:null;
+   const type=item.osm_type;
+   const osmId=typeof item.osm_id==='number'&&type&&['node','way','relation'].includes(type)
+    ? type+'/'+item.osm_id:null;
+   if(!osmId||!label)continue;
+   candidates.push(asCandidate('OpenStreetMap',name,city,country,point,{
+     name:label,address:item.display_name?.slice(0,240),category:(item.type||item.category||'').replace(/_/g,' '),
+     hours:item.extratags?.opening_hours?.slice(0,150),website:safeUrl(item.extratags?.website),
+     osmId,osmUrl:'https://www.openstreetmap.org/'+osmId,
+     point:pointOsm
+   },checkedAt));
+ }
+ // No blending Wikipedia and OSM records unless independently confirmed as same POI.
+ // Candidate score is a heuristic, and all low-confidence results require explicit user review.
+ return candidates.filter(c=>c.verification.level!=='rejected')
+   .sort((a,b)=>b.verification.score-a.verification.score).slice(0,4);
+}
+export async function POST(request:NextRequest){
+ if(Number(request.headers.get('content-length')||0)>3500)
+   return NextResponse.json({error:'Request too large.'},{status:413});
+ let body:Record<string,unknown>;
+ try{body=await request.json();if(!body||typeof body!=='object'||Array.isArray(body))throw Error();}
+ catch{return NextResponse.json({error:'Invalid request.'},{status:400});}
+ const {title,location,destination,country,lat,lng}=body;
+ if(!valid(title,120)||!valid(location,140)||!valid(destination,100)||!valid(country,100))
+   return NextResponse.json({error:'Invalid place details.'},{status:400});
+ const inputPoint=typeof lat==='number'&&typeof lng==='number'&&
+   Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180?{lat,lng}:null;
+ const names=partsOf(title);
+ const cacheKey=[names.map(normalizeName).join('&'),normalizeName(destination),normalizeName(country),
+   inputPoint?.lat.toFixed(3),inputPoint?.lng.toFixed(3)].join('|');
+ const existing=cache.get(cacheKey);
+ if(existing&&existing.until>Date.now())return NextResponse.json(existing.result,{headers:{'Cache-Control':'private, no-store'}});
+ const ip=(request.headers.get('x-forwarded-for')||'anonymous').split(',')[0].slice(0,80);
+ const now=Date.now();if(usage.size>1500)for(const [k,v]of usage)if(v.until<now)usage.delete(k);
+ const record=usage.get(ip);
+ if(record&&record.until>now&&record.count>=15)return NextResponse.json({error:'Too many lookups. Try again later.'},{status:429});
+ usage.set(ip,record&&record.until>now?{until:record.until,count:record.count+1}:{until:now+900000,count:1});
+ const checkedAt=new Date().toISOString();
+ const results=await Promise.all(names.map((name,i)=>candidatesFor(name,destination,country,
+   i===0?inputPoint:null,i===0,checkedAt)));
+ const places=results.flat();
+ const unmatched=names.filter((_,i)=>!results[i]?.length);
+ const result:Result={places,unmatched,...(!places.length?{message:'No credible matches found. Try specifying a landmark and checking its city.'}:{})};
+ if(cache.size>350)cache.delete(cache.keys().next().value!);
+ cache.set(cacheKey,{result,until:now+(places.length&&unmatched.length===0?60*60*1000:3*60*1000)});
+ return NextResponse.json(result,{headers:{'Cache-Control':'private, no-store'}});
 }
