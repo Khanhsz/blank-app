@@ -25,7 +25,18 @@ export interface Negotiation { id: string; round: number; fee: number; scope: nu
 export interface RivalTender {leadId:string;deadline:number;rivalId:string;score:number;fee:number;status:"open"|"won"|"player"|"closed"}
 export interface RivalEvent {id:string;day:number;rivalId:string;kind:"pitch"|"win"|"expand"|"hire"|"poach"|"market"|"loss";message:string}
 export interface TalentOffer {id:string;employeeId:string;rivalId:string;day:number;expires:number;raise:number;bonus:number;status:"open"|"retained"|"left"}
+export type WeeklyCategory = "decisions" | "finance" | "clients" | "operations" | "competition" | "talent";
+export interface WeeklyDecision {id:string; day:number; category:WeeklyCategory; headline:string; detail:string}
+export interface WeeklyArticle {id:string; category:WeeklyCategory; headline:string; body:string; evidence:string; impact:"positive"|"negative"|"neutral"}
+export interface WeeklyEdition {
+ id:string; weekCompleted:number; weekStarted:number; dayFrom:number; dayTo:number;
+ articles:WeeklyArticle[]; cashBefore:number; cashAfter:number; repBefore:number; repAfter:number;
+ projectsBefore:number; projectsAfter:number; rivalsWon:number; completedProjects:number;
+ read:boolean;
+}
+export interface WeeklyProgress {week:number; pending:WeeklyDecision[]; editions:WeeklyEdition[]; lastAdvanceDay:number}
 export interface CEO {
+  weekly?:WeeklyProgress;
   tenders?:RivalTender[]; rivalNews?:RivalEvent[]; talentOffers?:TalentOffer[];
   salaryPremiums?:Record<string,number>; talentMarket?:Record<string,{rivalId:string;untilDay:number}>;
   rivalLastTick?:number;
@@ -73,6 +84,7 @@ export const newCEO = (reputation: number): CEO => ({
   reputation: { overall: reputation, creative: 50, performance: 50, strategy: 50, reliability: 60, industries: {} },
   seq: 0, pitch: null, negotiation: null, totalPayroll: 0, totalDirect: 0, totalBilled: 0, totalPaid: 0,
   tenders:[], rivalNews:[], talentOffers:[], salaryPremiums:{}, talentMarket:{}, rivalLastTick:0,
+  weekly:{week:1,pending:[],editions:[],lastAdvanceDay:1},
 });
 
 export const SAVE_KEY = "marketing-tycoon-lovable-v2";
@@ -111,7 +123,15 @@ export function migrate(raw: unknown): GameState {
       talentOffers:Array.isArray(out.ceo.talentOffers)?out.ceo.talentOffers:[],
       salaryPremiums:out.ceo.salaryPremiums??{},
       talentMarket:out.ceo.talentMarket??{},
-      rivalLastTick:out.ceo.rivalLastTick??Math.max(0,out.ceo.day-1)
+      rivalLastTick:out.ceo.rivalLastTick??Math.max(0,out.ceo.day-1),
+      weekly:{
+        week:Math.max(1,out.ceo.weekly?.week??Math.floor((out.ceo.day-1)/7)+1),
+        pending:Array.isArray(out.ceo.weekly?.pending)?out.ceo.weekly.pending:[],
+        editions:Array.isArray(out.ceo.weekly?.editions)?out.ceo.weekly.editions:[],
+        lastAdvanceDay:out.ceo.weekly?.lastAdvanceDay??out.ceo.day
+      },
+      speed:0,
+      pauseOnIssue:false
     };
     // New corporate clients appear in existing CEO saves without resetting
     // relationships, negotiation outcomes, ongoing projects or cash history.
