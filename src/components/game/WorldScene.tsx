@@ -98,37 +98,6 @@ function RoadNetwork(){
   {Array.from({length:7},(_,i)=><Car key={i} seed={i}/>)}
  </group>;
 }
-function BuildingWindows({b,muted}:{b:District;muted:boolean}){
- const mesh=useRef<THREE.InstancedMesh>(null);
- const transforms=useMemo(()=>{
-  const v:{x:number;y:number;z:number}[]=[];
-  const floors=Math.max(2,Math.floor(b.h/1.7)-1);
-  for(let f=0;f<floors;f++)for(const x of [-.27,0,.27])for(const side of [-1,1]){
-   v.push({x:x*b.w,y:1.45+f*1.6,z:side*(b.d/2+.06)});
-  }
-  return v;
- },[b.h,b.w,b.d]);
- useEffect(()=>{
-  if(!mesh.current)return;
-  const obj=new THREE.Object3D();
-  for(let i=0;i<transforms.length;i++){
-   const t=transforms[i];obj.position.set(t.x,t.y,t.z);obj.scale.set(b.w*.16,.78,.105);obj.updateMatrix();
-   mesh.current.setMatrixAt(i,obj.matrix);
-  }
-  mesh.current.instanceMatrix.needsUpdate=true;
- },[transforms,b.w]);
- return <instancedMesh ref={mesh} args={[undefined,undefined,transforms.length]} castShadow={false}>
-  <boxGeometry args={[1,1,1]}/><meshStandardMaterial color={muted?"#c9c8c4":"#bfdcd8"} emissive={muted?"#1d1916":"#355b5c"} emissiveIntensity={muted?0:.08} roughness={.46}/>
- </instancedMesh>;
-}
-function BuildingDoor({b,open}:{b:District;open:boolean}){
- const hinge=useRef<THREE.Group>(null);
- useFrame((_,dt)=>{if(hinge.current){const target=open?-.97:0;hinge.current.rotation.y+=(target-hinge.current.rotation.y)*Math.min(1,dt*5.2)}});
- return <group position={[-b.w*.14,0,b.d/2+.28]} ref={hinge}>
-  <mesh position={[b.w*.14,1.16,0]} castShadow><boxGeometry args={[b.w*.28,2.15,.20]}/><meshStandardMaterial color={b.locked?"#a8a49a":"#405158"} roughness={.55}/></mesh>
-  <mesh position={[b.w*.25,1.25,.14]}><sphereGeometry args={[.09,8,8]}/><meshStandardMaterial color="#dbb589" metalness={.3} roughness={.32}/></mesh>
- </group>;
-}
 function CityPlayer({character,districts,touch,position,active}:{character:Character;districts:District[];touch:string;position:React.MutableRefObject<[number,number]>;active:React.MutableRefObject<boolean>}){
  const group=useRef<THREE.Group>(null),pressed=useRef<Set<string>>(new Set());
  useEffect(()=>{
@@ -163,61 +132,9 @@ function CityPlayer({character,districts,touch,position,active}:{character:Chara
  return <group ref={group} position={[0,.05,0]}><LowPolyPerson c={character} pos={[0,0,0]} walk seed={7}/><mesh position={[0,.03,0]} rotation-x={-Math.PI/2}><ringGeometry args={[.55,.7,24]}/><meshBasicMaterial color="#cf8759" transparent opacity={.58} depthWrite={false}/></mesh></group>;
 }
 
-function LegacyBuilding({b,onSelect,selected}:{b:District;onSelect:(id:string)=>void;selected:boolean}){
- const [hover,setHover]=useState(false);
- const liftGroup=useRef<THREE.Group>(null);
- const transparent=b.locked;
- const isHQ=b.id==="brand"||b.id==="agency"||b.kind==="rival"||b.occupied;
- const isRival=b.kind==="rival",isOffice=b.kind==="office",isClient=b.kind==="client";
- const isCafe=b.id==="network";
-
- useFrame((_,dt)=>{if(liftGroup.current){const goal=selected ? .22 : hover ? .09 : 0;liftGroup.current.position.y+=(goal-liftGroup.current.position.y)*Math.min(1,dt*9)}});
- const click=(e:any)=>{e.stopPropagation();onSelect(b.id)};
- const wall=transparent?"#c1bdb5":b.color;
- return <group ref={liftGroup} position={[b.x,0,b.z]}>
-  <Box p={[0,.18,0]} size={[b.w+1,.35,b.d+1]} color={selected?"#d5a084":"#e9d9c6"}/>
-  <group onPointerOver={e=>{e.stopPropagation();setHover(true);document.body.style.cursor="pointer"}} onPointerOut={()=>{setHover(false);document.body.style.cursor="auto"}} onClick={click}>
-   <Box p={[0,b.h*.5+.38,0]} size={[b.w,b.h,b.d]} color={wall}/>
-   <Box p={[0,b.h+.65,0]} size={[b.w+.45,.35,b.d+.45]} color={isCafe?"#5b766d":isHQ?"#413f47":"#f4eadf"}/>
-   {(b.id==="creative"||b.id==="influencer")&&<mesh castShadow position={[0,b.h+1.3,0]} rotation-y={Math.PI/4}><coneGeometry args={[Math.min(b.w,b.d)*.62,1.7,4]}/><meshStandardMaterial color="#6b625a" {...flat}/></mesh>}
-   {isHQ&&<Box p={[0,b.h+1.45,0]} size={[b.w*.42,1.6,b.d*.54]} color="#e9d6c5"/>}
-   {isRival&&<><Box p={[0,b.h*.71,b.d/2+.16]} size={[b.w*.76,1.23,.29]} color="#333b45"/><Box p={[0,b.h+2.7,0]} size={[.17,2.6,.17]} color="#545963"/></>}
-   {isClient&&<group>
-    {/* Distinctive corporate brand tower: glass arrival foyer, metallic trims and roof crown. */}
-    <Box p={[0,1.8,b.d/2+.55]} size={[b.w*.72,3.05,.82]} color="#a5b8bb"/>
-    <Box p={[0,b.h*.71,b.d/2+.21]} size={[b.w*.82,1.43,.22]} color="#404f59"/>
-    <Box p={[0,b.h*.71,b.d/2+.34]} size={[b.w*.64,.16,.05]} color="#bed0cf"/>
-    {[-1,1].map(side=><Box key={side} p={[side*(b.w*.44),b.h*.52,b.d/2+.16]} size={[.13,b.h*.7,.21]} color="#e6e7df"/>)}
-    <Box p={[0,b.h+1.19,0]} size={[b.w*.73,.63,b.d*.72]} color="#6d7881"/>
-    <mesh position={[0,b.h+2.05,0]} rotation-y={Math.PI*.25} castShadow>
-      <octahedronGeometry args={[.85,0]}/>
-      <meshStandardMaterial color="#e7ebdf" emissive="#7e9ca5" emissiveIntensity={.12} roughness={.57}/>
-    </mesh>
-    {b.id==="client-orion"&&<Box p={[0,b.h+2.8,0]} size={[.18,1.6,.18]} color="#515e69"/>}
-    {b.id==="client-bloom"&&<mesh castShadow position={[b.w*.23,b.h+1.5,0]}><icosahedronGeometry args={[.7,0]}/><meshStandardMaterial color="#c8c0c6" flatShading/></mesh>}
-   </group>}
-   {isOffice&&!b.occupied&&<><Box p={[0,b.h*.60,b.d/2+.16]} size={[b.w*.69,1.28,.21]} color="#aa7954"/><Box p={[b.w*.3,b.h+1.2,0]} size={[.19,1.5,.19]} color="#a48f7b"/></>}
-   {b.occupied&&<><Box p={[0,b.h*.68,b.d/2+.2]} size={[b.w*.75,1.48,.22]} color="#8db5a5"/><mesh position={[0,b.h+2.8,0]}><octahedronGeometry args={[.8,0]}/><meshStandardMaterial color="#f0c18e" emissive="#d68d51" emissiveIntensity={.35}/></mesh></>}
-   {isCafe&&<><Box p={[0,.54,b.d*.56]} size={[b.w+.9,.24,1.4]} color="#dcaf83"/>{[-1,1].map(x=><Box key={x} p={[x*b.w*.42,2.1,b.d*.7]} size={[.25,3.2,.28]} color="#f3d7b0"/>)}</>}
-   <BuildingWindows b={b} muted={transparent}/>
-   <BuildingDoor b={b} open={selected&&!b.locked}/>
-   <Box p={[0,.16,b.d/2+1.1]} size={[b.w*.72,.18,1.9]} color="#d6c4b1"/>
-   {b.id==="research"&&<group position={[b.w*.25,b.h+1.1,0]}><mesh castShadow><icosahedronGeometry args={[.65,0]}/><meshStandardMaterial color="#eff9f8" {...flat}/></mesh></group>}
-   {b.id==="media"&&<Box p={[0,b.h*.66,b.d/2+.1]} size={[b.w*.68,1.52,.18]} color="#384950"/>}
-   {b.id==="influencer"&&<mesh position={[0,b.h+2,0]}><torusGeometry args={[1,.17,6,14]}/><meshStandardMaterial color={copper} {...flat}/></mesh>}
-   {selected&&<mesh position={[0,b.h+1.94,0]}><sphereGeometry args={[.23,9,7]}/><meshBasicMaterial color="#ffdcaa"/></mesh>}
-  </group>
-  <Html position={[0,b.h+2.8,0]} center distanceFactor={36} style={{pointerEvents:"auto"}}>
-   <button type="button" className={"world-building-label "+(selected?"selected":"")+(transparent?" locked":"")+(b.kind==="rival"?" rival":"")+(b.kind==="office"?" office":"")+(b.kind==="client"?" client":"")+(b.occupied?" occupied":"")} onClick={()=>onSelect(b.id)}>
-    <span className="map-pin"/><span>{b.name}</span>{b.occupied?<small>YOUR HQ</small>:b.kind==="rival"?<small>RIVAL</small>:b.kind==="office"?<small>{transparent?"LOCKED":"TO LET"}</small>:b.kind==="client"?<small>CLIENT HQ</small>:transparent?<small>LOCKED</small>:null}
-   </button>
-  </Html>
- </group>;
-}
 function City({districts,onSelect,selected,c,touch,position,active,quality}:{districts:District[];onSelect:(id:string)=>void;selected:string|null;c:Character;touch:string;position:React.MutableRefObject<[number,number]>;active:React.MutableRefObject<boolean>;quality:"high"|"low"}){
  return <><Land/><RoadNetwork/>
- <DistrictManager districts={districts} selected={selected} onSelect={onSelect} quality={quality}
-  fallback={b=><LegacyBuilding b={b} selected={selected===b.id} onSelect={onSelect}/>}/>
+ <DistrictManager districts={districts} selected={selected} onSelect={onSelect} quality={quality}/>
  <ChunkManager quality={quality}/>
  {Array.from({length:13},(_,i)=><CityWalker key={i} seed={i+1} c={c}/>)}
  <CityPlayer character={c} districts={districts} touch={touch} position={position} active={active}/>
