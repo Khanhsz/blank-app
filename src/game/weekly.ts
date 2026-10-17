@@ -6,6 +6,7 @@
 import {ceoDay} from "./ceo";
 import {progressFreelanceWeek,scenarioOf,phaseOf,scheduleOf} from "./campaign";
 import {employees,money} from "./data";
+import {ensureRecruitment} from "./recruitment";
 import type {Fx} from "./store";
 import type {GameState,GameClock,WeeklyArticle,WeeklyCategory,WeeklyDecision,WeeklyEdition} from "./state";
 
@@ -129,6 +130,7 @@ export function endWeek(s:GameState,fx:Fx):WeeklyEdition|null{
   read:false
  };
  weekly.pending=[];weekly.editions.unshift(edition);weekly.editions=weekly.editions.slice(0,24);
+ ensureRecruitment(s); // refresh the recruiting board only after a completed turn
  fx.log("Week "+completed+" complete · Week "+weekly.week+" begins");
  fx.toast("Week "+weekly.week+" started · read your weekly review");
  return edition;

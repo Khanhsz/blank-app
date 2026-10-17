@@ -121,7 +121,7 @@ export const upgrades: Record<UpgradeId, { name: string; cost: number; desc: str
 };
 export const COWORK_COST = 300000;
 
-export interface Employee { id: string; name: string; role: string; salary: number; skill: string; specialty?:string; startingSkill?:number }
+export interface Employee { id: string; name: string; role: string; salary: number; skill: string; specialty?:string; startingSkill?:number; startingMorale?:number; startingFatigue?:number }
 export const employees: Employee[] = [
   { id: "researcher", name: "An Phạm", role: "Researcher", salary: 1600000, skill: "Insight / Survey" },
   { id: "planner", name: "Huy Nguyễn", role: "Strategic Planner", salary: 2200000, skill: "Strategy / Positioning" },
@@ -142,6 +142,11 @@ export const employees: Employee[] = [
   { id:"analyst2",name:"Kiên Ngô",role:"Performance Analyst",salary:2300000,skill:"Dashboards / Attribution",specialty:"analytics",startingSkill:67 },
   { id:"ops2",name:"Hải Vũ",role:"Project Coordinator",salary:1900000,skill:"QA / Resource Allocation",specialty:"operations",startingSkill:61 },
 ];
+const originalEmployeeCount=employees.length;
+export function registerDynamicEmployees(entries:Employee[]):void{
+ const unique=new Map(entries.filter(e=>e.id.startsWith("recruit-")).map(e=>[e.id,e]));
+ employees.splice(originalEmployeeCount,employees.length-originalEmployeeCount,...unique.values());
+}
 export const employeeById = (id: string) => employees.find((e) => e.id === id);
 
 export const ceoRoles: Record<string, string> = { account: "Account Manager", research: "Research Executive", strategy: "Strategic Planner", creative: "Creative Team", production: "Production Producer", media: "Media Buyer", kol: "KOL/KOC Manager", analytics: "Data Analyst", operations: "Operations Lead" };

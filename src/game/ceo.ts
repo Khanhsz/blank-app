@@ -10,6 +10,7 @@ import {candidatesForRole,primaryRole,eligibleForRole,profile,effectiveCapacity,
 import {teamForProject,ownerTeam,startClientTeam,reconcileClientTeams,teamCoverage} from "./clientTeams";
 import {contractBrief} from "./clientMarket";
 import {ensureLocalPricing,qualificationQuote} from "./pricingAdvisor";
+import {ensureRecruitment,acceptCandidate,recruitmentFee,visibleCandidates} from "./recruitment";
 import {activeDealCount,activeDealLimit,proposalMerit,opportunityForecast,acquisitionDay,onProjectCompleted} from "./acquisition";
 
 const OVERHEAD = 160000;
@@ -18,6 +19,7 @@ export function ceoInit(s: GameState): CEO | null {
   if (!s.agencyUnlocked) return null;
   if (!s.ceo) {s.ceo = newCEO(s.reputation);s.ceo.day=s.clock.day;s.ceo.weekly=s.clock;}
   if(!s.ceo.clientTeams)reconcileClientTeams(s);
+  ensureRecruitment(s);
   return s.ceo;
 }
 const lead = (c: CEO, id: string) => c.leads.find((l) => l.id === id);
@@ -71,6 +73,7 @@ export function ceoTick(s: GameState, fx: Fx, days: number) {
   const c = ceoInit(s); if (!c) return;
   for (let i = 0; i < Math.min(7,Math.max(0,Math.floor(days))); i++) ceoDay(s,c,fx);
   s.clock.day=c.day;s.clock.week=Math.floor((c.day-1)/7)+1;c.weekly=s.clock;
+  ensureRecruitment(s);
 }
 
 export function ceoDay(s: GameState, c: CEO, fx: Fx) {
@@ -183,11 +186,26 @@ export function ceoMigrateLegacy(s: GameState, fx: Fx) {
 
 // ---------- CEO decisions ----------
 export function hire(s: GameState, fx: Fx, id: string) {
-  const e = employees.find((x) => x.id === id);
-  if (!e || s.staff.includes(id) || s.agencyCash < e.salary) return;
-  if ((s.ceo?.talentMarket?.[id]?.untilDay??0)> (s.ceo?.day??0))return fx.toast(e.name+" is currently contracted by a rival agency. Available again on day "+s.ceo?.talentMarket?.[id]?.untilDay);
-  if (s.staff.length >= currentOffice(s).capacity) return fx.toast("Office desk capacity reached — move to a larger headquarters.");
-  s.staff.push(id);s.personnel[id]=s.personnel[id]??defaultProfile(id); if(s.ceo?.talentMarket)delete s.ceo.talentMarket[id]; fx.log(`Hired ${e.name} — ${e.role}`); fx.toast(`${e.name} joined the team`);
+  if(!s.agencyUnlocked||!s.ceo)return;
+  ensureRecruitment(s);
+  const applicant=visibleCandidates(s).find(x=>x.id===id);
+  // Legacy employees remain recruitable for older saves and tests; new IDs must have active offers.
+  const e=applicant??(!id.startsWith("recruit-")?employees.find(x=>x.id===id):undefined);
+  if(!e||s.staff.includes(id))return fx.toast("This applicant is no longer available in the current week's recruitment market.");
+  const signingCost=applicant?recruitmentFee(e):0;
+  if(s.agencyCash<Math.max(signingCost,applicant?0:e.salary))return fx.toast("Insufficient hiring budget.");
+  if((s.ceo.talentMarket?.[id]?.untilDay??0)>s.ceo.day)return fx.toast(e.name+" is currently contracted by a rival agency.");
+  if(s.staff.length>=currentOffice(s).capacity)return fx.toast("Office desk capacity reached — move to a larger headquarters.");
+  s.personnel[id]=s.personnel[id]??defaultProfile(id);
+  s.staff.push(id);
+  if(applicant){
+   s.agencyCash-=signingCost;
+   s.ceo.ledger.unshift({day:s.ceo.day,what:"Recruitment & onboarding · "+e.name,value:-signingCost,lead:"agency",status:"paid"});
+   acceptCandidate(s,id);
+  }
+  if(s.ceo.talentMarket)delete s.ceo.talentMarket[id];
+  fx.log(`Hired ${e.name} — ${e.role} · ${money(e.salary)}/mo`);
+  fx.toast(`${e.name} joined the team`);
 }
 export function setSpeed(s: GameState, speed: number) { const c = ceoInit(s); if (c) c.speed = speed; }
 export function qualify(s: GameState, fx: Fx, id: string) {

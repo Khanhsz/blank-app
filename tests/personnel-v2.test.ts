@@ -26,7 +26,7 @@ test("legacy staff IDs gain persistent deterministic employee profiles and missi
  s.teamLeads={creative:"no-longer-employed"};
  const m=migrate(JSON.parse(JSON.stringify(s)));
  assert.equal(m.personnel.creator.skill,64);
- assert.equal(m.personnel.buyer.focus,"balanced");
+ assert.equal("focus" in m.personnel.buyer,false);
  assert.equal(m.personnel.creator.morale,78);
  assert.equal(m.teamLeads.creative,undefined);
  const n=migrate(JSON.parse(JSON.stringify(m)));
@@ -41,21 +41,18 @@ test("agency can recruit multiple specialists for the same marketing function",(
  assert.ok(P.candidatesForRole("creative").includes("creator2"));
  assert.equal(departmentMetrics(s).find(x=>x.id==="creative")?.primaryCount,2);
 });
-test("quality versus speed staffing settings change real employee throughput and staffing slots",()=>{
+test("two-slot staffing capacity is fixed and increasing skill improves work quality",()=>{
  const s=agency();hire(s,fx,"creator2");
  const initial=P.staffRate(s,"creator2","creative",1);
- P.setWorkStyle(s,fx,"creator2","quality");
- assert.equal(P.effectiveCapacity(s,"creator2"),1);
- const deep=P.staffRate(s,"creator2","creative",1);
- assert.ok(deep.quality>initial.quality);
- assert.ok(deep.speed<initial.speed);
- P.setWorkStyle(s,fx,"creator2","speed");
- assert.equal(s.personnel.creator2.focus,"quality","cannot change twice in one week");
+ assert.equal(P.effectiveCapacity(s,"creator2"),2);
+ s.personnel.creator2.skill+=10;
+ const improved=P.staffRate(s,"creator2","creative",1);
+ assert.ok(improved.quality>initial.quality);
  const client=project("leader-client","creative");s.ceo!.projects.push(client);
  const squad=T.startClientTeam(s,client);T.joinClientTeam(s,fx,squad.id,"creator2");
  const oldPay=dailyPayroll(s);T.changeClientLead(s,fx,squad.id,"creator2");
  assert.equal(squad.leadId,"creator2");
- assert.ok(dailyPayroll(s)>=oldPay,"client leadership has appropriate salary accounting");
+ assert.ok(dailyPayroll(s)>=oldPay);
 });
 test("training costs agency cash, blocks assignment, and finishes after seven game days",()=>{
  const s=agency();hire(s,fx,"researcher2");
@@ -73,7 +70,6 @@ test("training costs agency cash, blocks assignment, and finishes after seven ga
 });
 test("an employee cannot be assigned to tasks for two different clients",()=>{
  const s=agency();hire(s,fx,"creator2");
- P.setWorkStyle(s,fx,"creator2","quality");
  const a=project("normal-client","creative"),b=project("urgent-client","creative");
  s.ceo!.projects.push(a,b);
  const teamA=T.startClientTeam(s,a),teamB=T.startClientTeam(s,b);
