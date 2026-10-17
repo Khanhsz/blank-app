@@ -12,17 +12,10 @@ import {initStore,useGame,act,getState} from "./game/store";
 import * as K from "./game/ceo";
 import {prepareNextBrief} from "./game/automaticBrief";
 import {money,BRAND_HQ_REP} from "./game/data";
+import {cityLots,findOffice,cityCounts,type DistrictKind} from "./game/city";
 import type {SceneId} from "./game/state";
 
-const buildings:Omit<District,"locked">[]=[
-{id:"research",name:"Research Lab",x:-24,z:-18,w:7,d:7,h:8,color:"#73929a"},
-{id:"creative",name:"Creative Studio",x:-23,z:3,w:8,d:7,h:6,color:"#d69d72"},
-{id:"media",name:"Media Hub",x:-22,z:19,w:8,d:6,h:10,color:"#647e87"},
-{id:"influencer",name:"Creator District",x:0,z:-19,w:8,d:7,h:7,color:"#c38a83"},
-{id:"network",name:"Networking Café",x:1,z:19,w:8,d:6,h:5,color:"#819b78"},
-{id:"brand",name:"Brand HQ",x:24,z:-18,w:8,d:8,h:13,color:"#a58c76"},
-{id:"cowork",name:"Co-working",x:25,z:3,w:7,d:7,h:8,color:"#b1a3c5"},
-{id:"agency",name:"Your Agency",x:24,z:19,w:8,d:8,h:11,color:"#bd694a"}];
+const buildings=cityLots;
 const sceneName:Record<SceneId,string>={room:"The Bedroom",city:"Marketing City",office:"Agency HQ",boardroom:"The Boardroom"};
 type Panel="none"|"onboard"|"campaign"|"ceo"|"location"|"avatar"|"map"|"journal"|"phone"|"settings";
 
@@ -61,6 +54,8 @@ export default function App(){
  const s=useGame(x=>x);
  const [panel,setPanel]=useState<Panel>(getState().created?(getState().agencyUnlocked?"ceo":"none"):"onboard");
  const [selected,setSelected]=useState<string|null>(null);
+ const [directoryType,setDirectoryType]=useState<"all"|DistrictKind>("all");
+ const [directorySearch,setDirectorySearch]=useState("");
  const [webgl,setWebgl]=useState(true);
  const [map2d,setMap2d]=useState(false);
  const [computerHint,setComputerHint]=useState(false);
@@ -92,7 +87,11 @@ export default function App(){
   p.phase=s.campaign.phase;p.history=s.history.length;p.agency=s.agencyUnlocked;p.city=s.cityUnlocked;p.staff=s.staff.length;p.projects=s.ceo?.projects.length??0;p.upgrades=s.upgrades.length;
   if(!message)return;setCelebrate(message);const id=window.setTimeout(()=>setCelebrate(null),2600);return()=>window.clearTimeout(id);
  },[s.history.length,s.agencyUnlocked,s.cityUnlocked,s.campaign.phase,s.staff.length,s.upgrades.length,s.ceo?.projects.length]);
- const districts:District[]=buildings.map(b=>({...b,locked:!s.cityUnlocked||(b.id==="brand"&&!s.agencyUnlocked&&s.reputation<BRAND_HQ_REP)}));
+ const districts:District[]=buildings.map(b=>({...b,
+   name:b.id===s.officeId?(b.id==="agency"?"Your Agency · Starter HQ":"★ YOUR HQ · "+b.name):b.name,
+   occupied:b.id===s.officeId&&s.agencyUnlocked,
+   locked:!s.cityUnlocked||(b.id==="brand"&&!s.agencyUnlocked&&s.reputation<BRAND_HQ_REP)||(b.kind==="office"&&(!s.agencyUnlocked||s.reputation<findOffice(b.id).minRep))
+ }));
  const change=(to:SceneId)=>{setMoveInput("");setSceneFocus(null);if(to==="city"&&!s.cityUnlocked)return;if((to==="office"||to==="boardroom")&&!s.agencyUnlocked)return;act(d=>{d.scene=to});setSelected(null);setPanel(to==="office"||to==="boardroom"?"ceo":"none")};
  const locate=(id:string)=>{setSelected(id);setPanel("location")};
  const roomInteract=(id:"board"|"phone"|"wardrobe")=>{if(getState().scene!=="room")return;setSceneFocus(id);if(transitionTimer.current!==null)window.clearTimeout(transitionTimer.current);transitionTimer.current=window.setTimeout(()=>setPanel(id==="board"?"journal":id==="phone"?"phone":"avatar"),reduceMotion?0:370)};
@@ -137,7 +136,12 @@ export default function App(){
    {panel==="settings"&&<GameSettings onReset={()=>{setPanel("onboard");setSelected(null);setSceneFocus(null)}}/>}
    {panel==="journal"&&<div className="world-ambient-panel"><div className="eyebrow">YOUR CREATIVE PROCESS</div><h3>Project moodboard</h3><p>Your research, strategy and creative decisions remain saved as you explore. Return to the bedroom computer for your active campaign.</p><div className="world-item-stat">Current phase <b>{s.campaign.phase}</b></div><button className="world-action" onClick={approachComputer}>Return to workstation ↗</button></div>}
    {panel==="phone"&&<div className="world-ambient-panel"><div className="eyebrow">MESSAGES & NETWORK</div><h3>Your professional life</h3><p>{s.agencyUnlocked?"Your Account Manager handles routine messages. Open CEO inbox for decisions that need you.":"A potential client is waiting in your email inbox. Check the computer to see the brief."}</p><button className="world-action" onClick={()=>s.agencyUnlocked?setPanel("ceo"):approachComputer()}>{s.agencyUnlocked?"Open CEO inbox":"Go to computer"} ↗</button></div>}
-   {panel==="map"&&<div className="directory">{buildings.map(b=><button key={b.id} disabled={!s.cityUnlocked} onClick={()=>{if(s.cityUnlocked){change("city");locate(b.id)}}}><span>{b.name}</span>{s.cityUnlocked?"→":"Locked"}</button>)}</div>}
+   {panel==="map"&&<div className="mt-world-directory">
+     <div className="mt-map-summary"><span><strong>{buildings.length}</strong> interactive locations</span><span>{cityCounts.rivals} rival HQs</span><span>{cityCounts.offices} available office sites</span></div>
+     <input aria-label="Search buildings" className="mt-directory-search" placeholder="Search buildings or districts…" value={directorySearch} onChange={e=>setDirectorySearch(e.target.value)}/>
+     <div className="mt-directory-filters">{(["all","core","rival","office"] as const).map(k=><button key={k} className={directoryType===k?"active":""} onClick={()=>setDirectoryType(k)}>{({all:"All",core:"Districts",rival:"Rival Agencies",office:"Office Spaces"} as const)[k]}</button>)}</div>
+     <div className="directory">{districts.filter(b=>(directoryType==="all"||directoryType===b.kind)&&(!directorySearch||b.name.toLowerCase().includes(directorySearch.toLowerCase())||(b.district||"").toLowerCase().includes(directorySearch.toLowerCase()))).map(b=><button key={b.id} disabled={!s.cityUnlocked} onClick={()=>{if(s.cityUnlocked){change("city");locate(b.id)}}}><span><b>{b.name}</b><small>{b.district} · {b.kind==="rival"?"Competitor":b.kind==="office"?(b.occupied?"Current HQ":"Office listing"):"Gameplay location"}{b.locked?" · Locked":""}</small></span>{b.occupied?"★":s.cityUnlocked?"→":"🔒"}</button>)}</div>
+   </div>}
    </div></motion.section>}</AnimatePresence>
    <AnimatePresence>{celebrate&&<motion.div role="status" className="mt-milestone" initial={{opacity:0,y:28,scale:.9}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:-12,scale:.95}} transition={{duration:reduceMotion?0:.42}}><Trophy size={22}/><div><small>CAREER MILESTONE</small><strong>{celebrate}</strong></div><Star size={18}/></motion.div>}</AnimatePresence>
    <Toaster position="top-center" richColors/>
