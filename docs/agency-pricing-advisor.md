@@ -7,7 +7,7 @@ Input to the pricing advisor comes only from existing simulated game state:
 - Client media campaign budget (\`Lead.value\`) and listed agency service fee (\`Lead.fee\`) are **separate**.
 - Client industry, objective, required KPI, scope, delivery duration and difficulty.
 - Staffing count, modeled payroll/overhead/direct/outsourcing from \`forecast()\` and live rival agency fee indices.
-- Company scale is inferred **from campaign media budget** (growing/regional/national). It is not a verified assessment of real-world company size or revenue.
+- Fictional client size (small/medium/large/enterprise) is defined for starter leads and inherited by recurring seasonal RFPs. When not supplied, the API infers a coarse category from campaign budget. Campaign scale (growing/regional/national) is a separate media-budget signal, not verified revenue or actual headcount.
 
 The API returns a bounded competitive, balanced or premium service fee envelope. Gemini chooses one strategy and writes rationale and preparation steps. Actual VND values are calculated by server-side rules, not trusted from the model. The game provides rule-based pricing if Gemini is unconfigured or temporarily unavailable; the interface labels that fallback honestly. Requests are on-demand and throttled.
 
