@@ -5,7 +5,8 @@ import {useState} from "react";
 import {ArrowLeft,ArrowRight,AlertTriangle,BriefcaseBusiness,CheckCircle2,ChevronRight,ClipboardList,Search,UserPlus,Users,UserRound,Wallet} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {useGame,act} from "@/game/store";
-import {ceoTaskDefs,ceoRoles,employeeById,employees,money} from "@/game/data";
+import {ceoRoles,employeeById,money} from "@/game/data";
+import {recruitmentFee} from "@/game/recruitment";
 import * as K from "@/game/ceo";
 import * as P from "@/game/personnel";
 import * as T from "@/game/clientTeams";
@@ -15,8 +16,11 @@ import type {ClientTeam,GameState} from "@/game/state";
 const labels:Record<string,string>={forming:"Needs staffing",active:"Active",closing:"Ready to release",released:"Released","needs-staff":"Needs staffing",critical:"Deadline risk",attention:"Action needed","on-track":"On track",completed:"Completed"};
 const nice=(status:string)=>labels[status]??status;
 function canHire(s:GameState,id:string){
- const e=employeeById(id),c=s.ceo;
- return !!e&&!!c&&!s.staff.includes(id)&&s.agencyCash>=e.salary&&s.staff.length<currentOffice(s).capacity&&
+ const applicant=s.recruitment?.week===s.clock.week?s.recruitment.candidates.find(e=>e.id===id):undefined;
+ const legacy=!id.startsWith("recruit-")?employeeById(id):undefined;
+ const e=applicant??legacy,c=s.ceo;
+ const cost=applicant?recruitmentFee(applicant):e?.salary??0;
+ return !!e&&!!c&&!s.staff.includes(id)&&s.agencyCash>=cost&&s.staff.length<currentOffice(s).capacity&&
   (c.talentMarket?.[id]?.untilDay??0)<=c.day;
 }
 function staffBusy(s:GameState,id:string){
@@ -61,7 +65,7 @@ function TeamDetail({team,onBack,onEmployee,onDelivery,onRecruit}:{team:ClientTe
  const [newMember,setNewMember]=useState("");
  const [fromTeam,setFromTeam]=useState(""),[fromEmployee,setFromEmployee]=useState("");
  const canStaff=team.status!=="closing"&&team.status!=="released";
- const candidate=employees.find(e=>!s.staff.includes(e.id)&&plan.needs.missing.some(role=>P.eligibleForRole(e.id,role)));
+ const candidate=(s.recruitment?.candidates??[]).find(e=>!s.staff.includes(e.id)&&plan.needs.missing.some(role=>P.eligibleForRole(e.id,role)));
  return <div className="mt-work-flow">
   <button className="mt-work-back" onClick={onBack}><ArrowLeft size={16}/> All client teams</button>
   <div className="mt-work-detail-title"><div><small>CLIENT WORKFORCE</small><h3>{team.brand}</h3><p>Dedicated team · {team.memberIds.length} assigned · {stats.readiness}% readiness</p></div><TeamHealth team={team}/></div>
@@ -78,7 +82,7 @@ function TeamDetail({team,onBack,onEmployee,onDelivery,onRecruit}:{team:ClientTe
      {candidate&&<Button size="sm" disabled={!canHire(s,candidate.id)} onClick={()=>act((d,fx)=>{
       K.hire(d,fx,candidate.id);
       if(d.staff.includes(candidate.id))T.joinClientTeam(d,fx,team.id,candidate.id);
-     })}>Hire & assign {candidate.name} · {money(candidate.salary)}</Button>}
+     })}>Hire & assign {candidate.name} · {money(recruitmentFee(candidate))}</Button>}
      <Button size="sm" variant="outline" onClick={onRecruit}><UserPlus size={15}/> Browse talent</Button>
     </div>
     <small>Outsource eligible work from Campaign Delivery if staffing is unavailable.</small>
@@ -152,6 +156,7 @@ function CampaignDelivery({team,projectId,onBack}:{team:ClientTeam;projectId:str
 }
 function EmployeeDetail({id,onBack,onTeam}:{id:string;onBack:()=>void;onTeam:(teamId:string)=>void}){
  const s=useGame(x=>x),e=employeeById(id),hired=s.staff.includes(id),p=P.profile(s,id),owner=T.ownerTeam(s,id),busy=staffBusy(s,id);
+ const applicant=s.recruitment?.candidates.find(e=>e.id===id);
  const [selectedTeam,setSelectedTeam]=useState("");
  const teams=(s.ceo?.clientTeams??[]).filter(t=>t.status!=="released"&&t.status!=="closing");
  if(!e)return null;
@@ -159,12 +164,12 @@ function EmployeeDetail({id,onBack,onTeam}:{id:string;onBack:()=>void;onTeam:(te
  return <div className="mt-work-flow">
   <button className="mt-work-back" onClick={onBack}><ArrowLeft size={16}/> Workforce</button>
   <div className="mt-work-detail-title"><div><small>EMPLOYEE PROFILE</small><h3>{e.name}</h3><p>{e.role}</p></div><span className="mt-work-avatar"><UserRound size={21}/></span></div>
-  <div className="mt-work-employee-stats"><span><small>Skill</small><b>{Math.round(p.skill)}/100</b></span><span><small>Morale</small><b>{Math.round(p.morale)}%</b></span><span><small>Fatigue</small><b>{Math.round(p.fatigue)}%</b></span><span><small>Salary / mo</small><b>{money(e.salary)}</b></span></div>
+  <div className="mt-work-employee-stats"><span><small>Skill</small><b>{Math.round(applicant?.startingSkill??p.skill)}/100</b></span><span><small>Morale</small><b>{Math.round(applicant?.startingMorale??p.morale)}%</b></span><span><small>Fatigue</small><b>{Math.round(applicant?.startingFatigue??p.fatigue)}%</b></span><span><small>Salary / mo</small><b>{money(e.salary)}</b></span></div>
   <section className="mt-work-section"><div className="mt-work-section-head"><h4>Current assignment</h4></div>
    <p>{owner?"Dedicated to "+owner.brand:hired?"Available to join any client squad":"Not hired"}</p>
    {training&&<p className="mt-work-hint">Training through Day {p.trainingUntil}; unavailable for staffing until complete.</p>}
    {owner&&<Button size="sm" variant="outline" onClick={()=>onTeam(owner.id)}>Open client team</Button>}
-   {!hired&&<Button disabled={!canHire(s,id)} onClick={()=>act((d,fx)=>K.hire(d,fx,id))}>Hire · {money(e.salary)}</Button>}
+   {!hired&&<Button disabled={!canHire(s,id)} onClick={()=>act((d,fx)=>K.hire(d,fx,id))}>Hire · {money(applicant?recruitmentFee(applicant):e.salary)}</Button>}
    {hired&&!owner&&teams.length>0&&<div className="mt-work-add-row">
     <select aria-label="Assign employee to client" value={selectedTeam} onChange={evt=>setSelectedTeam(evt.target.value)}>
      <option value="">Assign to a client</option>{teams.map(t=><option value={t.id} key={t.id}>{t.brand}</option>)}
@@ -184,13 +189,16 @@ function TalentPool({onEmployee}:{onEmployee:(id:string)=>void}){
  const s=useGame(x=>x);
  const [filter,setFilter]=useState<"available"|"assigned"|"recruit">("available");
  const [query,setQuery]=useState("");
- const items=employees.filter(e=>{
+ const staff=s.staff.map(id=>employeeById(id)).filter((e):e is NonNullable<typeof e>=>!!e);
+ const offers=s.recruitment?.week===s.clock.week?(s.recruitment?.candidates??[]):[];
+ const items=(filter==="recruit"?offers:staff).filter(e=>{
   const hired=s.staff.includes(e.id),owner=T.ownerTeam(s,e.id);
   const match=filter==="recruit"?!hired:filter==="assigned"?hired&&!!owner:hired&&!owner;
   return match&&(e.name+" "+e.role+" "+P.primaryRole(e.id)).toLowerCase().includes(query.trim().toLowerCase());
  });
  return <div className="mt-work-flow">
   <div className="mt-work-section-head"><h3>Talent pool</h3><span>{s.staff.length}/{currentOffice(s).capacity} employed · {money(K.dailyPayroll(s))}/day</span></div>
+  <p className="mt-work-muted">Recruitment shortlist · Week {s.clock.week}. New applicants arrive when you End Week; hires keep their salary and development progress.</p>
   <div className="mt-work-filter" role="tablist" aria-label="Filter workforce">
    {(["available","assigned","recruit"] as const).map(f=><button key={f} type="button" role="tab" aria-selected={filter===f} className={filter===f?"active":""} onClick={()=>setFilter(f)}>{f==="available"?"Available ("+T.talentPool(s).length+")":f==="assigned"?"Assigned":"Recruit"}</button>)}
   </div>
@@ -200,11 +208,11 @@ function TalentPool({onEmployee}:{onEmployee:(id:string)=>void}){
    return <div className="mt-work-person-row" key={e.id}>
     <span className="mt-work-avatar"><UserRound size={17}/></span>
     <button type="button" className="mt-work-person-text" onClick={()=>onEmployee(e.id)}><b>{e.name}</b><small>{e.role} · Skill {Math.round(p.skill)}</small></button>
-    <span className="mt-work-person-meta">{owner?owner.brand:training?"Training":hired?"Available":money(e.salary)+"/mo"}</span>
+    <span className="mt-work-person-meta">{owner?owner.brand:training?"Training":hired?"Available":money(recruitmentFee(e))+" hire fee"}</span>
     {hired?<button aria-label={"View "+e.name} onClick={()=>onEmployee(e.id)} className="mt-work-row-next"><ChevronRight size={17}/></button>:
      <Button size="sm" disabled={!canHire(s,e.id)} onClick={()=>act((d,fx)=>K.hire(d,fx,e.id))}>Hire</Button>}
    </div>;
-  }):<div className="mt-work-empty"><Search size={24}/><b>No employees found</b><p>{filter==="available"?"Use Recruit to hire specialists or release an idle employee from a client.":"Change your filter or search."}</p></div>}
+  }):<div className="mt-work-empty"><Search size={24}/><b>No employees found</b><p>{filter==="available"?"Use Recruit to review this week’s applicants or release an idle employee from a client.":"Change your filter or wait for the next in-game week."}</p></div>}
  </div>;
 }
 export function ClientTeamBoard(){
