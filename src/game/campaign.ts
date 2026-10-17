@@ -3,7 +3,6 @@ import { AGENCY_REQ, COWORK_COST, clamp, creatives, hash, insights, money, optim
 import { newCampaign, type Campaign, type GameState, type ScoreResult } from "./state";
 import type { Fx } from "./store";
 import { ceoInit, ceoMigrateLegacy } from "./ceo";
-import { aggregateRuntime, decisionFit, makeCampaignRuntime, stepCampaignDay } from "./campaignRuntime";
 
 export const scenarioOf = (c: Campaign) => c.aiScenario ?? scenarios[c.scenarioIndex % scenarios.length];
 export const playerMoney = (s: GameState) => (s.agencyUnlocked ? s.agencyCash : s.personalCash);
@@ -29,19 +28,6 @@ export function surveyResults(s: GameState) {
 export function scoreModel(s: GameState, c: Campaign, mode: "final" | "interim" = "final"): ScoreResult {
   const sc = scenarioOf(c);
   const fit = { insight: +(c.insight === sc.trueInsight), segment: +(c.strategy.segment === sc.trueSegment), position: +(c.strategy.position === sc.truePosition), objective: +(c.strategy.objective === sc.trueObjective), creative: +(c.creative === sc.trueCreative) };
-  // Phase 1: the existing scoreModel becomes the single KPI projection interface.
-  // If a new daily runtime exists, read observed in-game metrics. CEO and legacy
-  // campaigns without runtime continue to use the original legacy scoring.
-  if (c.simulation) {
-    const measured = aggregateRuntime(c)!;
-    const pct = measured.lastUplift;
-    const quality = clamp(Math.round(decisionFit(c) * 80), 15, 99);
-    return {
-      pct, outcome: Math.round(sc.baseline * (1 + pct / 100)),
-      adReach: measured.reach, quality, fit,
-      performance: pct >= sc.target ? "target" : pct >= sc.target * .7 ? "near" : "under",
-    };
-  }
   const research = c.research.reduce((a, id) => a + (researchOptions.find((x) => x.id === id)?.quality ?? 0), 0);
   let qual = 0.46 + 0.055 * Math.min(3, research) + 0.11 * surveyQuality(s, c) + 0.12 * fit.insight + 0.11 * fit.segment + 0.08 * fit.position + 0.085 * fit.objective + 0.11 * fit.creative - Math.max(0, c.day - 7) * 0.012;
   if (s.upgrades.includes("creative")) qual += 0.025;
@@ -83,51 +69,22 @@ export function confirmCreative(s: GameState, fx: Fx, id: string) {
 export function launch(s: GameState, fx: Fx, media: Record<Channel, number>) {
   const c = s.campaign, total = Object.values(media).reduce((a, b) => a + b, 0);
   if (c.phase !== "media" || total < 500000 || total > scenarioOf(c).budget - c.spent) return;
-  c.media = { ...media }; c.spent += total; c.day = Math.max(c.day, 7); c.phase = "live";
-  // Commit, but do not double-charge media as each day actually delivers.
-  c.simulation = makeCampaignRuntime(c);
-  c.liveMetrics = scoreModel(s, c, "interim");
-  fx.log(`Campaign live! Committed media ${money(total)} · run ${c.simulation.duration} delivery days`);
+  c.media = { ...media }; c.spent += total; c.day = Math.max(c.day, 7); c.phase = "live"; c.liveMetrics = scoreModel(s, c, "interim");
+  fx.log(`Campaign live! Media ${money(total)}`);
 }
-/** The campaign advances only when the player clicks the in-game action. */
-export function advanceCampaignDay(s: GameState, fx: Fx, requestedDays = 1) {
-  const c = s.campaign;
-  if (s.agencyUnlocked || c.phase !== "live") return;
-  // Resume old saved games that were already in the Live phase.
-  if (!c.simulation) c.simulation = makeCampaignRuntime(c);
-  const days = Math.min(30, Math.max(1, Math.floor(requestedDays)));
-  for (let i = 0; i < days && c.phase === "live"; i++) {
-    const day = stepCampaignDay(c);
-    if (!day) break;
-    c.liveMetrics = scoreModel(s, c, "interim");
-    if (day.event) fx.log(`Campaign day ${day.day}: ${day.event}`);
-    if (c.simulation.elapsed >= c.simulation.duration) {
-      fx.log(`Media delivery completed after ${c.simulation.elapsed} days`);
-      finalize(s, fx);
-      break;
-    }
-  }
-}
-
 export function optimize(s: GameState, fx: Fx, choice: string) {
   const c = s.campaign, o = optimizations.find((x) => x.id === choice);
-  if (c.phase !== "live" || !o || c.optimization) return;
-  if (!c.simulation?.elapsed) return fx.toast("Run at least one day before optimizing.");
+  if (c.phase !== "live" || !o) return;
   if (!canPay(s, o.cost)) return fx.toast("Remaining budget too low — hold the plan.");
-  c.spent += o.cost;
-  c.optimization = choice;
-  // Cost of optimization is committed once; its effect changes FUTURE days.
-  fx.log(`Optimization selected: ${o.title} (${money(o.cost)}). Delivery continues.`);
-  fx.toast("Optimization applied to the remaining days.");
+  c.spent += o.cost; c.optimization = choice; c.phase = "results"; finalize(s, fx);
 }
 export function finalize(s: GameState, fx: Fx) {
   const c = s.campaign, sc = scenarioOf(c);
   if (c.final) return;
-  if (c.simulation && c.simulation.elapsed < c.simulation.duration) return;
   const r = scoreModel(s, c, "final");
   const qualityScore = clamp(Math.round(34 + r.quality * 0.34 + r.pct * 0.55 + (r.fit.insight + r.fit.segment + r.fit.objective) * 3), 15, 99);
   const rep = clamp(Math.round(6 + qualityScore / 6), 6, 25), xp = clamp(Math.round(4 + qualityScore / 12), 5, 13);
-  s.personalCash += sc.fee; s.reputation += rep; s.expertise += xp; c.day = Math.max(c.day, sc.days);
+  s.personalCash += sc.fee; s.reputation += rep; s.expertise += xp; c.day = sc.days;
   c.final = { ...r, qualityScore, rep, xp }; c.phase = "results";
   s.history.push({ brand: sc.brand, outcome: r.pct, score: qualityScore, spent: c.spent, rep, xp, scenarioIndex: c.scenarioIndex, agency: false });
   fx.log(`Delivered results: ${r.pct}% KPI, +${rep} REP, +${xp} XP`);
