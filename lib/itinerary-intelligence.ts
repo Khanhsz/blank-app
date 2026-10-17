@@ -110,9 +110,9 @@ export function analyzeDay(trip:Trip,dayIndex:number):DayIntelligence{
   warnings,interestMatches
  };
 }
-function isFlexible(a:Activity):boolean{
+function isFlexible(a:Activity,allowMealMoves:boolean):boolean{
  // Transport, stays and meal appointments are left in their time slots.
- return hasCoordinates(a)&&['sightseeing','culture','nature','other'].includes(a.category);
+ return hasCoordinates(a)&&(['sightseeing','culture','nature','other'].includes(a.category)||(allowMealMoves&&a.category==='food'));
 }
 function totalCost(order:Activity[]):number{return measuredDistance(order).meters;}
 /** Deterministic 2-opt over contiguous flexible visit blocks.
@@ -120,9 +120,9 @@ function totalCost(order:Activity[]):number{return measuredDistance(order).meter
  * their time slots stay fixed. Candidate start/end inherit existing time slots
  * only when the user explicitly applies the proposal.
  */
-export function optimizeDay(activities:Activity[]):RouteProposal{
+export function optimizeDay(activities:Activity[],allowMealMoves=false):RouteProposal{
  const initial=activities.slice();let current=initial.slice();
- const fixed=initial.filter(a=>!isFlexible(a)).map(a=>a.title);
+ const fixed=initial.filter(a=>!isFlexible(a,allowMealMoves)).map(a=>a.title);
  const before=totalCost(initial);
  if(activities.length<3)return {available:false,reason:'Add at least three stops to compare an alternative route.',beforeMeters:before,afterMeters:before,savedMeters:0,percentSaved:0,orderedIds:initial.map(a=>a.id),moved:[],preserved:fixed};
  let changes=true,passes=0;
@@ -131,9 +131,9 @@ export function optimizeDay(activities:Activity[]):RouteProposal{
   let best=current;
   let bestCost=totalCost(current);
   for(let start=0;start<current.length;start++){
-   if(!isFlexible(current[start]))continue;
+   if(!isFlexible(current[start],allowMealMoves))continue;
    let end=start;
-   while(end+1<current.length&&isFlexible(current[end+1]))end++;
+   while(end+1<current.length&&isFlexible(current[end+1],allowMealMoves))end++;
    if(end-start<1){start=end;continue;}
    for(let i=start;i<end;i++){
     for(let j=i+1;j<=end;j++){
@@ -151,8 +151,8 @@ export function optimizeDay(activities:Activity[]):RouteProposal{
  const moved=current.map((a,to)=>({id:a.id,title:a.title,from:initial.findIndex(x=>x.id===a.id),to})).filter(m=>m.from!==m.to);
  const available=savings>=150&&savings>=before*.05&&moved.length>0;
  return {available,reason:available?
-   'Only adjacent, flexible visits were reordered. Meal, stay and transport slots remain fixed.':
-   'No meaningful shorter order found without moving fixed meals, transfers or unmapped stops.',
+   allowMealMoves?'Route reordered after you opted to move meal slots. Stay and transport remain fixed.':'Only adjacent, flexible visits were reordered. Meal, stay and transport slots remain fixed.':
+   allowMealMoves?'No meaningful shorter order found while preserving stay, transport and unmapped stops.':'No meaningful shorter order found without moving fixed meals, transfers or unmapped stops.',
   beforeMeters:before,afterMeters:available?after:before,savedMeters:available?savings:0,
   percentSaved:available&&before?Math.round(savings/before*100):0,
   orderedIds:available?current.map(a=>a.id):initial.map(a=>a.id),
