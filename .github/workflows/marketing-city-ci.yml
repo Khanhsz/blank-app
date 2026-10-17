@@ -1,0 +1,26 @@
+name: Marketing City checks
+
+on:
+  pull_request:
+    branches:
+      - deploy/marketing-tycoon-lovable-world
+  push:
+    branches:
+      - optimize/marketing-city-renderer-20261018
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # The repository does not currently track an npm lockfile.
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build (includes typechecking and game tests)
+        run: npm run build
+      - name: Verify generated GLBs are byte-for-byte reproducible
+        run: npm run assets:verify
