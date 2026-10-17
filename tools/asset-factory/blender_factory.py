@@ -123,7 +123,19 @@ def run():
   for file in (base,hi,lo):
    if not args.preview_only or file!=lo:
     if not file.exists() or file.stat().st_size<100:raise RuntimeError("Output not created: "+str(file))
-  written.append({"id":spec["id"],"meshObjects":mesh_count,"blend":str(base),"lod0":str(hi),"lod1":str(lo)})
+  stages=[]
+  if spec["class"]=="rival" and not args.preview_only:
+   for tier in range(2,5):
+    stage={**spec,"tier":tier}
+    native=master_dir/(spec["id"]+".tier"+str(tier)+".blend")
+    front=out/(spec["id"]+".tier"+str(tier)+".lod0.glb")
+    distant=out/(spec["id"]+".tier"+str(tier)+".lod1.glb")
+    build_master(stage,0,front,native)
+    build_master(stage,1,distant,None)
+    for file in (native,front,distant):
+     if not file.exists() or file.stat().st_size<100:raise RuntimeError("Missing upgraded agency stage "+str(file))
+    stages.append({"tier":tier,"blend":str(native),"lod0":str(front),"lod1":str(distant)})
+  written.append({"id":spec["id"],"meshObjects":mesh_count,"blend":str(base),"lod0":str(hi),"lod1":str(lo),"stages":stages})
   print("MASTER VERIFIED",spec["id"],mesh_count,flush=True)
  (out/"blender-export-report.json").write_text(json.dumps({"generatedBy":"blender-bpy","assets":written},indent=2),encoding="utf8")
  print("FINISHED",len(written),"editables and GLB masters",flush=True)
