@@ -9,7 +9,7 @@ import {runRivalAgents,ensureTender,rivalBidScore,registerRivalWin,resolveTalent
 import {candidatesForRole,primaryRole,eligibleForRole,profile,effectiveCapacity,employeeReadiness,staffRate,defaultProfile,updatePersonnelDay,recordDelivery} from "./personnel";
 import {teamForProject,ownerTeam,startClientTeam,reconcileClientTeams,teamCoverage} from "./clientTeams";
 import {contractBrief} from "./clientMarket";
-import {ensureLocalPricing} from "./pricingAdvisor";
+import {ensureLocalPricing,qualificationQuote} from "./pricingAdvisor";
 
 const OVERHEAD = 160000;
 
@@ -189,8 +189,16 @@ export function hire(s: GameState, fx: Fx, id: string) {
 export function setSpeed(s: GameState, speed: number) { const c = ceoInit(s); if (c) c.speed = speed; }
 export function qualify(s: GameState, fx: Fx, id: string) {
   const c = ceoInit(s)!, l = lead(c, id); if (!l || !["new", "renewal"].includes(l.status)) return;
-  if (s.agencyCash < 180000) return fx.toast("Not enough cash to qualify this lead");
-  s.agencyCash -= 180000; ledger(c, "Lead qualification cost", -180000, l.brand); l.status = "qualified"; l.insightKnown = true; ensureLocalPricing(s,l); fx.log("Qualified opportunity · " + l.brand);
+  // Qualification is an actual research / procurement diligence expense.
+  // Snapshot the exact quoted amount before changing the lead's state.
+  const {fee,depth}=qualificationQuote(s,l);
+  if(s.agencyCash<fee)return fx.toast("Need "+money(fee)+" to qualify "+l.brand);
+  s.agencyCash-=fee;
+  ledger(c,"Lead qualification · "+depth+" diligence",-fee,l.brand);
+  l.qualifyFeePaid=fee;l.qualifyDepthPaid=depth;
+  l.status="qualified";l.insightKnown=true;
+  ensureLocalPricing(s,l);
+  fx.log("Qualified opportunity · "+l.brand+" · "+money(fee)+" diligence spend");
 }
 export function decline(s: GameState, id: string) { const l = lead(ceoInit(s)!, id); if (l && ["new", "qualified", "renewal"].includes(l.status)) l.status = "declined"; }
 export function startPitch(s: GameState, fx: Fx, id: string) {
