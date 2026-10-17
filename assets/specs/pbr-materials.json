@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "version": "mt-pbr-v1",
+  "colorSpace": "sRGB hexadecimal input → linear glTF baseColorFactor",
+  "renderMode": "opaque metallic-roughness (no transmission)",
+  "roles": [
+    {
+      "index": 0,
+      "name": "STRUCTURE_CONCRETE",
+      "roughness": 0.88,
+      "metallic": 0
+    },
+    {
+      "index": 1,
+      "name": "FACADE_PLASTER",
+      "roughness": 0.89,
+      "metallic": 0
+    },
+    {
+      "index": 2,
+      "name": "ROOF_CONCRETE",
+      "roughness": 0.91,
+      "metallic": 0
+    },
+    {
+      "index": 3,
+      "name": "WINDOW_GLASS",
+      "roughness": 0.26,
+      "metallic": 0.035
+    },
+    {
+      "index": 4,
+      "name": "ARCHITECTURAL_ACCENT",
+      "roughness": 0.8,
+      "metallic": 0
+    },
+    {
+      "index": 5,
+      "name": "PODIUM_STONE",
+      "roughness": 0.8,
+      "metallic": 0
+    },
+    {
+      "index": 6,
+      "name": "WINDOW_FRAME_METAL",
+      "roughness": 0.46,
+      "metallic": 0.74
+    },
+    {
+      "index": 7,
+      "name": "CURTAIN_WALL_GLASS",
+      "roughness": 0.3,
+      "metallic": 0.045
+    },
+    {
+      "index": 8,
+      "name": "ALUMINUM_CLADDING",
+      "roughness": 0.41,
+      "metallic": 0.76
+    },
+    {
+      "index": 9,
+      "name": "CONCRETE_PANEL",
+      "roughness": 0.91,
+      "metallic": 0
+    },
+    {
+      "index": 10,
+      "name": "DOOH_HOUSING",
+      "roughness": 0.45,
+      "metallic": 0.72
+    }
+  ],
+  "palettes": {
+    "clay": [
+      "#b8a99b",
+      "#e4d8c9",
+      "#6e7577",
+      "#577d89",
+      "#b45f48",
+      "#8b8c85",
+      "#2d414d",
+      "#4d7988",
+      "#aab5b6",
+      "#b9afa2",
+      "#33414b"
+    ],
+    "rose": [
+      "#c1aab0",
+      "#e8dbd6",
+      "#727c82",
+      "#6b8798",
+      "#b98088",
+      "#b3a9a3",
+      "#334552",
+      "#527a8b",
+      "#b9c4c7",
+      "#c9b9b8",
+      "#303f49"
+    ],
+    "mauve": [
+      "#a6a6b3",
+      "#dedde2",
+      "#6b707b",
+      "#617f94",
+      "#9b819a",
+      "#858a94",
+      "#2f424f",
+      "#517488",
+      "#a9b9c3",
+      "#b7b7c2",
+      "#303e4b"
+    ],
+    "sand": [
+      "#c3beb3",
+      "#e8e3d9",
+      "#85837c",
+      "#65818b",
+      "#bc8864",
+      "#aba397",
+      "#344650",
+      "#4e7786",
+      "#adb8b7",
+      "#cec8b9",
+      "#374750"
+    ],
+    "sage": [
+      "#adb9ac",
+      "#e4e9df",
+      "#677b7d",
+      "#557f86",
+      "#7b947e",
+      "#919c94",
+      "#31484b",
+      "#4e8884",
+      "#a6b6b2",
+      "#b4bfb4",
+      "#314349"
+    ],
+    "slate": [
+      "#9baab4",
+      "#e0e6e9",
+      "#536574",
+      "#537c91",
+      "#718ba0",
+      "#87939a",
+      "#293f4d",
+      "#416d84",
+      "#a2b6c1",
+      "#a9b8c3",
+      "#283a47"
+    ]
+  }
+}
