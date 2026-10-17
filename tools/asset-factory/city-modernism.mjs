@@ -1,3 +1,4 @@
+import {addArchitecturalFacades} from "./city-facades.mjs";
 /**
  * V2 city modernism — facade-coherent, physically bounded low-poly architectural grammar.
  * Source of truth for browser GLB generator. Each window is attached to a specific mass,
@@ -110,89 +111,13 @@ export function cityAnchors(a){
 export function buildCityModernist(box,a,lod=0){
  const p=cityBuildingPlan(a),w=a.width,d=a.depth,h=a.height;
  const b=(x,y,z,sx,sy,sz,mat)=>box(x,y,z,sx,sy,sz,mat);
- const glass=(v,side,wx,wy,span,glassH)=>{
-  // Reject windows on facades hidden by another mass, including courtyard/internal walls.
-  const x=side==="front"?wx:v.x+v.width/2+.07;
-  const z=side==="front"?v.z+v.depth/2+.07:wx;
-  const covered=p.volumes.some(other=>other!==v&&wy>other.bottom+.12&&wy<other.top-.12&&
-    Math.abs(x-other.x)<other.width/2-.03&&Math.abs(z-other.z)<other.depth/2-.03);
-  if(covered)return;
-  const backing=side==="front"?[span+.13,glassH+.13,.085]:[.085,glassH+.13,span+.13];
-  const pane=side==="front"?[span,glassH,.065]:[.065,glassH,span];
-  b(x,wy,z,...backing,6);
-  if(side==="front")b(x,wy,z+.065,...pane,3);
-  else b(x+.065,wy,z,...pane,3);
- };
  b(0,.13,0,w*.976,.26,d*.976,5);
  for(const [index,v] of p.volumes.entries()){
   b(v.x,v.bottom+v.height/2,v.z,v.width,v.height,v.depth,v.material);
-  // Roof trim hugs the mass it belongs to, not a bounding-box height.
+  // Each roof slab touches and caps its own physical mass.
   b(v.x,v.top+.105,v.z,v.width+.10,.21,v.depth+.10,index%3===1?4:2);
  }
- if(lod===0){
-  for(const v of p.volumes){
-   if(v.height<3.3||v.width<1.6)continue;
-   const rows=Math.min(4,Math.max(1,Math.floor((v.height-2.1)/2.45)));
-   const cols=Math.min(3,Math.max(1,Math.floor(v.width/2.12)));
-   for(let row=0;row<rows;row++){
-    const wy=v.bottom+1.88+row*((v.height-2.5)/Math.max(1,rows));
-    if(wy+1.0>v.top-.26)continue;
-    for(let col=0;col<cols;col++){
-     const span=Math.min(.98,v.width/(cols+1)*.56);
-     const wx=v.x+(col-(cols-1)/2)*v.width/(cols+.30);
-     const windowH=a.facade==="vertical"?1.07:a.facade==="balcony"?.58:.78;
-     glass(v,"front",wx,wy,span,windowH);
-    }
-    // Isometric camera sees the right side. Add physically attached side windows too.
-    if(v.depth>3.2){
-     const sideCols=Math.min(2,Math.max(1,Math.floor(v.depth/2.45)));
-     for(let col=0;col<sideCols;col++){
-      const wz=v.z+(col-(sideCols-1)/2)*v.depth/(sideCols+.6);
-      glass(v,"right",wz,wy,Math.min(.92,v.depth/(sideCols+1)*.46),.76);
-     }
-    }
-    if(a.facade==="ribbon"||a.facade==="modular"||a.facade==="grid"){
-     const face=v.z+v.depth/2+.05;
-     b(v.x,wy-.60,face,v.width*.81,.105,.12,2);
-    }
-   }
-  }
- }else{
-  // Distant LOD must NOT turn back into windowless pastel blocks.
-  const volumes=h>=7?p.volumes.filter(v=>v.height>h*.29).sort((a,b)=>b.top-a.top).slice(0,2):[];
-  for(const v of volumes){
-   const wy=v.bottom+v.height*.55;
-   glass(v,"front",v.x,wy,v.width*.52,Math.min(1.05,v.height*.14));
-   glass(v,"right",v.z,wy,v.depth*.41,Math.min(1.05,v.height*.14));
-  }
- }
- // Architecturally integrated entrance at an existing ground-level wall.
- const entry=p.entrance;
- b(entry.x,1.18,entry.z-.11,Math.min(w*.20,1.9),2.25,.11,6);
- b(entry.x,1.21,entry.z+.025,Math.min(w*.176,1.72),1.97,.07,3);
- b(entry.x,2.40,entry.z-.17,Math.min(w*.32,3.1),.22,.65,2);
- // Roof / parapet accents use physical bearing surfaces.
- const roof=p.primary;
- if(lod===0){
-  if(["pergola","green","terrace"].includes(a.roof)){
-   for(let k=-1;k<=1;k++)b(roof.x+k*roof.width*.27,roof.top+.44,roof.z,.12,.66,roof.depth*.56,4);
-   b(roof.x,roof.top+.80,roof.z,roof.width*.70,.13,roof.depth*.46,4);
-  }else if(["crown","spire"].includes(a.roof)){
-   b(roof.x,roof.top+.36,roof.z,roof.width*.63,.52,roof.depth*.61,6);
-  }else if(a.roof==="sawtooth"){
-   for(let k=-1;k<=1;k++)b(roof.x+k*roof.width*.22,roof.top+.35,roof.z,roof.width*.20,.54,roof.depth*.70,k===0?4:2);
-  }else if(["offset","cantilever"].includes(a.roof)){
-   b(roof.x+roof.width*.10,roof.top+.33,roof.z,roof.width*.68,.35,roof.depth*.70,4);
-  }
-  if(a.archetype==="grid"){
-   const v=p.primary;
-   for(let k=-1;k<=1;k++)b(v.x+k*v.width*.24,v.bottom+v.height*.50,v.z+v.depth/2+.11,.11,v.height*.72,.16,6);
-  }
-  if(a.archetype==="terraced"){
-   const v=p.volumes[0];
-   for(let k=0;k<2;k++)b(v.x,v.top-.38-k*.42,v.z+v.depth/2+.10,v.width*.76,.13,.24,4);
-  }
- }
+ addArchitecturalFacades(b,p,a,lod);
  // DOOH frame embeds onto a verified existing face; omit overlapping window geometry in the slot zone.
  if(p.dooh){
   const m=p.dooh;
