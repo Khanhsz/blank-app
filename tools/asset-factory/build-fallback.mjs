@@ -124,6 +124,7 @@ function main(){
    }
    lod["lod"+mode]={uri:"/assets/mt-city/"+cfg.version+"/"+name,triangles:data.triangles,bytes:data.buffer.length,materials:data.primitiveCount,sha256:crypto.createHash("sha256").update(data.buffer).digest("hex")};
   }
+  if(lod.lod1.triangles>lod.lod0.triangles)throw Error("Invalid LOD detail order for "+a.id+": low "+lod.lod1.triangles+" > high "+lod.lod0.triangles);
   // Expansion stages of each of the five actual rival agencies are separate 3D assets.
   const tiers={};
   if(a.class==="rival")for(let tier=2;tier<=4;tier++){
