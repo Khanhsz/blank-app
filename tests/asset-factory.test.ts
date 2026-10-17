@@ -168,3 +168,33 @@ test("old ambient cuboid buildings are completely removed and replaced with GLB 
  assert.match(renderer,/<CityCampaignMedia /);
  assert.match(renderer,/GAMEPLAY_HITBOX_/);
 });
+
+
+test("all five rival AI agencies have distinct real 3D models for tiers 1 through 4",()=>{
+ const rivals=manifest.assets.filter((a:{kind:string})=>a.kind==="rival");
+ assert.equal(rivals.length,5);
+ const allUri=new Set<string>();
+ for(const rival of rivals){
+  const entries=[rival.lod,...[2,3,4].map(t=>rival.tierLOD["tier"+t])];
+  const highTriangles=entries.map(x=>x.lod0.triangles);
+  for(let tier=1;tier<=4;tier++){
+   for(const lod of [0,1]){
+    const info=entries[tier-1]["lod"+lod];
+    assert.equal(info.uri,AssetRegistry.url(rival.id,lod as 0|1,tier));
+    assert.ok(!allUri.has(info.uri),"duplicate stage GLB path "+info.uri);
+    allUri.add(info.uri);
+    const bin=fs.readFileSync(path.join(generated,path.basename(info.uri)));
+    assert.equal(info.sha256,crypto.createHash("sha256").update(bin).digest("hex"));
+    const parsed=inspect(bin);
+    assert.equal(parsed.extras.id,rival.id);
+    assert.equal(parsed.extras.tier,tier);
+    assert.ok(parsed.nodes.some((n:{name:string})=>n.name==="COLLIDER_Footprint"));
+   }
+  }
+  assert.equal(new Set(highTriangles).size,4,"rival stage geometry should change visibly: "+rival.id);
+ }
+ const report=JSON.parse(fs.readFileSync(path.join(generated,"qa-report.json"),"utf8"));
+ assert.equal(report.glbFiles,112);
+ assert.equal(report.extraTierFiles,30);
+ assert.ok(report.extraTierBytes>0);
+});
