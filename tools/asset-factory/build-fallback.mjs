@@ -75,7 +75,7 @@ function glb(asset,lod){
   nodes:[{name:"MT_MASTER_"+asset.id,children:Array.from({length:1+anchors.length},(_,i)=>i+1),extras:{persistentGameEntity:asset.gameplayId||null,assetId:asset.id,lod}}, {name:"VISIBLE_MESH",mesh:0},...anchors],
   meshes:[{name:"merged_facade",primitives}],bufferViews,accessors,buffers:[{byteLength:offset}],
   materials:materials.map((hex,i)=>({name:"M_"+asset.palette+"_"+i,pbrMetallicRoughness:{baseColorFactor:[...rgb(hex),1],metallicFactor:i===3?.1:0,roughnessFactor:i===3?.62:.92},doubleSided:false})),
-  extras:{id:asset.id,version:cfg.version,source:"node-fallback",height:asset.height,width:asset.width,depth:asset.depth,triangles,archetype:asset.id==="office-brick"?BRICKHOUSE_ARCHETYPE:asset.archetype,advertisingSlots:slots}
+  extras:{id:asset.id,version:cfg.version,source:"node-fallback",height:asset.height,width:asset.width,depth:asset.depth,triangles,tier:asset.tier??1,archetype:asset.id==="office-brick"?BRICKHOUSE_ARCHETYPE:asset.archetype,advertisingSlots:slots}
  };
  const jsonBytes=textBytes(JSON.stringify(json));
  const j=Buffer.concat([jsonBytes,Buffer.alloc(align(jsonBytes.length)-jsonBytes.length,0x20)]);
@@ -98,7 +98,7 @@ export function parseGLB(buffer){
 }
 function main(){
  fs.mkdirSync(dest,{recursive:true});
- const ids=new Set(),out=[],qa=[];
+ const ids=new Set(),out=[],qa=[];let extraTierFiles=0,extraTierBytes=0,extraTierTris=0;
  if(cfg.masters.length!==cfg.auditedBuildingCount||cfg.masters.length!==41)throw Error("Incomplete whole-city manifest; expected all audited building instances");
  for(const a of cfg.masters){
   if(ids.has(a.id))throw Error("Duplicate ID: "+a.id);ids.add(a.id);
@@ -122,22 +122,40 @@ function main(){
    }
    lod["lod"+mode]={uri:"/assets/mt-city/"+cfg.version+"/"+name,triangles:data.triangles,bytes:data.buffer.length,materials:data.primitiveCount,sha256:crypto.createHash("sha256").update(data.buffer).digest("hex")};
   }
+  // Expansion stages of each of the five actual rival agencies are separate 3D assets.
+  const tiers={};
+  if(a.class==="rival")for(let tier=2;tier<=4;tier++){
+   const stage={...a,tier},stageLod={};
+   for(const mode of [0,1]){
+    const data=glb(stage,mode);
+    if(data.triangles>(mode===0?1800:360))throw Error("Rival stage exceeds budget "+a.id+" T"+tier+" LOD"+mode);
+    const name=a.id+".tier"+tier+".lod"+mode+".glb",file=path.join(dest,name);
+    if(process.argv.includes("--verify")){
+     if(!fs.existsSync(file)||!fs.readFileSync(file).equals(data.buffer))throw Error("Missing or inconsistent expansion GLB "+name);
+    }else fs.writeFileSync(file,data.buffer);
+    const parsed=parseGLB(data.buffer);
+    if(parsed.extras.id!==a.id||parsed.extras.tier!==tier)throw Error("Rival tier metadata mismatch");
+    stageLod["lod"+mode]={uri:"/assets/mt-city/"+cfg.version+"/"+name,triangles:data.triangles,bytes:data.buffer.length,sha256:crypto.createHash("sha256").update(data.buffer).digest("hex")};
+    extraTierFiles++;extraTierBytes+=data.buffer.length;if(mode===0)extraTierTris+=data.triangles;
+   }
+   tiers["tier"+tier]=stageLod;
+  }
   qa.push({id:a.id,kind:a.class,gameplayId:a.gameplayId||null,highTriangles:lod.lod0.triangles,lowTriangles:lod.lod1.triangles,highBytes:lod.lod0.bytes,lowBytes:lod.lod1.bytes});
   out.push({id:a.id,name:a.name,kind:a.class,gameplayId:a.gameplayId||null,decorative:!!a.decorative,district:a.district,
    position:[a.x,a.z],dimensions:[a.width,a.height,a.depth],footprint:[a.width,a.depth],previousAsset:a.priorAsset,
    anchors:Object.keys(a.id==="office-brick"?brickhouseAnchors(a):cityAnchors(a)),
    archetype:a.id==="office-brick"?BRICKHOUSE_ARCHETYPE:a.archetype,roof:a.roof,facade:a.facade,entrance:a.entrance,variant:a.variant,
    advertisingSlots:a.id==="office-brick"?brickhouseSlots(a):cityMediaSlots(a),
-   migrationStatus:"replaced",verificationStatus:"binary-pass-browser-pending",lod,palette:a.palette});
+   migrationStatus:"replaced",verificationStatus:"binary-pass-browser-pending",lod,tierLOD:tiers,palette:a.palette});
  }
  for(const d of cfg.decorativePlacements)if(!ids.has(d.id))throw Error("Missing placement asset "+d.id);
  const manifest={schemaVersion:2,version:cfg.version,district:cfg.district,units:"meters",up:"Y",front:"+Z",source:"web-fallback-not-blender",
  auditedBuildingCount:cfg.auditedBuildingCount,interactiveCount:cfg.auditedInteractiveCount,decorativeCount:cfg.auditedDecorativeCount,
  assets:out,decorativePlacements:cfg.decorativePlacements};
- const report={generatedAt:"reproducible-build",assetCount:qa.length,glbFiles:qa.length*2,totalTrianglesHigh:qa.reduce((x,y)=>x+y.highTriangles,0),totalBytesHigh:qa.reduce((x,y)=>x+y.highBytes,0),totalBytesLow:qa.reduce((x,y)=>x+y.lowBytes,0),assets:qa,passed:true,measuredBrowserFPS:false,measuredBrowserDrawCalls:false};
+ const report={generatedAt:"reproducible-build",assetCount:qa.length,glbFiles:qa.length*2+extraTierFiles,extraTierFiles,extraTierBytes,extraTierTris,totalTrianglesHigh:qa.reduce((x,y)=>x+y.highTriangles,0),totalBytesHigh:qa.reduce((x,y)=>x+y.highBytes,0),totalBytesLow:qa.reduce((x,y)=>x+y.lowBytes,0),assets:qa,passed:true,measuredBrowserFPS:false,measuredBrowserDrawCalls:false};
  const mFile=path.join(dest,"manifest.json"),qFile=path.join(dest,"qa-report.json");
  if(process.argv.includes("--verify")){if(!fs.existsSync(mFile)||fs.readFileSync(mFile,"utf8")!==JSON.stringify(manifest,null,2)+"\n")throw Error("Manifest mismatch")}
  else{fs.writeFileSync(mFile,JSON.stringify(manifest,null,2)+"\n");fs.writeFileSync(qFile,JSON.stringify(report,null,2)+"\n")}
- console.log("ART FACTORY",JSON.stringify({district:cfg.district,masters:qa.length,interactive:cfg.auditedInteractiveCount,decorative:cfg.auditedDecorativeCount,glbs:qa.length*2,triangles:report.totalTrianglesHigh,bytes:report.totalBytesHigh+report.totalBytesLow,verified:true}));
+ console.log("ART FACTORY",JSON.stringify({district:cfg.district,masters:qa.length,interactive:cfg.auditedInteractiveCount,decorative:cfg.auditedDecorativeCount,glbs:qa.length*2+extraTierFiles,triangles:report.totalTrianglesHigh,bytes:report.totalBytesHigh+report.totalBytesLow+extraTierBytes,rivalTierVariants:extraTierFiles,verified:true}));
 }
 main();
