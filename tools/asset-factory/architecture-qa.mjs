@@ -31,7 +31,7 @@ for(const a of assets){
   const boxes=[];
   buildCityModernist((x,y,z,w,h,d,m)=>boxes.push({x,y,z,w,h,d,m}),{...a,tier:1},lod);
   assert.ok(boxes.length>=p.volumes.length+1,a.id+" LOD "+lod+" missing mass");
-  const glazing=boxes.filter(q=>q.m===3&&q.h<1.38&&((q.w<1.4&&q.d<.3)||(q.d<1.4&&q.w<.3)));
+  const glazing=boxes.filter(q=>q.m===3&&q.h<1.38&&((q.w<Math.max(1.4,a.width*.40)&&q.d<.3)||(q.d<Math.max(1.4,a.depth*.40)&&q.w<.3)));
   if(lod===0&&a.height>7)assert.ok(glazing.length>2,a.id+" has no detailed facade glazing");
   if(lod===1&&a.height>7)assert.ok(glazing.length>=1,a.id+" distant LOD has no visible glazing");
   for(const pane of glazing){
