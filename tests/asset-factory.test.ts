@@ -162,7 +162,7 @@ test("old ambient cuboid buildings are completely removed and replaced with GLB 
  const source=fs.readFileSync("src/components/game/WorldScene.tsx","utf8");
  assert.doesNotMatch(source,/function AmbientBuildings/);
  assert.doesNotMatch(source,/<AmbientBuildings/);
- assert.match(source,/<ChunkManager quality=\{quality\}/);
+ assert.match(source,/<ChunkManager\/>/);
  const renderer=fs.readFileSync("src/components/game/AssetDistrict.tsx","utf8");
  assert.doesNotMatch(renderer,/OutdoorCampaignDisplay/);
  assert.match(renderer,/<CityCampaignMedia /);
@@ -222,4 +222,23 @@ test("single-authority city renderer contains zero legacy building models and no
  // Old GLB-error fallback no longer doubles the architecture, but gameplay
  // access still exists when a file is missing.
  assert.match(district,/MISSING_ASSET_/);
+});
+
+
+test("every city building loads full-detail LOD0 irrespective of camera, graphics setting or selection",()=>{
+ const renderer=fs.readFileSync("src/components/game/AssetDistrict.tsx","utf8");
+ const world=fs.readFileSync("src/components/game/WorldScene.tsx","utf8");
+ assert.doesNotMatch(renderer,/\bLODManager\b|setLod\(|onLOD=/);
+ assert.doesNotMatch(renderer,/distance.*66|lod\s*===\s*1/);
+ assert.match(renderer,/<BuildingVisual b=\{b\} lod=\{0\}/);
+ assert.match(renderer,/<ModelGeometry id=\{id\} lod=\{0\}/);
+ assert.match(renderer,/AssetRegistry\.url\(b\.id,0,b\.tier\)/);
+ assert.match(world,/<DistrictManager districts=\{districts\} selected=\{selected\} onSelect=\{onSelect\}\/>/);
+ assert.match(world,/<ChunkManager\/>/);
+ // Quality remains a renderer concern (DPR/shadows) and must not downshift architecture.
+ assert.match(world,/shadows=\{quality==="high"\}/);
+ const r=fs.readFileSync("src/components/game/CityCampaignMedia.tsx","utf8");
+ const h=fs.readFileSync("src/components/game/BrickhouseCampaignMedia.tsx","utf8");
+ assert.match(r,/AssetRegistry\.url\(b\.id,lod,b\.tier\)/);
+ assert.match(h,/AssetRegistry\.url\(b\.id,lod\)/);
 });
