@@ -4,7 +4,7 @@ import type {GameState,Lead,PricingAdvice} from "./state";
 
 const API="https://marketing-tycoon-ai-api.onrender.com";
 export interface PricingContext{
- leadId:string;brand:string;industry:string;objective:string;preference:"performance"|"creative"|"cost"|"strategy";
+ leadId:string;brand:string;industry:string;objective:string;preference:"performance"|"creative"|"cost"|"strategy";businessSize?:"small"|"medium"|"large"|"enterprise";
  mediaBudget:number;baselineFee:number;scope:number;duration:number;difficulty:number;target:number;intensity:number;
  estimatedCost:number;competitorIndex:number;staffCount:number;
 }
@@ -13,7 +13,7 @@ export function pricingContext(s:GameState,l:Lead):PricingContext{
  const rivals=l.rivalIds.map(id=>s.ceo?.rivals.find(r=>r.id===id)?.price).filter((n):n is number=>typeof n==="number"&&Number.isFinite(n));
  const index=rivals.length?rivals.reduce((a,b)=>a+b,0)/rivals.length:1;
  return {
-  leadId:l.id,brand:l.brand,industry:l.industry,objective:l.objective,preference:l.pref,
+  leadId:l.id,brand:l.brand,industry:l.industry,objective:l.objective,preference:l.pref,businessSize:l.businessSize,
   mediaBudget:l.value,baselineFee:l.fee,scope:l.scope,duration:l.duration,
   difficulty:l.difficulty,target:l.target,intensity:l.intensity,
   estimatedCost:Math.min(2000000000,Math.max(0,Math.round(l.fee-estimate.margin))),
@@ -21,7 +21,7 @@ export function pricingContext(s:GameState,l:Lead):PricingContext{
  };
 }
 export const pricingFingerprint=(x:PricingContext)=>JSON.stringify([
- x.leadId,x.mediaBudget,x.baselineFee,x.scope,x.duration,x.estimatedCost,x.competitorIndex,x.staffCount
+ x.leadId,x.mediaBudget,x.baselineFee,x.scope,x.duration,x.businessSize,x.estimatedCost,x.competitorIndex,x.staffCount
 ]);
 export function validatedAdvice(raw:unknown,x:PricingContext):PricingAdvice{
  if(!raw||typeof raw!=="object")throw Error("Invalid pricing advice");
