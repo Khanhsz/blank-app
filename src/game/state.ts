@@ -47,10 +47,18 @@ export type WorkStyle="balanced"|"speed"|"quality";
 export interface PersonnelProfile {skill:number;morale:number;fatigue:number;xp:number;focus:WorkStyle;trainingUntil?:number;pendingSkill?:number;lastFocusWeek?:number;}
 export interface Task {preferredEmployee?:string|null; key: string; label: string; role: string; effort: number; pre: string[]; cost: number; status: "backlog" | "assigned" | "in_progress" | "review" | "completed"; progress: number; quality: number; employee: string | null; outsourced: boolean; revised?: boolean; reviewDay?: number; assignedDay?: number; startedDay?: number; doneDay?: number }
 export interface Project { priority?:"normal"|"high"; id: string; leadId: string; brand: string; adBudget: number; fee: number; bonus: number; scope: number; duration: number; industry: string; days: number; status: "active" | "completed"; scenarioIndex: number; startedDay: number; target: number; pitchQuality: number; mediaSpent: number; mediaReserved: number; direct: number; campaign: Campaign; tasks: Task[]; paymentCount: number; payrollAllocated?: number; overheadAllocated?: number; deadlineIssue?: boolean; midpoint?: boolean; kolQuality?: number; reportQuality?: number; kpi?: number; quality?: number; margin?: number; clientTrust?: number; completedDay?: number; legacy?: boolean }
-export interface Lead extends LeadDef { status: "new" | "qualified" | "pitch" | "pitch_won" | "negotiating" | "signed" | "lost" | "declined" | "renewal"; relationship: number; insightKnown?: boolean; lostTo?: string }
+export type PriceTier="competitive"|"balanced"|"premium";
+export interface PricingAdvice {
+ leadId:string;brand:string;mediaBudget:number;baselineFee:number;
+ companyScale:"growing"|"regional"|"national";estimatedCost:number;feeFloor:number;feeCeiling:number;
+ options:Record<PriceTier,number>;tier:PriceTier;recommendedFee:number;
+ headline:string;rationale:string;preparation:string[];risk:string;
+ source:"gemini"|"rules";contextKey?:string;
+}
+export interface Lead extends LeadDef { pricingAdvice?:PricingAdvice; status: "new" | "qualified" | "pitch" | "pitch_won" | "negotiating" | "signed" | "lost" | "declined" | "renewal"; relationship: number; insightKnown?: boolean; lostTo?: string }
 export interface Issue { id: string; type: string; project: string; message: string; choices: string[]; status: "open" | "resolved"; day: number; resolution?: string }
 export interface LedgerEntry { day: number; what: string; value: number; lead: string; status: "paid" | "due"; due?: number; project?: string }
-export interface Pitch { id: string; focus: string; price: string; team: string; evidence: string; step: "prepare" | "objection" | "result"; quality: number; objection: string | null; result: { winner: string; playerScore: number; topRival: string; topScore: number; explanation: string } | null }
+export interface Pitch { id: string; focus: string; price: string; bidFee?:number; team: string; evidence: string; step: "prepare" | "objection" | "result"; quality: number; objection: string | null; result: { winner: string; playerScore: number; topRival: string; topScore: number; explanation: string } | null }
 export interface Negotiation { id: string; round: number; fee: number; scope: number; advance: number; deadline: number; bonus: number; trust: number; notes: string[]; status: "open" | "signed" | "lost" | "walked"; counter: { fee: number; scope: number; advance: number; deadline: number } | null }
 export interface RivalTender {leadId:string;deadline:number;rivalId:string;score:number;fee:number;status:"open"|"won"|"player"|"closed"}
 export interface RivalEvent {id:string;day:number;rivalId:string;kind:"pitch"|"win"|"expand"|"hire"|"poach"|"market"|"loss";message:string}
