@@ -280,3 +280,17 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 @media(prefers-reduced-motion:reduce){
  .mt-timeline-point,.mt-begin-button,.mt-chart-fill,.mt-gauge-fill,.mt-decision{animation:none!important;transition:none!important}
 }
+
+
+/* Fast-start loading state and milestone presentation */
+.mt-world-loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:11px;background:radial-gradient(ellipse at 55% 35%,#fbefdf,#d8c9b8);color:#5e4e43;z-index:3}
+.mt-world-loader b{font:26px Georgia,serif}
+.mt-world-loader small{color:#8b786b;letter-spacing:.09em;font-size:10px}
+.mt-world-loader-spin{width:35px;height:35px;border-radius:50%;border:3px solid #e6d5c1;border-top-color:#b3654a;animation:mt-load-spin .8s linear infinite}
+@keyframes mt-load-spin{to{transform:rotate(360deg)}}
+.mt-milestone{position:absolute;z-index:50;left:50%;top:111px;transform:translateX(-50%);pointer-events:none;display:flex;align-items:center;gap:14px;min-width:300px;max-width:calc(100vw - 30px);padding:15px 20px;background:#342b26;color:#fff6e8;border:1px solid #9e816a;border-radius:15px;box-shadow:0 14px 47px #382b2790}
+.mt-milestone>svg:first-child{color:#edbb81}.mt-milestone>svg:last-child{margin-left:auto;color:#e4b47c}
+.mt-milestone small{display:block;letter-spacing:.16em;font-size:8px;color:#d3b29a;font-weight:900}
+.mt-milestone strong{display:block;font-size:12px;margin-top:6px;letter-spacing:.025em}
+@media(max-width:750px){.mt-milestone{top:81px;min-width:0;width:calc(100% - 20px);padding:11px 14px}.mt-milestone strong{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.mt-world-loader-spin{animation:none!important}}
