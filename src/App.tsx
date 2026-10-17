@@ -13,6 +13,7 @@ import {endWeek,acknowledgeEdition} from "./game/weekly";
 import {initStore,useGame,act,getState} from "./game/store";
 import * as K from "./game/ceo";
 import {prepareNextBrief} from "./game/automaticBrief";
+import {prepareAgencyPricing} from "./game/automaticPricing";
 import {money,BRAND_HQ_REP} from "./game/data";
 import {cityLots,findOffice,currentOffice,cityCounts,type DistrictKind} from "./game/city";
 import {AssetRegistry} from "./components/game/AssetRegistry";
@@ -76,6 +77,8 @@ export default function App(){
  // Every unaccepted freelance brief begins with Gemini automatically, whether
  // the player is looking at the bedroom or opening the computer.
  useEffect(()=>{prepareNextBrief()},[s.created,s.agencyUnlocked,s.campaign.phase,s.campaign.briefId,s.campaign.aiStatus]);
+ // Pricing now runs as a mandatory part of agency lead qualification and pitch preparation.
+ useEffect(()=>{prepareAgencyPricing()},[s.agencyUnlocked,s.ceo?.leads,s.ceo?.pitch?.id,s.staff.length]);
  useEffect(()=>{if(panel!=="ceo"||!s.agencyUnlocked)return;const board=!!(s.ceo?.pitch||s.ceo?.negotiation);if(board&&s.scene!=="boardroom")act(d=>{d.scene="boardroom"});else if(!board&&s.scene==="boardroom")act(d=>{d.scene="office"})},[panel,s.agencyUnlocked,!!s.ceo?.pitch,!!s.ceo?.negotiation,s.scene]);
  useEffect(()=>{const p=previousMilestones.current;let message="";
   if(!p.city&&s.cityUnlocked)message="MARKETING CITY UNLOCKED";
