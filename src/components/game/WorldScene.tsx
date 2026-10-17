@@ -79,7 +79,34 @@ function City({ districts, onSelect, selected }: { districts: District[]; onSele
   );
 }
 
-function Room({ r, c }: { r: RoomStyle; c: Character }) {
+
+function BedroomComputer({ onInteract }: { onInteract: () => void }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <group position={[-2.5, 0, -4.1]}>
+      <group
+        onPointerOver={(e) => { e.stopPropagation(); setHover(true); document.body.style.cursor = "pointer"; }}
+        onPointerOut={() => { setHover(false); document.body.style.cursor = "auto"; }}
+        onClick={(e) => { e.stopPropagation(); onInteract(); }}>
+        <mesh position={[0, 1.2, 0]} castShadow><boxGeometry args={[1.45, 1.05, 0.16]} /><meshStandardMaterial color="#27221f" roughness={0.6}/></mesh>
+        <mesh position={[0, 1.2, 0.095]}>
+          <planeGeometry args={[1.28, 0.85]} />
+          <meshStandardMaterial color="#24464b" emissive={hover ? "#70c8b1" : "#4c9589"} emissiveIntensity={hover ? 1.05 : 0.65} />
+        </mesh>
+        <mesh position={[0, 0.92, 0.51]} castShadow><boxGeometry args={[1.2, 0.07, 0.42]} /><meshStandardMaterial color="#47413e" /></mesh>
+        <mesh position={[0, 0.975, 0.53]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[0.95, 0.25]} /><meshStandardMaterial color="#c5bcb2" /></mesh>
+      </group>
+      <Html position={[0, 2.2, 0.06]} center distanceFactor={11}>
+        <button id="bedroom-computer" type="button" data-testid="bedroom-computer" className="room-pc-label" onClick={onInteract}>
+          <span className="pc-dot"/> USE COMPUTER <span aria-hidden="true">↗</span>
+        </button>
+      </Html>
+      <pointLight position={[0, 1.5, 0.7]} color="#9dd2c8" intensity={hover ? 1.5 : 0.75} distance={3} />
+    </group>
+  );
+}
+
+function Room({ r, c, onComputerInteract }: { r: RoomStyle; c: Character; onComputerInteract: () => void }) {
   return (
     <>
       <mesh rotation-x={-Math.PI / 2} receiveShadow><planeGeometry args={[10, 10]} /><meshStandardMaterial color="#c9a582" /></mesh>
@@ -87,7 +114,7 @@ function Room({ r, c }: { r: RoomStyle; c: Character }) {
       <mesh position={[-5, 2.5, 0]} receiveShadow><boxGeometry args={[0.2, 5, 10]} /><meshStandardMaterial color={r.wall} /></mesh>
       <mesh rotation-x={-Math.PI / 2} position={[0.5, 0.02, 0.5]}><circleGeometry args={[2.2, 32]} /><meshStandardMaterial color={r.rug} /></mesh>
       <mesh position={[-2.5, 0.75, -3.8]} castShadow><boxGeometry args={[3, 0.15, 1.4]} /><meshStandardMaterial color="#8a6a4f" /></mesh>
-      <mesh position={[-2.5, 1.2, -4.1]} castShadow><boxGeometry args={[1.2, 0.8, 0.08]} /><meshStandardMaterial color="#27221f" emissive="#4c9589" emissiveIntensity={0.4} /></mesh>
+      <BedroomComputer onInteract={onComputerInteract}/>
       <mesh position={[3, 0.4, -3]} castShadow><boxGeometry args={[2.6, 0.6, 3.6]} /><meshStandardMaterial color="#e8dccb" /></mesh>
       {r.plant && <Tree x={3.8} z={2.8} />}
       {r.lamp && <><mesh position={[-4, 1.2, 2]}><cylinderGeometry args={[0.05, 0.05, 2.4]} /><meshStandardMaterial color="#27221f" /></mesh><pointLight position={[-4, 2.5, 2]} intensity={6} color="#ffd9a8" /><mesh position={[-4, 2.5, 2]}><sphereGeometry args={[0.3]} /><meshStandardMaterial emissive="#ffd9a8" emissiveIntensity={2} color="#fff" /></mesh></>}
@@ -117,7 +144,7 @@ function Office({ c, staff, board }: { c: Character; staff: number; board: boole
   );
 }
 
-export function WorldScene(props: { scene: SceneId; districts: District[]; selected: string | null; onSelect: (id: string) => void; character: Character; room: RoomStyle; staff: number; quality: "high" | "low" }) {
+export function WorldScene(props: { scene: SceneId; districts: District[]; selected: string | null; onSelect: (id: string) => void; character: Character; room: RoomStyle; staff: number; quality: "high" | "low"; onComputerInteract: () => void }) {
   const city = props.scene === "city";
   return (
     <Canvas shadows={props.quality === "high"} dpr={props.quality === "high" ? [1, 2] : 1} camera={{ position: city ? [26, 26, 30] : [9, 8, 11], fov: 45 }} key={props.scene}>
@@ -127,7 +154,7 @@ export function WorldScene(props: { scene: SceneId; districts: District[]; selec
       <directionalLight position={[15, 25, 10]} intensity={1.6} castShadow shadow-mapSize={[1024, 1024]} shadow-camera-left={-40} shadow-camera-right={40} shadow-camera-top={40} shadow-camera-bottom={-40} />
       <Environment resolution={64}><Lightformer intensity={1.5} position={[0, 6, 0]} scale={[10, 10, 1]} /><Lightformer intensity={0.8} color="#9cc7c4" position={[-6, 2, 0]} rotation-y={Math.PI / 2} scale={[20, 2, 1]} /></Environment>
       {city && <City districts={props.districts} onSelect={props.onSelect} selected={props.selected} />}
-      {props.scene === "room" && <Room r={props.room} c={props.character} />}
+      {props.scene === "room" && <Room r={props.room} c={props.character} onComputerInteract={props.onComputerInteract} />}
       {(props.scene === "office" || props.scene === "boardroom") && <Office c={props.character} staff={props.staff} board={props.scene === "boardroom"} />}
       <OrbitControls enablePan enableDamping maxPolarAngle={Math.PI / 2.3} minDistance={6} maxDistance={city ? 70 : 22} />
     </Canvas>
