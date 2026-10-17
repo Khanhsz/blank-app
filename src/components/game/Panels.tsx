@@ -8,7 +8,7 @@ import * as C from "@/game/campaign";
 import * as K from "@/game/ceo";
 import { ceoPartners, ceoRoles, creatives, employees, insights, mediaChannels, money, objectives, optimizations, positions, researchOptions, segments, surveyCosts, upgrades, BRAND_HQ_REP, type Channel, type UpgradeId } from "@/game/data";
 import { PHASES, PHASE_LABEL } from "@/game/state";
-import {findCityLot,findOffice,currentOffice,cityRival,leaseOffice} from "@/game/city";
+import {findCityLot,findOffice,currentOffice,cityRival,cityClient,leaseOffice} from "@/game/city";
 
 const Choice = ({ on, onClick, title, sub }: { on?: boolean; onClick: () => void; title: string; sub?: string }) => (
   <DecisionCard active={on} onClick={onClick} title={title} description={sub}/>
@@ -72,6 +72,33 @@ export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaig
       <div className="mt-location-fact"><b>Competitive intelligence</b><p>Pricing index {rival.price.toFixed(2)}× market baseline · Strategic aggression {Math.round(rival.aggression*100)}%. Rivals evolve as simulated agency time advances.</p></div>
       {!s.agencyUnlocked?<FeedbackStrip>Found your own agency to compete in major pitch battles. This is a real rival from the simulated market, not a decorative building.</FeedbackStrip>:
        <Button className="w-full" onClick={()=>onOpen("ceo")}>Open CEO competitive intelligence →</Button>}
+     </div>;
+  }
+
+  if(lot?.kind==="client" && lot.clientId){
+    const l=cityClient(s,lot.clientId);
+    if(!l)return <FeedbackStrip>This client is not available in your current game state.</FeedbackStrip>;
+    const live=s.ceo?.leads.find(x=>x.id===l.id);
+    const status=live?.status||"future";
+    const activeNegotiation=!!(s.ceo?.negotiation||s.ceo?.pitch);
+    const opportunityOpen=status==="new"||status==="renewal";
+    const qualifyAffordable=s.agencyCash>=180000;
+    const canPitch=status==="qualified"&&s.agencyCash>=500000&&!activeNegotiation;
+    const scope=l.duration+" days · "+l.scope+" workstreams";
+    return <div className="mt-city-building-panel">
+      <div className="mt-location-identity"><span className="mt-location-eyebrow">CORPORATE CLIENT HQ · {lot.district}</span><h3>{l.brand}</h3><p>{l.industry} · {l.origin}</p></div>
+      <div className="mt-client-status"><span>ACCOUNT STATUS</span><strong>{s.agencyUnlocked?status.replaceAll("_"," ").toUpperCase():"FUTURE OPPORTUNITY"}</strong></div>
+      <p className="mt-client-brief">{l.desc}</p>
+      <div className="mt-location-stat-grid"><GameStat label="CAMPAIGN BUDGET" value={money(l.value)}/><GameStat label="AGENCY FEE" value={money(l.fee)}/><GameStat label="DIFFICULTY" value={Math.round(l.difficulty)+"/100"}/></div>
+      <div className="mt-location-fact"><b>Client requirements</b><p>{l.objective} · {scope}. Preferred capability: {l.pref}. You will compete with other agencies in the city.</p></div>
+      {!s.agencyUnlocked?<FeedbackStrip>This is a potential corporate client. Found your own agency to qualify their lead and compete for the account.</FeedbackStrip>:
+       <div className="mt-client-actions">
+        {opportunityOpen&&<Button className="w-full" disabled={!qualifyAffordable} onClick={()=>act((d,fx)=>K.qualify(d,fx,l.id))}>Qualify opportunity · 180,000đ</Button>}
+        {status==="qualified"&&<Button className="w-full" disabled={!canPitch} onClick={()=>act((d,fx)=>K.startPitch(d,fx,l.id))}>Prepare competitive pitch · 500,000đ</Button>}
+        {status==="qualified"&&activeNegotiation&&<FeedbackStrip>Finish your ongoing pitch or negotiation before beginning another.</FeedbackStrip>}
+        {!["new","renewal","qualified"].includes(status)&&<FeedbackStrip tone={status==="signed"?"positive":"neutral"}>{status==="signed"?"Contract signed — your staff manage delivery in Agency HQ.":status==="lost"?"This opportunity was won by a rival.":status==="declined"?"You previously declined this account.":status==="pitch"||status==="pitch_won"||status==="negotiating"?"This account is progressing through the boardroom.":"Check the active pipeline for this account."}</FeedbackStrip>}
+        <Button variant="outline" className="w-full" onClick={()=>onOpen("ceo")}>Open CEO deal pipeline →</Button>
+       </div>}
      </div>;
   }
   if(lot?.kind==="office"){
