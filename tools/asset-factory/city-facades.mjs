@@ -25,7 +25,7 @@ export function addArchitecturalFacades(box,p,a,lod){
  const b=(x,y,z,w,h,d,m)=>box(x,y,z,w,h,d,m);
  const detailed=lod===0;
  // More than one real material has to be visible on every level, even at reduced LOD.
- const glassBudget=detailed?54:11;let rendered=0,frontCount=0,sideCount=0;
+ const glassBudget=detailed?42:11; // capped for 1800-triangle maximumlet rendered=0,frontCount=0,sideCount=0;
  const featureVolumes=[...p.volumes].sort((a,b)=>b.height-a.height||b.width-a.width);
  // Deterministic facade treatment: different building uses receive different
  // amounts of glass, concrete panels and metal, rather than random pastel cubes.
