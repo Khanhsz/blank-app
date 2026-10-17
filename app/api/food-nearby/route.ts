@@ -8,7 +8,14 @@ const USER_AGENT = 'TripMateTravelPlanner/0.5 (https://tripmate-ai-khanhsz.onren
 const TTL = 45 * 60 * 1000;
 const MIN_INTERVAL_MS = 3000;
 const LIMIT_PER_15_MIN = 10;
-const API = 'https://overpass-api.de/api/interpreter';
+// Documented free, global OSM Overpass mirrors. Public services may be unavailable.
+// Respect community resource limits: one user-initiated lookup, at most one
+// request per mirror, and no automatic background polling.
+const MIRRORS = [
+  'https://overpass.private.coffee/api/interpreter',
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.osm.jp/api/interpreter'
+] as const;
 let lastRequestTime = 0;
 const cache = new Map<string, { expires: number; value: NearbyResponse }>();
 const perIp = new Map<string, { until: number; count: number }>();
@@ -73,28 +80,52 @@ function parseVenue(item:OsmElement,lat:number,lng:number):Venue|null {
   };
 }
 async function queryOverpass(lat:number,lng:number):Promise<NearbyResponse>{
-  const around='(around:1400,'+lat.toFixed(5)+','+lng.toFixed(5)+')';
-  const query='[out:json][timeout:12];(nwr'+around+'["amenity"~"^(restaurant|cafe|fast_food|ice_cream)$"];nwr'+around+'["shop"="bakery"];);out center 350;';
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),14500);
-  try {
-    const result=await fetch(API,{
-      method:'POST',
-      headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'application/json','User-Agent':USER_AGENT},
-      body:new URLSearchParams({data:query}).toString(),
-      signal:controller.signal,cache:'no-store'
-    });
-    if(!result.ok)throw Error('Upstream service error: '+result.status);
-    const json=await result.json() as OverpassResponse;
-    if(!Array.isArray(json.elements))throw Error('Unexpected response');
-    const seen=new Set<string>();
-    const places=json.elements.map(item=>parseVenue(item,lat,lng)).filter((p):p is Venue=>!!p)
-      .filter(p=>{const k=p.name.trim().toLocaleLowerCase()+'|'+Math.round(p.lat*5000)+'|'+Math.round(p.lng*5000);if(seen.has(k))return false;seen.add(k);return true;})
-      .sort((a,b)=>a.distanceMeters-b.distanceMeters)
-      .slice(0,48);
-    return {places,source:'OpenStreetMap',
-      ...(places.length?{}:{message:'No named food or drink venues were found in OpenStreetMap within about 1.4 km. Try a different stop.'})};
-  } finally {clearTimeout(timer);}
+  // Smaller geographical search and only named venues reduce community CPU cost.
+  const around='(around:900,'+lat.toFixed(5)+','+lng.toFixed(5)+')';
+  const query='[out:json][timeout:10];(nwr'+around+'["amenity"~"^(restaurant|cafe|fast_food|ice_cream)$"]["name"];nwr'+around+'["shop"="bakery"]["name"];);out center 150;';
+  const attempts:string[]=[];
+  for(const [index,endpoint] of MIRRORS.entries()){
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),index===0?9500:8500);
+    try{
+      const response=await fetch(endpoint,{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/x-www-form-urlencoded',
+          'Accept':'application/json',
+          'User-Agent':USER_AGENT
+        },
+        body:new URLSearchParams({data:query}).toString(),
+        signal:controller.signal,cache:'no-store'
+      });
+      if(!response.ok){
+        attempts.push('mirror '+(index+1)+': HTTP '+response.status);
+        continue;
+      }
+      const raw=await response.json() as OverpassResponse;
+      if(!Array.isArray(raw.elements)){
+        attempts.push('mirror '+(index+1)+': malformed or rejected data');
+        continue;
+      }
+      const seen=new Set<string>();
+      const places=raw.elements.map(item=>parseVenue(item,lat,lng)).filter((p):p is Venue=>!!p)
+        .filter(p=>{
+          const k=p.name.trim().toLocaleLowerCase()+'|'+Math.round(p.lat*5000)+'|'+Math.round(p.lng*5000);
+          if(seen.has(k))return false;
+          seen.add(k);
+          return true;
+        })
+        .sort((a,b)=>a.distanceMeters-b.distanceMeters)
+        .slice(0,48);
+      return {places,source:'OpenStreetMap',
+        ...(places.length?{}:{message:'No named restaurants or cafes in the OpenStreetMap data near this stop. Try another mapped place.'})};
+    }catch(e){
+      attempts.push('mirror '+(index+1)+': '+(e instanceof Error?e.name:'connection error'));
+    }finally{clearTimeout(timer);}
+  }
+  // Never expose platform addresses, upstream response bodies or logs to the client.
+  console.warn('[food-nearby] Overpass mirrors unavailable: '+attempts.join('; '));
+  throw new Error('Public Overpass servers temporarily unavailable');
 }
 function error(message:string,status=400){
   return NextResponse.json({error:message},{status,headers:{'Cache-Control':'no-store'}});
@@ -117,7 +148,7 @@ export async function POST(request:NextRequest){
   if(perIp.size>1000)for(const [id,v] of perIp)if(v.until<now)perIp.delete(id);
   const v=perIp.get(ip);
   if(v&&v.until>now&&v.count>=LIMIT_PER_15_MIN)return error('Too many lookups. Please try again later.',429);
-  if(now-lastRequestTime<MIN_INTERVAL_MS)return error('The community map service is busy. Please retry in a few seconds.',429);
+  if(now-lastRequestTime<MIN_INTERVAL_MS)return error('A nearby-place search was just made. Please wait a few seconds, then retry.',429);
   perIp.set(ip,v&&v.until>now?{until:v.until,count:v.count+1}:{until:now+15*60*1000,count:1});
   lastRequestTime=now;
   const promise=queryOverpass(lat,lng);
@@ -127,6 +158,6 @@ export async function POST(request:NextRequest){
     if(cache.size>=250){for(const [k,v] of cache)if(v.expires<now)cache.delete(k);if(cache.size>=250)cache.delete(cache.keys().next().value!);}
     cache.set(key,{expires:Date.now()+(result.places.length?TTL:5*60*1000),value:result});
     return NextResponse.json(result,{headers:{'Cache-Control':'private, no-store'}});
-  }catch{return error('OpenStreetMap place discovery is temporarily unavailable. Please retry later.',503);}
+  }catch{return error('Public OpenStreetMap search servers are busy. Please retry in a minute or use another mapped stop.',503);}
   finally{inflight.delete(key);}
 }
