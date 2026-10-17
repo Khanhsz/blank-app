@@ -1,3 +1,4 @@
+import {MATERIAL_ROLE as MAT} from "./material-system.mjs";
 /**
  * Marketing Tycoon: real wall-mounted facade finishes (all modernist archetypes).
  * Works with the same Y-up cuboid emitter as the GLB factory.
@@ -26,6 +27,12 @@ export function addArchitecturalFacades(box,p,a,lod){
  // More than one real material has to be visible on every level, even at reduced LOD.
  const glassBudget=detailed?54:11;let rendered=0,frontCount=0,sideCount=0;
  const featureVolumes=[...p.volumes].sort((a,b)=>b.height-a.height||b.width-a.width);
+ // Deterministic facade treatment: different building uses receive different
+ // amounts of glass, concrete panels and metal, rather than random pastel cubes.
+ const glassForward=(a.class==="client"||a.class==="rival"||["client","corporate","agency","creative"].includes(a.function));
+ const isOffice=a.class==="office"||a.function==="office";
+ const isResidential=a.decorative||a.function==="decorative";
+
  for(const v of featureVolumes){
   if(v.height<3.0||v.width<1.45)continue;
   const rows=Math.min(detailed?7:4,Math.max(1,Math.floor(v.height/(detailed?2.7:3.25))));
@@ -48,14 +55,14 @@ export function addArchitecturalFacades(box,p,a,lod){
     if(p.volumes.some(other=>visibleOnFace(v,other,"front",x,y,face)))continue;
     if(isScreenBlocking(p,v,x,y,face))continue;
     if(detailed){
-     b(x,y,face,span+.12,windowH+.13,.075,1); // warm concrete window reveal
-     b(x,y,face+.073,span,windowH,.065,3); // tinted-glass pane
+     b(x,y,face,span+.12,windowH+.13,.075,MAT.WINDOW_FRAME_METAL); // warm concrete window reveal
+     b(x,y,face+.073,span,windowH,.065,MAT.WINDOW_GLASS); // tinted-glass pane
      if(a.facade==="balcony"||a.facade==="zigzag"){
       // Shallow attached balcony on selected levels only
       if((r+col)%2===0)b(x,y-windowH*.63,face+.15,span+.23,.10,.25,4);
      }
     }else{
-     b(x,y,face,span,windowH,.07,3); // single wide glass pane is readable at city scale
+     b(x,y,face,span,windowH,.07,MAT.WINDOW_GLASS); // single wide glass pane is readable at city scale
     }
     rendered++;frontCount++;
    }
@@ -67,15 +74,62 @@ export function addArchitecturalFacades(box,p,a,lod){
     const face=v.x+v.width/2+.075;
     if(p.volumes.some(other=>visibleOnFace(v,other,"right",face,y,z)))continue;
     if(detailed){
-     b(face,y,z,.075,windowH+.13,span+.12,1);
-     b(face+.073,y,z,.065,windowH,span,3);
-    }else b(face,y,z,.07,windowH,span,3);
+     b(face,y,z,.075,windowH+.13,span+.12,MAT.WINDOW_FRAME_METAL);
+     b(face+.073,y,z,.065,windowH,span,MAT.WINDOW_GLASS);
+    }else b(face,y,z,.07,windowH,span,MAT.WINDOW_GLASS);
     rendered++;sideCount++;
    }
    if(detailed&&r>0&&r%2===0&&v.width>3.7){
     const wallZ=v.z+v.depth/2+.04;
     const outside=p.volumes.every(o=>!visibleOnFace(v,o,"front",v.x,y,wallZ));
     if(outside)b(v.x,y-windowH*.78,wallZ,v.width*.88,.10,.15,2);
+   }
+  }
+ }
+ // Shared facade material detailing. All panel seams are attached to the actual
+ // front/right wall face; these do not use a fabricated whole-lot facade plane.
+ // No texture files are used (0 additional texture-memory overhead).
+ if(detailed){
+  for(const [index,v] of featureVolumes.entries()){
+   if(v.height<4||v.width<2.6)continue;
+   const front=v.z+v.depth/2+.024;
+   const right=v.x+v.width/2+.024;
+   const exposed=p.volumes.every(other=>!visibleOnFace(v,other,"front",v.x,v.bottom+v.height*.67,front));
+   if(exposed){
+    const count=glassForward?3:2;
+    // Precast panel joints or horizontal metal feature seams, depending on use.
+    for(let k=1;k<=count;k++){
+     const y=v.bottom+v.height*k/(count+1);
+     if(p.dooh&&Math.abs(y-p.dooh.y)<p.dooh.height*.55+.19&&Math.abs(v.x-p.dooh.x)<v.width*.52)continue;
+     b(v.x,y,front,v.width*.87,.055,.045,glassForward?MAT.ALUMINUM_CLADDING:MAT.CONCRETE_PANEL);
+    }
+    // Curtain wall panel is mounted behind the existing window frames.
+    // Keep residential/office windows punched into visible solid masonry instead.
+    if(glassForward&&index<2&&v.height>6){
+     const curtainHeight=Math.min(v.height*.48,6.5);
+     const cy=v.bottom+v.height*.53;
+     if(!p.dooh||Math.abs(cy-p.dooh.y)>curtainHeight*.55+p.dooh.height*.55){
+      b(v.x,cy,front-.009,v.width*.58,curtainHeight,.028,MAT.CURTAIN_WALL_GLASS);
+      // Graphite vertical mullions separate glass into panels.
+      for(let j=-1;j<=1;j++)b(v.x+j*v.width*.17,cy,front+.020,.055,curtainHeight,.052,MAT.WINDOW_FRAME_METAL);
+     }
+    }else if(isOffice||isResidential){
+     // One offset plaster/concrete color panel, attached with no floating gap.
+     const k=((a.seed||1)+index*13)%2===0?-1:1;
+     const panelX=v.x+k*v.width*.27;
+     b(panelX,v.bottom+v.height*.57,front-.005,v.width*.13,v.height*.38,.038,MAT.CONCRETE_PANEL);
+    }
+   }
+   // Isometric city view exposes right-hand facade. Light vertical seams make
+   // concrete surfaces coherent from that angle as well.
+   if(v.depth>3.4){
+    const visibleRight=p.volumes.every(other=>!visibleOnFace(v,other,"right",right,v.bottom+v.height*.5,v.z));
+    if(visibleRight){
+     for(let k=-1;k<=1;k+=2){
+      const zz=v.z+k*v.depth*.27;
+      b(right,v.bottom+v.height*.54,zz,.042,v.height*.64,.055,MAT.ALUMINUM_CLADDING);
+     }
+    }
    }
   }
  }
