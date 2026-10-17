@@ -13,6 +13,16 @@ export type Activity = {
   cost: number;
   lat?: number;
   lng?: number;
+  verifiedPlace?: {
+    name: string;
+    source: 'OpenStreetMap' | 'Wikipedia';
+    sourceId: string | null;
+    sourceUrl: string;
+    lat: number | null;
+    lng: number | null;
+    score: number | null;
+    confirmedAt: string;
+  };
 };
 export type TripDay = { date: string; theme: string; activities: Activity[] };
 export type Expense = { id: string; title: string; category: Category; amount: number };
