@@ -3,8 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc --noEmit && vite build",
-    "dev": "vite --host 0.0.0.0"
+    "build": "tsc --noEmit && npm test && vite build",
+    "dev": "vite --host 0.0.0.0",
+    "test": "node --import tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "react": "^19.2.0",
@@ -25,6 +26,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/three": "^0.181.0",
-    "@types/node": "^22.0.0"
+    "@types/node": "^22.0.0",
+    "tsx": "^4.20.6"
   }
 }
