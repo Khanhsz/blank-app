@@ -41,7 +41,7 @@ export default function App(){
  const clock=useRef(0);
  useEffect(()=>{initStore();setWebgl(hasWebGL())},[]);
  useEffect(()=>{const handle=window.setInterval(()=>{const v=getState();if(!v.agencyUnlocked||!v.ceo?.speed)return;clock.current+=v.ceo.speed*.25; if(clock.current>=2.2){const n=Math.min(4,Math.floor(clock.current/2.2));clock.current%=2.2;act((d,fx)=>K.ceoTick(d,fx,n));}},250);return()=>clearInterval(handle)},[]);
- useEffect(()=>{if(s.agencyUnlocked&&panel==="campaign")setPanel("ceo")},[s.agencyUnlocked,panel]);
+ useEffect(()=>{if(s.agencyUnlocked&&(panel==="campaign"||panel==="location"&&s.scene==="office"))setPanel("ceo")},[s.agencyUnlocked,s.scene,panel]);
  const districts:District[]=buildings.map(b=>({...b,locked:!availableAt(s,b.id as WorldLocation).open}));
  const objective=nextLocation(s);
  const change=(to:SceneId)=>{if(to==="city"&&!s.cityUnlocked)return;if((to==="office"||to==="boardroom")&&!s.agencyUnlocked)return;act(d=>{d.scene=to});setSelected(null);setPanel(to==="office"||to==="boardroom"?"ceo":"none")};
@@ -61,9 +61,11 @@ export default function App(){
  const roomInteract=(action:"board"|"phone"|"wardrobe")=>{if(getState().scene!=="room")return;setPanel(action==="board"?"journal":action==="phone"?"phone":"avatar");};
  const guideToObjective=()=>{
    if(s.agencyUnlocked){change("office");return;}
-   const dest=campaignSite(s);
+   const dest=nextLocation(s).id;
    if(dest==="computer"){approachComputer();return;}
-   change("city");locate(dest);
+   // Guided navigation highlights the destination without opening actions for free.
+   // Players still click the physical building on the map to enter.
+   change("city");setSelected(dest);
  };
  const title=panel==="campaign"?"Campaign Workstation":panel==="ceo"?"CEO Command Center":panel==="avatar"?"Your Creative Identity":panel==="journal"?"Campaign Moodboard":panel==="phone"?"Messages & Contacts":panel==="map"?"World Directory":panel==="location"?(buildings.find(b=>b.id===selected)?.name||"Location"):"Welcome to Marketing Tycoon";
  const projects=s.ceo?.projects.filter(p=>p.status==="active").length||0;
