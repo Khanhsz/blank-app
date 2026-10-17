@@ -9,9 +9,10 @@ import path from "node:path";
 import crypto from "node:crypto";
 import {fileURLToPath} from "node:url";
 import {buildBrickhouseModernist,brickhouseAnchors,brickhouseSlots,BRICKHOUSE_ARCHETYPE} from "./brickhouse-modernism.mjs";
+import {buildCityModernist,cityAnchors,cityMediaSlots,CITY_ARCHITECTURE_FAMILIES} from "./city-modernism.mjs";
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),"../..");
-const cfg=JSON.parse(fs.readFileSync(path.join(root,"assets/specs/arts-quarter.slice.json"),"utf8"));
+const cfg=JSON.parse(fs.readFileSync(path.join(root,"assets/specs/city-all.modernism.json"),"utf8"));
 const dest=path.join(root,"public/assets/mt-city",cfg.version);
 const palettes={
  clay:["#b88b7e","#dbc3af","#615c65","#9db4b7","#bd674f","#d4c5b4","#354d52"],
@@ -43,118 +44,9 @@ function geometry(asset,lod){
   ];
   const out=buckets[m];for(const face of faces){const index=out.positions.length/3;for(const p of face.v){out.positions.push(...p);out.normals.push(...face.n)}out.indices.push(index,index+1,index+2,index,index+2,index+3);out.triangles+=2}
  }
- const w=asset.width,d=asset.depth,h=asset.height;const base=.28;
- if(asset.id==="office-brick"){
-  buildBrickhouseModernist(cuboid,asset,lod);
-  return {buckets,materials,triangles:buckets.reduce((n,b)=>n+b.triangles,0)};
- }
- cuboid(0,base/2,0,w+.5,base,d+.5,5);
- cuboid(0,base+h/2,0,w,h,d,0);
- // muted roof / cornice and building cap silhouettes
- cuboid(0,h+.42,0,w+.5,.42,d+.5,2);
- if(asset.roof==="crown"||asset.roof==="sawtooth")cuboid(0,h+1.04,0,w*.58,.84,d*.65,1);
- if(asset.roof==="gable"){cuboid(0,h+.85,0,w*.83,.8,d*.85,2);cuboid(0,h+1.36,0,w*.42,.4,d*.82,2)}
- if(asset.roof==="terrace"){cuboid(0,h+.77,-d*.18,w*.65,.3,d*.38,1)}
- if(asset.roof==="canopy"){cuboid(0,h+.66,d*.20,w+1,.22,d+1,4)}
- // first-floor glazing and transom
- cuboid(0,1.26,d/2+.095,w*.54,1.9,.14,3);
- cuboid(0,1.22,d/2+.21,w*.13,2.13,.14,6);
- cuboid(0,2.38,d/2+.22,w*.63,.21,.28,1);
- cuboid(0,3.1,d/2+.21,w*.72,.60,.21,4);
- if(lod===0){
-  const floors=Math.min(asset.floors-1,10);
-  const cols=w<7?2:3;
-  for(let f=0;f<floors;f++){
-   const y=Math.min(h-1.05,3.7+f*(h-4.1)/Math.max(1,floors));
-   for(let k=0;k<cols;k++){
-    const x=(k-(cols-1)/2)*(w*.23);
-    const width=Math.min(1.55,w*.17);
-    cuboid(x,y,d/2+.083,width,.86,.10,3);
-    cuboid(x,y+.49,d/2+.14,width+.14,.11,.16,1);
-    if(rnd()>.65)cuboid(x,y-.55,d/2+.16,width+.2,.12,.22,4);
-   }
-   // side windows, only one facade to keep triangle budgets low.
-   if(f%2===0)for(let col=0;col<2;col++){
-    const z=(col-.5)*d*.36;
-    cuboid(w/2+.082,y,z,.1,.78,Math.min(1.4,d*.17),3);
-   }
-  }
- 
-  // V2 landmarks: recognizable category silhouettes, distinct from legacy box buildings.
-  // Lower facades extend beyond the main structural cuboid but remain in each plot.
-  if(asset.class==="creative_agency"){
-   cuboid(-w*.32,h*.49,d/2+.20,w*.22,h*.68,.42,4); // giant terracotta art fin
-   cuboid(w*.32,h*.36,d/2+.27,w*.16,h*.46,.53,6);
-   cuboid(0,h+.98,0,w*.82,.25,d*.72,4); // visible orange roof frame
-   for(let k=0;k<3;k++)cuboid((k-1)*w*.22,h+1.57,0,w*.17,1.05,d*.47,1); // studio skylights
-  }else if(asset.class==="media_facility"){
-   cuboid(0,h*.63,d/2+.28,w*.83,h*.35,.46,6); // TVC/video wall
-   cuboid(0,h*.63,d/2+.54,w*.75,h*.30,.09,3);
-   cuboid(-w*.43,h*.58,d/2+.52,.22,h*.45,.38,4);
-   cuboid(w*.43,h*.58,d/2+.52,.22,h*.45,.38,4);
-   cuboid(0,h+1.74,0,w*.74,1.10,d*.54,4); // illuminated rooftop screen
-  }else if(asset.class==="rival_agency"){
-   cuboid(-w*.23,h*.78,-d*.18,w*.46,h*.44,d*.52,2); // competing tower wing
-   cuboid(w*.32,h*.64,d/2+.22,w*.19,h*.65,.35,4); // high-contrast rival fin
-   cuboid(0,h+1.85,0,w*.78,1.65,d*.44,6); // iconic sky-bridge cap
-   cuboid(0,h*.60,d/2+.27,w*.80,1.3,.38,4);
-  }else if(asset.class==="corporate_client"){
-   cuboid(-w*.28,h*.47,d/2+.43,w*.26,h*.76,.56,1); // vertical corporate atrium
-   cuboid(w*.28,h*.47,d/2+.43,w*.26,h*.76,.56,1);
-   cuboid(0,h*.76,d/2+.24,w*.72,h*.16,.40,6); // prominent ad wall
-   cuboid(0,h*.76,d/2+.48,w*.62,h*.12,.12,4);
-   cuboid(0,h+1.87,0,w*.77,1.55,d*.57,3); // glass crown
-  }else if(asset.class==="office_property"){
-   cuboid(0,h*.29,d/2+.27,w*.83,2.7,.55,1); // raised front leasing portico
-   cuboid(-w*.42,h*.54,d/2+.27,.25,h*.69,.56,4);
-   cuboid(w*.42,h*.54,d/2+.27,.25,h*.69,.56,4);
-   cuboid(0,h+1.09,0,w*.68,.55,d*.54,4); // roof deck
-  }else if(asset.class==="residential"){
-   cuboid(-w*.28,h*.56,d/2+.24,w*.3,h*.66,.37,1);
-   cuboid(w*.28,h*.56,d/2+.24,w*.3,h*.66,.37,5);
-   cuboid(0,h+1.31,-d*.22,w*.35,.65,d*.25,4);
-  }else if(asset.class==="retail_property"){
-   cuboid(0,h*.38,d/2+.66,w*.85,2.4,1.0,3); // storefront
-   cuboid(0,h*.38,d/2+1.23,w*.75,.3,.2,4); // shop sign
-  }else if(asset.class==="urban_infrastructure"){
-   cuboid(0,h*.55,d/2+.35,w*.70,h*.48,.42,3);
-   cuboid(0,h+1.11,0,w+1,.36,d+.9,4);
-  }
- // roof HVAC vents, ledges and facade fins for distinctive silhouettes.
-  cuboid(-w*.23,h+.76,-d*.24,w*.15,.45,d*.18,6);
-  if(asset.class==="rival_agency"||asset.class==="corporate_client"){
-   cuboid(-w*.4,h*.62,d/2+.18,.16,h*.48,.25,1);
-   cuboid(w*.4,h*.62,d/2+.18,.16,h*.48,.25,1);
-  }
-  if(asset.class==="retail_property"||asset.class==="urban_infrastructure"){
-   cuboid(0,2.35,d/2+.8,w*.8,.19,1.6,4);
-  }
- }else{
-  // Distant LOD deliberately preserves each category's architectural silhouette.
-  // Otherwise upgraded GLBs look exactly like the legacy box buildings in city overview.
-  if(asset.class==="creative_agency"){
-   cuboid(-w*.32,h*.52,d/2+.19,w*.24,h*.72,.35,4);
-   cuboid(0,h+1.20,0,w*.75,1.0,d*.54,4);
-  }else if(asset.class==="media_facility"){
-   cuboid(0,h*.64,d/2+.27,w*.83,h*.34,.37,6);
-   cuboid(0,h+1.40,0,w*.70,1.1,d*.5,4);
-  }else if(asset.class==="rival_agency"){
-   cuboid(-w*.24,h*.75,-d*.12,w*.44,h*.43,d*.5,2);
-   cuboid(0,h+1.53,0,w*.77,1.5,d*.5,6);
-  }else if(asset.class==="corporate_client"){
-   cuboid(0,h*.67,d/2+.34,w*.76,h*.24,.35,4);
-   cuboid(0,h+1.60,0,w*.76,1.45,d*.52,3);
-  }else if(asset.class==="office_property"){
-   cuboid(0,h*.30,d/2+.25,w*.85,2.6,.42,1);
-   cuboid(0,h+1.02,0,w*.68,.56,d*.55,4);
-  }else if(asset.class==="residential"){
-   cuboid(0,h*.58,d/2+.22,w*.75,h*.60,.35,1);
-  }else if(asset.class==="retail_property"){
-   cuboid(0,h*.36,d/2+.46,w*.83,2.2,.55,3);
-  }else if(asset.class==="urban_infrastructure"){
-   cuboid(0,h+.92,0,w+1,.38,d+.8,4);
-  }
- }
+ if(asset.archetype==="brickhouse"&&asset.id==="office-brick")buildBrickhouseModernist(cuboid,asset,lod);
+ else if(CITY_ARCHITECTURE_FAMILIES.includes(asset.archetype))buildCityModernist(cuboid,asset,lod);
+ else throw Error("No approved modernist geometry: "+asset.id+" / "+asset.archetype);
  return {buckets,materials,triangles:buckets.reduce((n,b)=>n+b.triangles,0)};
 }
 function glb(asset,lod){
@@ -174,21 +66,16 @@ function glb(asset,lod){
   const aI=accessor(push(index16(b.indices),34963),b.indices.length,"SCALAR",5123);
   primitives.push({attributes:{POSITION:aP,NORMAL:aN},indices:aI,material:mi,mode:4});
  }
- const anchors=asset.id==="office-brick"?
-  Object.entries(brickhouseAnchors(asset)).map(([name,translation])=>({name,translation,...(name==="COLLIDER_Footprint"?{extras:{width:asset.width,depth:asset.depth,height:asset.height}}:{})})):
-  [
-   {name:"ANCHOR_Entrance",translation:[0,1.1,asset.depth/2+.4]},
-   {name:"ANCHOR_Sign",translation:[0,3.1,asset.depth/2+.34]},
-   {name:"ANCHOR_Roof",translation:[0,asset.height+1.55,0]},
-   {name:"COLLIDER_Footprint",translation:[0,.2,0],extras:{width:asset.width,depth:asset.depth,height:asset.height}}
-  ];
+ const anchors=(Object.entries(asset.id==="office-brick"?brickhouseAnchors(asset):cityAnchors(asset)))
+ .map(([name,translation])=>({name,translation,...(name==="COLLIDER_Footprint"?{extras:{width:asset.width,depth:asset.depth,height:asset.height}}:{})}));
+ const slots=asset.id==="office-brick"?brickhouseSlots(asset):cityMediaSlots(asset);
  const json={
   asset:{version:"2.0",generator:"Marketing Tycoon Reproducible Web Fallback (not Blender)"},
   scene:0,scenes:[{nodes:[0]}],
   nodes:[{name:"MT_MASTER_"+asset.id,children:Array.from({length:1+anchors.length},(_,i)=>i+1),extras:{persistentGameEntity:asset.gameplayId||null,assetId:asset.id,lod}}, {name:"VISIBLE_MESH",mesh:0},...anchors],
   meshes:[{name:"merged_facade",primitives}],bufferViews,accessors,buffers:[{byteLength:offset}],
   materials:materials.map((hex,i)=>({name:"M_"+asset.palette+"_"+i,pbrMetallicRoughness:{baseColorFactor:[...rgb(hex),1],metallicFactor:i===3?.1:0,roughnessFactor:i===3?.62:.92},doubleSided:false})),
-  extras:{id:asset.id,version:cfg.version,source:"node-fallback",height:asset.height,width:asset.width,depth:asset.depth,triangles,...(asset.id==="office-brick"?{archetype:BRICKHOUSE_ARCHETYPE,advertisingSlots:brickhouseSlots(asset)}:{})}
+  extras:{id:asset.id,version:cfg.version,source:"node-fallback",height:asset.height,width:asset.width,depth:asset.depth,triangles,archetype:asset.id==="office-brick"?BRICKHOUSE_ARCHETYPE:asset.archetype,advertisingSlots:slots}
  };
  const jsonBytes=textBytes(JSON.stringify(json));
  const j=Buffer.concat([jsonBytes,Buffer.alloc(align(jsonBytes.length)-jsonBytes.length,0x20)]);
@@ -212,7 +99,7 @@ export function parseGLB(buffer){
 function main(){
  fs.mkdirSync(dest,{recursive:true});
  const ids=new Set(),out=[],qa=[];
- if(cfg.masters.length!==10)throw Error("Vertical slice must have exactly ten masters");
+ if(cfg.masters.length!==cfg.auditedBuildingCount||cfg.masters.length!==41)throw Error("Incomplete whole-city manifest; expected all audited building instances");
  for(const a of cfg.masters){
   if(ids.has(a.id))throw Error("Duplicate ID: "+a.id);ids.add(a.id);
   if(!Number.isInteger(a.seed)||a.width<=0||a.height<=0||a.depth<=0||a.floors<1)throw Error("Invalid asset spec "+a.id);
@@ -226,6 +113,7 @@ function main(){
    }else fs.writeFileSync(file,data.buffer);
    const parsed=parseGLB(data.buffer);
    if(parsed.extras.id!==a.id||parsed.extras.height!==a.height)throw Error("Metadata mismatch "+a.id);
+   for(const slot of a.id==="office-brick"?brickhouseSlots(a):cityMediaSlots(a)){if(!parsed.nodes.some(x=>x.name===slot.anchor))throw Error("Missing media anchor "+slot.id)}
    if(a.id==="office-brick"){
     if(parsed.extras.archetype!==BRICKHOUSE_ARCHETYPE)throw Error("Brickhouse modernist archetype missing");
     for(const slot of brickhouseSlots(a)){
@@ -235,16 +123,21 @@ function main(){
    lod["lod"+mode]={uri:"/assets/mt-city/"+cfg.version+"/"+name,triangles:data.triangles,bytes:data.buffer.length,materials:data.primitiveCount,sha256:crypto.createHash("sha256").update(data.buffer).digest("hex")};
   }
   qa.push({id:a.id,kind:a.class,gameplayId:a.gameplayId||null,highTriangles:lod.lod0.triangles,lowTriangles:lod.lod1.triangles,highBytes:lod.lod0.bytes,lowBytes:lod.lod1.bytes});
-  out.push({id:a.id,name:a.name,kind:a.class,gameplayId:a.gameplayId||null,decorative:!!a.decorative,dimensions:[a.width,a.height,a.depth],
-   anchors:a.id==="office-brick"?Object.keys(brickhouseAnchors(a)):["ANCHOR_Entrance","ANCHOR_Sign","ANCHOR_Roof","COLLIDER_Footprint"],
-   ...(a.id==="office-brick"?{archetype:BRICKHOUSE_ARCHETYPE,advertisingSlots:brickhouseSlots(a)}:{}),lod,palette:a.palette});
+  out.push({id:a.id,name:a.name,kind:a.class,gameplayId:a.gameplayId||null,decorative:!!a.decorative,district:a.district,
+   position:[a.x,a.z],dimensions:[a.width,a.height,a.depth],footprint:[a.width,a.depth],previousAsset:a.priorAsset,
+   anchors:Object.keys(a.id==="office-brick"?brickhouseAnchors(a):cityAnchors(a)),
+   archetype:a.id==="office-brick"?BRICKHOUSE_ARCHETYPE:a.archetype,roof:a.roof,facade:a.facade,entrance:a.entrance,variant:a.variant,
+   advertisingSlots:a.id==="office-brick"?brickhouseSlots(a):cityMediaSlots(a),
+   migrationStatus:"replaced",verificationStatus:"binary-pass-browser-pending",lod,palette:a.palette});
  }
  for(const d of cfg.decorativePlacements)if(!ids.has(d.id))throw Error("Missing placement asset "+d.id);
- const manifest={schemaVersion:1,version:cfg.version,district:cfg.district,units:"meters",up:"Y",front:"+Z",source:"web-fallback-not-blender",assets:out,decorativePlacements:cfg.decorativePlacements};
+ const manifest={schemaVersion:2,version:cfg.version,district:cfg.district,units:"meters",up:"Y",front:"+Z",source:"web-fallback-not-blender",
+ auditedBuildingCount:cfg.auditedBuildingCount,interactiveCount:cfg.auditedInteractiveCount,decorativeCount:cfg.auditedDecorativeCount,
+ assets:out,decorativePlacements:cfg.decorativePlacements};
  const report={generatedAt:"reproducible-build",assetCount:qa.length,glbFiles:qa.length*2,totalTrianglesHigh:qa.reduce((x,y)=>x+y.highTriangles,0),totalBytesHigh:qa.reduce((x,y)=>x+y.highBytes,0),totalBytesLow:qa.reduce((x,y)=>x+y.lowBytes,0),assets:qa,passed:true,measuredBrowserFPS:false,measuredBrowserDrawCalls:false};
  const mFile=path.join(dest,"manifest.json"),qFile=path.join(dest,"qa-report.json");
  if(process.argv.includes("--verify")){if(!fs.existsSync(mFile)||fs.readFileSync(mFile,"utf8")!==JSON.stringify(manifest,null,2)+"\n")throw Error("Manifest mismatch")}
  else{fs.writeFileSync(mFile,JSON.stringify(manifest,null,2)+"\n");fs.writeFileSync(qFile,JSON.stringify(report,null,2)+"\n")}
- console.log("ART FACTORY",JSON.stringify({district:cfg.district,masters:qa.length,glbs:qa.length*2,triangles:report.totalTrianglesHigh,bytes:report.totalBytesHigh+report.totalBytesLow,verified:true}));
+ console.log("ART FACTORY",JSON.stringify({district:cfg.district,masters:qa.length,interactive:cfg.auditedInteractiveCount,decorative:cfg.auditedDecorativeCount,glbs:qa.length*2,triangles:report.totalTrianglesHigh,bytes:report.totalBytesHigh+report.totalBytesLow,verified:true}));
 }
 main();
