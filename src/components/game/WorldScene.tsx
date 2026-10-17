@@ -106,7 +106,24 @@ function BedroomComputer({ onInteract }: { onInteract: () => void }) {
   );
 }
 
-function Room({ r, c, onComputerInteract }: { r: RoomStyle; c: Character; onComputerInteract: () => void }) {
+
+function BedroomProps({onInteract}:{onInteract:(what:"board"|"phone"|"wardrobe")=>void}){
+ const [focus,setFocus]=useState<""|"board"|"phone"|"wardrobe">("");
+ const objects=[
+  {id:"board" as const,name:"MOODBOARD",at:[1.6,2.2,-4.7] as [number,number,number],label:[1.6,3.45,-4.7] as [number,number,number]},
+  {id:"phone" as const,name:"PHONE",at:[-3.4,0.94,-3.25] as [number,number,number],label:[-3.65,1.65,-3.15] as [number,number,number]},
+  {id:"wardrobe" as const,name:"WARDROBE",at:[4.35,1.1,1.4] as [number,number,number],label:[4.35,3.2,1.4] as [number,number,number]}
+ ];
+ return <>{objects.map(o=><group key={o.id}>
+  <mesh position={o.at} onPointerOver={e=>{e.stopPropagation();setFocus(o.id)}} onPointerOut={()=>setFocus("")} onClick={e=>{e.stopPropagation();onInteract(o.id)}} castShadow>
+   <boxGeometry args={o.id==="board"?[2.5,1.6,.13]:o.id==="phone"?[.35,.08,.6]:[1.7,2.2,1]}/>
+   <meshStandardMaterial color={o.id==="board"?"#a47c5e":o.id==="phone"?"#35434a":"#986f59"} emissive={focus===o.id?"#bd694a":"#000000"} emissiveIntensity={focus===o.id ? 0.3 : 0}/>
+  </mesh>
+  <Html position={o.label} center distanceFactor={12}><button className="room-small-label" type="button" onClick={()=>onInteract(o.id)}>{o.name} ↗</button></Html>
+ </group>)}</>;
+}
+
+function Room({ r, c, onComputerInteract, onRoomInteract }: { r: RoomStyle; c: Character; onComputerInteract: () => void; onRoomInteract:(what:"board"|"phone"|"wardrobe")=>void }) {
   return (
     <>
       <mesh rotation-x={-Math.PI / 2} receiveShadow><planeGeometry args={[10, 10]} /><meshStandardMaterial color="#c9a582" /></mesh>
@@ -115,6 +132,7 @@ function Room({ r, c, onComputerInteract }: { r: RoomStyle; c: Character; onComp
       <mesh rotation-x={-Math.PI / 2} position={[0.5, 0.02, 0.5]}><circleGeometry args={[2.2, 32]} /><meshStandardMaterial color={r.rug} /></mesh>
       <mesh position={[-2.5, 0.75, -3.8]} castShadow><boxGeometry args={[3, 0.15, 1.4]} /><meshStandardMaterial color="#8a6a4f" /></mesh>
       <BedroomComputer onInteract={onComputerInteract}/>
+      <BedroomProps onInteract={onRoomInteract}/>
       <mesh position={[3, 0.4, -3]} castShadow><boxGeometry args={[2.6, 0.6, 3.6]} /><meshStandardMaterial color="#e8dccb" /></mesh>
       {r.plant && <Tree x={3.8} z={2.8} />}
       {r.lamp && <><mesh position={[-4, 1.2, 2]}><cylinderGeometry args={[0.05, 0.05, 2.4]} /><meshStandardMaterial color="#27221f" /></mesh><pointLight position={[-4, 2.5, 2]} intensity={6} color="#ffd9a8" /><mesh position={[-4, 2.5, 2]}><sphereGeometry args={[0.3]} /><meshStandardMaterial emissive="#ffd9a8" emissiveIntensity={2} color="#fff" /></mesh></>}
@@ -144,7 +162,7 @@ function Office({ c, staff, board }: { c: Character; staff: number; board: boole
   );
 }
 
-export function WorldScene(props: { scene: SceneId; districts: District[]; selected: string | null; onSelect: (id: string) => void; character: Character; room: RoomStyle; staff: number; quality: "high" | "low"; onComputerInteract: () => void }) {
+export function WorldScene(props: { scene: SceneId; districts: District[]; selected: string | null; onSelect: (id: string) => void; character: Character; room: RoomStyle; staff: number; quality: "high" | "low"; onComputerInteract: () => void; onRoomInteract:(what:"board"|"phone"|"wardrobe")=>void }) {
   const city = props.scene === "city";
   return (
     <Canvas shadows={props.quality === "high"} dpr={props.quality === "high" ? [1, 2] : 1} camera={{ position: city ? [26, 26, 30] : [9, 8, 11], fov: 45 }} key={props.scene}>
@@ -154,7 +172,7 @@ export function WorldScene(props: { scene: SceneId; districts: District[]; selec
       <directionalLight position={[15, 25, 10]} intensity={1.6} castShadow shadow-mapSize={[1024, 1024]} shadow-camera-left={-40} shadow-camera-right={40} shadow-camera-top={40} shadow-camera-bottom={-40} />
       <Environment resolution={64}><Lightformer intensity={1.5} position={[0, 6, 0]} scale={[10, 10, 1]} /><Lightformer intensity={0.8} color="#9cc7c4" position={[-6, 2, 0]} rotation-y={Math.PI / 2} scale={[20, 2, 1]} /></Environment>
       {city && <City districts={props.districts} onSelect={props.onSelect} selected={props.selected} />}
-      {props.scene === "room" && <Room r={props.room} c={props.character} onComputerInteract={props.onComputerInteract} />}
+      {props.scene === "room" && <Room r={props.room} c={props.character} onComputerInteract={props.onComputerInteract} onRoomInteract={props.onRoomInteract} />}
       {(props.scene === "office" || props.scene === "boardroom") && <Office c={props.character} staff={props.staff} board={props.scene === "boardroom"} />}
       <OrbitControls enablePan enableDamping maxPolarAngle={Math.PI / 2.3} minDistance={6} maxDistance={city ? 70 : 22} />
     </Canvas>
