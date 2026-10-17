@@ -3,7 +3,7 @@
  * Runs once per simulated day — does not spend Gemini API tokens.
  * All actions change the existing CEO state; no fabricated wins are presented.
  */
-import {ceoRand,ceoTalent,ceoRoles,employees,clamp,money} from "./data";
+import {ceoRand,ceoLeadDefs,employees,clamp,money} from "./data";
 import type {Rival} from "./data";
 import type {GameState,CEO,Lead,RivalTender,RivalEvent,TalentOffer} from "./state";
 import type {Fx} from "./store";
@@ -157,6 +157,20 @@ export function runRivalAgents(s:GameState,c:CEO,fx:Fx){
  for(let day=start;day<=c.day;day++){
   c.rivalLastTick=day;
   c.tenders||=[];c.talentOffers||=[];
+  // Fresh fictional corporate RFPs keep the economy competitive beyond starter deals.
+  // Same game-world client definitions and real CEO pitch/negotiation engine.
+  if(day>=28&&day%28===0&&c.leads.length<90){
+   const base=ceoLeadDefs[(Math.floor(day/28)-1)%ceoLeadDefs.length];
+   const factor=.86+noise(base.id+"rfp",day)*.27;
+   const id="market-"+base.id+"-"+day;
+   if(!c.leads.some(l=>l.id===id)){
+    const l:Lead={...base,id,brand:base.brand,origin:"New seasonal request for proposal",value:Math.round(base.value*factor),fee:Math.round(base.fee*factor),status:"new",relationship:base.trust,insightKnown:false};
+    c.leads.push(l);
+    const tender=ensureTender(c,l,day);
+    const rival=c.rivals.find(r=>r.id===tender?.rivalId)||c.rivals[0];
+    if(rival)logEvent(c,day,rival,"pitch",l.brand+" invited agencies to a new competitive pitch.");
+   }
+  }
   for(const l of c.leads)if(["new","qualified","renewal"].includes(l.status))ensureTender(c,l,day);
   for(const r of c.rivals)stepRivalStrategy(c,r,day);
   talentActivities(s,c,day);
