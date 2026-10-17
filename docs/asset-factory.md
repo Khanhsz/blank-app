@@ -14,7 +14,7 @@
 
 ```bash
 npm install
-npm run assets:build             # produces public/assets/mt-city/slice-1
+npm run assets:build             # produces public/assets/mt-city/slice-2
 npm run assets:verify            # byte-for-byte deterministic validation
 npm test                         # also generates GLBs then checks game + asset suite
 npm run build                    # runs TypeScript + tests + Vite
@@ -22,7 +22,7 @@ npm run build                    # runs TypeScript + tests + Vite
 
 Generated directory (reproducible, not required to commit binary files):
 ```
-public/assets/mt-city/slice-1/
+public/assets/mt-city/slice-2/
   manifest.json
   qa-report.json
   creative.lod0.glb
@@ -40,15 +40,15 @@ Requires Blender 4.x executable installed and available on PATH. Blender MCP was
 blender -b --factory-startup --python tools/asset-factory/blender_factory.py -- \
   --spec assets/specs/arts-quarter.slice.json \
   --masters assets/source/arts-quarter \
-  --out public/assets/mt-city/slice-1 \
+  --out public/assets/mt-city/slice-2 \
   --count 10
 ```
 
 This is the **canonical Blender path** and generates:
 - `assets/source/arts-quarter/<id>.blend`: editable scene, materials, named empties
-- `public/assets/mt-city/slice-1/<id>.lod0.glb`
-- `public/assets/mt-city/slice-1/<id>.lod1.glb`
-- `public/assets/mt-city/slice-1/blender-export-report.json`
+- `public/assets/mt-city/slice-2/<id>.lod0.glb`
+- `public/assets/mt-city/slice-2/<id>.lod1.glb`
+- `public/assets/mt-city/slice-2/blender-export-report.json`
 
 Keep Blender-produced .blend files in version control (Git LFS recommended) or upload them to a reproducible asset store. Don't run `npm run assets:build` *after* exporting Blender GLBs into the same folder: the web fallback deliberately regenerates and overwrites its own binaries. Once Blender masters pass visual/browser QA, change the build mode to copy native Blender output from a separate versioned directory, then bump `assets/specs/arts-quarter.slice.json` version and the asset registry. This prevents accidentally mislabeling fallback meshes as Blender outputs.
 
