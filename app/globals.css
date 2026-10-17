@@ -192,3 +192,47 @@
 .global-explorer-credit{font-size:10px;line-height:1.5;color:#8a9d8e;border-top:1px solid #eaf0eb;margin-top:16px;padding-top:11px}
 @media(max-width:890px){.global-explorer-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:550px){.global-explorer{padding:13px}.global-explorer-form{grid-template-columns:1fr}}
+
+
+/* Verified Place Intelligence: source identity, evidence, manual confirmation and Commons licenses */
+.verified-panel{border:1px solid #d6e5dc;background:#fff;border-radius:14px;padding:15px;margin:14px 12px;box-shadow:0 2px 8px #213d310a;min-width:0}
+.activity-details>.verified-panel{margin:16px 0 0}
+.verified-panel-header{display:flex;align-items:center;gap:9px;color:#2b7751;border-bottom:1px solid #e8efe9;padding-bottom:12px;margin-bottom:12px}
+.verified-panel-header svg{flex-shrink:0}
+.verified-panel-header h4{font-size:13px;color:#294b3b;font-weight:850;margin:0 0 3px}
+.verified-panel-header p{font-size:10px;line-height:1.5;margin:0;color:#788b7c}
+.verified-status{font-size:11px;line-height:1.6;display:flex;gap:8px;align-items:center;color:#617b67;padding:10px 0}
+.verified-status svg{flex-shrink:0}
+.verified-status .spinner{height:15px;width:15px;flex-shrink:0}
+.verified-current{display:flex;align-items:flex-start;gap:6px;background:#eaf5ed;color:#2a7851;border-radius:9px;padding:10px;font-size:11px;line-height:1.55}
+.verified-current svg{flex-shrink:0;margin-top:2px}
+.verified-candidate{border:1px solid #e4eee7;border-radius:11px;background:#fefefe;margin:12px 0;padding:14px;min-width:0}
+.verified-candidate.needs-confirm{border-color:#e7d8b5;background:#fffcf6}
+.verified-candidate-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.verified-candidate-top h5{font-size:13px;font-weight:800;color:#294a3b;line-height:1.4;margin:0 0 3px;overflow-wrap:anywhere}
+.verified-candidate-top small{font-size:10px;color:#718b78}
+.verified-strong,.verified-review{font-size:10px;font-weight:800;padding:6px 9px;border-radius:20px;white-space:nowrap}
+.verified-strong{background:#e9f5eb;color:#28724b}.verified-review{background:#fff0d5;color:#855a15}
+.verified-evidence{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px;background:#f5f8f6;border-radius:9px;padding:12px;margin:12px 0;font-size:10px;color:#506957;overflow-wrap:anywhere}
+.verified-evidence b{font-weight:800;color:#355f48}.verified-evidence small{font-size:9px;color:#92a096}
+.verified-warnings{margin:10px 0}
+.verified-warnings p{display:flex;align-items:flex-start;gap:6px;font-size:10px;color:#946c32;line-height:1.5;margin:5px 0}
+.verified-warnings svg{flex-shrink:0;margin-top:1px}
+.verified-confirm-actions{border-top:1px solid #f0e6cf;padding-top:10px;margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.verified-confirm-actions p{font-size:11px;color:#855f2b;line-height:1.5;flex-basis:100%;margin:0}
+.verified-confirm-btn,.verified-reject-btn{border-radius:8px;font-size:10px;font-weight:800;padding:9px 12px;cursor:pointer}
+.verified-confirm-btn{background:#287551;color:white;border:1px solid #26734e}
+.verified-reject-btn{background:white;border:1px solid #ddcba9;color:#785b34}
+.verified-save-btn{margin:5px 0 10px}
+.verified-confirm-btn:focus-visible,.verified-reject-btn:focus-visible{outline:2px solid #32794f;outline-offset:2px}
+.verified-description{font-size:11px;line-height:1.7;color:#576f60;margin:11px 0}
+.verified-attr{display:flex;align-items:flex-start;gap:7px;font-size:10px;color:#617767;line-height:1.6;margin:7px 0}
+.verified-attr svg{flex-shrink:0;margin-top:1px}
+.verified-attr a,.verified-source-links a,.verified-photo a{color:#276e52;text-decoration:underline;text-underline-offset:2px}
+.verified-source-links{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0 3px}
+.verified-source-links a{font-size:10px;display:flex;align-items:center;gap:5px}
+.verified-photo{margin:12px 0;overflow:hidden;border-radius:10px;border:1px solid #e8ede8;background:#f8faf7}
+.verified-photo img{display:block;max-width:100%;width:100%;height:auto;max-height:240px;object-fit:contain;background:#e9efe9}
+.verified-photo figcaption{font-size:9px;line-height:1.6;color:#667a6e;padding:10px 11px;overflow-wrap:anywhere}
+.verified-photo-note{display:flex;align-items:center;gap:6px;font-size:10px;color:#819786;margin:11px 0}
+@media(max-width:680px){.verified-panel{padding:12px;margin:12px 8px}.verified-candidate{padding:11px}.verified-evidence{grid-template-columns:1fr}.verified-candidate-top{flex-wrap:wrap}}
