@@ -19,6 +19,7 @@ import {AssetRegistry} from "./components/game/AssetRegistry";
 import type {SceneId} from "./game/state";
 
 const buildings=cityLots;
+const sceneName:Record<SceneId,string>={room:"The Bedroom",city:"Marketing City",office:"Agency HQ",boardroom:"The Boardroom"};
 type Panel="none"|"onboard"|"campaign"|"ceo"|"location"|"avatar"|"map"|"journal"|"phone"|"settings";
 
 const shadeOptions=["#4c9589","#bd694a","#485f9f","#9470a8","#cba457"];
