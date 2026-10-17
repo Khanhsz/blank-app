@@ -337,10 +337,10 @@ export function WorldScene({scene,districts,selected,onSelect,onComputerInteract
  const memoDistricts=useMemo(()=>districts,[JSON.stringify(districts)]);
  const playerPosition=useRef<[number,number]>([0,0]);const playerActive=useRef(false);
  return <Canvas key={scene} shadows={quality==="high"} dpr={quality==="high"?[1,1.65]:[1,1]} gl={{antialias:quality==="high",alpha:false,powerPreference:"high-performance"}} camera={{position:city?[78,73,86]:[11.4,10.7,13.8],fov:42,near:.1,far:260}}>
-  <color attach="background" args={[city?"#e3e7e9":"#f5eee5"]}/><fog attach="fog" args={[city?"#e3e7e9":"#f5eee5",city?150:36,city?235:70]}/>
-  <hemisphereLight args={[city?"#f0f3f4":"#fff6e8",city?"#adb5b4":"#b8aa97",city?1.35:1.55]}/>
-  <ambientLight intensity={city?.42:.45}/>
-  <directionalLight position={[25,37,16]} intensity={city?1.55:2.1} color={city?"#fffefa":"#ffeed9"} castShadow={quality==="high"} shadow-mapSize-width={2048} shadow-mapSize-height={2048} shadow-camera-left={-75} shadow-camera-right={75} shadow-camera-top={75} shadow-camera-bottom={-75} shadow-bias={-.00014}/>
+  <color attach="background" args={[city?"#dce5e9":"#f5eee5"]}/><fog attach="fog" args={[city?"#dce5e9":"#f5eee5",city?183:36,city?278:70]}/>
+  <hemisphereLight args={[city?"#f0f3f4":"#fff6e8",city?"#adb5b4":"#b8aa97",city?1.05:1.55]}/>
+  <ambientLight intensity={city?.30:.45}/>
+  <directionalLight position={[25,37,16]} intensity={city?1.37:2.1} color={city?"#fffefa":"#ffeed9"} castShadow={quality==="high"} shadow-mapSize-width={2048} shadow-mapSize-height={2048} shadow-camera-left={-75} shadow-camera-right={75} shadow-camera-top={75} shadow-camera-bottom={-75} shadow-bias={-.00014}/>
   <directionalLight position={[-12,9,-17]} intensity={city?.5:.65} color={city?"#c2d0d4":"#aeced3"}/>
   {city?<City districts={memoDistricts} selected={selected} onSelect={onSelect} c={character} touch={moveInput} position={playerPosition} active={playerActive} quality={quality}/>:scene==="room"?<Room r={room} c={character} onComputerInteract={onComputerInteract} onRoomInteract={onRoomInteract} preview={preview} avatarYaw={avatarYaw}/>:<Office c={character} staff={staff} board={scene==="boardroom"} name={officeName} capacity={officeCapacity}/>}
   {quality==="high"&&!city&&scene==="room"&&<ContactShadows scale={14} opacity={.2} blur={2.8} far={8} position={[0,-.02,0]}/>}
