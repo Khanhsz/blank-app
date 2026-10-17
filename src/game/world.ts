@@ -38,13 +38,14 @@ export function campaignSite(s:GameState):"computer"|"research"|"creative"|"medi
  return "media";
 }
 export function nextLocation(s:GameState):{id:string;name:string;description:string}{
- const id=campaignSite(s);
- const names:{[k:string]:string}={computer:"Bedroom Computer",research:"Research Lab",creative:"Creative Studio",media:"Media Hub",ceo:"Agency Office"};
+ const id=s.cityUnlocked && !s.agencyUnlocked && s.campaign.phase==="results"?"network":campaignSite(s);
+ const names:{[k:string]:string}={computer:"Bedroom Computer",network:"Networking Café",research:"Research Lab",creative:"Creative Studio",media:"Media Hub",ceo:"Agency Office"};
  const desc:{[k:string]:string}={
   computer:s.cityUnlocked && s.campaign.phase==="results"?"Use your bedroom computer to review the delivered report, then visit Networking Café for your next lead.":"Interact with the computer in your room to open your client brief.",
   research:"Travel to the Research Lab to collect evidence, survey and validate insight.",
   creative:"Visit the Creative Studio to develop the strategy and campaign creative.",
   media:"Go to Media Hub to allocate budget, launch and optimize.",
+  network:"Meet your Account Manager at Networking Café to request your next client introduction.",
   ceo:"Your staff manage operations. Visit your agency to handle executive decisions."
  };
  return {id,name:names[id],description:desc[id]};
