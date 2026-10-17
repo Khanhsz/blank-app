@@ -111,6 +111,7 @@ export default function PlaceDetails({activity,destination,country,onConfirm}:{
        <button type="button" className="verified-reject-btn" onClick={()=>setDismissed(v=>[...v,place.id])}>Not this place</button>
       </div>}
       {showDetails&&<>
+       {high&&!isApproved&&onConfirm&&<button type="button" className="verified-confirm-btn verified-save-btn" onClick={()=>confirm(place)}>Use this matched place in itinerary</button>}
        {place.description&&<p className="verified-description">{place.description}</p>}
        {place.category&&<p className="verified-attr">Type: {place.category}</p>}
        {place.address&&<p className="verified-attr"><MapPin size={14}/>{place.address}</p>}
