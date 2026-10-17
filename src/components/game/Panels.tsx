@@ -8,6 +8,7 @@ import * as C from "@/game/campaign";
 import * as K from "@/game/ceo";
 import { ceoPartners, ceoRoles, creatives, employees, insights, mediaChannels, money, objectives, optimizations, positions, researchOptions, segments, surveyCosts, upgrades, BRAND_HQ_REP, type Channel, type UpgradeId } from "@/game/data";
 import { PHASES, PHASE_LABEL } from "@/game/state";
+import {findCityLot,findOffice,currentOffice,cityRival,leaseOffice} from "@/game/city";
 
 const Choice = ({ on, onClick, title, sub }: { on?: boolean; onClick: () => void; title: string; sub?: string }) => (
   <DecisionCard active={on} onClick={onClick} title={title} description={sub}/>
@@ -60,6 +61,34 @@ export function CampaignWorkspace() {
 export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaign" | "ceo") => void }) {
   const s = useGame((x) => x);
   const [name, setName] = useState("");
+  const lot=findCityLot(id);
+  if(lot?.kind==="rival" && lot.rivalId){
+    const rival=cityRival(s,lot.rivalId);
+    if(!rival)return <p>No market information available.</p>;
+    return <div className="mt-city-building-panel">
+      <div className="mt-location-identity"><span className="mt-location-eyebrow">COMPETITOR HEADQUARTERS · {lot.district}</span><h3>{rival.name}</h3><p>{rival.type} · {rival.special} specialist</p></div>
+      <div className="mt-location-stat-grid"><GameStat label="REPUTATION" value={Math.round(rival.rep)+"/100"}/><GameStat label="ACTIVE CLIENTS" value={rival.clients}/><GameStat label="TEAM MEMBERS" value={rival.people}/></div>
+      <BarComparison max={100} rows={[{label:"Creative capability",value:rival.creative},{label:"Performance capability",value:rival.performance},{label:"Strategy capability",value:rival.strategy}]}/>
+      <div className="mt-location-fact"><b>Competitive intelligence</b><p>Pricing index {rival.price.toFixed(2)}× market baseline · Strategic aggression {Math.round(rival.aggression*100)}%. Rivals evolve as simulated agency time advances.</p></div>
+      {!s.agencyUnlocked?<FeedbackStrip>Found your own agency to compete in major pitch battles. This is a real rival from the simulated market, not a decorative building.</FeedbackStrip>:
+       <Button className="w-full" onClick={()=>onOpen("ceo")}>Open CEO competitive intelligence →</Button>}
+     </div>;
+  }
+  if(lot?.kind==="office"){
+    const option=findOffice(id),active=s.officeId===id&&s.agencyUnlocked;
+    const eligible=s.agencyUnlocked&&s.reputation>=option.minRep&&s.agencyCash>=option.deposit&&!active;
+    return <div className="mt-city-building-panel">
+      <div className="mt-location-identity"><span className="mt-location-eyebrow">{lot.district} / OFFICE PROPERTY</span><h3>{lot.name}</h3><p>{option.description}</p></div>
+      <div className="mt-location-stat-grid"><GameStat label="LEASE DEPOSIT" value={money(option.deposit)}/><GameStat label="DAILY OVERHEAD" value={money(option.daily)}/><GameStat label="TEAM CAPACITY" value={option.capacity}/></div>
+      <div className="mt-location-fact"><b>Office impact on your agency</b><p>Prestige +{option.prestige} (first lease only) · Pitch preparation advantage · Expanded recruitment capacity. Relocation updates your real agency ledger and recurring daily cost.</p></div>
+      <div className="mt-office-comparison"><div><span>Current HQ</span><strong>{findCityLot(s.officeId)?.name||"Starter HQ"}</strong></div><div><span>Current daily cost</span><strong>{money(currentOffice(s).daily)}</strong></div><div><span>Required reputation</span><strong>{option.minRep}</strong></div></div>
+      {active?<><FeedbackStrip tone="positive">This building is your active agency headquarters.</FeedbackStrip><Button className="w-full" onClick={()=>onOpen("ceo")}>Enter your agency →</Button></>:
+       <><Button className="w-full" disabled={!eligible} onClick={()=>act((d,fx)=>leaseOffice(d,fx,id))}>Lease & relocate · {money(option.deposit)}</Button>
+       {!s.agencyUnlocked?<FeedbackStrip>Found an agency before leasing office space.</FeedbackStrip>:
+        s.reputation<option.minRep?<FeedbackStrip>Need {option.minRep} reputation to lease this office (current {s.reputation}).</FeedbackStrip>:
+        s.agencyCash<option.deposit?<FeedbackStrip>Not enough agency cash for the deposit.</FeedbackStrip>:null}</>}
+     </div>;
+  }
   if (id in upgrades) { const u = upgrades[id as UpgradeId], own = s.upgrades.includes(id); return <div className="space-y-3"><h4 className="font-semibold">{u.name}</h4><p className="text-sm text-muted-foreground">{u.desc}</p><Button className="w-full" disabled={own || C.playerMoney(s) < u.cost} onClick={() => act((d, f) => C.buyUpgrade(d, f, id as UpgradeId))}>{own ? "Owned" : `Buy · ${money(u.cost)}`}</Button></div>; }
   if (id === "cowork") return <Button className="w-full" disabled={s.upgrades.includes("cowork") || C.playerMoney(s) < 300000} onClick={() => act((d, f) => C.buyUpgrade(d, f, "cowork"))}>{s.upgrades.includes("cowork") ? "Member" : `Join coworking · ${money(300000)} (+1 XP)`}</Button>;
   if (id === "network" || id === "brand") {
@@ -70,7 +99,7 @@ export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaig
       {s.campaign.phase !== "results" && <Button variant="outline" className="w-full" onClick={() => onOpen("campaign")}>Continue current campaign</Button>}</div>;
   }
   if (id === "agency") {
-    if (s.agencyUnlocked) return <Button className="w-full" onClick={() => onOpen("ceo")}>Enter CEO Command Center</Button>;
+    if (s.agencyUnlocked) return <div className="mt-city-building-panel"><GameSection eyebrow="AGENCY HEADQUARTERS" title={s.agencyName||"Your Agency"} sub={"Current location: "+(findCityLot(s.officeId)?.name||"Starter HQ")}/><div className="mt-location-stat-grid"><GameStat label="STAFF" value={s.staff.length+"/"+currentOffice(s).capacity}/><GameStat label="DAILY OVERHEAD" value={money(currentOffice(s).daily)}/></div><Button className="w-full" onClick={() => onOpen("ceo")}>Enter CEO Command Center</Button></div>;
     return <div className="space-y-2">{C.agencyReqs(s).map((r) => <Row key={r.name} k={(r.ok ? "Done · " : "Locked · ") + r.name} v={r.num} />)}
       <input className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm" placeholder="Agency name" value={name} onChange={(e) => setName(e.target.value)} disabled={!C.canOpenAgency(s)} />
       <Button className="w-full" disabled={!C.canOpenAgency(s)} onClick={() => act((d, f) => C.createAgency(d, f, name))}>Found agency · 8,000,000đ</Button></div>;
