@@ -135,7 +135,30 @@ def build_master(spec,lod,output,save_blend):
    for side in (-1,1):add("corporate_fin_"+str(side),(side*w*.4,h*.62,d/2+.18),(.16,h*.48,.25),1)
   if spec["class"] in ("retail_property","urban_infrastructure"):
    add("awning",(0,2.35,d/2+.8),(w*.8,.19,1.6),4)
- else:add("silhouette_bar",(0,h*.64,d/2+.11),(w*.6,.45,.2),1)
+ else:
+  # Low LOD keeps the category silhouette visible in the elevated city view.
+  c=spec["class"]
+  if c=="creative_agency":
+   add("creative_art_fin_lod1",(-w*.32,h*.52,d/2+.19),(w*.24,h*.72,.35),4)
+   add("creative_roof_lod1",(0,h+1.20,0),(w*.75,1.0,d*.54),4)
+  elif c=="media_facility":
+   add("media_video_wall_lod1",(0,h*.64,d/2+.27),(w*.83,h*.34,.37),6)
+   add("media_roof_lod1",(0,h+1.40,0),(w*.70,1.1,d*.5),4)
+  elif c=="rival_agency":
+   add("rival_wing_lod1",(-w*.24,h*.75,-d*.12),(w*.44,h*.43,d*.5),2)
+   add("rival_crown_lod1",(0,h+1.53,0),(w*.77,1.5,d*.5),6)
+  elif c=="corporate_client":
+   add("client_ad_wall_lod1",(0,h*.67,d/2+.34),(w*.76,h*.24,.35),4)
+   add("client_glass_crown_lod1",(0,h+1.60,0),(w*.76,1.45,d*.52),3)
+  elif c=="office_property":
+   add("office_portico_lod1",(0,h*.30,d/2+.25),(w*.85,2.6,.42),1)
+   add("office_deck_lod1",(0,h+1.02,0),(w*.68,.56,d*.55),4)
+  elif c=="residential":
+   add("residence_balcony_lod1",(0,h*.58,d/2+.22),(w*.75,h*.60,.35),1)
+  elif c=="retail_property":
+   add("retail_window_lod1",(0,h*.36,d/2+.46),(w*.83,2.2,.55),3)
+  elif c=="urban_infrastructure":
+   add("kiosk_roof_lod1",(0,h+.92,0),(w+1,.38,d+.8),4)
  # Preserve independent empty interaction anchors with stable names.
  col=bpy.context.scene.collection
  empty("ANCHOR_Entrance",(0,1.1,d/2+.4),col,{"game_id":spec.get("gameplayId","")})
