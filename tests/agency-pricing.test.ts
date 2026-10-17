@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {defaults,newCEO,migrate} from "../src/game/state";
 import {qualify,startPitch,pitchFee,presentPitch,applySuggestedFee,setPitch,beginNegotiation} from "../src/game/ceo";
-import {pricingContext,pricingFingerprint,validatedAdvice} from "../src/game/pricingAdvisor";
+import {pricingContext,pricingFingerprint,validatedAdvice,qualificationQuote} from "../src/game/pricingAdvisor";
+import {qualificationFee} from "../marketing-tycoon-ai-api/pricing.mjs";
 import {readFileSync} from "node:fs";
 import type {Fx} from "../src/game/store";
 
@@ -103,4 +104,62 @@ test("old prepared pitches without bidFee automatically become priced before sub
  presentPitch(saved);
  assert.equal(p.step,"objection");
  assert.equal(p.bidFee,saved.ceo!.leads.find(x=>x.id===l.id)!.pricingAdvice!.recommendedFee);
+});
+
+test("Qualify charges exact displayed risk-weighted fee and stores payment in the agency ledger and save",()=>{
+ const s=agency(),l=s.ceo!.leads.find(x=>x.id==="orion")!;
+ const before=s.agencyCash,quote=qualificationQuote(s,l);
+ assert.ok(quote.fee>180000);
+ qualify(s,fx,l.id);
+ assert.equal(l.status,"qualified");
+ assert.equal(l.qualifyFeePaid,quote.fee);
+ assert.equal(l.qualifyDepthPaid,quote.depth);
+ assert.equal(s.agencyCash,before-quote.fee);
+ assert.equal(s.ceo!.ledger[0].value,-quote.fee);
+ assert.ok(s.ceo!.ledger[0].what.includes("Lead qualification"));
+ const after=s.agencyCash;
+ qualify(s,fx,l.id);
+ assert.equal(s.agencyCash,after,"cannot pay for the same qualified lead twice");
+ const restored=migrate(JSON.parse(JSON.stringify(s)));
+ assert.equal(restored.ceo?.leads.find(x=>x.id===l.id)?.qualifyFeePaid,quote.fee);
+});
+test("insufficient funds prevent lead qualification without partial charges",()=>{
+ const s=agency(),l=s.ceo!.leads.find(x=>x.id==="sora")!;
+ const quote=qualificationQuote(s,l);
+ s.agencyCash=quote.fee-1;
+ const ledgerSize=s.ceo!.ledger.length;
+ qualify(s,fx,l.id);
+ assert.equal(l.status,"new");
+ assert.equal(s.agencyCash,quote.fee-1);
+ assert.equal(s.ceo!.ledger.length,ledgerSize);
+});
+test("Gemini picks diligence depth while the game calculates the exact charge and freezes paid fees",()=>{
+ const s=agency(),l=s.ceo!.leads.find(x=>x.id==="sora")!;
+ const x=pricingContext(s,l),fromGemini=validatedAdvice({
+   ...l,leadId:l.id,brand:l.brand,mediaBudget:l.value,baselineFee:l.fee,
+   feeFloor:20000000,feeCeiling:80000000,options:{competitive:25000000,balanced:39000000,premium:55000000},
+   tier:"balanced",recommendedFee:39000000,companyScale:"growing",estimatedCost:x.estimatedCost,
+   qualificationDepth:"deep",qualificationFee:999999999,
+   headline:"Complex stakeholder approvals",rationale:"Requires validation",preparation:["Interview stakeholders","Verify media quotes"],risk:"",
+   source:"gemini"
+ },x);
+ assert.equal(fromGemini.qualificationFee,qualificationFee(x,"deep"));
+ l.pricingAdvice=fromGemini;
+ const quote=qualificationQuote(s,l);
+ assert.equal(quote.depth,"deep");
+ assert.equal(quote.fee,qualificationFee(x,"deep"));
+ qualify(s,fx,l.id);
+ assert.equal(l.qualifyFeePaid,quote.fee);
+ // The next Gemini analysis may change strategic advice but cannot change a past charge.
+ l.pricingAdvice=validatedAdvice({...fromGemini,qualificationDepth:"lean"},x);
+ assert.equal(l.qualifyFeePaid,quote.fee);
+});
+test("the CEO pipeline and the client headquarters show the same calculated qualifying cost",()=>{
+ const panels=readFileSync("src/components/game/Panels.tsx","utf8");
+ assert.ok(panels.includes("qualificationQuote(s,live)"));
+ assert.ok(panels.includes("qualificationQuote(s,l)"));
+ assert.ok(panels.includes("Qualify · {money(quote.fee)}"));
+ assert.ok(panels.includes("Qualify opportunity · {money(quote?.fee??0)}"));
+ assert.ok(!panels.includes("Qualify · 180k"));
+ assert.ok(!panels.includes("Qualify opportunity · 180,000đ"));
 });
