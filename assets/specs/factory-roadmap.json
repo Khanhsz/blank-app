@@ -1,0 +1,19 @@
+{
+  "targetMasterTemplates": 70,
+  "targetVariantCount": 268,
+  "phase": "vertical-slice",
+  "currentMasterTemplates": 10,
+  "currentVariants": 0,
+  "proposedMastersByCategory": {
+    "creative_agency": 12,
+    "corporate_client": 12,
+    "rival_agency": 10,
+    "office_property": 12,
+    "residential": 9,
+    "retail_property": 6,
+    "media_facility": 5,
+    "urban_infrastructure": 4
+  },
+  "gate": "Do not generate any full-production variants until Blender source, GLB, browser QA and performance gates pass.",
+  "currentSource": "Programmatic Node fallback for 10 slice masters; Blender bpy exporter authored but not executed"
+}
