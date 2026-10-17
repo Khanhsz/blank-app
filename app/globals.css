@@ -236,3 +236,6 @@
 .verified-photo figcaption{font-size:9px;line-height:1.6;color:#667a6e;padding:10px 11px;overflow-wrap:anywhere}
 .verified-photo-note{display:flex;align-items:center;gap:6px;font-size:10px;color:#819786;margin:11px 0}
 @media(max-width:680px){.verified-panel{padding:12px;margin:12px 8px}.verified-candidate{padding:11px}.verified-evidence{grid-template-columns:1fr}.verified-candidate-top{flex-wrap:wrap}}
+
+
+.food-venue-main .food-source-evidence{font-size:9px;color:#708e79;border-top:1px dashed #dde8df;margin:10px 0 0;padding-top:8px;line-height:1.55;overflow-wrap:anywhere}
