@@ -16,7 +16,7 @@ export const AssetRegistry={
  has:(id:string)=>entryMap.has(id),
  get:(id:string)=>entryMap.get(id),
  isInteractive:(id:string)=>!!entryMap.get(id)?.gameplayId,
- url:(id:string,lod:0|1)=>"/assets/mt-city/"+ASSET_VERSION+"/"+encodeURIComponent(id)+".lod"+lod+".glb",
+ url:(id:string,lod:0|1,tier=1)=>"/assets/mt-city/"+ASSET_VERSION+"/"+encodeURIComponent(id)+((entryMap.get(id)?.class==="rival"&&tier>1)?".tier"+Math.min(4,Math.max(2,Math.floor(tier))):"")+".lod"+lod+".glb",
  decorativePlacements:slice.decorativePlacements as AssetLocation[],
  all:()=>entries.slice()
 };
