@@ -198,3 +198,28 @@ test("all five rival AI agencies have distinct real 3D models for tiers 1 throug
  assert.equal(report.extraTierFiles,30);
  assert.ok(report.extraTierBytes>0);
 });
+
+
+test("single-authority city renderer contains zero legacy building models and no duplicate fallback geometry",()=>{
+ const world=fs.readFileSync("src/components/game/WorldScene.tsx","utf8");
+ const district=fs.readFileSync("src/components/game/AssetDistrict.tsx","utf8");
+ // Removed dead code: the old building model, old instanced facade and door system.
+ for(const retired of ["LegacyBuilding","BuildingWindows","BuildingDoor","AmbientBuildings"]){
+  assert.doesNotMatch(world,new RegExp(retired),"Legacy city renderer must not exist: "+retired);
+ }
+ assert.doesNotMatch(world,/fallback=\{b=>/);
+ assert.match(world,/<DistrictManager districts=\{districts\}/);
+ // The complete mesh visual path is a single GLB subtree; Suspense and error
+ // states cannot show a second building, only absence of geometry.
+ assert.match(district,/<Suspense fallback=\{null\}>/);
+ assert.match(district,/<BuildingVisual b=\{b\}/);
+ assert.match(district,/return this\.state\.error\?null:this\.props\.children/);
+ assert.doesNotMatch(district,/props\.fallback|fallback:\s*React\.ReactNode/);
+ const visuals=(district.match(/<ModelGeometry id=\{b\.id\}/g)||[]).length;
+ assert.equal(visuals,1,"Every gameplay GLB should have exactly one geometry mount point");
+ assert.match(district,/<BuildingInteraction b=\{props\.building\}/);
+ assert.match(district,/GAMEPLAY_HITBOX_/);
+ // Old GLB-error fallback no longer doubles the architecture, but gameplay
+ // access still exists when a file is missing.
+ assert.match(district,/MISSING_ASSET_/);
+});
