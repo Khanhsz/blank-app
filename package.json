@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0",
-    "build": "python3 scripts/ensure_food_db.py && next build",
+    "build": "python3 -m py_compile scripts/import_global_pbf.py scripts/import_food_osm.py && python3 scripts/ensure_food_db.py && next build",
     "start": "next start --hostname 0.0.0.0",
     "typecheck": "tsc --noEmit"
   },
