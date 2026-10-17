@@ -8,6 +8,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import {fileURLToPath} from "node:url";
+import {buildBrickhouseModernist,brickhouseAnchors,brickhouseSlots,BRICKHOUSE_ARCHETYPE} from "./brickhouse-modernism.mjs";
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),"../..");
 const cfg=JSON.parse(fs.readFileSync(path.join(root,"assets/specs/arts-quarter.slice.json"),"utf8"));
@@ -43,6 +44,10 @@ function geometry(asset,lod){
   const out=buckets[m];for(const face of faces){const index=out.positions.length/3;for(const p of face.v){out.positions.push(...p);out.normals.push(...face.n)}out.indices.push(index,index+1,index+2,index,index+2,index+3);out.triangles+=2}
  }
  const w=asset.width,d=asset.depth,h=asset.height;const base=.28;
+ if(asset.id==="office-brick"){
+  buildBrickhouseModernist(cuboid,asset,lod);
+  return {buckets,materials,triangles:buckets.reduce((n,b)=>n+b.triangles,0)};
+ }
  cuboid(0,base/2,0,w+.5,base,d+.5,5);
  cuboid(0,base+h/2,0,w,h,d,0);
  // muted roof / cornice and building cap silhouettes
@@ -169,19 +174,21 @@ function glb(asset,lod){
   const aI=accessor(push(index16(b.indices),34963),b.indices.length,"SCALAR",5123);
   primitives.push({attributes:{POSITION:aP,NORMAL:aN},indices:aI,material:mi,mode:4});
  }
- const anchors=[
-  {name:"ANCHOR_Entrance",translation:[0,1.1,asset.depth/2+.4]},
-  {name:"ANCHOR_Sign",translation:[0,3.1,asset.depth/2+.34]},
-  {name:"ANCHOR_Roof",translation:[0,asset.height+1.55,0]},
-  {name:"COLLIDER_Footprint",translation:[0,.2,0],extras:{width:asset.width,depth:asset.depth,height:asset.height}}
- ];
+ const anchors=asset.id==="office-brick"?
+  Object.entries(brickhouseAnchors(asset)).map(([name,translation])=>({name,translation,...(name==="COLLIDER_Footprint"?{extras:{width:asset.width,depth:asset.depth,height:asset.height}}:{})})):
+  [
+   {name:"ANCHOR_Entrance",translation:[0,1.1,asset.depth/2+.4]},
+   {name:"ANCHOR_Sign",translation:[0,3.1,asset.depth/2+.34]},
+   {name:"ANCHOR_Roof",translation:[0,asset.height+1.55,0]},
+   {name:"COLLIDER_Footprint",translation:[0,.2,0],extras:{width:asset.width,depth:asset.depth,height:asset.height}}
+  ];
  const json={
   asset:{version:"2.0",generator:"Marketing Tycoon Reproducible Web Fallback (not Blender)"},
   scene:0,scenes:[{nodes:[0]}],
-  nodes:[{name:"MT_MASTER_"+asset.id,children:[1,2,3,4,5],extras:{persistentGameEntity:asset.gameplayId||null,assetId:asset.id,lod}}, {name:"VISIBLE_MESH",mesh:0},...anchors],
+  nodes:[{name:"MT_MASTER_"+asset.id,children:Array.from({length:1+anchors.length},(_,i)=>i+1),extras:{persistentGameEntity:asset.gameplayId||null,assetId:asset.id,lod}}, {name:"VISIBLE_MESH",mesh:0},...anchors],
   meshes:[{name:"merged_facade",primitives}],bufferViews,accessors,buffers:[{byteLength:offset}],
   materials:materials.map((hex,i)=>({name:"M_"+asset.palette+"_"+i,pbrMetallicRoughness:{baseColorFactor:[...rgb(hex),1],metallicFactor:i===3?.1:0,roughnessFactor:i===3?.62:.92},doubleSided:false})),
-  extras:{id:asset.id,version:cfg.version,source:"node-fallback",height:asset.height,width:asset.width,depth:asset.depth,triangles}
+  extras:{id:asset.id,version:cfg.version,source:"node-fallback",height:asset.height,width:asset.width,depth:asset.depth,triangles,...(asset.id==="office-brick"?{archetype:BRICKHOUSE_ARCHETYPE,advertisingSlots:brickhouseSlots(asset)}:{})}
  };
  const jsonBytes=textBytes(JSON.stringify(json));
  const j=Buffer.concat([jsonBytes,Buffer.alloc(align(jsonBytes.length)-jsonBytes.length,0x20)]);
@@ -219,10 +226,18 @@ function main(){
    }else fs.writeFileSync(file,data.buffer);
    const parsed=parseGLB(data.buffer);
    if(parsed.extras.id!==a.id||parsed.extras.height!==a.height)throw Error("Metadata mismatch "+a.id);
+   if(a.id==="office-brick"){
+    if(parsed.extras.archetype!==BRICKHOUSE_ARCHETYPE)throw Error("Brickhouse modernist archetype missing");
+    for(const slot of brickhouseSlots(a)){
+      if(!parsed.nodes.some(x=>x.name===slot.anchor))throw Error("Missing modernist media anchor: "+slot.anchor);
+    }
+   }
    lod["lod"+mode]={uri:"/assets/mt-city/"+cfg.version+"/"+name,triangles:data.triangles,bytes:data.buffer.length,materials:data.primitiveCount,sha256:crypto.createHash("sha256").update(data.buffer).digest("hex")};
   }
   qa.push({id:a.id,kind:a.class,gameplayId:a.gameplayId||null,highTriangles:lod.lod0.triangles,lowTriangles:lod.lod1.triangles,highBytes:lod.lod0.bytes,lowBytes:lod.lod1.bytes});
-  out.push({id:a.id,name:a.name,kind:a.class,gameplayId:a.gameplayId||null,decorative:!!a.decorative,dimensions:[a.width,a.height,a.depth],anchors:["ANCHOR_Entrance","ANCHOR_Sign","ANCHOR_Roof","COLLIDER_Footprint"],lod,...{palette:a.palette}});
+  out.push({id:a.id,name:a.name,kind:a.class,gameplayId:a.gameplayId||null,decorative:!!a.decorative,dimensions:[a.width,a.height,a.depth],
+   anchors:a.id==="office-brick"?Object.keys(brickhouseAnchors(a)):["ANCHOR_Entrance","ANCHOR_Sign","ANCHOR_Roof","COLLIDER_Footprint"],
+   ...(a.id==="office-brick"?{archetype:BRICKHOUSE_ARCHETYPE,advertisingSlots:brickhouseSlots(a)}:{}),lod,palette:a.palette});
  }
  for(const d of cfg.decorativePlacements)if(!ids.has(d.id))throw Error("Missing placement asset "+d.id);
  const manifest={schemaVersion:1,version:cfg.version,district:cfg.district,units:"meters",up:"Y",front:"+Z",source:"web-fallback-not-blender",assets:out,decorativePlacements:cfg.decorativePlacements};
