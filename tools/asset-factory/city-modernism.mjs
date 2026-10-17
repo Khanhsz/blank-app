@@ -201,5 +201,24 @@ export function buildCityModernist(box,a,lod=0){
   b(0,h+.42,d*.265,w*.415,.99,d*.148,6);
   b(0,h+.42,d*.343,w*.391,.83,.07,4);
  }
+ // Rival agency upgrades have genuine geometric stages, not stretched/recolored facades.
+ if(a.class==="rival"&&(a.tier||1)>1){
+  const tier=Math.min(4,Math.max(2,a.tier));
+  // Tier 2: cantilevered glass meeting annex, visibly distinct from base.
+  mass(w*.22,h*.48,-d*.16,w*.28,h*.25,d*.40,3);
+  b(w*.22,h*.75,-d*.16,w*.31,.23,d*.45,2);
+  if(tier>=3){
+   // Tier 3: roof-level creative campus bridge and vertical screening.
+   mass(-w*.15,h*.75,-d*.19,w*.30,h*.26,d*.33,1);
+   b(-w*.15,h+.1,-d*.19,w*.34,.23,d*.37,4);
+   b(-w*.31,h*.63,d*.26,.17,h*.57,.22,6);
+  }
+  if(tier>=4){
+   // Tier 4: prestige parapet / second roof program. Works for tall rivals.
+   b(0,h+.72,-d*.12,w*.62,.37,d*.52,2);
+   b(-w*.20,h+.43,-d*.12,.18,.76,d*.45,4);
+   b(w*.20,h+.43,-d*.12,.18,.76,d*.45,4);
+  }
+ }
  // source anchors are assigned independently of actual number of geometry children.
 }
