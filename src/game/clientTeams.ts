@@ -137,26 +137,70 @@ export function transferClientMember(s:GameState,fx:Fx,fromId:string,toId:string
  leaveClientTeam(s,fx,fromId,employeeId);
  joinClientTeam(s,fx,toId,employeeId);
 }
+/** Workforce planning is a pure, deterministic layer above the existing game.
+ * Recommendations never assign members of another client's dedicated team.
+ */
+export const WORKFORCE_GROUPS=[
+ {id:"client",label:"Account & Operations",roles:["account","operations"]},
+ {id:"planning",label:"Research & Strategy",roles:["research","strategy"]},
+ {id:"studio",label:"Creative & Production",roles:["creative","production"]},
+ {id:"growth",label:"Media & Analytics",roles:["media","kol","analytics"]},
+] as const;
+export function teamNeeds(s:GameState,team:ClientTeam){
+ const projects=(s.ceo?.projects??[]).filter(p=>p.teamId===team.id&&p.status==="active");
+ const pending=projects.flatMap(p=>p.tasks.filter(t=>t.status!=="completed"&&!t.outsourced));
+ const required=[...new Set(pending.map(t=>t.role))];
+ const busy:Record<string,number>={};
+ for(const p of (s.ceo?.projects??[]).filter(p=>p.status==="active"))for(const t of p.tasks){
+  if(t.status==="in_progress"&&t.employee&&t.employee!=="external")busy[t.employee]=(busy[t.employee]??0)+1;
+ }
+ const canCover=(id:string,role:string)=>eligibleForRole(id,role)&&effectiveCapacity(s,id)>0;
+ const missing=required.filter(role=>!team.memberIds.some(id=>canCover(id,role)));
+ const overloaded=team.memberIds.filter(id=>{
+  const fatigue=s.personnel[id]?.fatigue??0;
+  return fatigue>=72||(busy[id]??0)>effectiveCapacity(s,id);
+ });
+ const unavailable=team.memberIds.filter(id=>effectiveCapacity(s,id)===0);
+ const remaining=projects.length?Math.min(...projects.map(p=>Math.max(0,p.duration-p.days))):null;
+ const warnings:string[]=[];
+ if(missing.length)warnings.push(missing.length+" uncovered workstream"+(missing.length>1?"s":""));
+ if(overloaded.length)warnings.push(overloaded.length+" overworked specialist"+(overloaded.length>1?"s":""));
+ if(unavailable.length)warnings.push(unavailable.length+" unavailable specialist"+(unavailable.length>1?"s":""));
+ if(remaining!==null&&remaining<=7&&pending.length)warnings.push("Deadline in "+remaining+" days");
+ const status=team.status==="closing"?"completed":team.status==="forming"?"needs-staff":
+  missing.length&&remaining!==null&&remaining<=7?"critical":
+  missing.length||overloaded.length||unavailable.length?"attention":"on-track";
+ return {projects,pending,required,missing,busy,overloaded,unavailable,remaining,warnings,status};
+}
+export function staffingPlan(s:GameState,team:ClientTeam){
+ const needs=teamNeeds(s,team);
+ const wanted=new Set(needs.missing);
+ const absentGroups=WORKFORCE_GROUPS.filter(g=>!team.memberIds.some(id=>g.roles.some(role=>eligibleForRole(id,role)&&effectiveCapacity(s,id)>0)));
+ const ranked=talentPool(s).filter(id=>effectiveCapacity(s,id)>0).map(id=>{
+  const relevant=needs.missing.filter(role=>eligibleForRole(id,role));
+  const groups=absentGroups.filter(g=>g.roles.some(role=>eligibleForRole(id,role)));
+  const leadBonus=team.leadId===null&&primaryRole(id)==="account"?30:0;
+  const readiness=employeeReadiness(s,id),fatigue=s.personnel[id]?.fatigue??0;
+  return {id,roles:relevant,groups:groups.map(g=>g.label),
+   score:relevant.length*110+groups.length*40+leadBonus+readiness*.24-fatigue*.3};
+ }).filter(x=>x.roles.length||x.groups.length).sort((a,b)=>b.score-a.score||a.id.localeCompare(b.id));
+ const unavailablePool=talentPool(s).filter(id=>effectiveCapacity(s,id)===0);
+ const recruitment=[...wanted].flatMap(role=>ceoTaskDefs.filter(t=>t.role===role)).map(t=>t.role);
+ return {needs,ranked,unavailablePool,recruitment:[...new Set(recruitment)],next:ranked[0]??null,
+  hint:ranked[0]?"Assign "+(employeeById(ranked[0].id)?.name??"available specialist")+" to cover "+(ranked[0].roles[0]??ranked[0].groups[0])+
+    ".":needs.missing.length?"Recruit, upskill, or outsource "+needs.missing[0]+" work.":"Your dedicated team covers its current work."};
+}
 export function autoAssembleTeam(s:GameState,fx:Fx,teamId:string){
  const team=s.ceo?.clientTeams?.find(t=>t.id===teamId);
  if(!team||team.status==="released"||team.status==="closing")return;
- const outstanding=new Set(ceoTaskDefs.map(t=>t.role));
+ let allocated=0;
  while(team.memberIds.length<TEAM_SIZE_TARGET){
-  const pool=talentPool(s).filter(id=>effectiveCapacity(s,id)>0);
-  if(!pool.length)break;
-  const candidates=pool.map(id=>{
-   const covers=[...outstanding].filter(role=>eligibleForRole(id,role));
-   const specialist=primaryRole(id);
-   const roleBoost=TEAM_ROLES.some(r=>r.id===specialist)?2:0;
-   return{id,covers,score:covers.length*50+roleBoost+employeeReadiness(s,id)*.18};
-  }).sort((a,b)=>b.score-a.score);
-  const best=candidates[0];
-  if(!best||!best.covers.length)break;
-  joinClientTeam(s,fx,team.id,best.id);
-  for(const role of best.covers)outstanding.delete(role);
-  if(!outstanding.size)break;
+  const suggestion=staffingPlan(s,team).next;
+  if(!suggestion)break;
+  joinClientTeam(s,fx,teamId,suggestion.id);
+  allocated++;
  }
- if(!team.memberIds.length)fx.toast("No unassigned employees. Recruit staff or resolve an existing client team's capacity.");
+ if(!allocated)fx.toast("No eligible unassigned specialists. Recruit, train, or outsource critical work.");
 }
 export function teamCoverage(s:GameState,team:ClientTeam){
  const taskRoles=[...new Set(ceoTaskDefs.map(x=>x.role))];
