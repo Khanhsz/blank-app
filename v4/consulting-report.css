@@ -1,7 +1,7 @@
 
 /* INTELLIGENCE REPORT / CONSULTING EDITORIAL SYSTEM V5
    Inspired by established consulting report conventions; no McKinsey identity or affiliation. */
-:root{font-family:Arial,Helvetica,sans-serif;color:#172d3b;background:#f4f6f6}
+:root{font-family:"Be Vietnam Pro",Arial,Helvetica,sans-serif;color:#172d3b;background:#f4f6f6}
 body{background:#f3f5f6;color:#172e3d}
 .app{grid-template-columns:224px minmax(0,1fr)}
 .side{background:#fff;color:#4c6270;border-right:1px solid #dfe5e8;padding:22px 15px;box-shadow:none}
@@ -20,7 +20,7 @@ body{background:#f3f5f6;color:#172e3d}
 .main{background:#f6f8f8}
 .top{background:#fff;height:79px;border-bottom:1px solid #d7e1e6;padding:14px clamp(22px,3.5vw,58px)}
 .top-title{font-size:10px;color:#7d92a1;text-transform:uppercase;letter-spacing:.13em}
-.top-title b{font-family:Georgia,'Times New Roman',serif;font-size:19px;letter-spacing:-.02em;color:#17384d;text-transform:none}
+.top-title b{font-family:"Noto Serif","Times New Roman",serif;font-size:19px;letter-spacing:-.02em;color:#17384d;text-transform:none}
 .search{background:#f7f9fa;border-color:#dce4e9;border-radius:1px;min-height:40px}
 .search input{font-size:12px}
 .btn{background:#fff;color:#143e57;border:1px solid #afc2cc;border-radius:2px;font-size:11px;letter-spacing:.015em;min-height:41px}
@@ -32,9 +32,9 @@ body{background:#f3f5f6;color:#172e3d}
 .content{max-width:1420px;padding:42px clamp(22px,4.5vw,72px) 100px}
 .eyebrow,.small-title{color:#0b5678;font-size:10px;letter-spacing:.15em;font-weight:800}
 h1,h2,h3{color:#0d2e43}
-h1{font:normal clamp(36px,4.7vw,60px)/1.08 Georgia,'Times New Roman',serif;letter-spacing:-.032em;margin:14px 0}
-h2{font:normal 27px/1.22 Georgia,'Times New Roman',serif;letter-spacing:-.02em}
-h3{font:700 16px/1.4 Arial,Helvetica,sans-serif;letter-spacing:-.02em}
+h1{font:normal clamp(36px,4.7vw,60px)/1.08 "Noto Serif","Times New Roman",serif;letter-spacing:-.032em;margin:14px 0}
+h2{font:normal 27px/1.22 "Noto Serif","Times New Roman",serif;letter-spacing:-.02em}
+h3{font:700 16px/1.4 "Be Vietnam Pro",Arial,Helvetica,sans-serif;letter-spacing:-.02em}
 .lead{font-size:14px;color:#526c7b;max-width:790px;line-height:1.8}
 .page-head{padding-bottom:21px;border-bottom:1px solid #cfd9df;margin-bottom:28px}
 .section-heading{margin:36px 0 15px;border-top:2px solid #173d54;padding-top:15px}
@@ -45,7 +45,7 @@ h3{font:700 16px/1.4 Arial,Helvetica,sans-serif;letter-spacing:-.02em}
 .pill.gray{background:#edf0f1;color:#687d89}
 .pill.amber{background:#f8efe4;color:#9f7149}
 .hero{border-radius:0;background:#0c3047;min-height:0;padding:42px 45px}
-.hero h2{font:normal clamp(30px,3.5vw,48px)/1.12 Georgia,serif;letter-spacing:-.03em;max-width:610px}
+.hero h2{font:normal clamp(30px,3.5vw,48px)/1.12 "Noto Serif","Times New Roman",serif;letter-spacing:-.03em;max-width:610px}
 .hero p{font-size:14px;line-height:1.8}
 .hero .eyebrow{color:#a1cdda}
 .hero-art{border-left:1px solid #446678}
@@ -54,10 +54,10 @@ h3{font:700 16px/1.4 Arial,Helvetica,sans-serif;letter-spacing:-.02em}
 .stat{border-right:0}
 .stat:last-child{border-right:1px solid #dce5e9}
 .stat span{font-size:10px;letter-spacing:.09em;text-transform:uppercase}
-.stat strong{font-family:Georgia,serif;font-weight:400;font-size:39px}
+.stat strong{font-family:"Noto Serif","Times New Roman",serif;font-weight:400;font-size:39px}
 .stat small{font-size:11px}
 .story{border:1px solid #e1e8eb;padding:23px}
-.story h3{font:normal 23px/1.25 Georgia,'Times New Roman',serif;margin:14px 0;color:#0c2c42}
+.story h3{font:normal 23px/1.25 "Noto Serif","Times New Roman",serif;margin:14px 0;color:#0c2c42}
 .story .domain{color:#126080}
 .story p{font-size:13px;line-height:1.8;color:#516a79}
 .story .meta{margin-bottom:4px}
@@ -76,9 +76,9 @@ h3{font:700 16px/1.4 Arial,Helvetica,sans-serif;letter-spacing:-.02em}
 .map-node{border-radius:3px}
 .dialog{width:min(850px,calc(100% - 24px));border-radius:0;max-height:93vh}
 .dialog-head{padding:38px 46px 26px}
-.dialog-head h2{font:normal clamp(28px,3vw,39px)/1.2 Georgia,serif}
+.dialog-head h2{font:normal clamp(28px,3vw,39px)/1.2 "Noto Serif","Times New Roman",serif}
 .dialog-body{padding:30px 46px 45px}
-.detail-text h3{font:normal 26px/1.25 Georgia,serif;margin:27px 0 9px}
+.detail-text h3{font:normal 26px/1.25 "Noto Serif","Times New Roman",serif;margin:27px 0 9px}
 .detail-text p{color:#425c6b;line-height:1.8;font-size:15px}
 .dialog-close{top:22px;right:21px}
 .article-photo-source{border-radius:0}
@@ -96,11 +96,11 @@ h3{font:700 16px/1.4 Arial,Helvetica,sans-serif;letter-spacing:-.02em}
 .report-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .report-section-index{color:#0d5979;font-size:11px;font-weight:800;letter-spacing:.12em;display:block;margin-bottom:9px}
 .report-section-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin:42px 0 16px;border-top:2px solid #0e3951;padding-top:16px}
-.report-section-heading h2{font:normal clamp(27px,3vw,36px)/1.2 Georgia,serif;margin:0 0 4px}
+.report-section-heading h2{font:normal clamp(27px,3vw,36px)/1.2 "Noto Serif","Times New Roman",serif;margin:0 0 4px}
 .report-section-heading p{font-size:12px;color:#69818e;line-height:1.5;margin:0}
 .report-intro-grid{display:grid;grid-template-columns:1.45fr 1fr;gap:16px}
 .report-summary{padding:26px 28px;border:1px solid #d7e2e7;background:#fff}
-.report-summary .thesis{font:normal 25px/1.35 Georgia,serif;color:#0c3952;margin:8px 0 16px}
+.report-summary .thesis{font:normal 25px/1.35 "Noto Serif","Times New Roman",serif;color:#0c3952;margin:8px 0 16px}
 .report-points{list-style:none;margin:0;padding:0}
 .report-points li{display:grid;grid-template-columns:32px 1fr;gap:11px;padding:12px 0;border-top:1px solid #e3e9ed}
 .report-points .number{font-size:15px;font-weight:800;color:#006994}
@@ -109,7 +109,7 @@ h3{font:700 16px/1.4 Arial,Helvetica,sans-serif;letter-spacing:-.02em}
 .report-points button{border:0;padding:0;background:transparent;color:#0a6686;text-decoration:underline;cursor:pointer;font-size:11px;margin-top:6px;text-align:left}
 .report-chart{padding:24px 26px;background:#113952;color:#fff;display:flex;flex-direction:column}
 .report-chart .report-section-index{color:#9cd3e2}
-.report-chart h3{font:normal 25px/1.24 Georgia,serif;color:#fff;margin:7px 0 16px}
+.report-chart h3{font:normal 25px/1.24 "Noto Serif","Times New Roman",serif;color:#fff;margin:7px 0 16px}
 .report-chart p{color:#c2d9e3;font-size:11px;line-height:1.7}
 .report-chart-row{display:grid;grid-template-columns:83px minmax(0,1fr) 27px;align-items:center;gap:9px;margin:8px 0;font-size:10px;color:#c3dce5}
 .report-chart-row .bartrack{display:block;background:#3a6277;height:8px;min-width:60px;overflow:hidden;position:relative}
@@ -118,21 +118,21 @@ h3{font:700 16px/1.4 Arial,Helvetica,sans-serif;letter-spacing:-.02em}
 .report-metric-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin-top:16px;border:1px solid #dce4e9;background:#fff}
 .report-metric{padding:19px 24px;border-right:1px solid #dce4e9;min-width:0}
 .report-metric:last-child{border-right:0}
-.report-metric strong{font:normal 38px/1.1 Georgia,serif;color:#0b3e5b;display:block}
+.report-metric strong{font:normal 38px/1.1 "Noto Serif","Times New Roman",serif;color:#0b3e5b;display:block}
 .report-metric span{font-size:10px;letter-spacing:.07em;color:#536d7a;text-transform:uppercase;font-weight:750;display:block;margin-top:9px}
 .report-metric small{font-size:10px;color:#95a4ac;display:block;margin-top:4px}
 .report-sector-list{border:1px solid #dce5e9;background:#fff}
 .report-sector-item{display:grid;grid-template-columns:45px 1.6fr 100px 130px;align-items:center;gap:17px;padding:17px 19px;border-bottom:1px solid #e3eaed;background:#fff;width:100%;text-align:left;color:#16374c}
 .report-sector-item:last-child{border-bottom:0}
 .report-sector-item:hover{background:#f3f7f9}
-.report-sector-item .num{font:normal 25px Georgia,serif;color:#0b698c}
+.report-sector-item .num{font:normal 25px "Noto Serif","Times New Roman",serif;color:#0b698c}
 .report-sector-item strong{font-weight:700;font-size:14px}
 .report-sector-item small{color:#7b909b;font-size:11px;text-align:right}
 .report-sector-item .go{font-size:11px;color:#0a698b;text-align:right;font-weight:bold}
 .report-feature-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;border:1px solid #dce5e9;background:#dce5e9}
 .report-feature{background:white;padding:26px 27px;min-width:0;display:flex;flex-direction:column}
 .report-feature .index{font-size:11px;font-weight:800;color:#0b708b;letter-spacing:.14em}
-.report-feature h3{font:normal 24px/1.26 Georgia,serif;margin:16px 0 12px;flex-grow:1;color:#13394d}
+.report-feature h3{font:normal 24px/1.26 "Noto Serif","Times New Roman",serif;margin:16px 0 12px;flex-grow:1;color:#13394d}
 .report-feature p{font-size:12px;line-height:1.8;color:#566f7a;margin-bottom:16px}
 .report-feature .tagline{font-size:10px;letter-spacing:.12em;font-weight:bold;color:#577585}
 .report-feature .go{border:0;border-top:1px solid #e0e6ea;padding:13px 0 0;text-align:left;background:none;color:#0d6284;font-size:12px;font-weight:bold;text-decoration:underline;text-underline-offset:3px}
@@ -144,29 +144,29 @@ h3{font:700 16px/1.4 Arial,Helvetica,sans-serif;letter-spacing:-.02em}
 .report-toc{border-top:3px solid #0c3751;background:#fff}
 .report-toc .report-row{display:grid;grid-template-columns:50px 1fr 110px;gap:18px;align-items:start;padding:23px 25px;border-bottom:1px solid #dce6eb}
 .report-toc .report-row:nth-child(even){background:#f8fafb}
-.report-toc .report-no{font:normal 31px Georgia,serif;color:#0e607c}
-.report-toc h3{font:normal 24px/1.24 Georgia,serif;margin:0 0 10px}
+.report-toc .report-no{font:normal 31px "Noto Serif","Times New Roman",serif;color:#0e607c}
+.report-toc h3{font:normal 24px/1.24 "Noto Serif","Times New Roman",serif;margin:0 0 10px}
 .report-toc p{font-size:13px;line-height:1.65;color:#547080;margin:0}
 .report-toc .report-row-meta{display:flex;gap:8px;align-items:center;color:#8b9ca5;font-size:11px;justify-content:flex-end;flex-wrap:wrap}
 .report-toc .report-row-meta button{border:0;background:none;color:#0c5d80;font-weight:800;font-size:12px;text-decoration:underline;cursor:pointer}
 .report-issue{background:#fff;padding:32px;border:1px solid #dce5e9}
 .report-issue .report-kicker{font-size:10px}
-.report-issue .report-lead{font:normal 29px/1.23 Georgia,serif;color:#0c3850;margin:14px 0 15px}
+.report-issue .report-lead{font:normal 29px/1.23 "Noto Serif","Times New Roman",serif;color:#0c3850;margin:14px 0 15px}
 .report-exhibit-note{font-size:11px;color:#728d9a;line-height:1.7}
 .report-article-head{border-bottom:1px solid #d8e2e7;padding-bottom:24px}
 .report-article-head .report-number{font-size:11px;letter-spacing:.16em;color:#0b7591;font-weight:750}
-.report-article-head h2{font:normal clamp(29px,3.8vw,43px)/1.17 Georgia,serif;margin:12px 0}
-.report-article-summary{font:normal 20px/1.6 Georgia,serif;color:#345668}
+.report-article-head h2{font:normal clamp(29px,3.8vw,43px)/1.17 "Noto Serif","Times New Roman",serif;margin:12px 0}
+.report-article-summary{font:normal 20px/1.6 "Noto Serif","Times New Roman",serif;color:#345668}
 .report-section-step{display:grid;grid-template-columns:42px 1fr;gap:15px;padding:22px 0;border-bottom:1px solid #e0e8ed}
-.report-section-step .step-no{font:normal 24px Georgia,serif;color:#126888}
+.report-section-step .step-no{font:normal 24px "Noto Serif","Times New Roman",serif;color:#126888}
 .report-section-step h3{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#0e5c7b;margin:0 0 7px}
 .report-section-step p{font-size:14px;line-height:1.83;color:#415d6c;margin:0}
 .report-detail-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:15px;color:#6c8591;font-size:11px}
 .report-facts{margin:20px 0 0;border-left:3px solid #0e617e;background:#edf4f6;padding:18px 21px}
 .report-facts b{font-size:10px;color:#0a5b78;letter-spacing:.13em}
-.report-facts p{font:normal 18px/1.55 Georgia,serif;margin:7px 0 0}
+.report-facts p{font:normal 18px/1.55 "Noto Serif","Times New Roman",serif;margin:7px 0 0}
 .report-sources{border-top:2px solid #11394d;margin-top:26px;padding-top:18px}
-.report-sources h3{font:normal 22px Georgia,serif}
+.report-sources h3{font:normal 22px "Noto Serif","Times New Roman",serif}
 .report-sources a{border-bottom:1px solid #dfe8ec}
 .report-domain-label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#0c627f;font-weight:bold}
 .report-source-row{font-size:11px;line-height:1.6;color:#8193a0}
@@ -224,3 +224,24 @@ h3{font:700 16px/1.4 Arial,Helvetica,sans-serif;letter-spacing:-.02em}
 .report-chart{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .content{max-width:none;width:100%}
 }
+
+/* VIETNAMESE TYPOGRAPHY HOTFIX
+ * Noto Serif / Be Vietnam Pro have Vietnamese glyphs; avoid Georgia's mixed-glyph fallback.
+ * Use generous line heights to prevent clipped ascenders and dấu tiếng Việt.
+ */
+html{font-family:"Be Vietnam Pro",Arial,Helvetica,sans-serif;font-synthesis:weight style}
+body,input,button,select,textarea{font-family:"Be Vietnam Pro",Arial,Helvetica,sans-serif}
+h1,h2,.story h3,.hero h2,.report-cover h1,.report-section-heading h2,.report-summary .thesis,
+.report-chart h3,.report-feature h3,.report-toc h3,.report-article-head h2,
+.report-facts p,.report-lead,.report-issue .report-lead,.report-metric strong,
+.report-no,.report-sector-item .num,.dialog-head h2,.report-section-step .step-no{
+ font-family:"Noto Serif","Times New Roman",serif;
+ letter-spacing:-.012em;
+ line-height:1.29;
+}
+.report-cover h1{line-height:1.21;letter-spacing:-.018em}
+.report-section-heading h2,.report-feature h3,.report-toc h3{line-height:1.35}
+.report-summary .thesis,.report-article-summary,.report-facts p{line-height:1.63}
+.nav,.small-title,.report-kicker,.eyebrow,.report-section-index{letter-spacing:.075em}
+.report-feature p,.report-row p,.detail-text p{line-height:1.85}
+button{line-height:1.45}
