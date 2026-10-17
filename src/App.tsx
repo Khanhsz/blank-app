@@ -118,7 +118,7 @@ export default function App(){
 
 
    {s.created&&<div className="stats"><div>REPUTATION<strong>{s.reputation}</strong></div><div>EXPERTISE<strong>{s.expertise}</strong></div><div className="darkstat">CASH<strong>{money(s.agencyUnlocked?s.agencyCash:s.personalCash)}</strong></div></div>}
-   {s.agencyUnlocked&&s.ceo&&<WeekIndicator week={s.ceo.weekly?.week??Math.floor((s.ceo.day-1)/7)+1} day={s.ceo.day} count={s.ceo.weekly?.editions.length??0} unread={!!s.ceo.weekly?.editions.some(x=>!x.read)} onAdvance={()=>act((d,fx)=>endWeek(d,fx))} onReview={()=>setReviewNews(s.ceo?.weekly?.editions[0]?.id??null)}/>}
+   {s.created&&<WeekIndicator week={s.clock.week} day={s.clock.day} count={s.clock.editions.length} unread={!!s.clock.editions.some(x=>!x.read)} onAdvance={()=>act((d,fx)=>endWeek(d,fx))} onReview={()=>setReviewNews(s.clock.editions[0]?.id??null)}/>}
    {s.created&&<nav className="dock"><button onClick={()=>change("room")} className={s.scene==="room"?"active":""}><Home size={19}/>Home</button><button disabled={!s.cityUnlocked} onClick={()=>change("city")} className={s.scene==="city"?"active":""}>{s.cityUnlocked?<Compass size={19}/>:<LockKeyhole size={19}/>}City</button><button id="navigate-workstation" onClick={()=>s.agencyUnlocked?setPanel("ceo"):approachComputer()}><Map size={19}/>{s.agencyUnlocked?"Projects":"Computer"}</button><button disabled={!s.agencyUnlocked&&!s.cityUnlocked} onClick={()=>s.agencyUnlocked?change("office"):(change("city"),locate("agency"))}><BriefcaseBusiness size={19}/>Agency</button><button onClick={()=>setPanel("avatar")}><Users size={19}/>Avatar</button><button onClick={()=>setPanel("settings")} aria-label="Settings"><Settings2 size={19}/>Settings</button></nav>}
    {s.created&&!s.agencyUnlocked&&s.scene==="room"&&panel==="none"&&<div className="computer-instruction" role="status"><strong>{computerHint?"You are back in your bedroom.":"Your first client is waiting."}</strong><span>Click the glowing computer screen to open your inbox.</span></div>}
 
@@ -148,7 +148,7 @@ export default function App(){
    </div>}
    </div></motion.section>}</AnimatePresence>
    <AnimatePresence>{celebrate&&<motion.div role="status" className="mt-milestone" initial={{opacity:0,y:28,scale:.9}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:-12,scale:.95}} transition={{duration:reduceMotion?0:.42}}><Trophy size={22}/><div><small>CAREER MILESTONE</small><strong>{celebrate}</strong></div><Star size={18}/></motion.div>}</AnimatePresence>
-   {s.ceo?.weekly?.editions.find(x=>!x.read)||s.ceo?.weekly?.editions.find(x=>x.id===reviewNews)?<WeeklyNewspaper edition={(s.ceo.weekly!.editions.find(x=>!x.read)||s.ceo.weekly!.editions.find(x=>x.id===reviewNews))!} onClose={()=>{const unread=s.ceo?.weekly?.editions.find(x=>!x.read);if(unread)act(d=>acknowledgeEdition(d,unread.id));setReviewNews(null)}}/>:null}
+   {s.clock.editions.find(x=>!x.read)||s.clock.editions.find(x=>x.id===reviewNews)?<WeeklyNewspaper edition={(s.clock.editions.find(x=>!x.read)||s.clock.editions.find(x=>x.id===reviewNews))!} onClose={()=>{const unread=s.clock.editions.find(x=>!x.read);if(unread)act(d=>acknowledgeEdition(d,unread.id));setReviewNews(null)}}/>:null}
    <Toaster position="top-center" richColors/>
  </div>
 }

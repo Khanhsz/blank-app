@@ -130,11 +130,13 @@ export const employees: Employee[] = [
   { id: "account", name: "Mai Đỗ", role: "Account Manager", salary: 3400000, skill: "Client / Scope" },
   { id: "kol", name: "Phúc Lâm", role: "KOL/KOC Manager", salary: 3100000, skill: "Creator / Booking" },
   { id: "analyst", name: "Nhi Võ", role: "Data Analyst", salary: 3500000, skill: "Metrics / Reporting" },
+  { id: "producer", name: "Bảo Trần", role: "Production Producer", salary: 2800000, skill: "Assets / Activations" },
+  { id: "ops", name: "Hà Phạm", role: "Operations Lead", salary: 2600000, skill: "Project Delivery / Resource Planning" },
 ];
 export const employeeById = (id: string) => employees.find((e) => e.id === id);
 
-export const ceoRoles: Record<string, string> = { account: "Account Manager", research: "Research Executive", strategy: "Strategic Planner", creative: "Creative Team", media: "Media Buyer", kol: "KOL/KOC Manager", analytics: "Data Analyst" };
-export const ceoTalent: Record<string, string> = { research: "researcher", strategy: "planner", creative: "creator", media: "buyer", account: "account", kol: "kol", analytics: "analyst" };
+export const ceoRoles: Record<string, string> = { account: "Account Manager", research: "Research Executive", strategy: "Strategic Planner", creative: "Creative Team", production: "Production Producer", media: "Media Buyer", kol: "KOL/KOC Manager", analytics: "Data Analyst", operations: "Operations Lead" };
+export const ceoTalent: Record<string, string> = { research: "researcher", strategy: "planner", creative: "creator", production: "producer", operations: "ops", media: "buyer", account: "account", kol: "kol", analytics: "analyst" };
 
 export interface LeadDef {
   id: string; brand: string; industry: string; value: number; fee: number; duration: number; objective: string; scope: number; intensity: number;
@@ -155,10 +157,12 @@ export const ceoTaskDefs: TaskDef[] = [
   { key: "account", label: "Kick-off & scope control", role: "account", effort: 2, pre: [], cost: 850000 },
   { key: "research", label: "Consumer research & survey", role: "research", effort: 3, pre: ["account"], cost: 1900000 },
   { key: "strategy", label: "Positioning & campaign plan", role: "strategy", effort: 3, pre: ["research"], cost: 1700000 },
-  { key: "creative", label: "Creative assets production", role: "creative", effort: 5, pre: ["strategy"], cost: 3600000 },
+  { key: "creative", label: "Creative concept & content", role: "creative", effort: 3, pre: ["strategy"], cost: 1700000 },
+  { key: "production", label: "Asset production & activation", role: "production", effort: 4, pre: ["creative"], cost: 1900000 },
+  { key: "operations", label: "Delivery QA & coordination", role: "operations", effort: 3, pre: ["account"], cost: 900000 },
   { key: "media", label: "Media planning & A/B testing", role: "media", effort: 4, pre: ["strategy"], cost: 1600000 },
   { key: "kol", label: "Creator sourcing & execution", role: "kol", effort: 4, pre: ["strategy"], cost: 2500000 },
-  { key: "analytics", label: "Campaign analytics & client report", role: "analytics", effort: 4, pre: ["creative", "media", "kol"], cost: 1550000 },
+  { key: "analytics", label: "Campaign analytics & client report", role: "analytics", effort: 4, pre: ["production", "media", "kol", "operations"], cost: 1550000 },
 ];
 
 export interface Rival { id: string; name: string; type: string; special: string; rep: number; creative: number; performance: number; strategy: number; people: number; cash: number; price: number; aggression: number; clients: number; officeTier?:number; wins?:number; lastMove?:string; lastMoveDay?:number; focus?: "premium"|"growth"|"creative"|"value"|"strategy"; activeContracts?:{leadId:string;brand:string;finishDay:number;revenue:number}[] }

@@ -9,9 +9,9 @@ export const mtMotion={micro:.16,panel:.38,scene:.75};
 export function GameSection({eyebrow,title,sub,icon,children}: {eyebrow:string;title:string;sub?:string;icon?:ReactNode;children?:ReactNode}){
  return <section className="mt-game-section"><div className="mt-section-head">{icon&&<span className="mt-section-symbol">{icon}</span>}<div><small>{eyebrow}</small><h3>{title}</h3>{sub&&<p>{sub}</p>}</div></div>{children}</section>;
 }
-const icons=[FileCheck2,FlaskConical,Users,ShieldCheck,Target,Lightbulb,Clapperboard,Radio,Activity] as const;
+const icons=[FlaskConical,Clapperboard,Radio,FileCheck2] as const;
 export function CampaignTimeline({phase}:{phase:Phase}){
- const active=PHASES.indexOf(phase);
+ const active=Math.max(0,PHASES.indexOf(phase));
  return <div className="mt-timeline"><div className="mt-timeline-head"><small>CAMPAIGN PROGRESSION</small><strong>{String(active+1).padStart(2,"0")} <span>/ {PHASES.length}</span></strong></div><div className="mt-timeline-track">{PHASES.map((p,i)=>{const Icon=icons[i];return <div title={PHASE_LABEL[p]} key={p} className={"mt-timeline-point "+(i<active?"completed":i===active?"current":"pending")}><div className="mt-timeline-line"/><span className="mt-phase-dot">{i<active?<Check size={13} strokeWidth={3}/>:<Icon size={13}/>}</span>{i===active&&<span className="mt-phase-caption">{PHASE_LABEL[p]}</span>}</div>})}</div></div>;
 }
 export function AnimatedGauge({percent,label,suffix="%",tone="copper"}:{percent:number;label:string;suffix?:string;tone?:"copper"|"teal"|"sage"}){

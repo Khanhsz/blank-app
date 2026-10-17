@@ -6,12 +6,13 @@ import { scoreModel } from "./campaign";
 import { ceoRand } from "./data";
 import {currentOffice} from "./city";
 import {runRivalAgents,ensureTender,rivalBidScore,registerRivalWin,resolveTalentOffer} from "./rivalAI";
+import {candidatesForRole} from "./functions";
 
 const OVERHEAD = 160000;
 
 export function ceoInit(s: GameState): CEO | null {
   if (!s.agencyUnlocked) return null;
-  if (!s.ceo) s.ceo = newCEO(s.reputation);
+  if (!s.ceo) {s.ceo = newCEO(s.reputation);s.ceo.day=s.clock.day;s.ceo.weekly=s.clock;}
   return s.ceo;
 }
 const lead = (c: CEO, id: string) => c.leads.find((l) => l.id === id);
@@ -35,7 +36,7 @@ export function capacity(c: CEO) {
 }
 const wage = (id: string) => (employeeById(id)?.salary ?? 3000000) / 30;
 export const dailyPayroll = (s: GameState) => s.staff.reduce((a, id) => a + wage(id) + (s.ceo?.salaryPremiums?.[id]??0)/30, 0);
-function available(s: GameState, c: CEO, role: string) { const id = ceoTalent[role], busy = capacity(c); return s.staff.includes(id) && (busy[id] || 0) < 2 ? id : null; }
+function available(s: GameState, c: CEO, role: string) { const busy=capacity(c);return candidatesForRole(role).find(id=>s.staff.includes(id)&&(busy[id]||0)<2)??null; }
 const partnerFor = (key: string) => (key === "research" ? "research" : key === "creative" ? "production" : key === "media" || key === "kol" ? "media" : null);
 function taskCost(c: CEO, t: Task, p: Project) {
   let base = t.cost * (p.scope / 8); const pid = partnerFor(t.key);
@@ -52,6 +53,7 @@ function schedulePayment(c: CEO, p: Project, amount: number, delay: number, what
 export function ceoTick(s: GameState, fx: Fx, days: number) {
   const c = ceoInit(s); if (!c) return;
   for (let i = 0; i < Math.min(7,Math.max(0,Math.floor(days))); i++) ceoDay(s,c,fx);
+  s.clock.day=c.day;s.clock.week=Math.floor((c.day-1)/7)+1;c.weekly=s.clock;
 }
 
 export function ceoDay(s: GameState, c: CEO, fx: Fx) {
@@ -62,7 +64,7 @@ export function ceoDay(s: GameState, c: CEO, fx: Fx) {
   const active = c.projects.filter((p) => p.status === "active");
   for (const ap of active) { ap.payrollAllocated = (ap.payrollAllocated || 0) + pay / active.length; ap.overheadAllocated = (ap.overheadAllocated || 0) + officeCost / active.length; }
   if (c.day % 30 === 0) for (const pid of c.partners) { const sp = ceoPartners.find((x) => x.id === pid)!; s.agencyCash -= sp.monthly; ledger(c, "Partner retainer · " + sp.name, -sp.monthly, "agency"); }
-  for (const p of c.projects) if (p.status === "active") { p.days++; progressProject(s, c, p, fx); }
+  for (const p of c.projects) if (p.status === "active") { p.days++;p.campaign.day=c.day; progressProject(s, c, p, fx); }
   for (const x of c.ledger) if (x.status === "due" && (x.due ?? 0) <= c.day) { x.status = "paid"; s.agencyCash += x.value; c.totalPaid += x.value; issue(c, fx, "payment", x.lead + x.day, `Received ${money(x.value)} from ${x.lead}`, ["acknowledge"]); }
   runRivalAgents(s,c,fx);
   if (s.agencyCash < 0) issue(c, fx, "cash", "agency", "Agency cash flow is negative — improve liquidity.", ["finance"]);
@@ -78,7 +80,9 @@ function progressProject(s: GameState, c: CEO, p: Project, fx: Fx) {
       else if (!t.outsourced) { issue(c, fx, "capacity", p.id, `No ${ceoRoles[t.role]} free for ${p.brand}. Outsource or hire.`, ["outsource", "wait"]); continue; }
     }
     if (t.status === "in_progress") {
-      const fit = t.employee === ceoTalent[t.role] || t.outsourced, load = busy[t.employee ?? ""] || 0, skill = fit ? 1.12 : 0.58;
+      const primary=t.employee===ceoTalent[t.role],crossTrained=candidatesForRole(t.role).includes(t.employee??"");
+      const fit=primary||crossTrained||t.outsourced,load=busy[t.employee??""]||0;
+      const skill=primary?1.12:t.outsourced?1.08:crossTrained?0.85:0.58;
       const pid = partnerFor(t.key), boost = pid && c.partners.includes(pid) ? 1.08 : 1;
       t.progress = Number(Math.min(t.effort, t.progress + (skill * boost) / (load > 1 ? 1.5 : 1)).toFixed(2));
       if (t.progress >= t.effort) {
@@ -90,6 +94,10 @@ function progressProject(s: GameState, c: CEO, p: Project, fx: Fx) {
       else { t.status = "completed"; t.doneDay = c.day; const cost = taskCost(c, t, p); p.direct += cost; c.totalDirect += cost; s.agencyCash -= cost; ledger(c, "Delivery cost · " + t.label, -cost, p.brand); applyTask(p, t); }
     }
   }
+  if(p.campaign.phase!=="live"&&p.campaign.phase!=="results"&&["production","media","kol"].every(k=>p.tasks.find(t=>t.key===k)?.status==="completed")){
+    p.campaign.phase="live";p.campaign.actualLaunchDay=c.day;
+    fx.log(p.brand+" launched after production, media and creator delivery");
+  }
   if (p.days > p.duration - 6 && !p.deadlineIssue && p.tasks.some((t) => t.status !== "completed")) { p.deadlineIssue = true; issue(c, fx, "deadline", p.id, `Deadline risk on ${p.brand}. Extend or add resources.`, ["extend", "outsource"]); }
   if (p.days >= p.duration * 0.55 && !p.midpoint) { p.midpoint = true; schedulePayment(c, p, p.fee * 0.3, 2, "Mid-project milestone"); }
   if (p.tasks.every((t) => t.status === "completed") && p.days >= Math.max(10, Math.floor(p.duration * 0.6))) finishProject(s, c, p, fx);
@@ -97,10 +105,11 @@ function progressProject(s: GameState, c: CEO, p: Project, fx: Fx) {
 
 function applyTask(p: Project, t: Task) {
   const co = p.campaign, sc = scenarios[p.scenarioIndex];
-  if (t.key === "research") { co.research = ["audit", "reviews", "interview"]; co.survey = { audience: sc.trueSegment, sample: 120, question: "barrier" }; co.insight = t.quality >= 64 ? sc.trueInsight : "value"; co.phase = "strategy"; }
-  if (t.key === "strategy") { co.strategy = { segment: t.quality >= 65 ? sc.trueSegment : "everyone", objective: sc.trueObjective, position: t.quality >= 65 ? sc.truePosition : "budget" }; co.phase = "creative"; }
-  if (t.key === "creative") { co.creative = t.quality >= 68 ? sc.trueCreative : "discount"; co.phase = "media"; }
-  if (t.key === "media") { const b = sc.budget; co.media = { paid: Math.round(b * 0.46), creator: Math.round(b * 0.34), promo: Math.round(b * 0.13), flyer: Math.round(b * 0.07) }; co.spent = b; co.phase = "live"; p.mediaSpent = Math.round(p.adBudget * 0.88); p.mediaReserved = p.adBudget - p.mediaSpent; }
+  if (t.key === "research") { co.research = ["audit", "reviews", "interview"]; co.survey = { audience: sc.trueSegment, sample: 120, question: "barrier" }; co.insight = t.quality >= 64 ? sc.trueInsight : "value"; co.phase = "planning"; }
+  if (t.key === "strategy") { co.strategy = { segment: t.quality >= 65 ? sc.trueSegment : "everyone", objective: sc.trueObjective, position: t.quality >= 65 ? sc.truePosition : "budget" }; co.phase = "executing"; }
+  if (t.key === "creative") { co.creative = t.quality >= 68 ? sc.trueCreative : "discount"; co.phase = "executing"; }
+  if (t.key === "media") { const b = sc.budget; co.media = { paid: Math.round(b * 0.46), creator: Math.round(b * 0.34), promo: Math.round(b * 0.13), flyer: Math.round(b * 0.07) }; co.spent = b;co.mediaBooked=true; p.mediaSpent = Math.round(p.adBudget * 0.88); p.mediaReserved = p.adBudget - p.mediaSpent; }
+  if (t.key === "production") { co.productionReadyDay=p.startedDay+p.days; }
   if (t.key === "kol") { p.kolQuality = t.quality; p.mediaSpent = Math.min(p.adBudget, p.mediaSpent + Math.round(p.adBudget * 0.06)); p.mediaReserved = p.adBudget - p.mediaSpent; }
   if (t.key === "analytics") { p.reportQuality = t.quality; co.optimization = "retarget"; co.phase = "results"; }
 }
@@ -131,10 +140,12 @@ export function ceoMigrateLegacy(s: GameState, fx: Fx) {
   c.legacyCampaignMigration = 1;
   const old = s.campaign; if (!old || old.phase === "results" || old.final) return;
   const sc = scenarios[old.scenarioIndex % scenarios.length];
-  const prog = ["brief", "research", "survey", "validation", "strategy", "creative", "media", "live", "results"].indexOf(old.phase);
-  const done: Record<string, boolean> = { account: prog >= 1, research: prog >= 4, strategy: prog >= 5, creative: prog >= 6, media: prog >= 7, kol: prog >= 7, analytics: prog >= 8 };
+  const phase=old.phase;
+  const planningDone=["executing","live","results"].includes(phase);
+  const liveDone=["live","results"].includes(phase);
+  const done:Record<string,boolean>={account:phase!=="brief",research:planningDone,strategy:planningDone,creative:liveDone,production:liveDone,media:liveDone,kol:liveDone,operations:phase!=="brief",analytics:phase==="results"};
   const tasks: Task[] = ceoTaskDefs.map((t) => ({ ...t, status: done[t.key] ? "completed" : "backlog", progress: done[t.key] ? t.effort : 0, quality: done[t.key] ? 76 : 0, employee: done[t.key] ? "legacy" : null, outsourced: false }));
-  const p: Project = { id: "legacy-" + ++c.seq, leadId: "legacy", brand: sc.brand, adBudget: sc.budget, fee: sc.fee, bonus: 0, scope: 2, duration: Math.max(14, sc.days), industry: sc.industry, days: Math.max(0, old.day - 1), status: "active", scenarioIndex: old.scenarioIndex, startedDay: c.day, target: sc.target, pitchQuality: 70, mediaSpent: Math.min(sc.budget, old.spent), mediaReserved: Math.max(0, sc.budget - old.spent), direct: 0, campaign: structuredClone(old), tasks, paymentCount: 0, legacy: true, clientTrust: 60 };
+  const p: Project = { id: "legacy-" + ++c.seq, leadId: "legacy", brand: sc.brand, adBudget: sc.budget, fee: sc.fee, bonus: 0, scope: 2, duration: Math.max(14, sc.days), industry: sc.industry, days: Math.max(0, c.day-(old.startedDay??old.day)), status: "active", scenarioIndex: old.scenarioIndex, startedDay: c.day, target: sc.target, pitchQuality: 70, mediaSpent: Math.min(sc.budget, old.spent), mediaReserved: Math.max(0, sc.budget - old.spent), direct: 0, campaign: structuredClone(old), tasks, paymentCount: 0, legacy: true, clientTrust: 60 };
   c.projects.push(p); schedulePayment(c, p, sc.fee * 0.3, 0, "Migrated client advance");
   const e = c.ledger[0]; e.status = "paid"; c.totalPaid += e.value; s.agencyCash += e.value;
   fx.log(`Handed ${sc.brand} campaign to the agency team. Founder no longer executes tasks.`);
@@ -219,7 +230,7 @@ export function sign(s: GameState, fx: Fx) {
   const c = ceoInit(s)!, n = c.negotiation; if (!n || n.status !== "open") return; const l = lead(c, n.id)!;
   if (forecast(s, n).margin < 0 && n.round < 3) { issue(c, fx, "bad-margin", l.id, `Proposal risks a loss: ${l.brand}.`, ["review"]); return; }
   n.status = "signed"; l.status = "signed";const tender=ensureTender(c,l);if(tender)tender.status="player";
-  const p: Project = { id: "project-" + ++c.seq, leadId: l.id, brand: l.brand, adBudget: l.value, fee: n.fee, bonus: n.bonus, scope: n.scope, duration: n.deadline, industry: l.industry, days: 0, status: "active", scenarioIndex: l.scenario, startedDay: c.day, target: l.target, pitchQuality: c.pitch?.quality || 65, mediaSpent: 0, mediaReserved: l.value, direct: 0, campaign: newCampaign(l.scenario), tasks: ceoTaskDefs.map((t) => ({ ...t, status: "backlog", progress: 0, quality: 0, employee: null, outsourced: false })), paymentCount: 0 };
+  const p: Project = { id: "project-" + ++c.seq, leadId: l.id, brand: l.brand, adBudget: l.value, fee: n.fee, bonus: n.bonus, scope: n.scope, duration: n.deadline, industry: l.industry, days: 0, status: "active", scenarioIndex: l.scenario, startedDay: c.day, target: l.target, pitchQuality: c.pitch?.quality || 65, mediaSpent: 0, mediaReserved: l.value, direct: 0, campaign: newCampaign(l.scenario,c.day), tasks: ceoTaskDefs.map((t) => ({ ...t, status: "backlog", progress: 0, quality: 0, employee: null, outsourced: false })), paymentCount: 0 };
   c.projects.push(p); schedulePayment(c, p, (n.fee * n.advance) / 100, 0, "Contract advance");
   const e = c.ledger[0]; e.status = "paid"; c.totalPaid += e.value; s.agencyCash += e.value;
   fx.log(`Signed ${l.brand} · service fee ${money(n.fee)}`); issue(c, fx, "signed", p.id, `Signed ${l.brand}. The team runs the campaign from tomorrow.`, ["acknowledge"]);

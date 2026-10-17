@@ -4,26 +4,34 @@ import assert from "node:assert/strict";
 import {defaults,migrate} from "../src/game/state";
 import * as C from "../src/game/campaign";
 import * as K from "../src/game/ceo";
+import {endWeek,acknowledgeEdition} from "../src/game/weekly";
+import {departmentMetrics} from "../src/game/functions";
 import type {Fx} from "../src/game/store";
 
 const fx:Fx={toast:()=>{},log:()=>{}};
 function runCampaign(s:ReturnType<typeof defaults>){
   assert.equal(s.campaign.phase,"brief");
   C.acceptBrief(s,fx);
-  assert.equal(s.campaign.phase,"research");
+  assert.equal(s.campaign.phase,"planning");
   C.addResearch(s,fx,"audit");C.addResearch(s,fx,"reviews");C.addResearch(s,fx,"interview");
   assert.ok(s.campaign.research.length>=2);
-  C.toSurvey(s);assert.equal(s.campaign.phase,"survey");
   C.runSurvey(s,fx,{audience:"students",sample:60,question:"barrier"});
-  C.toValidation(s);assert.equal(s.campaign.phase,"validation");
-  C.confirmInsight(s,fx,"awareness");assert.equal(s.campaign.phase,"strategy");
+  assert.ok(s.campaign.survey);
+  C.confirmInsight(s,fx,"awareness");
   C.confirmStrategy(s,fx,{segment:"students",objective:"visits",position:"study"});
-  assert.equal(s.campaign.phase,"creative");
-  C.confirmCreative(s,fx,"study");assert.equal(s.campaign.phase,"media");
-  C.launch(s,fx,{paid:1800000,creator:1500000,promo:500000,flyer:250000});
+  assert.equal(s.campaign.phase,"executing");
+  C.confirmCreative(s,fx,"study");
+  C.bookMedia(s,fx,{paid:1800000,creator:1500000,promo:500000,flyer:250000});
+  assert.equal(s.campaign.phase,"executing");
+  // Production is not instantly live; a shared weekly turn must complete.
+  assert.ok(!s.campaign.actualLaunchDay);
+  const first=endWeek(s,fx)!;assert.ok(first);acknowledgeEdition(s,first.id);
+  C.launch(s,fx);
   assert.equal(s.campaign.phase,"live");
-  assert.ok(s.campaign.liveMetrics);
-  C.optimize(s,fx,"hold");assert.equal(s.campaign.phase,"results");
+  C.optimize(s,fx,"hold");
+  assert.equal(s.campaign.phase,"live");
+  const second=endWeek(s,fx)!;assert.ok(second);acknowledgeEdition(s,second.id);
+  assert.equal(s.campaign.phase,"results");
   assert.ok(s.campaign.final);
 }
 test("freelance campaign, city unlock and rewards are preserved",()=>{
@@ -42,6 +50,8 @@ test("three campaigns unlock actual CEO mode; employee time and data survive mig
  C.createAgency(s,fx,"Test Studio");
  assert.equal(s.agencyUnlocked,true);
  assert.ok(s.ceo);assert.equal(s.scene,"office");
+ assert.equal(s.ceo!.day,s.clock.day,"founding agency must not reset Week 1");
+ assert.equal(departmentMetrics(s).length,8);
  const startingDay=s.ceo!.day;const c=s.ceo!;
  K.hire(s,fx,"researcher");
  assert.ok(s.staff.includes("researcher"));
@@ -79,7 +89,7 @@ test("AI-generated evidence, insight options and correct outcome survive local s
  const restored=migrate(JSON.parse(JSON.stringify(s)));
  assert.equal(C.scenarioOf(restored.campaign).id,"ai-example123");
  assert.equal(C.scenarioOf(restored.campaign).insightOptions?.length,5);
- assert.equal(restored.campaign.phase,"strategy");
+ assert.equal(restored.campaign.phase,"planning");
 });
 test("AI brief cannot overwrite campaign already in progress",()=>{
  const s=defaults();s.created=true;
@@ -87,4 +97,23 @@ test("AI brief cannot overwrite campaign already in progress",()=>{
  const sample={...scenarios[0],id:"ai-something",aiMeta:{category:"coffee",seed:1,label:"Fictional"},insightOptions:["awareness","value","location","trust","style"].map(id=>({id,title:id,desc:id+" detail"}))};
  assert.equal(C.activateAIBrief(s,fx,sample),false);
  assert.equal(s.campaign.aiScenario,null);
+});
+
+test("brief deadlines, optimization and agency functions share one calendar",()=>{
+ const s=defaults();s.created=true;
+ const startDay=s.clock.day;
+ C.acceptBrief(s,fx);C.confirmInsight(s,fx,"awareness");
+ C.confirmStrategy(s,fx,{segment:"students",objective:"visits",position:"study"});
+ C.confirmCreative(s,fx,"study");C.bookMedia(s,fx,{paid:1500000,creator:1000000,promo:0,flyer:0});
+ // Week 1 production; launch only in Week 2.
+ C.launch(s,fx);assert.equal(s.campaign.phase,"executing");
+ const w1=endWeek(s,fx)!;assert.equal(s.clock.day,startDay+7);
+ acknowledgeEdition(s,w1.id);C.launch(s,fx);assert.equal(s.campaign.phase,"live");
+ C.optimize(s,fx,"retarget");C.optimize(s,fx,"refresh");
+ assert.equal(s.campaign.optimization,"retarget","only one optimization per week");
+ const w2=endWeek(s,fx)!;
+ assert.equal(s.campaign.phase,"results");assert.equal(s.campaign.liveWeeks,1);
+ assert.equal(s.campaign.weeklyResults?.length,1);
+ acknowledgeEdition(s,w2.id);C.nextClient(s,fx);
+ assert.equal(s.campaign.startedDay,s.clock.day,"next brief starts on the current global day");
 });

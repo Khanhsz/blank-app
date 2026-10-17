@@ -10,6 +10,7 @@ import {tenderFor,marketShare,resolveTalentOffer} from "@/game/rivalAI";
 import { ceoPartners, ceoRoles, creatives, employees, insights, mediaChannels, money, objectives, optimizations, positions, researchOptions, segments, surveyCosts, upgrades, BRAND_HQ_REP, type Channel, type UpgradeId } from "@/game/data";
 import { PHASES, PHASE_LABEL } from "@/game/state";
 import {findCityLot,findOffice,currentOffice,cityRival,cityClient,leaseOffice} from "@/game/city";
+import {departmentMetrics} from "@/game/functions";
 
 const Choice = ({ on, onClick, title, sub }: { on?: boolean; onClick: () => void; title: string; sub?: string }) => (
   <DecisionCard active={on} onClick={onClick} title={title} description={sub}/>
@@ -17,46 +18,99 @@ const Choice = ({ on, onClick, title, sub }: { on?: boolean; onClick: () => void
 const Row = ({ k, v }: { k: string; v: React.ReactNode }) => <div className="flex justify-between border-b border-border py-1.5 text-sm"><span className="text-muted-foreground">{k}</span><b>{v}</b></div>;
 
 export function CampaignWorkspace() {
-  const s = useGame((x) => x);
-  const c = s.campaign, sc = C.scenarioOf(c);
-  const [sv, setSv] = useState({ audience: "students", sample: 60, question: "barrier" });
-  const [ins, setIns] = useState<string | null>(null);
-  const [st, setSt] = useState(c.strategy);
-  const [cr, setCr] = useState<string | null>(null);
-  const [media, setMedia] = useState<Record<Channel, number>>({ paid: 0, creator: 0, promo: 0, flyer: 0 });
-  if (s.agencyUnlocked) return <p className="text-sm text-muted-foreground">Your team now runs all campaigns. Open the CEO Command Center.</p>;
+  const s=useGame(x=>x),c=s.campaign,sc=C.scenarioOf(c),phase=C.phaseOf(c),schedule=C.scheduleOf(c);
+  const [sv,setSv]=useState({audience:"students",sample:60,question:"barrier"});
+  const [ins,setIns]=useState<string|null>(c.insight);
+  const [st,setSt]=useState(c.strategy);
+  const [cr,setCr]=useState<string|null>(c.creative);
+  const [media,setMedia]=useState<Record<Channel,number>>({paid:0,creator:0,promo:0,flyer:0});
+  if(s.agencyUnlocked)return <p className="text-sm text-muted-foreground">Your agency manages delivery. Open CEO Command Center → Functions.</p>;
   if(c.phase==="brief"&&(c.aiStatus==="pending"||c.aiStatus==="generating"))return <AutomaticBriefWaiting/>;
-  const left = sc.budget - c.spent;
-  const idx = PHASES.indexOf(c.phase);
-  return (
-    <div className="mt-campaign-stage">
-      <CampaignTimeline phase={c.phase}/>
-      <div className="mt-campaign-hero"><div className="mt-eyebrow">{sc.industry} / Day {c.day} of {sc.days}</div><h2>{sc.brand}</h2><p>Real decisions shape your results. Plan, execute and deliver your first marketing campaign.</p></div>
-      <div className="mt-campaign-stats"><GameStat label="BUDGET REMAINING" value={money(left)} icon={<Coins size={17}/>}/><GameStat label="PERFORMANCE TARGET" value={"+"+sc.target+"%"} icon={<Target size={17}/>} sub={sc.metric}/></div>
-      <PhaseScene phase={c.phase}>
-      {c.phase === "brief" && <><GameSection eyebrow="NEW CLIENT OPPORTUNITY" title="Your first assignment" sub="Review the challenge before accepting the brief." icon={<FileText size={19}/> }><p className="mt-client-quote">“{sc.client}” — {sc.contact}</p></GameSection><AutomaticBriefNotice campaign={c}/><Button id="accept-first-brief" data-testid="accept-first-brief" className="w-full" onClick={() => act(C.acceptBrief)}>Accept brief</Button></>}
-      {c.phase === "research" && <><GameSection eyebrow="DISCOVERY" title="Evidence before instinct" icon={<FlaskConical size={19}/>} sub="Research improves reliability but spends time and money."/><div className="mt-research-choices">{researchOptions.map((r) => <Choice key={r.id} on={c.research.includes(r.id)} onClick={() => act((d, f) => C.addResearch(d, f, r.id))} title={`${r.title} · ${money(r.cost)} · ${r.days}d`} sub={c.research.includes(r.id) ? sc.reports[r.id] : r.description} />)}</div><AnimatedGauge label="Evidence collected" percent={c.research.length*100/Math.max(1,researchOptions.length)}/>
-        <Button className="w-full" disabled={!c.research.length} onClick={() => act(C.toSurvey)}>Continue to survey</Button></>}
-      {c.phase === "survey" && (!c.survey ? <><GameSection eyebrow="CONSUMER INTELLIGENCE" title="Design the survey" icon={<Users size={19}/>} sub="Sample size and question selection affect survey quality."/>
-        <div className="text-xs font-semibold">Audience</div><div className="grid grid-cols-2 gap-2">{segments.map((g) => <Choice key={g.id} on={sv.audience === g.id} onClick={() => setSv({ ...sv, audience: g.id })} title={g.title} />)}</div>
-        <div className="text-xs font-semibold">Sample size</div><div className="grid grid-cols-3 gap-2">{[20, 60, 120].map((n) => <Choice key={n} on={sv.sample === n} onClick={() => setSv({ ...sv, sample: n })} title={`${n}`} sub={money(surveyCosts[n])} />)}</div>
-        <div className="text-xs font-semibold">Question</div><div className="grid grid-cols-2 gap-2"><Choice on={sv.question === "barrier"} onClick={() => setSv({ ...sv, question: "barrier" })} title="Why not visit/buy?" /><Choice on={sv.question === "like"} onClick={() => setSv({ ...sv, question: "like" })} title="Do you like us?" /></div>
-        <Button className="w-full" onClick={() => act((d, f) => C.runSurvey(d, f, sv))}>Run survey</Button></> : (() => { const r = C.surveyResults(s); return <><div className="rounded-xl bg-muted p-3 text-sm"><b>{r.primary}%</b> cite “{r.reason}” · data quality {r.quality}%</div><Button className="w-full" onClick={() => act(C.toValidation)}>Validate insight</Button></>; })())}
-      {c.phase === "validation" && <><GameSection eyebrow="VALIDATION" title="Find the insight" icon={<ShieldCheck size={19}/>} sub="The strongest insight must be supported by the evidence you collected." />{(sc.insightOptions??insights).map((i) => <Choice key={i.id} on={ins === i.id} onClick={() => setIns(i.id)} title={i.title} sub={i.desc} />)}<Button className="w-full" disabled={!ins} onClick={() => act((d, f) => C.confirmInsight(d, f, ins!))}>Confirm insight</Button></>}
-      {c.phase === "strategy" && <><GameSection eyebrow="PLANNING" title="Choose your strategic direction" icon={<Target size={19}/>} sub="Segment, objectives and positioning determine the campaign fit." />{([["Segment", segments, "segment"], ["Objective", objectives, "objective"], ["Positioning", positions, "position"]] as const).map(([lbl, list, key]) => <div key={key}><div className="mb-1 text-xs font-semibold">{lbl}</div><div className="grid grid-cols-2 gap-2">{list.map((o) => <Choice key={o.id} on={st[key] === o.id} onClick={() => setSt({ ...st, [key]: o.id })} title={o.title} />)}</div></div>)}
-        <Button className="w-full" onClick={() => act((d, f) => C.confirmStrategy(d, f, st))}>Lock strategy</Button></>}
-      {c.phase === "creative" && <><GameSection eyebrow="PRODUCTION" title="Build the big idea" icon={<Clapperboard size={19}/>} sub="Choose a creative concept that works for both budget and strategy." />{creatives.map((k) => <Choice key={k.id} on={cr === k.id} onClick={() => setCr(k.id)} title={`${k.title} · ${money(k.cost)}`} sub={`${k.subtitle} — ${k.desc}`} />)}<Button className="w-full" disabled={!cr} onClick={() => act((d, f) => C.confirmCreative(d, f, cr!))}>Produce concept</Button></>}
-      {c.phase === "media" && (() => { const tot = Object.values(media).reduce((a, b) => a + b, 0); return <><GameSection eyebrow="MEDIA PLANNING" title="Spend where it matters" icon={<ChartNoAxesCombined size={19}/>} sub="Compare how each channel shares your campaign budget."/><BarComparison rows={mediaChannels.map(m=>({label:m.title,value:media[m.id],display:money(media[m.id])}))} max={Math.max(1,left)}/>
-        {mediaChannels.map((m) => <div key={m.id}><div className="flex justify-between text-sm"><span>{m.title}</span><b>{money(media[m.id])}</b></div><input type="range" className="w-full accent-primary" min={0} max={left} step={100000} value={media[m.id]} onChange={(e) => setMedia({ ...media, [m.id]: +e.target.value })} /></div>)}
-        <Row k="Allocated" v={`${money(tot)} / ${money(left)}`} />
-        <Button className="w-full" disabled={tot < 500000 || tot > left} onClick={() => act((d, f) => C.launch(d, f, media))}>Launch campaign</Button></>; })()}
-      {c.phase === "live" && c.liveMetrics && <><GameSection eyebrow="LIVE CAMPAIGN" title="Monitor and optimize" icon={<Activity size={19}/>} sub="Adjustments cost money but may change outcomes."/><div className="mt-campaign-stats"><GameStat label="INTERIM REACH" value={c.liveMetrics.adReach.toLocaleString()}/><GameStat label="INTERIM UPLIFT" value={c.liveMetrics.pct+"%"}/></div><AnimatedGauge label="Progress toward target" percent={c.liveMetrics.pct/Math.max(1,sc.target)*100} tone="teal"/>
-        {optimizations.map((o) => <Choice key={o.id} onClick={() => act((d, f) => C.optimize(d, f, o.id))} title={`${o.title} · ${money(o.cost)}`} sub={o.desc} />)}</>}
-      {c.phase === "results" && c.final && <><GameSection eyebrow="CAMPAIGN COMPLETE" title="The verdict" icon={<Check size={20}/>} sub="Results are recorded in your career history."/><AnimatedGauge label="Target achievement" percent={c.final.pct/Math.max(1,sc.target)*100} tone="sage"/><Row k="Final KPI" v={`${c.final.outcome} ${sc.unit}`} /><Row k="Uplift" v={`${c.final.pct}% (target +${sc.target}%)`} /><Row k="Fee earned" v={money(sc.fee)} /><Row k="Reward" v={`+${c.final.rep} REP · +${c.final.xp} XP`} />
-        <FeedbackStrip tone="positive">Campaign delivered. Reputation, fee and expertise have been recorded.</FeedbackStrip><p className="text-sm text-muted-foreground">Visit the Networking Café or Brand HQ in the city for your next brief.</p></>}
-      </PhaseScene>
+  const remaining=Math.max(0,sc.budget-c.spent),daysLeft=Math.max(0,schedule.endDay-s.clock.day);
+  const booked=Object.values(media).reduce((sum,v)=>sum+v,0);
+  const canLaunch=!!c.creative&&!!c.mediaBooked&&s.clock.day>=(c.productionReadyDay??Infinity)&&s.clock.day<schedule.endDay;
+  const campaignWeek=Math.min(schedule.weeks,Math.max(1,Math.floor((s.clock.day-(c.startedDay??s.clock.day))/7)+1));
+  return <div className="mt-campaign-stage">
+    <CampaignTimeline phase={phase}/>
+    <div className="mt-campaign-hero"><div className="mt-eyebrow">{sc.industry} · GLOBAL WEEK {s.clock.week} · CAMPAIGN WEEK {campaignWeek}/{schedule.weeks}</div><h2>{sc.brand}</h2><p>{sc.summary}</p></div>
+    <div className="mt-campaign-stats">
+      <GameStat label="BUDGET LEFT" value={money(remaining)} icon={<Coins size={17}/>}/>
+      <GameStat label="CLIENT TARGET" value={"+"+sc.target+"%"} icon={<Target size={17}/>}/>
+      <GameStat label="DAYS TO DEADLINE" value={String(daysLeft)} icon={<Activity size={17}/>}/>
     </div>
-  );
+    <div className="mt-campaign-weekline" aria-label="Brief-driven weekly schedule">
+      {Array.from({length:schedule.weeks},(_,i)=>{
+        const plan=i<schedule.planningWeeks,execute=i<schedule.planningWeeks+schedule.executingWeeks;
+        const name=plan?"Planning":execute?"Executing":"Live";
+        const now=i===campaignWeek-1;
+        return <div key={i} className={"mt-campaign-week "+(now?"current ":"")+(i<campaignWeek-1?"done":"")}>
+          <small>W{i+1}</small><b>{name}</b>
+        </div>;
+      })}
+    </div>
+    <p className="text-xs text-muted-foreground">Client launch target: Day {schedule.plannedLaunchDay} · Client deadline: Day {schedule.endDay}. Phases can overlap within a week; actions take effect on End Week.</p>
+    <PhaseScene phase={phase}>
+      {phase==="brief"&&<>
+        <GameSection eyebrow="CLIENT OPPORTUNITY" title="Crack the Brief" sub="Review the challenge, target and deadline. The global week does not reset for new clients." icon={<FileText size={19}/>}/>
+        <p className="mt-client-quote">“{sc.client||sc.summary}”</p>
+        <Row k="Contact" v={sc.contact}/><Row k="Campaign duration" v={sc.days+" days"}/><Row k="Budget" v={money(sc.budget)}/>
+        <Row k="Success metric" v={sc.metric}/><Row k="Fee" v={money(sc.fee)}/>
+        <Button className="w-full" onClick={()=>act(C.acceptBrief)}>Accept brief → Planning</Button>
+      </>}
+      {phase==="planning"&&<>
+        <GameSection eyebrow="01 / PLANNING" title="Evidence → Insight → Strategy" sub="Choose how much evidence is worth gathering under this brief's time and budget constraints." icon={<FlaskConical size={19}/>}/>
+        <details className="mt-workstream" open><summary>Research & competitor intelligence <span>{c.research.length} sources</span></summary>
+          <div className="mt-research-choices">{researchOptions.map(r=><Choice key={r.id} on={c.research.includes(r.id)} onClick={()=>act((d,f)=>C.addResearch(d,f,r.id))} title={r.title+" · "+money(r.cost)} sub={c.research.includes(r.id)?sc.reports[r.id]:r.description}/>)}</div>
+        </details>
+        <details className="mt-workstream"><summary>Optional consumer survey <span>{c.survey?c.survey.sample+" responses":"Not run"}</span></summary>
+          {c.survey?<div className="text-sm rounded-lg bg-muted p-3">Survey complete. {C.surveyResults(s).primary}% key signal · evidence quality {C.surveyResults(s).quality}%.</div>:<>
+            <p className="text-xs font-semibold mt-2">Audience</p><div className="grid grid-cols-2 gap-2">{segments.map(x=><Choice key={x.id} on={sv.audience===x.id} onClick={()=>setSv({...sv,audience:x.id})} title={x.title}/>)}</div>
+            <p className="text-xs font-semibold mt-2">Sample</p><div className="grid grid-cols-3 gap-2">{[20,60,120].map(n=><Choice key={n} on={sv.sample===n} onClick={()=>setSv({...sv,sample:n})} title={String(n)} sub={money(surveyCosts[n])}/>)}</div>
+            <p className="text-xs font-semibold mt-2">Question</p><div className="grid grid-cols-2 gap-2"><Choice on={sv.question==="barrier"} onClick={()=>setSv({...sv,question:"barrier"})} title="Purchase barrier"/><Choice on={sv.question==="like"} onClick={()=>setSv({...sv,question:"like"})} title="Preference"/></div>
+            <Button className="w-full mt-2" variant="outline" onClick={()=>act((d,f)=>C.runSurvey(d,f,sv))}>Conduct survey</Button>
+          </>}
+        </details>
+        <details className="mt-workstream" open><summary>Insight hypothesis <span>{c.insight??"Choose one"}</span></summary>
+          {(sc.insightOptions??insights).map(i=><Choice key={i.id} on={(ins??c.insight)===i.id} onClick={()=>setIns(i.id)} title={i.title} sub={i.desc}/>)}
+          <Button className="w-full mt-2" variant="outline" disabled={!ins} onClick={()=>act((d,f)=>C.confirmInsight(d,f,ins!))}>Save insight hypothesis</Button>
+          <p className="text-xs text-muted-foreground">A hypothesis without strong supporting evidence is riskier; the scoring model evaluates research fit.</p>
+        </details>
+        <GameSection eyebrow="STRATEGY LOCK" title="Campaign direction" icon={<Target size={19}/>}/>
+        {([["Segment",segments,"segment"],["Objective",objectives,"objective"],["Positioning",positions,"position"]] as const).map(([label,list,key])=><div key={key}><p className="text-xs font-semibold mt-2">{label}</p><div className="grid grid-cols-2 gap-2">{list.map(o=><Choice key={o.id} on={st[key]===o.id} onClick={()=>setSt({...st,[key]:o.id})} title={o.title}/>)}</div></div>)}
+        <Button className="w-full mt-3" disabled={!c.insight} onClick={()=>act((d,f)=>C.confirmStrategy(d,f,st))}>Approve strategy → Executing</Button>
+      </>}
+      {phase==="executing"&&<>
+        <GameSection eyebrow="02 / EXECUTING" title="Produce & Book" sub="Commission creative and allocate media. Production becomes launch-ready after a weekly turn." icon={<Clapperboard size={19}/>}/>
+        <details className="mt-workstream" open><summary>Creative production <span>{c.creative?"Commissioned":"Select concept"}</span></summary>
+          {creatives.map(k=><Choice key={k.id} on={(c.creative??cr)===k.id} onClick={()=>{if(!c.creative)setCr(k.id)}} title={k.title+" · "+money(k.cost)} sub={k.subtitle+" — "+k.desc}/>)}
+          {!c.creative?<Button className="w-full mt-2" disabled={!cr} onClick={()=>act((d,f)=>C.confirmCreative(d,f,cr!))}>Commission production</Button>:<FeedbackStrip tone="positive">{s.clock.day>=(c.productionReadyDay??Infinity)?"Assets ready to launch.":"Production in progress until Day "+c.productionReadyDay+". Advance the week to deliver."}</FeedbackStrip>}
+        </details>
+        <details className="mt-workstream" open><summary>Media booking <span>{c.mediaBooked?"Booked":money(booked)+" allocated"}</span></summary>
+          <BarComparison rows={mediaChannels.map(m=>({label:m.title,value:c.mediaBooked?c.media[m.id]:media[m.id],display:money(c.mediaBooked?c.media[m.id]:media[m.id])}))} max={Math.max(1,remaining)}/>
+          {!c.mediaBooked&&mediaChannels.map(m=><div key={m.id}><div className="flex justify-between text-sm"><span>{m.title}</span><b>{money(media[m.id])}</b></div><input type="range" className="w-full accent-primary" min={0} max={remaining} step={100000} value={media[m.id]} onChange={e=>setMedia({...media,[m.id]:+e.target.value})}/></div>)}
+          {!c.mediaBooked?<Button className="w-full mt-2" disabled={booked<500000||booked>remaining} onClick={()=>act((d,f)=>C.bookMedia(d,f,media))}>Confirm media booking</Button>:<FeedbackStrip tone="positive">Media inventory reserved. Spend is reflected in campaign budget.</FeedbackStrip>}
+        </details>
+        <Button className="w-full mt-3" disabled={!canLaunch} onClick={()=>act((d,f)=>C.launch(d,f))}>Launch campaign → Live</Button>
+        {!canLaunch&&<p className="text-xs text-muted-foreground">Launch requires completed production and a confirmed media booking. Missing the client launch target shortens the live flight.</p>}
+      </>}
+      {phase==="live"&&<>
+        <GameSection eyebrow="03 / LIVE" title="Measure & Optimize" sub="Effects are simulated on End Week. Choose one optimization per week and watch cumulative outcomes." icon={<Activity size={19}/>}/>
+        <div className="mt-campaign-stats"><GameStat label="CUMULATIVE REACH" value={(c.liveMetrics?.adReach??0).toLocaleString()}/><GameStat label="KPI UPLIFT" value={(c.liveMetrics?.pct??0)+"%"}/><GameStat label="LIVE WEEKS" value={String(c.liveWeeks??0)}/></div>
+        <AnimatedGauge label="Progress toward client KPI" percent={(c.liveMetrics?.pct??0)/Math.max(1,sc.target)*100} tone="teal"/>
+        {optimizations.map(o=><Choice key={o.id} on={c.lastOptimizationWeek===s.clock.week&&c.optimization===o.id} onClick={()=>act((d,f)=>C.optimize(d,f,o.id))} title={o.title+" · "+money(o.cost)} sub={o.desc}/>)}
+        {(c.weeklyResults??[]).slice().reverse().map(r=><div key={r.week} className="mt-project"><Row k={"Week "+r.week+" · "+r.decision} v={r.uplift+"% cumulative uplift"}/><Row k="Estimated cumulative reach" v={r.reach.toLocaleString()}/></div>)}
+        <p className="text-xs text-muted-foreground">The campaign closes on Day {schedule.endDay}. Global End Week processes performance and the final report.</p>
+      </>}
+      {phase==="results"&&c.final&&<>
+        <GameSection eyebrow="CAMPAIGN REVIEW" title="The verdict" sub="Results reflect the number of weeks actually live, strategic fit and budget decisions." icon={<Check size={20}/>}/>
+        <AnimatedGauge label="Target achievement" percent={c.final.pct/Math.max(1,sc.target)*100} tone="sage"/>
+        <Row k="Final KPI" v={c.final.outcome+" "+sc.unit}/><Row k="Uplift" v={c.final.pct+"% (target +"+sc.target+"%)"}/>
+        <Row k="Live weeks" v={(c.liveWeeks??0)+"/"+schedule.expectedLiveWeeks}/>
+        <Row k="Service fee" v={money(sc.fee)}/><Row k="Career rewards" v={"+"+c.final.rep+" REP · +"+c.final.xp+" XP"}/>
+        <FeedbackStrip tone="positive">Campaign reviewed. Portfolio updated; proceed to the next brief without resetting the global week.</FeedbackStrip>
+      </>}
+    </PhaseScene>
+  </div>;
 }
 
 export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaign" | "ceo") => void }) {
@@ -137,7 +191,7 @@ export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaig
   return null;
 }
 
-const TABS = ["inbox", "pipeline", "projects", "people", "finance", "rivals", "news", "partners"] as const;
+const TABS = ["inbox", "pipeline", "projects", "functions", "people", "finance", "rivals", "news", "partners"] as const;
 export function CEOCommandCenter({onReadEdition}:{onReadEdition?:(id:string)=>void}) {
   const s = useGame((x) => x);
   const [tab, setTab] = useState<(typeof TABS)[number]>("inbox");
@@ -145,8 +199,8 @@ export function CEOCommandCenter({onReadEdition}:{onReadEdition?:(id:string)=>vo
   const busy = K.capacity(c), open = K.openIssues(c);
   return (
     <div className="mt-ceo-stage">
-      <div className="mt-ceo-heading"><div><small>AGENCY HQ / EXECUTIVE OFFICE</small><h2>{s.agencyName||"Agency Command"}</h2></div><span className="mt-ceo-status">MANUAL · WEEK {c.weekly?.week??1} <span/></span></div>
-      <CEOOverview cash={money(s.agencyCash)} work={c.projects.filter(p=>p.status==="active").length} day={c.day} issues={open.length}/>
+      <div className="mt-ceo-heading"><div><small>AGENCY HQ / EXECUTIVE OFFICE</small><h2>{s.agencyName||"Agency Command"}</h2></div><span className="mt-ceo-status">MANUAL · WEEK {s.clock.week} <span/></span></div>
+      <CEOOverview cash={money(s.agencyCash)} work={c.projects.filter(p=>p.status==="active").length} day={s.clock.day} issues={open.length}/>
       <div className="mt-ceo-tabs" role="tablist" aria-label="CEO sections">{TABS.map(t => <button key={t} type="button" role="tab" aria-selected={tab===t} className={"mt-ceo-tab "+(tab===t?"active":"")} onClick={()=>setTab(t)}>{t}{t==="inbox"&&open.length>0?<b>{open.length}</b>:null}</button>)}</div>
       <PhaseScene phase={tab}>
       {tab === "inbox" && (open.length ? open.map((i) => <div key={i.id} className="mt-escalation"><div className="text-xs text-muted-foreground">Day {i.day} · {i.type}</div><p className="text-sm">{i.message}</p><div className="mt-2 flex flex-wrap gap-2">{i.choices.map((ch) => <Button key={ch} size="sm" variant="outline" className="capitalize" onClick={() => act((d, f) => K.resolveIssue(d, f, i.id, ch))}>{ch}</Button>)}</div></div>) : <p className="text-sm text-muted-foreground">Inbox clear. Staff are working autonomously — check the pipeline for new deals.</p>)}
@@ -158,14 +212,24 @@ export function CEOCommandCenter({onReadEdition}:{onReadEdition?:(id:string)=>vo
       </>}
       {tab === "projects" && (c.projects.length ? c.projects.map((p) => <div key={p.id} className="mt-project"><div className="flex justify-between"><b>{p.brand}</b><span className="text-xs">{p.status === "active" ? `Day ${p.days}/${p.duration}` : `Done · KPI ${p.kpi}%`}</span></div>
         <AnimatedGauge label="Workstreams completed" percent={p.tasks.filter(t=>t.status==="completed").length/Math.max(1,p.tasks.length)*100} tone="sage"/>{p.tasks.map((t) => <div key={t.key} className="mt-1.5"><div className="flex justify-between text-xs"><span>{t.label}</span><span className="text-muted-foreground">{t.status.replace("_", " ")}{t.employee ? ` · ${employees.find((e) => e.id === t.employee)?.name ?? t.employee}` : ""}</span></div><div className="h-1.5 rounded-full bg-muted"><div className="h-full rounded-full bg-accent-foreground transition-all" style={{ width: `${(t.progress / t.effort) * 100}%` }} /></div></div>)}</div>) : <p className="text-sm text-muted-foreground">No active projects. Win a pitch in the pipeline.</p>)}
+      {tab==="functions"&&<div className="mt-functions-grid">
+        <GameSection eyebrow="INTEGRATED AGENCY" title="8 Cross-Functional Teams" sub="Each function supports Planning, Executing or Live. Staff capacity and task dependencies determine delivery speed." icon={<Users size={19}/>}/>
+        {departmentMetrics(s).map(fn=><div key={fn.id} className="mt-function-card">
+          <div className="flex justify-between gap-2"><div><b>{fn.name}</b><p className="text-xs text-muted-foreground">{fn.mission}</p></div><span className={fn.bottleneck?"text-destructive text-xs":"text-primary text-xs"}>{fn.bottleneck?"CAPACITY RISK":"ON TRACK"}</span></div>
+          <div className="mt-2 flex flex-wrap justify-between gap-2 text-xs"><span>{fn.phases}</span><span>{fn.staff.length?"Team: "+fn.staff.join(", "):"No assigned specialist"}</span></div>
+          <div className="mt-2 flex justify-between text-xs"><span>Workload {fn.workload} / {fn.capacity} available slots</span><span>{fn.delivered}/{fn.total} complete{fn.quality!==null?" · quality "+fn.quality:""}</span></div>
+          <div className="h-1.5 rounded-full bg-muted mt-2"><div className={"h-full rounded-full "+(fn.bottleneck?"bg-destructive":"bg-accent-foreground")} style={{width:(fn.capacity?Math.min(100,fn.workload/fn.capacity*100):fn.workload?100:0)+"%"}}/></div>
+          {fn.bottleneck&&<p className="text-xs text-destructive mt-2">Hire a specialist, cross-train available staff or outsource through the relevant project escalation.</p>}
+        </div>)}
+      </div>}
       {tab === "people" && employees.map((e) => { const h = s.staff.includes(e.id); return <div key={e.id} className="mt-employee"><div><b className="text-sm">{e.name}</b><div className="text-xs text-muted-foreground">{e.role} · {money(e.salary)}/mo{h ? ` · workload ${busy[e.id] || 0}/2` : ""}</div></div>{h ? <span className="text-xs text-primary">On team</span> : <Button size="sm" disabled={s.agencyCash < e.salary||(c.talentMarket?.[e.id]?.untilDay??0)>c.day} onClick={() => act((d, f) => K.hire(d, f, e.id))}>{(c.talentMarket?.[e.id]?.untilDay??0)>c.day?"Under rival offer":"Hire"}</Button>}</div>; })}
       {tab === "finance" && <><GameSection eyebrow="AGENCY FINANCE" title="Understand your cash runway" icon={<Coins size={20}/>} sub="Receivables differ from paid cash. Payroll and direct project costs reduce reserves."/><BarComparison rows={[{label:"Cash reserves",value:Math.max(0,s.agencyCash),display:money(s.agencyCash)},{label:"Receivables",value:Math.max(0,c.totalBilled-c.totalPaid),display:money(c.totalBilled-c.totalPaid)},{label:"Expenses to date",value:Math.max(0,c.totalDirect+c.totalPayroll),display:money(c.totalDirect+c.totalPayroll)}]}/><Row k="Agency cash" v={money(s.agencyCash)} /><Row k="Daily payroll" v={money(K.dailyPayroll(s))} /><Row k="Billed / paid" v={`${money(c.totalBilled)} / ${money(c.totalPaid)}`} /><Row k="Direct costs" v={money(c.totalDirect)} />
         <div className="max-h-64 overflow-auto">{c.ledger.slice(0, 40).map((x, i) => <div key={i} className="flex justify-between text-xs py-0.5"><span>D{x.day} · {x.what}{x.status === "due" ? " (due)" : ""}</span><span className={x.value < 0 ? "text-destructive" : "text-primary"}>{money(x.value)}</span></div>)}</div></>}
       {tab === "news" && <div className="mt-week-archive">
        <GameSection eyebrow="WEEKLY BUSINESS JOURNAL" title="The Agency Ledger" icon={<FileText size={19}/>} sub="Each edition is assembled from your recorded decisions, real financial changes, delivered campaigns and rival agency actions."/>
-       <div className="mt-week-archive-status"><b>Planning Week {c.weekly?.week??1}</b><span>Game Day {c.day} · Time advances only when you select End Week</span></div>
-       {(c.weekly?.pending||[]).length>0&&<div className="mt-market-section"><h4><Check size={17}/> Decisions recorded this week</h4>{(c.weekly?.pending||[]).slice(-8).reverse().map(d=><div className="mt-market-line" key={d.id}><span><b>{d.headline}</b><small>{d.detail}</small></span></div>)}</div>}
-       {(c.weekly?.editions||[]).length ? c.weekly!.editions.map(e=><button type="button" className="mt-week-archive-entry" key={e.id} onClick={()=>onReadEdition?.(e.id)}><span><b>Issue {e.weekCompleted}: Week {e.weekStarted} Begins</b><small>Days {e.dayFrom}–{e.dayTo} · {e.articles.length} reports · {e.rivalsWon} rival wins</small></span><span>READ ↗</span></button>) : <p className="text-sm text-muted-foreground">The first edition is published as soon as you end Week 1.</p>}
+       <div className="mt-week-archive-status"><b>Planning Week {s.clock.week}</b><span>Game Day {c.day} · Time advances only when you select End Week</span></div>
+       {(s.clock.pending||[]).length>0&&<div className="mt-market-section"><h4><Check size={17}/> Decisions recorded this week</h4>{(c.weekly?.pending||[]).slice(-8).reverse().map(d=><div className="mt-market-line" key={d.id}><span><b>{d.headline}</b><small>{d.detail}</small></span></div>)}</div>}
+       {(s.clock.editions||[]).length ? s.clock.editions.map(e=><button type="button" className="mt-week-archive-entry" key={e.id} onClick={()=>onReadEdition?.(e.id)}><span><b>Issue {e.weekCompleted}: Week {e.weekStarted} Begins</b><small>Days {e.dayFrom}–{e.dayTo} · {e.articles.length} reports · {e.rivalsWon} rival wins</small></span><span>READ ↗</span></button>) : <p className="text-sm text-muted-foreground">The first edition is published as soon as you end Week 1.</p>}
       </div>}
       {tab === "rivals" && <>
       <GameSection eyebrow="AUTONOMOUS MARKET" title="Rival Intelligence" icon={<Activity size={19}/>} sub="Rival agencies make their own bids, invest in talent, expand offices and compete for clients as simulated time advances."/>

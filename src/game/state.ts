@@ -1,13 +1,15 @@
 import { ceoLeadDefs, ceoRivalDefs, type Channel, type LeadDef, type Rival, type Scenario } from "./data";
 
-export type Phase = "brief" | "research" | "survey" | "validation" | "strategy" | "creative" | "media" | "live" | "results";
-export const PHASES: Phase[] = ["brief", "research", "survey", "validation", "strategy", "creative", "media", "live", "results"];
-export const PHASE_LABEL: Record<Phase, string> = { brief: "Brief", research: "Research", survey: "Survey", validation: "Validate", strategy: "Strategy", creative: "Creative", media: "Media", live: "Live", results: "Review" };
+export type Phase = "brief" | "planning" | "executing" | "live" | "results" | "research" | "survey" | "validation" | "strategy" | "creative" | "media";
+export const PHASES: Phase[] = ["planning", "executing", "live", "results"];
+export const PHASE_LABEL: Record<Phase, string> = { brief: "Brief", planning: "Planning", executing: "Executing", live: "Live", results: "Results", research: "Planning", survey: "Planning", validation: "Planning", strategy: "Planning", creative: "Executing", media: "Executing" };
 
 export type AIBriefStatus = "pending" | "generating" | "ready" | "fallback";
 export interface Campaign {
   briefId: string; aiStatus: AIBriefStatus; aiError?: string | null;
   scenarioIndex: number; aiScenario?: Scenario | null; phase: Phase; day: number; spent: number; research: string[];
+  startedDay?: number; productionReadyDay?: number; mediaBooked?: boolean; actualLaunchDay?: number;
+  liveWeeks?: number; lastOptimizationWeek?: number; weeklyResults?: {week:number;reach:number;uplift:number;decision:string}[];
   survey: { audience: string; sample: number; question: string } | null; insight: string | null;
   strategy: { segment: string; objective: string; position: string }; creative: string | null;
   media: Record<Channel, number>; optimization: string | null;
@@ -35,6 +37,7 @@ export interface WeeklyEdition {
  read:boolean;
 }
 export interface WeeklyProgress {week:number; pending:WeeklyDecision[]; editions:WeeklyEdition[]; lastAdvanceDay:number}
+export interface GameClock extends WeeklyProgress {day:number}
 export interface CEO {
   weekly?:WeeklyProgress;
   tenders?:RivalTender[]; rivalNews?:RivalEvent[]; talentOffers?:TalentOffer[];
@@ -55,16 +58,16 @@ export interface WorldProgress {visited:string[];contacts:string[];leasedOffices
 export interface GameState {
   version: 2; created: boolean; character: Character; room: RoomStyle; scene: SceneId;
   reputation: number; expertise: number; personalCash: number; agencyCash: number; agencyUnlocked: boolean; agencyName: string;
-  staff: string[]; upgrades: string[]; cityUnlocked: boolean; campaign: Campaign; officeId:string;
+  staff: string[]; upgrades: string[]; cityUnlocked: boolean; campaign: Campaign; clock: GameClock; officeId:string;
   world: WorldProgress;
   history: { brand: string; outcome: number; score: number; spent: number; rep: number; xp: number; scenarioIndex: number; agency: boolean }[];
   log: { t: number; msg: string }[]; graphics: "high" | "low"; ceo: CEO | null;
 }
 
-export const newCampaign = (i: number): Campaign => ({
+export const newCampaign = (i: number, day = 1): Campaign => ({
   briefId: "brief-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,9),
   aiStatus:"pending", aiError:null,
-  scenarioIndex: i, aiScenario:null, phase: "brief", day: 1, spent: 0, research: [], survey: null, insight: null,
+  scenarioIndex: i, aiScenario:null, phase: "brief", day, startedDay:day, spent: 0, research: [], mediaBooked:false, productionReadyDay:undefined, liveWeeks:0, weeklyResults:[], survey: null, insight: null,
   strategy: { segment: "students", objective: "visits", position: "study" }, creative: null,
   media: { paid: 0, creator: 0, promo: 0, flyer: 0 }, optimization: null, liveMetrics: null, final: null,
 });
@@ -74,7 +77,7 @@ export const defaults = (): GameState => ({
   character: { name: "Alex", skin: "#d6a681", outfit: "#4c9589", hair: "#352824", interest: "Strategy", hairstyle:"short", accessory:"none" },
   room: { wall: "#efe4d3", rug: "#bd694a", plant: true, lamp: true, shelf: false },
   scene: "room", reputation: 0, expertise: 0, personalCash: 2500000, agencyCash: 0, agencyUnlocked: false, agencyName: "",
-  staff: [], upgrades: [], cityUnlocked: false, campaign: newCampaign(0), officeId:"agency", world:{visited:[],contacts:[],leasedOffices:[]}, history: [], log: [], graphics: "high", ceo: null,
+  staff: [], upgrades: [], cityUnlocked: false, campaign: newCampaign(0), clock:{day:1,week:1,pending:[],editions:[],lastAdvanceDay:1}, officeId:"agency", world:{visited:[],contacts:[],leasedOffices:[]}, history: [], log: [], graphics: "high", ceo: null,
 });
 
 export const newCEO = (reputation: number): CEO => ({
@@ -108,6 +111,23 @@ export function migrate(raw: unknown): GameState {
     log: Array.isArray(s.log) ? (s.log as unknown[]).map((l) => (typeof l === "string" ? { t: 0, msg: l } : (l as { t: number; msg: string }))) : [],
     ceo: s.ceo ?? null,
   };
+  // One global week from the bedroom onwards. CEO legacy saves retain their accumulated date.
+  const savedDay = s.clock?.day ?? (s.agencyUnlocked ? s.ceo?.day : s.campaign?.day) ?? 1;
+  const day = Math.max(1,Math.floor(Number(savedDay)||1));
+  const oldWeekly = s.clock ?? s.ceo?.weekly;
+  out.clock = {
+    day, week: Math.max(1,oldWeekly?.week ?? Math.floor((day-1)/7)+1),
+    pending: Array.isArray(oldWeekly?.pending)?oldWeekly.pending:[],
+    editions: Array.isArray(oldWeekly?.editions)?oldWeekly.editions:[],
+    lastAdvanceDay: oldWeekly?.lastAdvanceDay ?? day
+  };
+  const oldPhase = out.campaign.phase;
+  if (["research","survey","validation","strategy"].includes(oldPhase)) out.campaign.phase="planning";
+  if (["creative","media"].includes(oldPhase)) out.campaign.phase="executing";
+  if(!out.campaign.startedDay)out.campaign.startedDay=Math.min(day,Math.max(1,out.campaign.day||1));
+  if(out.campaign.productionReadyDay===undefined && out.campaign.creative)out.campaign.productionReadyDay=day;
+  if(out.campaign.mediaBooked===undefined)out.campaign.mediaBooked=Object.values(out.campaign.media).some(v=>v>0);
+  if(!Array.isArray(out.campaign.weeklyResults))out.campaign.weeklyResults=[];
   // Keep old saves playable; only unaccepted briefs become automatic-AI candidates.
   if (!out.campaign.briefId || typeof out.campaign.briefId!=="string") out.campaign.briefId=newCampaign(out.campaign.scenarioIndex).briefId;
   if (out.campaign.aiScenario) out.campaign.aiStatus="ready";
@@ -133,6 +153,8 @@ export function migrate(raw: unknown): GameState {
       speed:0,
       pauseOnIssue:false
     };
+    out.ceo.day = out.clock.day;
+    out.ceo.weekly = out.clock;
     // New corporate clients appear in existing CEO saves without resetting
     // relationships, negotiation outcomes, ongoing projects or cash history.
     const priorLeads=Array.isArray(out.ceo.leads)?out.ceo.leads:[];

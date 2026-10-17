@@ -5,12 +5,12 @@ import {captureDecision,endWeek,acknowledgeEdition,unreadEdition,weeklyOf} from 
 import {hire,qualify,startPitch,presentPitch,counter} from "../src/game/ceo";
 import type {Fx} from "../src/game/store";
 const fx:Fx={toast:()=>{},log:()=>{}};
-const setup=()=>{const s=defaults();s.agencyUnlocked=true;s.cityUnlocked=true;s.ceo=newCEO(51);s.agencyCash=180000000;s.reputation=51;return s};
+const setup=()=>{const s=defaults();s.created=true;s.agencyUnlocked=true;s.cityUnlocked=true;s.ceo=newCEO(51);s.ceo.weekly=s.clock;s.agencyCash=180000000;s.reputation=51;return s};
 test("CEO days are manual: hiring, qualifying and pitch preparation do not advance the week",()=>{
  const s=setup();const day=s.ceo!.day;
  hire(s,fx,"researcher");qualify(s,fx,"sora");startPitch(s,fx,"sora");presentPitch(s);
  assert.equal(s.ceo!.day,day);
- assert.equal(weeklyOf(s.ceo!).week,1);
+ assert.equal(weeklyOf(s).week,1);
 });
 test("End Week runs exactly seven days regardless of legacy speed and publishes observable financial and market events",()=>{
  const s=setup();const c=s.ceo!;
@@ -58,7 +58,7 @@ test("decision journal captures actual before/after agency actions, then newspap
  assert.ok(s.ceo?.weekly?.pending.some(d=>d.headline.includes("Hired")));
  assert.ok(s.ceo?.weekly?.pending.some(d=>d.headline.includes("Sora Home")));
  const edition=endWeek(s,fx);
- assert.ok(edition?.articles.some(a=>a.category==="talent"&&a.evidence.includes("Founder decision")));
+ assert.ok(edition?.articles.some(a=>a.category==="talent"&&a.evidence.includes("Decision recorded")));
  assert.ok(edition?.articles.some(a=>a.category==="clients"&&a.headline.includes("Sora Home")));
  assert.equal(s.ceo?.weekly?.pending.length,0);
 });
@@ -72,7 +72,7 @@ test("weekly agent news reports tender wins from live state rather than inventin
  assert.equal(edition2.rivalsWon,s.ceo!.rivals.reduce((n,r)=>n+(r.wins??0),0)-s.ceo!.rivals.reduce((n,r)=>n+(r.wins??0),0)+edition2.rivalsWon);
 });
 test("old saves with no newspaper state migrate to the manual week containing their saved day",()=>{
- const s=setup();s.ceo!.day=29;delete s.ceo!.weekly;s.ceo!.speed=3;s.ceo!.pauseOnIssue=true;
+ const s=setup();s.ceo!.day=29;delete (s as any).clock;delete s.ceo!.weekly;s.ceo!.speed=3;s.ceo!.pauseOnIssue=true;
  const m=migrate(JSON.parse(JSON.stringify(s)));
  assert.equal(m.ceo!.day,29);
  assert.equal(m.ceo!.weekly?.week,5);

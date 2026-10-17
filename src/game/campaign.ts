@@ -5,6 +5,16 @@ import type { Fx } from "./store";
 import { ceoInit, ceoMigrateLegacy } from "./ceo";
 
 export const scenarioOf = (c: Campaign) => c.aiScenario ?? scenarios[c.scenarioIndex % scenarios.length];
+/** A brief specifies the actual deadline; stages are suggested windows, not fixed gates. */
+export function scheduleOf(c: Campaign) {
+  const weeks=Math.max(2,Math.ceil(scenarioOf(c).days/7));
+  const planningWeeks=Math.max(1,Math.floor(weeks*0.34));
+  const launchWeek=weeks===2?2:Math.floor(weeks/2)+1;
+  const executingWeeks=Math.max(0,launchWeek-1-planningWeeks);
+  const started=c.startedDay??1;
+  return {weeks,planningWeeks,executingWeeks,plannedLaunchDay:started+(launchWeek-1)*7,endDay:started+scenarioOf(c).days,expectedLiveWeeks:Math.max(1,Math.ceil((scenarioOf(c).days-(launchWeek-1)*7)/7))};
+}
+export const phaseOf=(c:Campaign)=>c.phase==="brief"?"brief":["research","survey","validation","strategy"].includes(c.phase)?"planning":["creative","media"].includes(c.phase)?"executing":c.phase;
 export const playerMoney = (s: GameState) => (s.agencyUnlocked ? s.agencyCash : s.personalCash);
 const canPay = (s: GameState, v: number) => s.campaign.spent + v <= scenarioOf(s.campaign).budget;
 
@@ -29,7 +39,7 @@ export function scoreModel(s: GameState, c: Campaign, mode: "final" | "interim" 
   const sc = scenarioOf(c);
   const fit = { insight: +(c.insight === sc.trueInsight), segment: +(c.strategy.segment === sc.trueSegment), position: +(c.strategy.position === sc.truePosition), objective: +(c.strategy.objective === sc.trueObjective), creative: +(c.creative === sc.trueCreative) };
   const research = c.research.reduce((a, id) => a + (researchOptions.find((x) => x.id === id)?.quality ?? 0), 0);
-  let qual = 0.46 + 0.055 * Math.min(3, research) + 0.11 * surveyQuality(s, c) + 0.12 * fit.insight + 0.11 * fit.segment + 0.08 * fit.position + 0.085 * fit.objective + 0.11 * fit.creative - Math.max(0, c.day - 7) * 0.012;
+  let qual = 0.46 + 0.055 * Math.min(3, research) + 0.11 * surveyQuality(s, c) + 0.12 * fit.insight + 0.11 * fit.segment + 0.08 * fit.position + 0.085 * fit.objective + 0.11 * fit.creative - Math.max(0, (c.day-(c.startedDay??1)) - 7) * 0.012;
   if (s.upgrades.includes("creative")) qual += 0.025;
   let eff = (Object.entries(c.media) as [Channel, number][]).reduce((t, [k, v]) => t + v * (sc.channel[k] ?? 0.7), 0);
   if (s.upgrades.includes("influencer")) eff += c.media.creator * 0.05;
@@ -42,59 +52,102 @@ export function scoreModel(s: GameState, c: Campaign, mode: "final" | "interim" 
   return { pct, outcome: Math.round(sc.baseline * (1 + pct / 100)), adReach: Math.round((total / 1000) * 11.2 * qual * (mode === "interim" ? 0.51 : 1)), quality: Math.round(qual * 100), fit, performance: pct >= sc.target ? "target" : pct >= sc.target * 0.7 ? "near" : "under" };
 }
 
-// ---- Actions (all mutate a draft inside act()) ----
-export const acceptBrief = (s: GameState, fx: Fx) => { if (s.campaign.phase !== "brief") return; s.campaign.phase = "research"; fx.log("Accepted brief from " + scenarioOf(s.campaign).brand); };
-
-export function addResearch(s: GameState, fx: Fx, id: string) {
-  const c = s.campaign, r = researchOptions.find((x) => x.id === id);
-  if (!r || c.phase !== "research" || c.research.includes(id)) return;
-  if (!canPay(s, r.cost)) return fx.toast("Not enough client budget left");
-  c.research.push(id); c.spent += r.cost; c.day += r.days; fx.log(`Research: ${r.title} (${money(r.cost)})`);
+// ---- Actions: three brief-driven phases, resolved by the shared weekly clock ----
+export const acceptBrief=(s:GameState,fx:Fx)=>{
+ const c=s.campaign;if(c.phase!=="brief")return;
+ c.startedDay=s.clock.day;c.day=s.clock.day;c.phase="planning";
+ fx.log("Accepted brief from "+scenarioOf(c).brand+" · "+scheduleOf(c).weeks+" week schedule");
+};
+export function addResearch(s:GameState,fx:Fx,id:string){
+ const c=s.campaign,r=researchOptions.find(x=>x.id===id);
+ if(!r||phaseOf(c)!=="planning"||c.research.includes(id))return;
+ if(!canPay(s,r.cost))return fx.toast("Not enough campaign budget for research");
+ c.research.push(id);c.spent+=r.cost;fx.log("Research: "+r.title+" ("+money(r.cost)+")");
 }
-export const toSurvey = (s: GameState) => { if (s.campaign.phase === "research" && s.campaign.research.length) s.campaign.phase = "survey"; };
-export function runSurvey(s: GameState, fx: Fx, sv: { audience: string; sample: number; question: string }) {
-  const c = s.campaign, cost = surveyCosts[sv.sample];
-  if (c.phase !== "survey" || c.survey || !canPay(s, cost)) return;
-  c.survey = { ...sv }; c.spent += cost; c.day += 2; fx.log(`Survey of ${sv.sample} people · ${money(cost)}`);
+export const toSurvey=(_s:GameState)=>{};
+export function runSurvey(s:GameState,fx:Fx,sv:{audience:string;sample:number;question:string}){
+ const c=s.campaign,cost=surveyCosts[sv.sample];
+ if(phaseOf(c)!=="planning"||c.survey||cost===undefined||!canPay(s,cost))return;
+ c.survey={...sv};c.spent+=cost;fx.log("Survey of "+sv.sample+" people · "+money(cost));
 }
-export const toValidation = (s: GameState) => { if (s.campaign.survey) s.campaign.phase = "validation"; };
-export function confirmInsight(s: GameState, fx: Fx, id: string) { if (s.campaign.phase !== "validation") return; s.campaign.insight = id; s.campaign.phase = "strategy"; fx.log("Insight hypothesis: " + insights.find((x) => x.id === id)?.title); }
-export function confirmStrategy(s: GameState, fx: Fx, st: Campaign["strategy"]) { if (s.campaign.phase !== "strategy") return; s.campaign.strategy = { ...st }; s.campaign.phase = "creative"; fx.log("Strategy locked"); }
-export function confirmCreative(s: GameState, fx: Fx, id: string) {
-  const c = s.campaign, k = creatives.find((x) => x.id === id);
-  if (c.phase !== "creative" || !k) return;
-  if (!canPay(s, k.cost)) return fx.toast("Not enough client budget left");
-  c.creative = k.id; c.spent += k.cost; c.day += 2; c.phase = "media"; fx.log(`Produced concept: ${k.title} (${money(k.cost)})`);
+export const toValidation=(_s:GameState)=>{};
+export function confirmInsight(s:GameState,fx:Fx,id:string){
+ if(phaseOf(s.campaign)!=="planning")return;
+ s.campaign.insight=id;fx.log("Insight hypothesis: "+(insights.find(x=>x.id===id)?.title??id));
 }
-export function launch(s: GameState, fx: Fx, media: Record<Channel, number>) {
-  const c = s.campaign, total = Object.values(media).reduce((a, b) => a + b, 0);
-  if (c.phase !== "media" || total < 500000 || total > scenarioOf(c).budget - c.spent) return;
-  c.media = { ...media }; c.spent += total; c.day = Math.max(c.day, 7); c.phase = "live"; c.liveMetrics = scoreModel(s, c, "interim");
-  fx.log(`Campaign live! Media ${money(total)}`);
+export function confirmStrategy(s:GameState,fx:Fx,st:Campaign["strategy"]){
+ const c=s.campaign;if(phaseOf(c)!=="planning"||!c.insight)return fx.toast("Choose an insight hypothesis first");
+ c.strategy={...st};c.phase="executing";fx.log("Strategy approved; production phase begins");
 }
-export function optimize(s: GameState, fx: Fx, choice: string) {
-  const c = s.campaign, o = optimizations.find((x) => x.id === choice);
-  if (c.phase !== "live" || !o) return;
-  if (!canPay(s, o.cost)) return fx.toast("Remaining budget too low — hold the plan.");
-  c.spent += o.cost; c.optimization = choice; c.phase = "results"; finalize(s, fx);
+export function confirmCreative(s:GameState,fx:Fx,id:string){
+ const c=s.campaign,k=creatives.find(x=>x.id===id);
+ if(phaseOf(c)!=="executing"||!k||c.creative)return;
+ if(!canPay(s,k.cost))return fx.toast("Insufficient campaign budget");
+ c.creative=k.id;c.spent+=k.cost;c.productionReadyDay=s.clock.day+7;
+ fx.log("Production booked: "+k.title+" · ready after End Week");
 }
-export function finalize(s: GameState, fx: Fx) {
-  const c = s.campaign, sc = scenarioOf(c);
-  if (c.final) return;
-  const r = scoreModel(s, c, "final");
-  const qualityScore = clamp(Math.round(34 + r.quality * 0.34 + r.pct * 0.55 + (r.fit.insight + r.fit.segment + r.fit.objective) * 3), 15, 99);
-  const rep = clamp(Math.round(6 + qualityScore / 6), 6, 25), xp = clamp(Math.round(4 + qualityScore / 12), 5, 13);
-  s.personalCash += sc.fee; s.reputation += rep; s.expertise += xp; c.day = sc.days;
-  c.final = { ...r, qualityScore, rep, xp }; c.phase = "results";
-  s.history.push({ brand: sc.brand, outcome: r.pct, score: qualityScore, spent: c.spent, rep, xp, scenarioIndex: c.scenarioIndex, agency: false });
-  fx.log(`Delivered results: ${r.pct}% KPI, +${rep} REP, +${xp} XP`);
-  if (!s.cityUnlocked) { s.cityUnlocked = true; fx.toast("Marketing City unlocked — new opportunities await"); fx.log("UNLOCKED: Marketing City"); }
-  else fx.toast("Campaign closed — portfolio updated");
+export function bookMedia(s:GameState,fx:Fx,media:Record<Channel,number>){
+ const c=s.campaign,total=Object.values(media).reduce((a,b)=>a+b,0);
+ if(phaseOf(c)!=="executing"||c.mediaBooked||total<500000||!canPay(s,total))return fx.toast("Check media allocation and remaining budget");
+ c.media={...media};c.spent+=total;c.mediaBooked=true;fx.log("Media booked: "+money(total));
 }
-export function nextClient(s: GameState, fx: Fx) {
-  if (s.agencyUnlocked || s.campaign.phase !== "results") return;
-  const next = (s.campaign.scenarioIndex + 1) % 3;
-  s.campaign = newCampaign(next); fx.log("New brief from " + scenarios[next].brand); fx.toast("New brief: " + scenarios[next].brand);
+export function launch(s:GameState,fx:Fx,legacyMedia?:Record<Channel,number>){
+ const c=s.campaign;
+ if(legacyMedia&&!c.mediaBooked)bookMedia(s,fx,legacyMedia);
+ if(phaseOf(c)!=="executing"||!c.mediaBooked||!c.creative)return fx.toast("Approve creative and book media before launch");
+ if(s.clock.day<(c.productionReadyDay??s.clock.day))return fx.toast("Production still underway. End the week to deliver assets.");
+ if(s.clock.day>=scheduleOf(c).endDay)return fx.toast("The client's campaign window has closed");
+ c.phase="live";c.actualLaunchDay=s.clock.day;c.liveMetrics=null;
+ fx.log("Campaign launched on game day "+s.clock.day);
+}
+export function optimize(s:GameState,fx:Fx,choice:string){
+ const c=s.campaign,o=optimizations.find(x=>x.id===choice);
+ if(phaseOf(c)!=="live"||!o)return;
+ if(c.lastOptimizationWeek===s.clock.week)return fx.toast("One optimization decision per campaign each week.");
+ if(!canPay(s,o.cost))return fx.toast("Remaining budget too low — hold the plan.");
+ c.spent+=o.cost;c.optimization=choice;c.lastOptimizationWeek=s.clock.week;
+ fx.log("Live optimization committed: "+o.title+" · effect evaluated on End Week");
+}
+export function progressFreelanceWeek(s:GameState,fx:Fx){
+ if(s.agencyUnlocked)return;
+ const c=s.campaign;if(["brief","results"].includes(c.phase))return;
+ c.day=s.clock.day;
+ const schedule=scheduleOf(c);
+ if(phaseOf(c)==="live"){
+  c.liveWeeks=(c.liveWeeks??0)+1;
+  const predicted=scoreModel(s,c,"final");
+  const delivered=Math.min(1,(c.liveWeeks??0)/schedule.expectedLiveWeeks);
+  const uplift=Math.round(predicted.pct*delivered);
+  const reach=Math.round(predicted.adReach*delivered);
+  c.liveMetrics={...predicted,pct:uplift,adReach:reach,outcome:Math.round(scenarioOf(c).baseline*(1+uplift/100))};
+  c.weeklyResults=[...(c.weeklyResults??[]),{week:s.clock.week-1,reach,uplift,decision:c.optimization??"hold"}];
+ }
+ if(s.clock.day>=schedule.endDay){
+  if(phaseOf(c)!=="live")fx.log("Missed campaign launch deadline — client will assess undelivered work");
+  finalize(s,fx);
+ }
+}
+export function finalize(s:GameState,fx:Fx){
+ const c=s.campaign,sc=scenarioOf(c);if(c.final)return;
+ const theoretical=scoreModel(s,c,"final"),schedule=scheduleOf(c);
+ const delivered=Math.min(1,(c.liveWeeks??0)/schedule.expectedLiveWeeks);
+ const pct=Math.round(clamp(theoretical.pct*delivered-(1-delivered)*20,-30,85));
+ const r={...theoretical,pct,outcome:Math.round(sc.baseline*(1+pct/100)),adReach:Math.round(theoretical.adReach*delivered),performance:pct>=sc.target?"target" as const:pct>=sc.target*0.7?"near" as const:"under" as const};
+ const qualityScore=clamp(Math.round(34+r.quality*.34+pct*.55+(r.fit.insight+r.fit.segment+r.fit.objective)*3),15,99);
+ const rep=clamp(Math.round(6+qualityScore/6),6,25),xp=clamp(Math.round(4+qualityScore/12),5,13);
+ s.personalCash+=sc.fee;s.reputation+=rep;s.expertise+=xp;c.day=s.clock.day;
+ c.final={...r,qualityScore,rep,xp};c.phase="results";
+ s.history.push({brand:sc.brand,outcome:pct,score:qualityScore,spent:c.spent,rep,xp,scenarioIndex:c.scenarioIndex,agency:false});
+ fx.log("Campaign closed: "+pct+"% KPI · "+Math.round(delivered*100)+"% flight delivered");
+ if(!s.cityUnlocked){s.cityUnlocked=true;fx.toast("Marketing City unlocked — new opportunities await");}
+ else fx.toast("Campaign reviewed — portfolio updated");
+}
+export function nextClient(s:GameState,fx:Fx){
+ if(s.agencyUnlocked||s.campaign.phase!=="results")return;
+ const next=(s.campaign.scenarioIndex+1)%3;
+ s.campaign=newCampaign(next,s.clock.day);
+ fx.log("New brief from "+scenarios[next].brand+" at Week "+s.clock.week);
+ fx.toast("New brief: "+scenarios[next].brand);
 }
 export function buyUpgrade(s: GameState, fx: Fx, id: UpgradeId | "cowork") {
   const item = id === "cowork" ? { cost: COWORK_COST, name: "Coworking Membership" } : upgrades[id];
@@ -113,7 +166,7 @@ export const canOpenAgency = (s: GameState) => agencyReqs(s).every((r) => r.ok);
 export function createAgency(s: GameState, fx: Fx, name: string) {
   if (!canOpenAgency(s) || s.agencyUnlocked) return;
   s.agencyName = name.trim() || "Northstar Studio"; s.personalCash -= 8000000; s.agencyCash = 5000000; s.agencyUnlocked = true; s.scene = "office";
-  ceoInit(s); ceoMigrateLegacy(s, fx);
+  ceoInit(s); if(s.ceo){s.ceo.day=s.clock.day;s.ceo.weekly=s.clock;} ceoMigrateLegacy(s, fx);
   fx.log(`FOUNDED ${s.agencyName}. Startup capital 5,000,000đ.`); fx.toast("You are now Agency CEO");
 }
 
