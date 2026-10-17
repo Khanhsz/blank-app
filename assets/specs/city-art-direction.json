@@ -61,7 +61,7 @@
     "agency": {
       "archetype": "podium",
       "palette": "clay",
-      "facade": "ribbon",
+      "facade": "modular",
       "roof": "terrace",
       "entrance": "portico",
       "use": "agency"
@@ -110,8 +110,8 @@
       "archetype": "industrial",
       "palette": "sand",
       "facade": "ribbon",
-      "roof": "sawtooth",
-      "entrance": "loading",
+      "roof": "terrace",
+      "entrance": "canopy",
       "use": "office"
     },
     "office-brick": {
@@ -189,9 +189,9 @@
     "client-vertex": {
       "archetype": "sculptural",
       "palette": "sage",
-      "facade": "zigzag",
+      "facade": "vertical",
       "roof": "offset",
-      "entrance": "gallery",
+      "entrance": "atrium",
       "use": "client"
     },
     "client-bloom": {
@@ -219,18 +219,18 @@
       "use": "client"
     },
     "arts-residence-a": {
-      "archetype": "terraced",
+      "archetype": "podium",
       "palette": "slate",
-      "facade": "balcony",
-      "roof": "green",
+      "facade": "ribbon",
+      "roof": "terrace",
       "entrance": "recessed",
       "use": "decorative"
     },
     "arts-residence-b": {
       "archetype": "podium",
       "palette": "sage",
-      "facade": "ribbon",
-      "roof": "terrace",
+      "facade": "balcony",
+      "roof": "green",
       "entrance": "arcade",
       "use": "decorative"
     },
@@ -239,7 +239,7 @@
       "palette": "sand",
       "facade": "storefront",
       "roof": "butterfly",
-      "entrance": "arcade",
+      "entrance": "gallery",
       "use": "decorative"
     },
     "arts-kiosk": {
@@ -267,11 +267,11 @@
       "use": "decorative"
     },
     "ambient-m16-m24": {
-      "archetype": "pavilion",
+      "archetype": "campus",
       "palette": "clay",
-      "facade": "storefront",
-      "roof": "butterfly",
-      "entrance": "canopy",
+      "facade": "modular",
+      "roof": "flat",
+      "entrance": "bridge",
       "use": "decorative"
     },
     "ambient-m16-p8": {
@@ -283,11 +283,11 @@
       "use": "decorative"
     },
     "ambient-p0-p40": {
-      "archetype": "industrial",
+      "archetype": "grid",
       "palette": "sand",
-      "facade": "shed",
-      "roof": "sawtooth",
-      "entrance": "loading",
+      "facade": "modular",
+      "roof": "flat",
+      "entrance": "recessed",
       "use": "decorative"
     },
     "ambient-p16-m40": {
@@ -307,11 +307,11 @@
       "use": "decorative"
     },
     "ambient-p32-m8": {
-      "archetype": "campus",
+      "archetype": "stacked",
       "palette": "sand",
-      "facade": "modular",
-      "roof": "green",
-      "entrance": "bridge",
+      "facade": "graphic",
+      "roof": "offset",
+      "entrance": "gallery",
       "use": "decorative"
     },
     "ambient-p32-p40": {
@@ -323,11 +323,11 @@
       "use": "decorative"
     },
     "ambient-p48-m24": {
-      "archetype": "tower",
+      "archetype": "podium",
       "palette": "slate",
-      "facade": "vertical",
-      "roof": "crown",
-      "entrance": "atrium",
+      "facade": "modular",
+      "roof": "terrace",
+      "entrance": "portico",
       "use": "decorative"
     }
   }
