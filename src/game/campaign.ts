@@ -57,7 +57,10 @@ export function scoreModel(s: GameState, c: Campaign, mode: "final" | "interim" 
   if (mode === "interim") eff *= 0.49;
   const optBonus = mode === "final" ? ({ refresh: fit.creative ? 3 : 5, retarget: c.media.paid > 0 ? 6 : 0, promo: c.media.promo > 0 ? 3 : 1, hold: 0 } as Record<string, number>)[c.optimization ?? ""] ?? 0 : 0;
   const seed = hash(c.scenarioIndex * 13 + (c.survey?.sample ?? 0) + c.research.length * 7 + (c.aiScenario?.aiMeta?.seed ?? 0)) * 5 - 2.5;
-  const pct = Math.round(clamp((eff / 1e6) * 5.6 * qual - (mode === "final" ? 9 : 6) + optBonus + seed, -12, 85));
+  // Agency campaigns normalize percentage uplift to their contracted media budget.
+  // Actual spend still determines reach; raw national spend cannot auto-cap KPI.
+  const effectiveForKpi = c.mediaBudget && c.mediaBudget > 0 ? eff * sc.budget / c.mediaBudget : eff;
+  const pct = Math.round(clamp((effectiveForKpi / 1e6) * 5.6 * qual - (mode === "final" ? 9 : 6) + optBonus + seed, -12, 85));
   const total = Object.values(c.media).reduce((a, b) => a + b, 0);
   return { pct, outcome: Math.round(sc.baseline * (1 + pct / 100)), adReach: Math.round((total / 1000) * 11.2 * qual * (mode === "interim" ? 0.51 : 1)), quality: Math.round(qual * 100), fit, performance: pct >= sc.target ? "target" : pct >= sc.target * 0.7 ? "near" : "under" };
 }
@@ -144,12 +147,18 @@ export function finalize(s:GameState,fx:Fx){
  const pct=Math.round(clamp(theoretical.pct*delivered-(1-delivered)*20,-30,85));
  const r={...theoretical,pct,outcome:Math.round(sc.baseline*(1+pct/100)),adReach:Math.round(theoretical.adReach*delivered),performance:pct>=sc.target?"target" as const:pct>=sc.target*0.7?"near" as const:"under" as const};
  const qualityScore=clamp(Math.round(34+r.quality*.34+pct*.55+(r.fit.insight+r.fit.segment+r.fit.objective)*3),15,99);
- const rep=clamp(Math.round(6+qualityScore/6),6,25),xp=clamp(Math.round(4+qualityScore/12),5,13);
- s.personalCash+=sc.fee;s.reputation+=rep;s.expertise+=xp;c.day=s.clock.day;
- c.final={...r,qualityScore,rep,xp};c.phase="results";if(c.journey)c.journey.step="report";
- s.history.push({brand:sc.brand,outcome:pct,score:qualityScore,spent:c.spent,rep,xp,scenarioIndex:c.scenarioIndex,agency:false});
- fx.log("Campaign closed: "+pct+"% KPI · "+Math.round(delivered*100)+"% flight delivered");
- if(!s.cityUnlocked){s.cityUnlocked=true;fx.toast("Marketing City unlocked — new opportunities await");}
+ const baseRep=clamp(Math.round(6+qualityScore/6),6,25);
+ // Contract payout follows actual delivery. Abandoned briefs cannot farm progress.
+ const feePaid=Math.round(sc.fee*delivered);
+ const rep=delivered===0?-6:r.performance==="target"?Math.round(baseRep*delivered):
+   r.performance==="near"?Math.max(1,Math.round(baseRep*delivered*.7)):
+   pct<0?-Math.max(2,Math.round(baseRep*.4)):0;
+ const xp=delivered===0?0:clamp(Math.round(4+qualityScore/12),5,13);
+ s.personalCash+=feePaid;s.reputation=Math.max(0,s.reputation+rep);s.expertise+=xp;c.day=s.clock.day;
+ c.final={...r,qualityScore,rep,xp,feePaid,deliveryRatio:delivered};c.phase="results";if(c.journey)c.journey.step="report";
+ s.history.push({brand:sc.brand,outcome:pct,score:qualityScore,spent:c.spent,rep,xp,scenarioIndex:c.scenarioIndex,agency:false,feePaid,deliveryRatio:delivered});
+ fx.log("Campaign closed: "+pct+"% KPI · "+Math.round(delivered*100)+"% flight delivered · "+money(feePaid)+" earned");
+ if(!s.cityUnlocked&&delivered>0){s.cityUnlocked=true;fx.toast("Marketing City unlocked — new opportunities await");}
  else fx.toast("Campaign reviewed — portfolio updated");
 }
 export function nextClient(s:GameState,fx:Fx){
@@ -166,12 +175,15 @@ export function buyUpgrade(s: GameState, fx: Fx, id: UpgradeId | "cowork") {
   s.upgrades.push(id); if (id === "cowork") s.expertise += 1;
   fx.log("Unlocked city service: " + item.name); fx.toast("Unlocked: " + item.name);
 }
-export const agencyReqs = (s: GameState) => [
-  { name: "Complete 3 campaigns", ok: s.history.length >= AGENCY_REQ.campaigns, num: `${s.history.length}/3` },
+export const agencyReqs = (s: GameState) => {
+ const delivered=s.history.filter(h=>!h.agency&&(h.deliveryRatio??1)>0).length;
+ return [
+  { name: "Deliver 3 campaigns", ok: delivered >= AGENCY_REQ.campaigns, num: `${delivered}/3` },
   { name: "Reputation 38+", ok: s.reputation >= AGENCY_REQ.reputation, num: `${s.reputation}/38` },
   { name: "Expertise 18+", ok: s.expertise >= AGENCY_REQ.expertise, num: `${s.expertise}/18` },
   { name: "Personal cash 8M", ok: s.personalCash >= AGENCY_REQ.cash, num: `${(s.personalCash / 1e6).toFixed(1)}/8M` },
-];
+ ];
+};
 export const canOpenAgency = (s: GameState) => agencyReqs(s).every((r) => r.ok);
 export function createAgency(s: GameState, fx: Fx, name: string) {
   if (!canOpenAgency(s) || s.agencyUnlocked) return;
