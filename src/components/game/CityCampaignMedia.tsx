@@ -38,6 +38,7 @@ function renderPoster(assetName:string,campaign:string,week:number,id:string,kin
 export function CityCampaignMedia({b,lod,onSelect}:{b:District;lod:0|1;onSelect:(id:string)=>void}){
  const registry=AssetRegistry.get(b.id);
  const slots=(registry?.advertisingSlots||[]).filter(Boolean);
+ const masterWidth=registry?.width??b.w;
  const week=useGame(s=>s.ceo?.weekly?.week??1);
  const campaign=useGame(s=>s.campaign.aiScenario?.brand||"City Campaign");
  const gltf=useGLTF(AssetRegistry.url(b.id,lod,b.tier));
@@ -70,7 +71,7 @@ export function CityCampaignMedia({b,lod,onSelect}:{b:District;lod:0|1;onSelect:
    </group>;
    const texture=art[kind];if(!texture)return null;
    return <mesh key={id} name={id} position={[anchor.x,anchor.y,anchor.z+(kind==="dooh"?.12:.09)]}>
-    <planeGeometry args={[kind==="dooh"?b.w*.427:b.w*.376,kind==="dooh"?1.35:.73]}/>
+    <planeGeometry args={[kind==="dooh"?masterWidth*.427:masterWidth*.376,kind==="dooh"?1.35:.73]}/>
     <meshBasicMaterial map={texture} side={THREE.DoubleSide} toneMapped={false}/>
    </mesh>;
   })}
