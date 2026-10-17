@@ -1,7 +1,7 @@
-import React,{Component,Suspense,useEffect,useMemo,useState} from "react";
+import React,{Component,Suspense,useEffect,useMemo,useRef,useState} from "react";
 import {useFrame,useThree} from "@react-three/fiber";
 import {Html,useGLTF} from "@react-three/drei";
-import {AssetRegistry} from "./AssetRegistry";
+import {AssetRegistry,assetScale,selectCityLOD} from "./AssetRegistry";
 import {CityCampaignMedia} from "./CityCampaignMedia";
 import {BrickhouseCampaignMedia} from "./BrickhouseCampaignMedia";
 import type {District} from "./WorldScene";
@@ -15,33 +15,37 @@ class AssetErrorBoundary extends Component<{fallback:React.ReactNode;children:Re
 }
 /** LOD tracks camera without changing existing CameraControls or world coordinates. */
 export function LODManager({x,z,quality,selected,onLOD}:{x:number;z:number;quality:"high"|"low";selected:boolean;onLOD:(lod:0|1)=>void}){
- const camera=useThree(x=>x.camera);
- let elapsed=0;
+ const camera=useThree(s=>s.camera);
+ const elapsed=useRef(0);
+ const previous=useRef<0|1>(quality==="high"&&selected?0:1);
  useFrame((_,dt)=>{
-  elapsed+=dt;if(elapsed<.5)return;elapsed=0;
-  const d=Math.hypot(camera.position.x-x,camera.position.z-z,camera.position.y*.66);
-  onLOD(quality==="high"&&(selected||d<66)?0:1);
+  elapsed.current+=dt;if(elapsed.current<.35)return;
+  elapsed.current=0;
+  const distance=Math.hypot(camera.position.x-x,camera.position.z-z,camera.position.y*.66);
+  const next=selectCityLOD(distance,quality,selected,previous.current);
+  if(next!==previous.current){previous.current=next;onLOD(next)}
  });
  return null;
 }
-function ModelGeometry({id,lod,dimensions,height,tier=1}:{id:string;lod:0|1;dimensions:[number,number,number];height:number;tier?:number}){
- // useGLTF delegates loading to GLTFLoader and caches by exact versioned URL.
- const src=AssetRegistry.get(id);
- if(!src)throw Error("Unregistered asset "+id);
+function ModelGeometry({id,lod,scale,tier=1}:{id:string;lod:0|1;scale:[number,number,number];tier?:number}){
+ if(!AssetRegistry.has(id))throw Error("Unregistered asset "+id);
  const gltf=useGLTF(AssetRegistry.url(id,lod,tier));
  const scene=useMemo(()=>gltf.scene.clone(true),[gltf.scene]);
- const scale:[number,number,number]=[dimensions[0]/src.width,height/src.height,dimensions[2]/src.depth];
  return <primitive object={scene} scale={scale} dispose={null}/>;
 }
 export function BuildingInteraction({b,selected,onSelect,quality}:{b:District;selected:boolean;onSelect:(id:string)=>void;quality:"high"|"low"}){
  const [hot,setHot]=useState(false);
  const [lod,setLod]=useState<0|1>(quality==="high"&&selected?0:1);
+ const scale=assetScale(b.id,{w:b.w,h:b.h,d:b.d});
  const onHover=(yes:boolean)=>{setHot(yes);document.body.style.cursor=yes?"pointer":"auto"};
  useEffect(()=>()=>{document.body.style.cursor="auto"},[]);
  return <group position={[b.x,0,b.z]}>
   <LODManager x={b.x} z={b.z} quality={quality} selected={selected} onLOD={next=>setLod(prev=>prev===next?prev:next)}/>
-  <ModelGeometry id={b.id} lod={lod} tier={b.tier} height={b.h} dimensions={[b.w,b.h,b.d]}/>
-  {b.id==="office-brick"?<BrickhouseCampaignMedia b={b} lod={lod} onSelect={onSelect}/>:<CityCampaignMedia b={b} lod={lod} onSelect={onSelect}/>}
+  <ModelGeometry id={b.id} lod={lod} tier={b.tier} scale={scale}/>
+  {/* Billboard anchors originate inside the GLB and must follow its model scale. */}
+  <group scale={scale}>
+   {b.id==="office-brick"?<BrickhouseCampaignMedia b={b} lod={lod} onSelect={onSelect}/>:<CityCampaignMedia b={b} lod={lod} onSelect={onSelect}/>}
+  </group>
   {/* Invisible raycast collider. Game interaction is routed through the original b.id. */}
   <mesh name={"GAMEPLAY_HITBOX_"+b.id} position={[0,b.h*.5+.25,0]} onClick={e=>{e.stopPropagation();onSelect(b.id)}}
    onPointerOver={e=>{e.stopPropagation();onHover(true)}} onPointerOut={e=>{e.stopPropagation();onHover(false)}}>
@@ -51,7 +55,7 @@ export function BuildingInteraction({b,selected,onSelect,quality}:{b:District;se
   <Html center position={[0,b.h+4.0,0]} distanceFactor={36} style={{pointerEvents:"auto"}}>
    <button className={"world-building-label "+(selected?"selected":"")+(b.locked?" locked":"")+(b.kind==="rival"?" rival":"")+(b.kind==="office"?" office":"")+(b.kind==="client"?" client":"")+(b.occupied?" occupied":"")}
     type="button" onClick={()=>onSelect(b.id)}>
-    <span className="map-pin"/><span>{b.name}</span>{b.occupied?<small>YOUR HQ</small>:b.kind==="rival"?<small>RIVAL</small>:b.kind==="office"?<small>{b.locked?"LOCKED":"TO LET"}</small>:b.kind==="client"?<small>CLIENT HQ</small>:b.locked?<small>LOCKED</small>:null}<small className="mt-glb-status">● GLB {AssetRegistry.version.toUpperCase()}</small>
+    <span className="map-pin"/><span>{b.name}</span>{b.occupied?<small>YOUR HQ</small>:b.kind==="rival"?<small>RIVAL</small>:b.kind==="office"?<small>{b.locked?"LOCKED":"TO LET"}</small>:b.kind==="client"?<small>CLIENT HQ</small>:b.locked?<small>LOCKED</small>:null}{import.meta.env.DEV&&<small className="mt-glb-status">● GLB {AssetRegistry.version.toUpperCase()}</small>}
    </button>
   </Html>
   {hot&&<pointLight position={[0,b.h*.55,b.d/2+1]} color="#b9d4c8" intensity={.5} distance={b.w*2}/>}
@@ -72,7 +76,7 @@ function SceneryModel({id,x,z,quality}:{id:string;x:number;z:number;quality:"hig
  if(!entry||!entry.decorative)return null;
  return <group position={[x,0,z]}>
   <LODManager x={x} z={z} quality={quality} selected={false} onLOD={next=>setLod(prev=>prev===next?prev:next)}/>
-  <ModelGeometry id={id} lod={lod} height={entry.height} dimensions={[entry.width,entry.height,entry.depth]}/>
+  <ModelGeometry id={id} lod={lod} scale={[1,1,1]}/>
  </group>;
 }
 /** Chunks are keyed by block. Unload invisible distant decorative assets. */
