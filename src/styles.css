@@ -294,3 +294,16 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-milestone strong{display:block;font-size:12px;margin-top:6px;letter-spacing:.025em}
 @media(max-width:750px){.mt-milestone{top:81px;min-width:0;width:calc(100% - 20px);padding:11px 14px}.mt-milestone strong{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.mt-world-loader-spin{animation:none!important}}
+
+
+/* Actual avatar steering in the explorable city, sized for touch. */
+.mt-city-controls{position:absolute;bottom:112px;right:21px;z-index:12;display:flex;flex-direction:column;align-items:center;gap:6px;padding:9px;background:#fff9efdc;border:1px solid #fff2e1;border-radius:15px;box-shadow:0 9px 35px #38291e35;backdrop-filter:blur(16px);user-select:none;touch-action:none}
+.mt-city-controls>span{font-size:9px;font-weight:900;color:#956d57;letter-spacing:.13em}
+.mt-city-pad{width:116px;height:102px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:4px}
+.mt-city-pad button{display:grid;place-items:center;font-size:15px;border-radius:8px;background:#f2e6d9;border:1px solid #e5d0bd;color:#51463c;font-weight:900;touch-action:none;transition:background .12s,transform .12s}
+.mt-city-pad button:active{background:#c17756;color:#fff;transform:scale(.93)}
+.mt-city-pad-up{grid-column:2;grid-row:1}
+.mt-city-pad-left{grid-column:1;grid-row:2}
+.mt-city-pad-down{grid-column:2;grid-row:3}
+.mt-city-pad-right{grid-column:3;grid-row:2}
+@media(max-width:750px){.mt-city-controls{bottom:96px;right:10px;padding:7px}.mt-city-pad{width:110px;height:99px}}
