@@ -15,6 +15,7 @@ import * as K from "./game/ceo";
 import {prepareNextBrief} from "./game/automaticBrief";
 import {money,BRAND_HQ_REP} from "./game/data";
 import {cityLots,findOffice,currentOffice,cityCounts,type DistrictKind} from "./game/city";
+import {AssetRegistry} from "./components/game/AssetRegistry";
 import type {SceneId} from "./game/state";
 
 const buildings=cityLots;
@@ -56,7 +57,7 @@ export default function App(){
  const s=useGame(x=>x);
  const [panel,setPanel]=useState<Panel>(getState().created?(getState().agencyUnlocked?"ceo":"none"):"onboard");
  const [selected,setSelected]=useState<string|null>(null);
- const [directoryType,setDirectoryType]=useState<"all"|DistrictKind>("all");
+ const [directoryType,setDirectoryType]=useState<"all"|"upgraded"|DistrictKind>("all");
  const [directorySearch,setDirectorySearch]=useState("");
  const [webgl,setWebgl]=useState(true);
  const [map2d,setMap2d]=useState(false);
@@ -139,10 +140,10 @@ export default function App(){
    {panel==="journal"&&<div className="world-ambient-panel"><div className="eyebrow">YOUR CREATIVE PROCESS</div><h3>Project moodboard</h3><p>Your research, strategy and creative decisions remain saved as you explore. Return to the bedroom computer for your active campaign.</p><div className="world-item-stat">Current phase <b>{s.campaign.phase}</b></div><button className="world-action" onClick={approachComputer}>Return to workstation ↗</button></div>}
    {panel==="phone"&&<div className="world-ambient-panel"><div className="eyebrow">MESSAGES & NETWORK</div><h3>Your professional life</h3><p>{s.agencyUnlocked?"Your Account Manager handles routine messages. Open CEO inbox for decisions that need you.":"A potential client is waiting in your email inbox. Check the computer to see the brief."}</p><button className="world-action" onClick={()=>s.agencyUnlocked?setPanel("ceo"):approachComputer()}>{s.agencyUnlocked?"Open CEO inbox":"Go to computer"} ↗</button></div>}
    {panel==="map"&&<div className="mt-world-directory">
-     <div className="mt-map-summary"><span><strong>{buildings.length}</strong> interactive locations</span><span>{cityCounts.rivals} rival HQs</span><span>{cityCounts.offices} available office sites</span><span>{cityCounts.clients} client HQs</span></div>
+     <div className="mt-map-summary"><span><strong>{buildings.length}</strong> interactive locations</span><span>{cityCounts.rivals} rival HQs</span><span>{cityCounts.offices} available office sites</span><span>{cityCounts.clients} client HQs</span><span><strong>{AssetRegistry.all().filter(x=>!x.decorative).length}</strong> NEW GLB BUILDINGS</span></div>
      <input aria-label="Search buildings" className="mt-directory-search" placeholder="Search buildings or districts…" value={directorySearch} onChange={e=>setDirectorySearch(e.target.value)}/>
-     <div className="mt-directory-filters">{(["all","core","rival","office","client"] as const).map(k=><button key={k} className={directoryType===k?"active":""} onClick={()=>setDirectoryType(k)}>{({all:"All",core:"Districts",rival:"Rival Agencies",office:"Office Spaces",client:"Client HQs"} as const)[k]}</button>)}</div>
-     <div className="directory">{districts.filter(b=>(directoryType==="all"||directoryType===b.kind)&&(!directorySearch||b.name.toLowerCase().includes(directorySearch.toLowerCase())||(b.district||"").toLowerCase().includes(directorySearch.toLowerCase()))).map(b=><button key={b.id} disabled={!s.cityUnlocked} onClick={()=>{if(s.cityUnlocked){change("city");locate(b.id)}}}><span><b>{b.name}</b><small>{b.district} · {b.kind==="rival"?"Competitor":b.kind==="office"?(b.occupied?"Current HQ":"Office listing"):b.kind==="client"?"Corporate client":"Gameplay location"}{b.locked?" · Locked":""}</small></span>{b.occupied?"★":s.cityUnlocked?"→":"🔒"}</button>)}</div>
+     <div className="mt-directory-filters">{(["all","upgraded","core","rival","office","client"] as const).map(k=><button key={k} className={directoryType===k?"active":""} onClick={()=>setDirectoryType(k)}>{({all:"All",upgraded:"3D Upgrades",core:"Districts",rival:"Rival Agencies",office:"Office Spaces",client:"Client HQs"} as const)[k]}</button>)}</div>
+     <div className="directory">{districts.filter(b=>(directoryType==="all"||directoryType===b.kind||(directoryType==="upgraded"&&AssetRegistry.has(b.id)))&&(!directorySearch||b.name.toLowerCase().includes(directorySearch.toLowerCase())||(b.district||"").toLowerCase().includes(directorySearch.toLowerCase()))).map(b=><button key={b.id} disabled={!s.cityUnlocked} onClick={()=>{if(s.cityUnlocked){change("city");locate(b.id)}}}><span><b>{b.name}</b><small>{b.district} · {AssetRegistry.has(b.id)?"3D GLB "+AssetRegistry.version.toUpperCase()+" · ":""}{b.kind==="rival"?"Competitor":b.kind==="office"?(b.occupied?"Current HQ":"Office listing"):b.kind==="client"?"Corporate client":"Gameplay location"}{b.locked?" · Locked":""}</small></span>{b.occupied?"★":s.cityUnlocked?"→":"🔒"}</button>)}</div>
    </div>}
    </div></motion.section>}</AnimatePresence>
    <AnimatePresence>{celebrate&&<motion.div role="status" className="mt-milestone" initial={{opacity:0,y:28,scale:.9}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:-12,scale:.95}} transition={{duration:reduceMotion?0:.42}}><Trophy size={22}/><div><small>CAREER MILESTONE</small><strong>{celebrate}</strong></div><Star size={18}/></motion.div>}</AnimatePresence>
