@@ -1,0 +1,88 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {defaults,migrate} from "../src/game/state";
+import {endWeek,acknowledgeEdition} from "../src/game/weekly";
+import * as J from "../src/game/journey";
+import * as C from "../src/game/campaign";
+import type {Fx} from "../src/game/store";
+const fx:Fx={toast:()=>{},log:()=>{}};
+function game(){const s=defaults();s.created=true;s.campaign.aiStatus="fallback";return s}
+
+test("Brief Room requires client questions and a business diagnosis before research",()=>{
+ const s=game();J.approveBrief(s,fx,"discover");assert.equal(s.campaign.phase,"brief");
+ J.askClient(s,fx,"audience");J.approveBrief(s,fx,"discover");assert.equal(s.campaign.phase,"brief");
+ J.askClient(s,fx,"barrier");J.approveBrief(s,fx,"discover");
+ assert.equal(s.campaign.phase,"planning");
+ assert.equal(s.campaign.journey?.step,"research");
+ assert.equal(s.clock.day,1);
+});
+test("Insight Lab requires commissioned evidence and records a confidence estimate",()=>{
+ const s=game();J.askClient(s,fx,"barrier");J.askClient(s,fx,"success");J.approveBrief(s,fx,"hesitate");
+ J.approveInsight(s,fx,"awareness");assert.equal(s.campaign.journey?.step,"research");
+ C.addResearch(s,fx,"reviews");C.addResearch(s,fx,"audit");
+ const spent=s.campaign.spent;
+ J.approveInsight(s,fx,"awareness");
+ assert.equal(s.campaign.insight,"awareness");assert.equal(s.campaign.journey?.step,"strategy");
+ assert.ok((s.campaign.journey?.confidence??0)>=40);
+ assert.equal(s.campaign.spent,spent);
+ assert.equal(s.clock.day,1);
+});
+test("seven deliverables run through one two-week campaign, with launch dependencies and a persistent case study",()=>{
+ const s=game();
+ J.askClient(s,fx,"audience");J.askClient(s,fx,"barrier");
+ J.approveBrief(s,fx,"discover");assert.equal(s.campaign.journey?.step,"research");
+ C.addResearch(s,fx,"reviews");C.addResearch(s,fx,"interview");
+ J.approveInsight(s,fx,"awareness");
+ J.approveStrategy(s,fx,{segment:"students",objective:"visits",position:"study"},"proof");
+ assert.equal(s.campaign.journey?.step,"creative");
+ J.pitchConcept(s,fx,"discount","A deal for everyone");
+ assert.match(s.campaign.journey?.pitchFeedback??"",/Client:/);
+ J.pitchConcept(s,fx,"study","Your corner to study");
+ assert.equal(s.campaign.journey?.pitchCount,2);
+ J.approveCreative(s,fx);assert.equal(s.campaign.journey?.step,"production");
+ assert.equal(s.campaign.productionReadyDay,8);
+ const preSpend=s.campaign.spent;
+ J.approveMedia(s,fx,"creator");
+ assert.ok(s.campaign.mediaBooked);assert.ok(s.campaign.spent>preSpend);
+ assert.ok(s.campaign.media.creator>s.campaign.media.paid);
+ J.readyForLive(s,fx);assert.equal(s.campaign.journey?.step,"live");
+ J.launchJourney(s,fx);assert.equal(s.campaign.phase,"executing","must wait for production");
+ assert.equal(s.clock.day,1);
+ const edition1=endWeek(s,fx)!;acknowledgeEdition(s,edition1.id);
+ assert.equal(s.clock.day,8);
+ J.launchJourney(s,fx);assert.equal(s.campaign.phase,"live");
+ J.optimizeJourney(s,fx,"hold");J.optimizeJourney(s,fx,"refresh");
+ assert.equal(s.campaign.optimization,"hold");
+ const edition2=endWeek(s,fx)!;acknowledgeEdition(s,edition2.id);
+ assert.equal(s.campaign.phase,"results");assert.equal(s.campaign.journey?.step,"report");
+ assert.ok(s.campaign.final);
+ C.nextClient(s,fx);assert.equal(s.campaign.phase,"results","report must come before new client");
+ J.submitReview(s,fx,"kpi","insight","validate");
+ assert.equal(s.campaign.journey?.review?.highlight,"kpi");
+ assert.ok(s.history[0].caseStudy);
+ assert.equal(s.history[0].caseStudy?.message,"Your corner to study");
+ const saved=migrate(JSON.parse(JSON.stringify(s)));
+ assert.equal(saved.history[0].caseStudy?.mediaPlan,"creator");
+ assert.equal(saved.campaign.journey?.pitchCount,2);
+ C.nextClient(s,fx);
+ assert.equal(s.campaign.phase,"brief");
+ assert.equal(s.campaign.journey?.step,"brief");
+ assert.equal(s.clock.day,15);
+ assert.equal(s.clock.week,3);
+ assert.ok(s.history[0].caseStudy);
+});
+test("client deadline closes an unlaunched campaign and still unlocks honest review",()=>{
+ const s=game();J.askClient(s,fx,"audience");J.askClient(s,fx,"constraint");J.approveBrief(s,fx,"convert");
+ const first=endWeek(s,fx)!;acknowledgeEdition(s,first.id);
+ const second=endWeek(s,fx)!;acknowledgeEdition(s,second.id);
+ assert.equal(s.campaign.phase,"results");assert.equal(s.campaign.final?.adReach,0);
+ assert.equal(s.campaign.journey?.step,"report");assert.equal(s.campaign.liveWeeks,0);
+});
+test("legacy mid-campaign saves infer the appropriate mission instead of returning to Brief Room",()=>{
+ const s=game() as any;s.campaign.phase="executing";s.campaign.insight="awareness";s.campaign.journey.step="brief";
+ const out=migrate(JSON.parse(JSON.stringify(s)));
+ assert.equal(out.campaign.journey?.step,"creative");
+ delete s.campaign.journey;s.campaign.phase="live";
+ const live=migrate(JSON.parse(JSON.stringify(s)));
+ assert.equal(live.campaign.journey?.step,"live");
+});

@@ -6,6 +6,7 @@ import * as C from "../src/game/campaign";
 import * as K from "../src/game/ceo";
 import {endWeek,acknowledgeEdition} from "../src/game/weekly";
 import {departmentMetrics} from "../src/game/functions";
+import * as J from "../src/game/journey";
 import type {Fx} from "../src/game/store";
 
 const fx:Fx={toast:()=>{},log:()=>{}};
@@ -33,6 +34,8 @@ function runCampaign(s:ReturnType<typeof defaults>){
   const second=endWeek(s,fx)!;assert.ok(second);acknowledgeEdition(s,second.id);
   assert.equal(s.campaign.phase,"results");
   assert.ok(s.campaign.final);
+  J.submitReview(s,fx,"kpi","insight","validate");
+  assert.ok(s.campaign.journey?.review);
 }
 test("freelance campaign, city unlock and rewards are preserved",()=>{
  const s=defaults();s.created=true;
@@ -114,6 +117,7 @@ test("brief deadlines, optimization and agency functions share one calendar",()=
  const w2=endWeek(s,fx)!;
  assert.equal(s.campaign.phase,"results");assert.equal(s.campaign.liveWeeks,1);
  assert.equal(s.campaign.weeklyResults?.length,1);
+ J.submitReview(s,fx,"kpi","media","repair");
  acknowledgeEdition(s,w2.id);C.nextClient(s,fx);
  assert.equal(s.campaign.startedDay,s.clock.day,"next brief starts on the current global day");
 });

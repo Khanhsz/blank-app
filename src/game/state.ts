@@ -5,8 +5,34 @@ export const PHASES: Phase[] = ["planning", "executing", "live", "results"];
 export const PHASE_LABEL: Record<Phase, string> = { brief: "Brief", planning: "Planning", executing: "Executing", live: "Live", results: "Results", research: "Planning", survey: "Planning", validation: "Planning", strategy: "Planning", creative: "Executing", media: "Executing" };
 
 export type AIBriefStatus = "pending" | "generating" | "ready" | "fallback";
+export type JourneyStep = "brief" | "research" | "strategy" | "creative" | "production" | "live" | "report";
+export interface CampaignJourney {
+  step: JourneyStep;
+  questions: string[];
+  diagnosis: string | null;
+  confidence: number;
+  approach: "reach" | "proof" | "activation" | null;
+  message: string;
+  pitchedCreative: string | null;
+  pitchFeedback: string | null;
+  pitchCount: number;
+  mediaPlan: string | null;
+  review: {highlight:string;reason:string;next:string;score:number} | null;
+}
+export const newJourney = ():CampaignJourney=>({
+  step:"brief",questions:[],diagnosis:null,confidence:0,approach:null,message:"",
+  pitchedCreative:null,pitchFeedback:null,pitchCount:0,mediaPlan:null,review:null
+});
+export function inferJourney(c:Campaign):CampaignJourney {
+ const phase=c.phase;
+ const step:JourneyStep=phase==="brief"?"brief":phase==="results"?"report":phase==="live"?"live":
+ ["creative","media","executing"].includes(phase)?(c.creative?"production":"creative"):
+ c.insight?"strategy":"research";
+ return {...newJourney(),step,questions:step==="brief"?[]:["audience","barrier"],diagnosis:c.insight??null,confidence:c.research.length?55:0,
+  pitchedCreative:c.creative??null,mediaPlan:c.mediaBooked?"legacy":null};
+}
 export interface Campaign {
-  briefId: string; aiStatus: AIBriefStatus; aiError?: string | null;
+  briefId: string; aiStatus: AIBriefStatus; aiError?: string | null; journey?:CampaignJourney;
   scenarioIndex: number; aiScenario?: Scenario | null; phase: Phase; day: number; spent: number; research: string[];
   startedDay?: number; productionReadyDay?: number; mediaBooked?: boolean; actualLaunchDay?: number;
   liveWeeks?: number; lastOptimizationWeek?: number; weeklyResults?: {week:number;reach:number;uplift:number;decision:string}[];
@@ -60,14 +86,14 @@ export interface GameState {
   reputation: number; expertise: number; personalCash: number; agencyCash: number; agencyUnlocked: boolean; agencyName: string;
   staff: string[]; upgrades: string[]; cityUnlocked: boolean; campaign: Campaign; clock: GameClock; officeId:string;
   world: WorldProgress;
-  history: { brand: string; outcome: number; score: number; spent: number; rep: number; xp: number; scenarioIndex: number; agency: boolean }[];
+  history: { brand: string; outcome: number; score: number; spent: number; rep: number; xp: number; scenarioIndex: number; agency: boolean; caseStudy?: {highlight:string;reason:string;next:string;score:number;diagnosis:string|null;insight:string|null;approach:string|null;creative:string|null;message:string;mediaPlan:string|null;liveWeeks:number} }[];
   log: { t: number; msg: string }[]; graphics: "high" | "low"; ceo: CEO | null;
 }
 
 export const newCampaign = (i: number, day = 1): Campaign => ({
   briefId: "brief-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,9),
   aiStatus:"pending", aiError:null,
-  scenarioIndex: i, aiScenario:null, phase: "brief", day, startedDay:day, spent: 0, research: [], mediaBooked:false, productionReadyDay:undefined, liveWeeks:0, weeklyResults:[], survey: null, insight: null,
+  scenarioIndex: i, aiScenario:null, phase: "brief", journey:newJourney(), day, startedDay:day, spent: 0, research: [], mediaBooked:false, productionReadyDay:undefined, liveWeeks:0, weeklyResults:[], survey: null, insight: null,
   strategy: { segment: "students", objective: "visits", position: "study" }, creative: null,
   media: { paid: 0, creator: 0, promo: 0, flyer: 0 }, optimization: null, liveMetrics: null, final: null,
 });
@@ -121,6 +147,12 @@ export function migrate(raw: unknown): GameState {
     editions: Array.isArray(oldWeekly?.editions)?oldWeekly.editions:[],
     lastAdvanceDay: oldWeekly?.lastAdvanceDay ?? day
   };
+  out.campaign.journey = out.campaign.journey && typeof out.campaign.journey.step==="string"
+    ? {...inferJourney(out.campaign),...out.campaign.journey,questions:Array.isArray(out.campaign.journey.questions)?out.campaign.journey.questions:[]}
+    : inferJourney(out.campaign);
+  // Earlier saves already contain a phase, but not a completed Journey.
+  // Never strand an existing campaign in Brief Room after it progressed to Planning/Live.
+  if(out.campaign.phase!=="brief"&&out.campaign.journey.step==="brief")out.campaign.journey=inferJourney(out.campaign);
   const oldPhase = out.campaign.phase;
   if (["research","survey","validation","strategy"].includes(oldPhase)) out.campaign.phase="planning";
   if (["creative","media"].includes(oldPhase)) out.campaign.phase="executing";

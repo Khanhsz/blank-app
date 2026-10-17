@@ -41,6 +41,16 @@ export function scoreModel(s: GameState, c: Campaign, mode: "final" | "interim" 
   const research = c.research.reduce((a, id) => a + (researchOptions.find((x) => x.id === id)?.quality ?? 0), 0);
   let qual = 0.46 + 0.055 * Math.min(3, research) + 0.11 * surveyQuality(s, c) + 0.12 * fit.insight + 0.11 * fit.segment + 0.08 * fit.position + 0.085 * fit.objective + 0.11 * fit.creative - Math.max(0, (c.day-(c.startedDay??1)) - 7) * 0.012;
   if (s.upgrades.includes("creative")) qual += 0.025;
+  const j=c.journey;
+  if(j?.diagnosis){
+    const category=sc.trueInsight==="awareness"?"discover":["trust","style","value"].includes(sc.trueInsight)?"hesitate":"convert";
+    qual+=j.diagnosis===category?0.025:-0.012;
+  }
+  if(j?.approach){
+    const focus:Channel=j.approach==="reach"?"paid":j.approach==="proof"?"creator":"promo";
+    const allocated=Object.values(c.media).reduce((a,b)=>a+b,0);
+    if(allocated>0)qual+=c.media[focus]/allocated>0.26?0.025:-0.014;
+  }
   let eff = (Object.entries(c.media) as [Channel, number][]).reduce((t, [k, v]) => t + v * (sc.channel[k] ?? 0.7), 0);
   if (s.upgrades.includes("influencer")) eff += c.media.creator * 0.05;
   if (s.upgrades.includes("media")) eff += c.media.paid * 0.045;
@@ -136,14 +146,14 @@ export function finalize(s:GameState,fx:Fx){
  const qualityScore=clamp(Math.round(34+r.quality*.34+pct*.55+(r.fit.insight+r.fit.segment+r.fit.objective)*3),15,99);
  const rep=clamp(Math.round(6+qualityScore/6),6,25),xp=clamp(Math.round(4+qualityScore/12),5,13);
  s.personalCash+=sc.fee;s.reputation+=rep;s.expertise+=xp;c.day=s.clock.day;
- c.final={...r,qualityScore,rep,xp};c.phase="results";
+ c.final={...r,qualityScore,rep,xp};c.phase="results";if(c.journey)c.journey.step="report";
  s.history.push({brand:sc.brand,outcome:pct,score:qualityScore,spent:c.spent,rep,xp,scenarioIndex:c.scenarioIndex,agency:false});
  fx.log("Campaign closed: "+pct+"% KPI · "+Math.round(delivered*100)+"% flight delivered");
  if(!s.cityUnlocked){s.cityUnlocked=true;fx.toast("Marketing City unlocked — new opportunities await");}
  else fx.toast("Campaign reviewed — portfolio updated");
 }
 export function nextClient(s:GameState,fx:Fx){
- if(s.agencyUnlocked||s.campaign.phase!=="results")return;
+ if(s.agencyUnlocked||s.campaign.phase!=="results"||(s.campaign.journey&&!s.campaign.journey.review))return fx.toast("Complete the Client Review before requesting another brief.");
  const next=(s.campaign.scenarioIndex+1)%3;
  s.campaign=newCampaign(next,s.clock.day);
  fx.log("New brief from "+scenarios[next].brand+" at Week "+s.clock.week);

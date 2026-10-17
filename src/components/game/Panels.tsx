@@ -11,107 +11,14 @@ import { ceoPartners, ceoRoles, creatives, employees, insights, mediaChannels, m
 import { PHASES, PHASE_LABEL } from "@/game/state";
 import {findCityLot,findOffice,currentOffice,cityRival,cityClient,leaseOffice} from "@/game/city";
 import {departmentMetrics} from "@/game/functions";
+import {CampaignJourney} from "./CampaignJourney";
 
 const Choice = ({ on, onClick, title, sub }: { on?: boolean; onClick: () => void; title: string; sub?: string }) => (
   <DecisionCard active={on} onClick={onClick} title={title} description={sub}/>
 );
 const Row = ({ k, v }: { k: string; v: React.ReactNode }) => <div className="flex justify-between border-b border-border py-1.5 text-sm"><span className="text-muted-foreground">{k}</span><b>{v}</b></div>;
 
-export function CampaignWorkspace() {
-  const s=useGame(x=>x),c=s.campaign,sc=C.scenarioOf(c),phase=C.phaseOf(c),schedule=C.scheduleOf(c);
-  const [sv,setSv]=useState({audience:"students",sample:60,question:"barrier"});
-  const [ins,setIns]=useState<string|null>(c.insight);
-  const [st,setSt]=useState(c.strategy);
-  const [cr,setCr]=useState<string|null>(c.creative);
-  const [media,setMedia]=useState<Record<Channel,number>>({paid:0,creator:0,promo:0,flyer:0});
-  if(s.agencyUnlocked)return <p className="text-sm text-muted-foreground">Your agency manages delivery. Open CEO Command Center → Functions.</p>;
-  if(c.phase==="brief"&&(c.aiStatus==="pending"||c.aiStatus==="generating"))return <AutomaticBriefWaiting/>;
-  const remaining=Math.max(0,sc.budget-c.spent),daysLeft=Math.max(0,schedule.endDay-s.clock.day);
-  const booked=Object.values(media).reduce((sum,v)=>sum+v,0);
-  const canLaunch=!!c.creative&&!!c.mediaBooked&&s.clock.day>=(c.productionReadyDay??Infinity)&&s.clock.day<schedule.endDay;
-  const campaignWeek=Math.min(schedule.weeks,Math.max(1,Math.floor((s.clock.day-(c.startedDay??s.clock.day))/7)+1));
-  return <div className="mt-campaign-stage">
-    <CampaignTimeline phase={phase}/>
-    <div className="mt-campaign-hero"><div className="mt-eyebrow">{sc.industry} · GLOBAL WEEK {s.clock.week} · CAMPAIGN WEEK {campaignWeek}/{schedule.weeks}</div><h2>{sc.brand}</h2><p>{sc.summary}</p></div>
-    <div className="mt-campaign-stats">
-      <GameStat label="BUDGET LEFT" value={money(remaining)} icon={<Coins size={17}/>}/>
-      <GameStat label="CLIENT TARGET" value={"+"+sc.target+"%"} icon={<Target size={17}/>}/>
-      <GameStat label="DAYS TO DEADLINE" value={String(daysLeft)} icon={<Activity size={17}/>}/>
-    </div>
-    <div className="mt-campaign-weekline" aria-label="Brief-driven weekly schedule">
-      {Array.from({length:schedule.weeks},(_,i)=>{
-        const plan=i<schedule.planningWeeks,execute=i<schedule.planningWeeks+schedule.executingWeeks;
-        const name=plan?"Planning":execute?"Executing":"Live";
-        const now=i===campaignWeek-1;
-        return <div key={i} className={"mt-campaign-week "+(now?"current ":"")+(i<campaignWeek-1?"done":"")}>
-          <small>W{i+1}</small><b>{name}</b>
-        </div>;
-      })}
-    </div>
-    <p className="text-xs text-muted-foreground">Client launch target: Day {schedule.plannedLaunchDay} · Client deadline: Day {schedule.endDay}. Phases can overlap within a week; actions take effect on End Week.</p>
-    <PhaseScene phase={phase}>
-      {phase==="brief"&&<>
-        <GameSection eyebrow="CLIENT OPPORTUNITY" title="Crack the Brief" sub="Review the challenge, target and deadline. The global week does not reset for new clients." icon={<FileText size={19}/>}/>
-        <p className="mt-client-quote">“{sc.client||sc.summary}”</p>
-        <Row k="Contact" v={sc.contact}/><Row k="Campaign duration" v={sc.days+" days"}/><Row k="Budget" v={money(sc.budget)}/>
-        <Row k="Success metric" v={sc.metric}/><Row k="Fee" v={money(sc.fee)}/>
-        <Button className="w-full" onClick={()=>act(C.acceptBrief)}>Accept brief → Planning</Button>
-      </>}
-      {phase==="planning"&&<>
-        <GameSection eyebrow="01 / PLANNING" title="Evidence → Insight → Strategy" sub="Choose how much evidence is worth gathering under this brief's time and budget constraints." icon={<FlaskConical size={19}/>}/>
-        <details className="mt-workstream" open><summary>Research & competitor intelligence <span>{c.research.length} sources</span></summary>
-          <div className="mt-research-choices">{researchOptions.map(r=><Choice key={r.id} on={c.research.includes(r.id)} onClick={()=>act((d,f)=>C.addResearch(d,f,r.id))} title={r.title+" · "+money(r.cost)} sub={c.research.includes(r.id)?sc.reports[r.id]:r.description}/>)}</div>
-        </details>
-        <details className="mt-workstream"><summary>Optional consumer survey <span>{c.survey?c.survey.sample+" responses":"Not run"}</span></summary>
-          {c.survey?<div className="text-sm rounded-lg bg-muted p-3">Survey complete. {C.surveyResults(s).primary}% key signal · evidence quality {C.surveyResults(s).quality}%.</div>:<>
-            <p className="text-xs font-semibold mt-2">Audience</p><div className="grid grid-cols-2 gap-2">{segments.map(x=><Choice key={x.id} on={sv.audience===x.id} onClick={()=>setSv({...sv,audience:x.id})} title={x.title}/>)}</div>
-            <p className="text-xs font-semibold mt-2">Sample</p><div className="grid grid-cols-3 gap-2">{[20,60,120].map(n=><Choice key={n} on={sv.sample===n} onClick={()=>setSv({...sv,sample:n})} title={String(n)} sub={money(surveyCosts[n])}/>)}</div>
-            <p className="text-xs font-semibold mt-2">Question</p><div className="grid grid-cols-2 gap-2"><Choice on={sv.question==="barrier"} onClick={()=>setSv({...sv,question:"barrier"})} title="Purchase barrier"/><Choice on={sv.question==="like"} onClick={()=>setSv({...sv,question:"like"})} title="Preference"/></div>
-            <Button className="w-full mt-2" variant="outline" onClick={()=>act((d,f)=>C.runSurvey(d,f,sv))}>Conduct survey</Button>
-          </>}
-        </details>
-        <details className="mt-workstream" open><summary>Insight hypothesis <span>{c.insight??"Choose one"}</span></summary>
-          {(sc.insightOptions??insights).map(i=><Choice key={i.id} on={(ins??c.insight)===i.id} onClick={()=>setIns(i.id)} title={i.title} sub={i.desc}/>)}
-          <Button className="w-full mt-2" variant="outline" disabled={!ins} onClick={()=>act((d,f)=>C.confirmInsight(d,f,ins!))}>Save insight hypothesis</Button>
-          <p className="text-xs text-muted-foreground">A hypothesis without strong supporting evidence is riskier; the scoring model evaluates research fit.</p>
-        </details>
-        <GameSection eyebrow="STRATEGY LOCK" title="Campaign direction" icon={<Target size={19}/>}/>
-        {([["Segment",segments,"segment"],["Objective",objectives,"objective"],["Positioning",positions,"position"]] as const).map(([label,list,key])=><div key={key}><p className="text-xs font-semibold mt-2">{label}</p><div className="grid grid-cols-2 gap-2">{list.map(o=><Choice key={o.id} on={st[key]===o.id} onClick={()=>setSt({...st,[key]:o.id})} title={o.title}/>)}</div></div>)}
-        <Button className="w-full mt-3" disabled={!c.insight} onClick={()=>act((d,f)=>C.confirmStrategy(d,f,st))}>Approve strategy → Executing</Button>
-      </>}
-      {phase==="executing"&&<>
-        <GameSection eyebrow="02 / EXECUTING" title="Produce & Book" sub="Commission creative and allocate media. Production becomes launch-ready after a weekly turn." icon={<Clapperboard size={19}/>}/>
-        <details className="mt-workstream" open><summary>Creative production <span>{c.creative?"Commissioned":"Select concept"}</span></summary>
-          {creatives.map(k=><Choice key={k.id} on={(c.creative??cr)===k.id} onClick={()=>{if(!c.creative)setCr(k.id)}} title={k.title+" · "+money(k.cost)} sub={k.subtitle+" — "+k.desc}/>)}
-          {!c.creative?<Button className="w-full mt-2" disabled={!cr} onClick={()=>act((d,f)=>C.confirmCreative(d,f,cr!))}>Commission production</Button>:<FeedbackStrip tone="positive">{s.clock.day>=(c.productionReadyDay??Infinity)?"Assets ready to launch.":"Production in progress until Day "+c.productionReadyDay+". Advance the week to deliver."}</FeedbackStrip>}
-        </details>
-        <details className="mt-workstream" open><summary>Media booking <span>{c.mediaBooked?"Booked":money(booked)+" allocated"}</span></summary>
-          <BarComparison rows={mediaChannels.map(m=>({label:m.title,value:c.mediaBooked?c.media[m.id]:media[m.id],display:money(c.mediaBooked?c.media[m.id]:media[m.id])}))} max={Math.max(1,remaining)}/>
-          {!c.mediaBooked&&mediaChannels.map(m=><div key={m.id}><div className="flex justify-between text-sm"><span>{m.title}</span><b>{money(media[m.id])}</b></div><input type="range" className="w-full accent-primary" min={0} max={remaining} step={100000} value={media[m.id]} onChange={e=>setMedia({...media,[m.id]:+e.target.value})}/></div>)}
-          {!c.mediaBooked?<Button className="w-full mt-2" disabled={booked<500000||booked>remaining} onClick={()=>act((d,f)=>C.bookMedia(d,f,media))}>Confirm media booking</Button>:<FeedbackStrip tone="positive">Media inventory reserved. Spend is reflected in campaign budget.</FeedbackStrip>}
-        </details>
-        <Button className="w-full mt-3" disabled={!canLaunch} onClick={()=>act((d,f)=>C.launch(d,f))}>Launch campaign → Live</Button>
-        {!canLaunch&&<p className="text-xs text-muted-foreground">Launch requires completed production and a confirmed media booking. Missing the client launch target shortens the live flight.</p>}
-      </>}
-      {phase==="live"&&<>
-        <GameSection eyebrow="03 / LIVE" title="Measure & Optimize" sub="Effects are simulated on End Week. Choose one optimization per week and watch cumulative outcomes." icon={<Activity size={19}/>}/>
-        <div className="mt-campaign-stats"><GameStat label="CUMULATIVE REACH" value={(c.liveMetrics?.adReach??0).toLocaleString()}/><GameStat label="KPI UPLIFT" value={(c.liveMetrics?.pct??0)+"%"}/><GameStat label="LIVE WEEKS" value={String(c.liveWeeks??0)}/></div>
-        <AnimatedGauge label="Progress toward client KPI" percent={(c.liveMetrics?.pct??0)/Math.max(1,sc.target)*100} tone="teal"/>
-        {optimizations.map(o=><Choice key={o.id} on={c.lastOptimizationWeek===s.clock.week&&c.optimization===o.id} onClick={()=>act((d,f)=>C.optimize(d,f,o.id))} title={o.title+" · "+money(o.cost)} sub={o.desc}/>)}
-        {(c.weeklyResults??[]).slice().reverse().map(r=><div key={r.week} className="mt-project"><Row k={"Week "+r.week+" · "+r.decision} v={r.uplift+"% cumulative uplift"}/><Row k="Estimated cumulative reach" v={r.reach.toLocaleString()}/></div>)}
-        <p className="text-xs text-muted-foreground">The campaign closes on Day {schedule.endDay}. Global End Week processes performance and the final report.</p>
-      </>}
-      {phase==="results"&&c.final&&<>
-        <GameSection eyebrow="CAMPAIGN REVIEW" title="The verdict" sub="Results reflect the number of weeks actually live, strategic fit and budget decisions." icon={<Check size={20}/>}/>
-        <AnimatedGauge label="Target achievement" percent={c.final.pct/Math.max(1,sc.target)*100} tone="sage"/>
-        <Row k="Final KPI" v={c.final.outcome+" "+sc.unit}/><Row k="Uplift" v={c.final.pct+"% (target +"+sc.target+"%)"}/>
-        <Row k="Live weeks" v={(c.liveWeeks??0)+"/"+schedule.expectedLiveWeeks}/>
-        <Row k="Service fee" v={money(sc.fee)}/><Row k="Career rewards" v={"+"+c.final.rep+" REP · +"+c.final.xp+" XP"}/>
-        <FeedbackStrip tone="positive">Campaign reviewed. Portfolio updated; proceed to the next brief without resetting the global week.</FeedbackStrip>
-      </>}
-    </PhaseScene>
-  </div>;
-}
+export function CampaignWorkspace(){ return <CampaignJourney/>; }
 
 export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaign" | "ceo") => void }) {
   const s = useGame((x) => x);
@@ -179,7 +86,7 @@ export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaig
     if (s.agencyUnlocked) return <Button className="w-full" onClick={() => onOpen("ceo")}>Open sales pipeline</Button>;
     const locked = id === "brand" && s.reputation < BRAND_HQ_REP;
     return <div className="space-y-3"><Row k="Campaigns completed" v={s.history.length} /><Row k="Reputation" v={s.reputation} />{locked && <p className="text-sm text-muted-foreground">Requires {BRAND_HQ_REP} reputation.</p>}
-      <Button className="w-full" disabled={locked || s.campaign.phase !== "results"} onClick={() => act(C.nextClient)}>Request a new client brief</Button>
+      <Button className="w-full" disabled={locked || !s.campaign.journey?.review || s.campaign.phase !== "results"} onClick={() => act(C.nextClient)}>Request a new client brief</Button>
       {s.campaign.phase !== "results" && <Button variant="outline" className="w-full" onClick={() => onOpen("campaign")}>Continue current campaign</Button>}</div>;
   }
   if (id === "agency") {
