@@ -15,8 +15,8 @@ function Option({selected,title,sub,onClick,disabled=false}:{selected:boolean;ti
   <span className="mt-journey-choice-indicator">{selected?<Check size={15}/>:<span className="mt-journey-choice-empty"/>}</span>
  </button>;
 }
-function Detail({title,children,startOpen=false}:{title:string;children:React.ReactNode;startOpen?:boolean}){
- return <details className="mt-workstream" open={startOpen?undefined:undefined} defaultOpen={startOpen}><summary>{title}</summary><div className="mt-journey-detail">{children}</div></details>;
+function Detail({title,children}:{title:string;children:React.ReactNode}){
+ return <details className="mt-workstream"><summary>{title}</summary><div className="mt-journey-detail">{children}</div></details>;
 }
 function ClientMemo({text}:{text:string}){return <div className="mt-journey-memo"><MessageCircle size={19}/><p>{text}</p></div>;}
 function MissionHeader({step,sub}:{step:string;sub:string}){return <div className="mt-journey-mission-head"><small>YOUR NEXT ASSIGNMENT</small><h3>{step}</h3><p>{sub}</p></div>;}
