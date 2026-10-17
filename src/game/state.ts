@@ -34,7 +34,7 @@ export function inferJourney(c:Campaign):CampaignJourney {
 }
 export interface Campaign {
   briefId: string; aiStatus: AIBriefStatus; aiError?: string | null; journey?:CampaignJourney;
-  scenarioIndex: number; aiScenario?: Scenario | null; phase: Phase; day: number; spent: number; research: string[];
+  scenarioIndex: number; catalogClientId?:string|null; aiScenario?: Scenario | null; phase: Phase; day: number; spent: number; research: string[];
   startedDay?: number; productionReadyDay?: number; mediaBooked?: boolean; actualLaunchDay?: number;
   liveWeeks?: number; lastOptimizationWeek?: number; weeklyResults?: {week:number;reach:number;uplift:number;decision:string}[];
   survey: { audience: string; sample: number; question: string } | null; insight: string | null;
@@ -48,7 +48,7 @@ export type WorkStyle="balanced"|"speed"|"quality";
 export interface PersonnelProfile {skill:number;morale:number;fatigue:number;xp:number;focus:WorkStyle;trainingUntil?:number;pendingSkill?:number;lastFocusWeek?:number;}
 export interface Task {preferredEmployee?:string|null; key: string; label: string; role: string; effort: number; pre: string[]; cost: number; status: "backlog" | "assigned" | "in_progress" | "review" | "completed"; progress: number; quality: number; employee: string | null; outsourced: boolean; revised?: boolean; reviewDay?: number; assignedDay?: number; startedDay?: number; doneDay?: number }
 export interface ClientTeam {id:string;clientId:string;brand:string;memberIds:string[];projectIds:string[];leadId:string|null;status:"forming"|"active"|"closing"|"released";createdDay:number}
-export interface Project { teamId?:string; priority?:"normal"|"high"; id: string; leadId: string; brand: string; adBudget: number; fee: number; bonus: number; scope: number; duration: number; industry: string; days: number; status: "active" | "completed"; scenarioIndex: number; startedDay: number; target: number; pitchQuality: number; mediaSpent: number; mediaReserved: number; direct: number; campaign: Campaign; tasks: Task[]; paymentCount: number; payrollAllocated?: number; overheadAllocated?: number; deadlineIssue?: boolean; midpoint?: boolean; kolQuality?: number; reportQuality?: number; kpi?: number; quality?: number; margin?: number; clientTrust?: number; completedDay?: number; legacy?: boolean }
+export interface Project { clientMasterId?:string; teamId?:string; priority?:"normal"|"high"; id: string; leadId: string; brand: string; adBudget: number; fee: number; bonus: number; scope: number; duration: number; industry: string; days: number; status: "active" | "completed"; scenarioIndex: number; startedDay: number; target: number; pitchQuality: number; mediaSpent: number; mediaReserved: number; direct: number; campaign: Campaign; tasks: Task[]; paymentCount: number; payrollAllocated?: number; overheadAllocated?: number; deadlineIssue?: boolean; midpoint?: boolean; kolQuality?: number; reportQuality?: number; kpi?: number; quality?: number; margin?: number; clientTrust?: number; completedDay?: number; legacy?: boolean }
 export type PriceTier="competitive"|"balanced"|"premium";
 export interface PricingAdvice {
  leadId:string;brand:string;mediaBudget:number;baselineFee:number;
@@ -106,7 +106,7 @@ export interface GameState {
 export const newCampaign = (i: number, day = 1): Campaign => ({
   briefId: "brief-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,9),
   aiStatus:"pending", aiError:null,
-  scenarioIndex: i, aiScenario:null, phase: "brief", journey:newJourney(), day, startedDay:day, spent: 0, research: [], mediaBooked:false, productionReadyDay:undefined, liveWeeks:0, weeklyResults:[], survey: null, insight: null,
+  scenarioIndex: i, catalogClientId:null, aiScenario:null, phase: "brief", journey:newJourney(), day, startedDay:day, spent: 0, research: [], mediaBooked:false, productionReadyDay:undefined, liveWeeks:0, weeklyResults:[], survey: null, insight: null,
   strategy: { segment: "students", objective: "visits", position: "study" }, creative: null,
   media: { paid: 0, creator: 0, promo: 0, flyer: 0 }, optimization: null, liveMetrics: null, final: null,
 });

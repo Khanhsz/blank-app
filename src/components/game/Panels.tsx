@@ -13,6 +13,7 @@ import {findCityLot,findOffice,currentOffice,cityRival,cityClient,leaseOffice} f
 import {departmentMetrics} from "@/game/functions";
 import * as P from "@/game/personnel";
 import {ClientTeamBoard} from "./ClientTeamBoard";
+import {ClientCatalog} from "./ClientCatalog";
 import * as T from "@/game/clientTeams";
 import {CampaignJourney} from "./CampaignJourney";
 
@@ -115,6 +116,9 @@ export function CEOCommandCenter({onReadEdition}:{onReadEdition?:(id:string)=>vo
       <PhaseScene phase={tab}>
       {tab === "inbox" && (open.length ? open.map((i) => <div key={i.id} className="mt-escalation"><div className="text-xs text-muted-foreground">Day {i.day} · {i.type}</div><p className="text-sm">{i.message}</p><div className="mt-2 flex flex-wrap gap-2">{i.choices.map((ch) => <Button key={ch} size="sm" variant="outline" className="capitalize" onClick={() => act((d, f) => K.resolveIssue(d, f, i.id, ch))}>{ch}</Button>)}</div></div>) : <p className="text-sm text-muted-foreground">Inbox clear. Staff are working autonomously — check the pipeline for new deals.</p>)}
       {tab === "pipeline" && <>
+        <details className="mt-market-section mt-client-market-accordion"><summary>Browse Client Master Database · 7 industries · Startup / SME / Big Corp</summary>
+          <ClientCatalog mode="agency"/>
+        </details>
         {c.pitch && <PitchBox />}
         {c.negotiation && <NegBox />}
         {!c.pitch && !c.negotiation && c.leads.map((l) => <div key={l.id} className="mt-deal"><div className="flex justify-between"><b>{l.brand}</b><span className="text-xs capitalize text-primary">{l.status.replace("_", " ")}</span></div><p className="text-xs text-muted-foreground">{l.desc}</p><Row k="Service fee" v={money(l.fee)} /><Row k="Rivals" v={l.rivalIds.join(", ")} />{l.insightKnown && <Row k="Client priority" v={l.pref} />}{l.status==="qualified"&&l.pricingAdvice&&<Row k="Cost-aware bid estimate" v={money(l.pricingAdvice.recommendedFee)} />}{tenderFor(c,l.id)?.status==="open"&&<Row k="Tender deadline" v={"Day "+tenderFor(c,l.id)!.deadline}/>}

@@ -149,6 +149,7 @@ export const ceoTalent: Record<string, string> = { research: "researcher", strat
 
 export interface LeadDef {
   id: string; brand: string; industry: string; value: number; fee: number; duration: number; objective: string; scope: number; intensity: number; businessSize?:"small"|"medium"|"large"|"enterprise";
+  clientMasterId?:string; sector?:"coffee"|"beauty"|"fashion"|"education"|"tech"|"fitness"|"food";segment?:"startup"|"sme"|"bigcorp";
   difficulty: number; required: number; rivalIds: string[]; pref: "performance" | "creative" | "cost" | "strategy"; trust: number; stakeholder: string;
   target: number; scenario: number; origin: string; desc: string;
 }

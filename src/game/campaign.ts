@@ -3,6 +3,7 @@ import { AGENCY_REQ, COWORK_COST, clamp, creatives, hash, insights, money, optim
 import { newCampaign, type Campaign, type GameState, type ScoreResult } from "./state";
 import type { Fx } from "./store";
 import { ceoInit, ceoMigrateLegacy } from "./ceo";
+import {getClient,scenarioForClient} from "./clientDatabase";
 
 export const scenarioOf = (c: Campaign) => c.aiScenario ?? scenarios[c.scenarioIndex % scenarios.length];
 /** A brief specifies the actual deadline; stages are suggested windows, not fixed gates. */
@@ -151,6 +152,22 @@ export function finalize(s:GameState,fx:Fx){
  fx.log("Campaign closed: "+pct+"% KPI · "+Math.round(delivered*100)+"% flight delivered");
  if(!s.cityUnlocked){s.cityUnlocked=true;fx.toast("Marketing City unlocked — new opportunities await");}
  else fx.toast("Campaign reviewed — portfolio updated");
+}
+/** Choose freely among startup and SME clients; the brief is generated locally
+ * from the canonical catalog, with no fabricated public-company statistics.
+ */
+export function chooseFreelanceClient(s:GameState,fx:Fx,clientId:string):boolean{
+ if(s.agencyUnlocked||s.campaign.phase!=="brief")return false;
+ const client=getClient(clientId);
+ if(!client||client.segment==="bigcorp")return false;
+ const c=s.campaign;
+ c.catalogClientId=client.id;
+ c.aiScenario=scenarioForClient(client);
+ c.aiStatus="ready";c.aiError=null;
+ c.journey={step:"brief",questions:[],diagnosis:null,confidence:0,approach:null,message:"",pitchedCreative:null,pitchFeedback:null,pitchCount:0,mediaPlan:null,review:null};
+ fx.log("Selected "+client.segment+" client "+client.brand+" from the client master database");
+ fx.toast("Client brief selected: "+client.brand);
+ return true;
 }
 export function nextClient(s:GameState,fx:Fx){
  if(s.agencyUnlocked||s.campaign.phase!=="results"||(s.campaign.journey&&!s.campaign.journey.review))return fx.toast("Complete the Client Review before requesting another brief.");

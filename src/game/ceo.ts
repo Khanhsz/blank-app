@@ -8,6 +8,7 @@ import {currentOffice} from "./city";
 import {runRivalAgents,ensureTender,rivalBidScore,registerRivalWin,resolveTalentOffer} from "./rivalAI";
 import {candidatesForRole,primaryRole,eligibleForRole,profile,effectiveCapacity,employeeReadiness,staffRate,defaultProfile,updatePersonnelDay,recordDelivery} from "./personnel";
 import {teamForProject,ownerTeam,startClientTeam,reconcileClientTeams,teamCoverage} from "./clientTeams";
+import {contractBrief} from "./clientMarket";
 import {ensureLocalPricing} from "./pricingAdvisor";
 
 const OVERHEAD = 160000;
@@ -130,7 +131,7 @@ function progressProject(s: GameState, c: CEO, p: Project, fx: Fx) {
 }
 
 function applyTask(p: Project, t: Task) {
-  const co = p.campaign, sc = scenarios[p.scenarioIndex];
+  const co = p.campaign, sc = co.aiScenario??scenarios[p.scenarioIndex];
   if (t.key === "research") { co.research = ["audit", "reviews", "interview"]; co.survey = { audience: sc.trueSegment, sample: 120, question: "barrier" }; co.insight = t.quality >= 64 ? sc.trueInsight : "value"; co.phase = "planning"; }
   if (t.key === "strategy") { co.strategy = { segment: t.quality >= 65 ? sc.trueSegment : "everyone", objective: sc.trueObjective, position: t.quality >= 65 ? sc.truePosition : "budget" }; co.phase = "executing"; }
   if (t.key === "creative") { co.creative = t.quality >= 68 ? sc.trueCreative : "discount"; co.phase = "executing"; }
@@ -298,7 +299,12 @@ export function sign(s: GameState, fx: Fx) {
   const c = ceoInit(s)!, n = c.negotiation; if (!n || n.status !== "open") return; const l = lead(c, n.id)!;
   if (forecast(s, n).margin < 0 && n.round < 3) { issue(c, fx, "bad-margin", l.id, `Proposal risks a loss: ${l.brand}.`, ["review"]); return; }
   n.status = "signed"; l.status = "signed";const tender=ensureTender(c,l);if(tender)tender.status="player";
-  const p: Project = { id: "project-" + ++c.seq, leadId: l.id, brand: l.brand, adBudget: l.value, fee: n.fee, bonus: n.bonus, scope: n.scope, duration: n.deadline, industry: l.industry, days: 0, status: "active", scenarioIndex: l.scenario, startedDay: c.day, target: l.target, pitchQuality: c.pitch?.quality || 65, mediaSpent: 0, mediaReserved: l.value, direct: 0, campaign: newCampaign(l.scenario,c.day), tasks: ceoTaskDefs.map((t) => ({ ...t, status: "backlog", progress: 0, quality: 0, employee: null, outsourced: false })), paymentCount: 0 };
+  const projectCampaign=newCampaign(l.scenario,c.day);
+  if(l.clientMasterId){
+    const sc=contractBrief(l.clientMasterId,{value:l.value,fee:n.fee,days:n.deadline,target:l.target});
+    if(sc){projectCampaign.catalogClientId=l.clientMasterId;projectCampaign.aiScenario=sc;projectCampaign.aiStatus="ready";}
+  }
+  const p: Project = { id: "project-" + ++c.seq, leadId: l.id, clientMasterId:l.clientMasterId, brand: l.brand, adBudget: l.value, fee: n.fee, bonus: n.bonus, scope: n.scope, duration: n.deadline, industry: l.industry, days: 0, status: "active", scenarioIndex: l.scenario, startedDay: c.day, target: l.target, pitchQuality: c.pitch?.quality || 65, mediaSpent: 0, mediaReserved: l.value, direct: 0, campaign:projectCampaign, tasks: ceoTaskDefs.map((t) => ({ ...t, status: "backlog", progress: 0, quality: 0, employee: null, outsourced: false })), paymentCount: 0 };
   c.projects.push(p);
   startClientTeam(s,p);
   schedulePayment(c, p, (n.fee * n.advance) / 100, 0, "Contract advance");

@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useEffect,useState} from "react";
 import {Activity,ArrowRight,BookOpen,Check,CheckCircle2,ClipboardCheck,Clock3,Coins,FileText,FlaskConical,Lightbulb,MessageCircle,Play,Radio,Search,Send,Target,TrendingUp,Users} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {act,useGame} from "@/game/store";
@@ -7,6 +7,7 @@ import * as J from "@/game/journey";
 import {creatives,insights,mediaChannels,money,objectives,optimizations,positions,researchOptions,segments,surveyCosts,type Channel} from "@/game/data";
 import {AnimatedGauge,GameSection,GameStat,FeedbackStrip} from "./GameVisuals";
 import {AutomaticBriefWaiting} from "./AIBriefLauncher";
+import {ClientCatalog} from "./ClientCatalog";
 import type {Campaign,CampaignJourney,JourneyStep} from "@/game/state";
 
 function Option({selected,title,sub,onClick,disabled=false}:{selected:boolean;title:string;sub?:string;onClick:()=>void;disabled?:boolean}){
@@ -168,5 +169,13 @@ function Main({c}:{c:Campaign}){
 }
 export function CampaignJourney(){
  const c=useGame(s=>s.campaign);
- return <Main key={c.briefId} c={c}/>;
+ const [browse,setBrowse]=useState(true);
+ useEffect(()=>{if(c.phase==="brief"&&!c.catalogClientId)setBrowse(true);},[c.briefId]);
+ return <div className="mt-client-journey-wrap">
+  {c.phase==="brief"&&<div className="mt-client-journey-switch">
+    <Button size="sm" variant={browse?"default":"outline"} onClick={()=>setBrowse(true)}>Browse Startup & SME Clients</Button>
+    <Button size="sm" variant={!browse?"default":"outline"} onClick={()=>setBrowse(false)}>Current Client Brief</Button>
+  </div>}
+  {c.phase==="brief"&&browse?<ClientCatalog mode="freelancer" onSelected={()=>setBrowse(false)}/>:<Main key={c.briefId} c={c}/>}
+ </div>;
 }
