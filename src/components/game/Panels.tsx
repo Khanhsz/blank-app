@@ -5,7 +5,6 @@ import * as C from "@/game/campaign";
 import * as K from "@/game/ceo";
 import { ceoPartners, ceoRoles, creatives, employees, insights, mediaChannels, money, objectives, optimizations, positions, researchOptions, segments, surveyCosts, upgrades, BRAND_HQ_REP, type Channel, type UpgradeId } from "@/game/data";
 import { PHASES, PHASE_LABEL } from "@/game/state";
-import {availableAt,campaignSite,meetContact,nextLocation,worldPeople,type WorldLocation} from "@/game/world";
 
 const Choice = ({ on, onClick, title, sub }: { on?: boolean; onClick: () => void; title: string; sub?: string }) => (
   <button onClick={onClick} className={`w-full rounded-xl border p-3 text-left transition ${on ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50"}`}>
@@ -14,7 +13,7 @@ const Choice = ({ on, onClick, title, sub }: { on?: boolean; onClick: () => void
 );
 const Row = ({ k, v }: { k: string; v: React.ReactNode }) => <div className="flex justify-between border-b border-border py-1.5 text-sm"><span className="text-muted-foreground">{k}</span><b>{v}</b></div>;
 
-export function CampaignWorkspace({site="computer"}:{site?:"computer"|"research"|"creative"|"media"}) {
+export function CampaignWorkspace() {
   const s = useGame((x) => x);
   const c = s.campaign, sc = C.scenarioOf(c);
   const [sv, setSv] = useState({ audience: "students", sample: 60, question: "barrier" });
@@ -23,8 +22,6 @@ export function CampaignWorkspace({site="computer"}:{site?:"computer"|"research"
   const [cr, setCr] = useState<string | null>(null);
   const [media, setMedia] = useState<Record<Channel, number>>({ paid: 0, creator: 0, promo: 0, flyer: 0 });
   if (s.agencyUnlocked) return <p className="text-sm text-muted-foreground">Your team now runs all campaigns. Open the CEO Command Center.</p>;
-  const required=campaignSite(s);
-  if(site!==required)return <div className="world-mission"><span className="eyebrow">LOCATION-BASED WORKFLOW</span><h3>Work happens where the specialists are.</h3><p>The current phase is <b>{PHASE_LABEL[s.campaign.phase]}</b>. Travel to <strong>{nextLocation(s).name}</strong> to continue.</p><p className="mt-muted">{nextLocation(s).description}</p></div>;
   const left = sc.budget - c.spent;
   const idx = PHASES.indexOf(c.phase);
   return (
@@ -56,45 +53,25 @@ export function CampaignWorkspace({site="computer"}:{site?:"computer"|"research"
   );
 }
 
-
 export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaign" | "ceo") => void }) {
- const s=useGame(x=>x);
- const [name,setName]=useState("");
- const site=id as WorldLocation;
- const access=availableAt(s,site),person=worldPeople[site];
- if(!person)return <p className="mt-muted">No action available here.</p>;
- if(!access.open)return <div className="world-mission"><span className="eyebrow">DISTRICT LOCKED</span><h3>{person.title}</h3><p>{access.reason}</p><p className="mt-muted">Continue the campaign or explore available areas to gain access.</p></div>;
- const met=s.world?.contacts?.includes(site);
- const npc=<div className="npc-card"><div className="npc-portrait">{person.name.slice(0,1)}</div><div className="npc-copy"><span className="eyebrow">LOCAL CONTACT · {person.title}</span><h3>{person.name}</h3><p>“{person.message}”</p>{met?<small className="world-known">Connected · +1 expertise earned</small>:<button className="npc-talk" onClick={()=>act((d,fx)=>{if(meetContact(d,site)){fx.toast("Met "+person.name+" · +1 expertise");fx.log("Met "+person.name+" at "+site)}})}>Introduce yourself · +1 XP ↗</button>}</div></div>;
- const guide=<p className="world-tip">{person.tip}</p>;
- if(id==="research"||id==="creative"||id==="media"){
-  const upgrade=upgrades[id as UpgradeId],owned=s.upgrades.includes(id);
-  return <div className="space-y-4">{npc}{guide}<div className="world-lab-tools"><div><b>{upgrade?.name}</b><p>{upgrade?.desc}</p></div><Button size="sm" variant="outline" disabled={owned||C.playerMoney(s)<upgrade.cost} onClick={()=>act((d,fx)=>C.buyUpgrade(d,fx,id as UpgradeId))}>{owned?"Active":"Upgrade · "+money(upgrade.cost)}</Button></div>
-   <div className="world-section-title"><span>LIVE CAMPAIGN WORKSPACE</span><b>{PHASE_LABEL[s.campaign.phase]}</b></div>
-   <CampaignWorkspace site={id as "research"|"creative"|"media"}/></div>;
- }
- if(id==="network"){
-  return <div className="space-y-4">{npc}{guide}<div className="world-mission"><span className="eyebrow">CLIENT OPPORTUNITIES</span><h3>Your next relationship starts here.</h3><p>Build your portfolio to receive referrals and bigger briefs. New briefs are always opened through your personal computer.</p></div>
-    {s.agencyUnlocked?<Button className="w-full" onClick={()=>onOpen("ceo")}>Open agency deal pipeline</Button>:
-    s.campaign.phase==="results"?<Button className="w-full" id="get-next-client" onClick={()=>act((d,fx)=>C.nextClient(d,fx))}>Request next client introduction</Button>:
-    <div className="space-y-2"><p className="mt-muted">Current phase: {PHASE_LABEL[s.campaign.phase]}. No new brief until your active job is delivered.</p><Button className="w-full" variant="outline" onClick={()=>onOpen("campaign")}>Head home to your computer</Button></div>}</div>;
- }
- if(id==="agency"){
-  if(s.agencyUnlocked)return <div className="space-y-4">{npc}{guide}<Button className="w-full" onClick={()=>onOpen("ceo")}>Enter CEO Command Center</Button></div>;
-  return <div className="space-y-4">{npc}{guide}<div className="world-mission"><span className="eyebrow">YOUR FIRST AGENCY</span><h3>From freelancer to founder</h3>{C.agencyReqs(s).map(r=><div key={r.name} className="world-requirement"><span>{r.ok?"✓":"○"} {r.name}</span><b>{r.num}</b></div>)}</div>
-    <input aria-label="Agency name" className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm" placeholder="Your agency name" value={name} onChange={e=>setName(e.target.value)} disabled={!C.canOpenAgency(s)}/>
-    <Button className="w-full" disabled={!C.canOpenAgency(s)} onClick={()=>act((d,fx)=>C.createAgency(d,fx,name))}>Found Agency · 8,000,000đ</Button></div>;
- }
- if(id==="brand"){
-  return <div className="space-y-4">{npc}{guide}<div className="world-mission"><h3>Corporate relationships</h3><p>Your next opportunity depends on actual reputation, portfolio and commercial offers.</p></div><Button className="w-full" onClick={()=>s.agencyUnlocked?onOpen("ceo"):onOpen("campaign")}>{s.agencyUnlocked?"Open corporate deal pipeline":"Return to client brief"}</Button></div>;
- }
- if(id==="influencer"||id==="cowork"){
-  const upgradeId=id==="influencer"?"influencer":"cowork",owned=s.upgrades.includes(upgradeId);
-  const cost=id==="cowork"?300000:upgrades.influencer.cost;
-  return <div className="space-y-4">{npc}{guide}<div className="world-mission"><span className="eyebrow">SPECIALIST SERVICES</span><h3>{id==="cowork"?"Co-working membership":"Creator specialist network"}</h3><p>{id==="cowork"?"Membership provides +1 expertise once.":"Creator access improves effectiveness of your existing media allocation."}</p></div>
-    <Button className="w-full" disabled={owned||C.playerMoney(s)<cost} onClick={()=>act((d,fx)=>C.buyUpgrade(d,fx,upgradeId as UpgradeId))}>{owned?"Service active":"Activate service · "+money(cost)}</Button></div>;
- }
- return <div className="space-y-4">{npc}{guide}</div>;
+  const s = useGame((x) => x);
+  const [name, setName] = useState("");
+  if (id in upgrades) { const u = upgrades[id as UpgradeId], own = s.upgrades.includes(id); return <div className="space-y-3"><h4 className="font-semibold">{u.name}</h4><p className="text-sm text-muted-foreground">{u.desc}</p><Button className="w-full" disabled={own || C.playerMoney(s) < u.cost} onClick={() => act((d, f) => C.buyUpgrade(d, f, id as UpgradeId))}>{own ? "Owned" : `Buy · ${money(u.cost)}`}</Button></div>; }
+  if (id === "cowork") return <Button className="w-full" disabled={s.upgrades.includes("cowork") || C.playerMoney(s) < 300000} onClick={() => act((d, f) => C.buyUpgrade(d, f, "cowork"))}>{s.upgrades.includes("cowork") ? "Member" : `Join coworking · ${money(300000)} (+1 XP)`}</Button>;
+  if (id === "network" || id === "brand") {
+    if (s.agencyUnlocked) return <Button className="w-full" onClick={() => onOpen("ceo")}>Open sales pipeline</Button>;
+    const locked = id === "brand" && s.reputation < BRAND_HQ_REP;
+    return <div className="space-y-3"><Row k="Campaigns completed" v={s.history.length} /><Row k="Reputation" v={s.reputation} />{locked && <p className="text-sm text-muted-foreground">Requires {BRAND_HQ_REP} reputation.</p>}
+      <Button className="w-full" disabled={locked || s.campaign.phase !== "results"} onClick={() => act(C.nextClient)}>Request a new client brief</Button>
+      {s.campaign.phase !== "results" && <Button variant="outline" className="w-full" onClick={() => onOpen("campaign")}>Continue current campaign</Button>}</div>;
+  }
+  if (id === "agency") {
+    if (s.agencyUnlocked) return <Button className="w-full" onClick={() => onOpen("ceo")}>Enter CEO Command Center</Button>;
+    return <div className="space-y-2">{C.agencyReqs(s).map((r) => <Row key={r.name} k={(r.ok ? "Done · " : "Locked · ") + r.name} v={r.num} />)}
+      <input className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm" placeholder="Agency name" value={name} onChange={(e) => setName(e.target.value)} disabled={!C.canOpenAgency(s)} />
+      <Button className="w-full" disabled={!C.canOpenAgency(s)} onClick={() => act((d, f) => C.createAgency(d, f, name))}>Found agency · 8,000,000đ</Button></div>;
+  }
+  return null;
 }
 
 const TABS = ["inbox", "pipeline", "projects", "people", "finance", "rivals", "partners"] as const;
