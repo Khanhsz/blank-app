@@ -11,7 +11,7 @@ const only=(v,choices,label)=>{if(!choices.includes(v))throw Error("Invalid "+la
 const string=(v,max=350,label="text")=>{
  if(typeof v!=="string"||!v.trim())throw Error("Missing or invalid "+label+" ("+(typeof v==="string"?v.trim().length:"not-string")+")");
  const t=v.trim();if(t.length<=max)return t;
- const short=t.slice(0,max);return short.replace(/\\s+\\S*$/,"").trim()||short;
+ const short=t.slice(0,max);return short.replace(/\s+\S*$/,"").trim()||short;
 };
 const number=(v,min,max,label)=>{if(typeof v!=="number"||!Number.isFinite(v)||v<min||v>max)throw Error("Invalid "+label);return v};
 export function validateCandidate(raw,category="coffee"){
