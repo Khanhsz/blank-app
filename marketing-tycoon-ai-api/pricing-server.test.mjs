@@ -44,6 +44,8 @@ test("the real pricing API route validates the caller, prices tenders and falls 
   assert.equal(payload.advice.businessSize,"medium");
   assert.equal(payload.advice.mediaBudget,req.mediaBudget);
   assert.ok(payload.advice.recommendedFee>=payload.advice.feeFloor);
+  assert.ok(["lean","standard","deep"].includes(payload.advice.qualificationDepth));
+  assert.ok(payload.advice.qualificationFee>=90000&&payload.advice.qualificationFee<=1400000);
   const rejectOrigin=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json",Origin:"https://wrong.example"},body:JSON.stringify(req)});
   assert.equal(rejectOrigin.status,403);
   const bad=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json",Origin:ORIGIN},body:JSON.stringify({...req,mediaBudget:-1})});
