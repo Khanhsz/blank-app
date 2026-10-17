@@ -52,13 +52,13 @@ export function nextLocation(s:GameState):{id:string;name:string;description:str
 }
 export function visitSite(s:GameState,id:WorldLocation){
  if(!availableAt(s,id).open)return false;
- s.world ||= {visited:[],contacts:[]};
+ s.world ||= {visited:[],contacts:[],leasedOffices:[]};
  if(!s.world.visited.includes(id))s.world.visited.push(id);
  return true;
 }
 export function meetContact(s:GameState,id:WorldLocation){
  if(!availableAt(s,id).open)return false;
- s.world ||= {visited:[],contacts:[]};
+ s.world ||= {visited:[],contacts:[],leasedOffices:[]};
  if(s.world.contacts.includes(id))return false;
  s.world.contacts.push(id);s.expertise+=1;return true;
 }
