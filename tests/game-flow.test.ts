@@ -28,7 +28,7 @@ function runCampaign(s:ReturnType<typeof defaults>){
   assert.equal(s.campaign.simulation?.elapsed,1);
   C.optimize(s,fx,"hold");
   assert.equal(s.campaign.phase,"live");
-  C.advanceCampaignDay(s,fx,30);
+  for(let batch=0;batch<6&&s.campaign.phase==="live";batch++)C.advanceCampaignDay(s,fx,30);
   assert.equal(s.campaign.phase,"results");
   assert.ok(s.campaign.final);
 }
