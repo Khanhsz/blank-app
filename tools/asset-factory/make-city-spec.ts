@@ -39,6 +39,7 @@ const masters=[...real,...decorations,...ambient].map((l,i)=>{
   decorative:i>=real.length,x:l.x,z:l.z,width:l.w,depth:l.d,height:Number(l.h.toFixed(3)),
   floors:Math.max(1,Math.round(l.h/3.05)),archetype:a.archetype,facade:a.facade,roof:a.roof,entrance:a.entrance,
   palette:a.palette,massingStyle:i%4,variant:i%5,seed:1001+i*31,function:a.use,advertisingSlots:slots(l.id,a.use),
+  ...(l.id==="office-brick"?{massing:"three_offset_volumes"}:{}),
   priorAsset:slice.masters.some((x:{id:string})=>x.id===l.id)?"GLB slice-3":"procedural geometry"
  };
 });
