@@ -22,7 +22,9 @@ const palettes={
  sage:["#98aa9a","#d3ddc9","#5b6868","#a7c0b8","#779486","#d2d2bb","#344d4d"],
  slate:["#869ba6","#c6d3d4","#4b6372","#b0cdd1","#688ca0","#d7ddda","#385563"]
 };
-const rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255);
+// glTF baseColorFactor expects LINEAR RGB, not raw sRGB hex bytes.
+// Old exporter passed gamma-encoded values, producing the washed-out concrete seen in-game.
+const rgb=h=>[1,3,5].map(i=>{const c=parseInt(h.slice(i,i+2),16)/255;return c<=.04045?c/12.92:((c+.055)/1.055)**2.4});
 const prng=n=>{let s=n>>>0;return()=>((s=Math.imul(1664525,s)+1013904223>>>0)/4294967296)};
 const align=n=>(n+3)&~3;
 const textBytes=s=>Buffer.from(s,"utf8");
