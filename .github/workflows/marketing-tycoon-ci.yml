@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - deploy/marketing-tycoon-lovable-world
-      - fix/marketing-tycoon-p0-economy-ci-20261018
   pull_request:
     branches:
       - deploy/marketing-tycoon-lovable-world
