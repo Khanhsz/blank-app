@@ -132,7 +132,7 @@ export default function App(){
    <AnimatePresence mode="wait">{panel!=="none"&&<motion.section key={panel} initial={{opacity:0,x:30,scale:.986}} animate={{opacity:1,x:0,scale:1}} exit={{opacity:0,x:18,scale:.988}} transition={{type:"spring",stiffness:285,damping:29}} className={"panel "+(panel==="onboard"?"onboardpanel":"")}><header><div><span className="eyebrow">MT® / WORLD EDITION</span><h2>{title}</h2></div>{panel!=="onboard"&&<button className="close" onClick={()=>setPanel("none")} aria-label="Close"><X size={20}/></button>}</header><div className="panelbody">
    {panel==="onboard"&&<Intro onRotate={n=>setAvatarYaw(y=>y+n)} onZoom={n=>setAvatarZoom(z=>Math.max(.65,Math.min(1.45,z+n)))} done={()=>{setSceneFocus(null);setPanel("none");setComputerHint(true)}}/>}
    {panel==="campaign"&&!s.agencyUnlocked&&<CampaignWorkspace/>}
-   {panel==="ceo"&&s.agencyUnlocked&&<CEOCommandCenter/>}
+   {panel==="ceo"&&s.agencyUnlocked&&<CEOCommandCenter onReadEdition={setReviewNews}/>}
    {panel==="location"&&selected&&<LocationPanel id={selected} onOpen={fromLocation}/>}
    {panel==="avatar"&&<Customize/>}
    {panel==="settings"&&<GameSettings onReset={()=>{setPanel("onboard");setSelected(null);setSceneFocus(null)}}/>}
