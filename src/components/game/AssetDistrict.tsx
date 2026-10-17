@@ -35,9 +35,23 @@ function ModelGeometry({id,lod,dimensions,height,tier=1}:{id:string;lod:0|1;dime
 }
 export function BuildingInteraction({b,selected,onSelect,quality}:{b:District;selected:boolean;onSelect:(id:string)=>void;quality:"high"|"low"}){
  const [hot,setHot]=useState(false);
+ const [near,setNear]=useState(false);
+ const camera=useThree(s=>s.camera);
  const [lod,setLod]=useState<0|1>(quality==="high"&&selected?0:1);
  const onHover=(yes:boolean)=>{setHot(yes);document.body.style.cursor=yes?"pointer":"auto"};
  useEffect(()=>()=>{document.body.style.cursor="auto"},[]);
+ // At high-angle city overview, do not draw 27 overlapping HTML nameplates.
+ // Nearby, hovered, selected and current HQ buildings remain discoverable.
+ const nearbyRef=React.useRef(0);
+ useFrame((_,dt)=>{
+  nearbyRef.current+=dt;
+  if(nearbyRef.current<.45)return;
+  nearbyRef.current=0;
+  const dist=Math.hypot(camera.position.x-b.x,camera.position.z-b.z,camera.position.y*.68);
+  const visibility=dist<54;
+  setNear(prev=>prev===visibility?prev:visibility);
+ });
+ const showLabel=selected||hot||near||b.occupied||(b.id==="agency"&&!b.locked);
  return <group position={[b.x,0,b.z]}>
   <LODManager x={b.x} z={b.z} quality={quality} selected={selected} onLOD={next=>setLod(prev=>prev===next?prev:next)}/>
   <ModelGeometry id={b.id} lod={lod} tier={b.tier} height={b.h} dimensions={[b.w,b.h,b.d]}/>
@@ -48,12 +62,12 @@ export function BuildingInteraction({b,selected,onSelect,quality}:{b:District;se
    <boxGeometry args={[b.w+.25,b.h+.65,b.d+.25]}/><meshBasicMaterial transparent opacity={0} depthWrite={false}/>
   </mesh>
   {selected&&<mesh position={[0,.12,0]}><boxGeometry args={[b.w+.8,.08,b.d+.8]}/><meshBasicMaterial color="#93c5ac" transparent opacity={.55} depthWrite={false}/></mesh>}
-  <Html center position={[0,b.h+4.0,0]} distanceFactor={36} style={{pointerEvents:"auto"}}>
+  {showLabel&&<Html center position={[0,b.h+1.7,0]} distanceFactor={32} style={{pointerEvents:"auto"}}>
    <button className={"world-building-label "+(selected?"selected":"")+(b.locked?" locked":"")+(b.kind==="rival"?" rival":"")+(b.kind==="office"?" office":"")+(b.kind==="client"?" client":"")+(b.occupied?" occupied":"")}
     type="button" onClick={()=>onSelect(b.id)}>
-    <span className="map-pin"/><span>{b.name}</span>{b.occupied?<small>YOUR HQ</small>:b.kind==="rival"?<small>RIVAL</small>:b.kind==="office"?<small>{b.locked?"LOCKED":"TO LET"}</small>:b.kind==="client"?<small>CLIENT HQ</small>:b.locked?<small>LOCKED</small>:null}<small className="mt-glb-status">● GLB {AssetRegistry.version.toUpperCase()}</small>
+    <span className="map-pin"/><span>{b.name}</span>{b.occupied?<small>YOUR HQ</small>:b.kind==="rival"?<small>RIVAL</small>:b.kind==="office"?<small>{b.locked?"LOCKED":"TO LET"}</small>:b.kind==="client"?<small>CLIENT HQ</small>:b.locked?<small>LOCKED</small>:null}
    </button>
-  </Html>
+  </Html>}
   {hot&&<pointLight position={[0,b.h*.55,b.d/2+1]} color="#b9d4c8" intensity={.5} distance={b.w*2}/>}
  </group>;
 }
