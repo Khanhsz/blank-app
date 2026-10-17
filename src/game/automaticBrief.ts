@@ -49,7 +49,7 @@ export function prepareNextBrief(){
    const res=await fetch(API+"/api/generate-brief",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({category:"coffee"}),
+    body:JSON.stringify({category:["coffee","beauty","fashion","education","tech","fitness","food"][current.history.length%7]}),
     signal:controller.signal
    });
    const data=await res.json().catch(()=>null) as {scenario?:Scenario;error?:string}|null;
