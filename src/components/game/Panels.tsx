@@ -29,7 +29,7 @@ export function CampaignWorkspace() {
       <div className="flex flex-wrap gap-1">{PHASES.map((p, i) => <span key={p} className={`rounded-full px-2 py-0.5 text-[11px] ${i <= idx ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{PHASE_LABEL[p]}</span>)}</div>
       <div><div className="text-xs uppercase tracking-widest text-primary">{sc.industry} · Day {c.day}/{sc.days}</div><h3 className="font-display text-2xl">{sc.brand}</h3>
         <Row k="Client budget left" v={money(left)} /><Row k="Target" v={`+${sc.target}% ${sc.metric}`} /></div>
-      {c.phase === "brief" && <><p className="rounded-xl bg-muted p-3 text-sm italic">“{sc.client}” — {sc.contact}</p><Button className="w-full" onClick={() => act(C.acceptBrief)}>Accept brief</Button></>}
+      {c.phase === "brief" && <><p className="rounded-xl bg-muted p-3 text-sm italic">“{sc.client}” — {sc.contact}</p><Button id="accept-first-brief" data-testid="accept-first-brief" className="w-full" onClick={() => act(C.acceptBrief)}>Accept brief</Button></>}
       {c.phase === "research" && <>{researchOptions.map((r) => <Choice key={r.id} on={c.research.includes(r.id)} onClick={() => act((d, f) => C.addResearch(d, f, r.id))} title={`${r.title} · ${money(r.cost)} · ${r.days}d`} sub={c.research.includes(r.id) ? sc.reports[r.id] : r.description} />)}
         <Button className="w-full" disabled={!c.research.length} onClick={() => act(C.toSurvey)}>Continue to survey</Button></>}
       {c.phase === "survey" && (!c.survey ? <>
