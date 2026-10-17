@@ -41,6 +41,12 @@ export function CityCampaignMedia({b,lod,onSelect}:{b:District;lod:0|1;onSelect:
  const week=useGame(s=>s.ceo?.weekly?.week??1);
  const campaign=useGame(s=>s.campaign.aiScenario?.brand||"City Campaign");
  const gltf=useGLTF(AssetRegistry.url(b.id,lod,b.tier));
+ // Exporter stores slot dimensions with the corresponding architectural facade.
+ // Avoid re-using whole-lot width for a screen mounted on a narrow tower wing.
+ const slotDefinitions=(
+   gltf.parser.json as {extras?:{advertisingSlots?:Slot[]}}
+ ).extras?.advertisingSlots||[];
+
  const art=useMemo(()=>{
   const result:{[key:string]:THREE.CanvasTexture}={};
   for(const type of new Set(slots.filter(x=>x.includes(":dooh:")||x.includes(":ooh:")).map(x=>x.includes(":dooh:")?"dooh":"ooh"))){
@@ -69,8 +75,10 @@ export function CityCampaignMedia({b,lod,onSelect}:{b:District;lod:0|1;onSelect:
     </mesh>
    </group>;
    const texture=art[kind];if(!texture)return null;
+   const surface=slotDefinitions.find(s=>s.id===id);
+   if(!surface||!Number.isFinite(surface.width)||!Number.isFinite(surface.height))return null;
    return <mesh key={id} name={id} position={[anchor.x,anchor.y,anchor.z+(kind==="dooh"?.12:.09)]}>
-    <planeGeometry args={[kind==="dooh"?b.w*.427:b.w*.376,kind==="dooh"?1.35:.73]}/>
+    <planeGeometry args={[surface.width*.975,surface.height*.94]}/>
     <meshBasicMaterial map={texture} side={THREE.DoubleSide} toneMapped={false}/>
    </mesh>;
   })}
