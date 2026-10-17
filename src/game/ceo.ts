@@ -185,7 +185,32 @@ export function startPitch(s: GameState, fx: Fx, id: string) {
   s.agencyCash -= 500000; ledger(c, "Pitch team preparation", -500000, l.brand); l.status = "pitch";
   c.pitch = { id, focus: "performance", price: "standard", team: "balanced", evidence: "research", step: "prepare", quality: 0, objection: null, result: null };
 }
-export function setPitch(s: GameState, key: "focus" | "price" | "team" | "evidence", v: string) { const p = ceoInit(s)!.pitch; if (p?.step === "prepare") p[key] = v; }
+export function setPitch(s: GameState, key: "focus" | "price" | "team" | "evidence", v: string) {
+ const p=ceoInit(s)?.pitch;
+ if(p?.step!=="prepare")return;
+ p[key]=v;
+ if(key==="price")p.bidFee=undefined;
+}
+/** The client pays the quoted service fee, not the media budget. AI offers
+ * guidance only: the player must explicitly choose an offered pricing tier.
+ */
+export function pitchFee(l:Lead,p:import("./state").Pitch):number{
+ if(Number.isFinite(p.bidFee)&&p.bidFee!>=Math.round(l.fee*.65)&&p.bidFee!<=Math.max(l.fee*2.5,1000000000))
+   return Math.round(p.bidFee!);
+ const factor=p.price==="discount"?.92:p.price==="premium"?1.15:1;
+ return Math.round(l.fee*factor);
+}
+export function applySuggestedFee(s:GameState,fx:Fx,tier:import("./state").PriceTier){
+ const c=ceoInit(s),p=c?.pitch,l=p&&c?.leads.find(x=>x.id===p.id),advice=l?.pricingAdvice;
+ if(!p||p.step!=="prepare"||!l||!advice)return;
+ const fee=advice.options[tier];
+ if(!Number.isFinite(fee)||fee<advice.feeFloor||fee>advice.feeCeiling||
+    fee<Math.round(l.fee*.65)||fee>Math.max(l.fee*2.5,1000000000)||
+    advice.leadId!==l.id||advice.mediaBudget!==l.value||advice.baselineFee!==l.fee)return fx.toast("Pricing advice expired; refresh your estimate.");
+ p.price=tier==="competitive"?"discount":tier==="premium"?"premium":"standard";
+ p.bidFee=Math.round(fee);
+ fx.log("Pitch fee selected for "+l.brand+": "+money(p.bidFee));
+}
 export function presentPitch(s: GameState) {
   const c = ceoInit(s)!, p = c.pitch, l = p && lead(c, p.id); if (!l || !p || p.step !== "prepare") return;
   const teamReadiness=s.staff.length?s.staff.reduce((sum,id)=>sum+employeeReadiness(s,id),0)/s.staff.length:0;
@@ -193,7 +218,11 @@ export function presentPitch(s: GameState) {
   const cap=s.staff.length*10+Math.min(10,s.upgrades.length*2)+teamReadiness*.13+leadStrength*1.5;
   const evidence = p.evidence === "research" ? 11 : 5, focus = p.focus === l.pref ? 17 : 8;
   const team = p.team === "specialist" && s.staff.length >= 4 ? 12 : p.team === "balanced" ? 8 : 5;
-  const scale = p.price === "discount" ? -2 : p.price === "premium" ? 4 : 8;
+  const feeRatio=pitchFee(l,p)/Math.max(1,l.fee);
+  // Bid competitiveness influences procurement evaluation, but never guarantees a win.
+  const scale=p.bidFee!==undefined?
+    clamp(Math.round(8+(1-feeRatio)*(l.pref==="cost"?26:12)),-5,15):
+    p.price==="discount"?-2:p.price==="premium"?4:8;
   p.quality = clamp(27 + focus + evidence + team + cap * 0.31 + scale + s.reputation / 12 + currentOffice(s).prestige * 0.7 - l.difficulty * 0.17, 15, 98);
   p.step = "objection";
   p.objection = l.pref === "cost" ? "The CFO demands a fee cut of at least 10%." : l.pref === "creative" ? "The Brand Director doubts your creative differentiation." : "The Marketing Director wants clearer KPIs and measurement.";
@@ -213,7 +242,7 @@ export function answerPitch(s: GameState, answer: string) {
 export function closePitch(s: GameState) { const c = ceoInit(s)!; if (c.pitch?.step === "result" && c.pitch.result?.winner !== "player") c.pitch = null; }
 export function beginNegotiation(s: GameState) {
   const c = ceoInit(s)!, l = c.pitch && lead(c, c.pitch.id); if (!l || l.status !== "pitch_won") return;
-  l.status = "negotiating"; c.negotiation = { id: l.id, round: 1, fee: l.fee, scope: l.scope, advance: 30, deadline: l.duration, bonus: 0, trust: l.relationship, notes: ["Pitch won. Contract negotiation begins."], status: "open", counter: null };
+  l.status = "negotiating"; c.negotiation = { id: l.id, round: 1, fee: pitchFee(l,c.pitch!), scope: l.scope, advance: 30, deadline: l.duration, bonus: 0, trust: l.relationship, notes: ["Pitch won. Contract negotiation begins at your proposed fee."], status: "open", counter: null };
 }
 export function forecast(s: GameState, n: Pick<Negotiation, "fee" | "scope" | "deadline">) {
   const base = ceoTaskDefs.reduce((v, t) => v + t.cost, 0) * (n.scope / 8), payroll = dailyPayroll(s) * n.deadline, overhead = n.deadline * currentOffice(s).daily;
