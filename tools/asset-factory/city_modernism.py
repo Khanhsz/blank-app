@@ -139,4 +139,15 @@ def build_city(add,a,lod):
  if any(":ooh:" in sid for sid in slots):
   b(0,h+.42,d*.265,w*.415,.99,d*.148,6,"roof_billboard_frame")
   b(0,h+.42,d*.343,w*.391,.83,.07,4,"roof_billboard_screen")
+ if a["class"]=="rival" and a.get("tier",1)>1:
+  tier=min(4,max(2,a.get("tier",1)))
+  m(w*.22,h*.48,-d*.16,w*.28,h*.25,d*.40,3,"agency_expansion_meeting")
+  b(w*.22,h*.75,-d*.16,w*.31,.23,d*.45,2,"annex_parapet")
+  if tier>=3:
+   m(-w*.15,h*.75,-d*.19,w*.30,h*.26,d*.33,1,"agency_roof_campus")
+   b(-w*.15,h+.1,-d*.19,w*.34,.23,d*.37,4,"campus_roof")
+   b(-w*.31,h*.63,d*.26,.17,h*.57,.22,6,"prestige_facade")
+  if tier>=4:
+   b(0,h+.72,-d*.12,w*.62,.37,d*.52,2,"flagship_roofline")
+   for side in [-1,1]:b(side*w*.2,h+.43,-d*.12,.18,.76,d*.45,4,"flagship_fin")
  return count
