@@ -7,7 +7,7 @@ import {AssetRegistry,checkRegistry} from "../src/components/game/AssetRegistry"
 import {cityLots} from "../src/game/city";
 
 const root=process.cwd(),generated=path.join(root,"public/assets/mt-city",AssetRegistry.version);
-const specs=JSON.parse(fs.readFileSync(path.join(root,"assets/specs/arts-quarter.slice.json"),"utf8"));
+const specs=JSON.parse(fs.readFileSync(path.join(root,"assets/specs/city-all.modernism.json"),"utf8"));
 const manifest=JSON.parse(fs.readFileSync(path.join(generated,"manifest.json"),"utf8"));
 function inspect(buffer:Buffer){
  assert.equal(buffer.toString("ascii",0,4),"glTF");
@@ -18,13 +18,13 @@ function inspect(buffer:Buffer){
  assert.equal(data.asset.version,"2.0");
  return data;
 }
-test("vertical slice registers 10 deterministic masters and retains original entity IDs",()=>{
- assert.equal(AssetRegistry.count,10);
- assert.equal(manifest.assets.length,10);
+test("all 41 city buildings are registered by their real entity IDs",()=>{
+ assert.equal(AssetRegistry.count,41);
+ assert.equal(manifest.assets.length,41);
  assert.equal(manifest.source,"web-fallback-not-blender");
  assert.deepEqual(checkRegistry(cityLots.map(l=>l.id)),[]);
- assert.equal(AssetRegistry.all().filter(x=>!x.decorative).length,6);
- assert.equal(AssetRegistry.decorativePlacements.length,4);
+ assert.equal(AssetRegistry.all().filter(x=>!x.decorative).length,27);
+ assert.equal(AssetRegistry.decorativePlacements.length,14);
  for(const asset of AssetRegistry.all()){
   if(asset.gameplayId)assert.ok(cityLots.some(b=>b.id===asset.gameplayId));
  }
@@ -59,7 +59,7 @@ test("decorative chunk positions cannot overlap any interactive building, IDs re
   assert.equal(used.has(item.x+","+item.z),false,"decor overlaps playable entity");
   assert.equal(AssetRegistry.get(item.id)?.decorative,true);
  }
- assert.equal(manifest.district,"Arts Quarter");
+ assert.equal(manifest.district,"Marketing City");
  assert.equal(manifest.units,"meters");assert.equal(manifest.up,"Y");assert.equal(manifest.front,"+Z");
 });
 test("reproducible binary generation passes byte-for-byte verification",async()=>{
@@ -109,4 +109,62 @@ test("Brickhouse media is composed at runtime rather than permanently baked into
  assert.match(source,/BRICKHOUSE_AD_SLOT_IDS/);
  assert.match(integration,/b\.id==="office-brick"\?<BrickhouseCampaignMedia/);
  assert.match(integration,/OutdoorCampaignDisplay b=\{b\}/);
+});
+
+
+test("every actual gameplay and decorative building has a validated replacement GLB",()=>{
+ const positions=new Set<string>(),ids=new Set<string>();
+ for(const asset of manifest.assets){
+  assert.ok(!ids.has(asset.id),"duplicate building "+asset.id);ids.add(asset.id);
+  const position=asset.position.join(",");
+  assert.ok(!positions.has(position),"duplicate occupied plot "+asset.id);positions.add(position);
+  assert.equal(asset.migrationStatus,"replaced");
+  assert.equal(asset.verificationStatus,"binary-pass-browser-pending");
+  assert.ok(asset.archetype&&asset.facade&&asset.roof&&asset.entrance);
+ }
+ for(const lot of cityLots){
+  assert.ok(ids.has(lot.id),"unmapped gameplay ID "+lot.id);
+  assert.equal(manifest.assets.find((a:{id:string})=>a.id===lot.id)?.gameplayId,lot.id);
+ }
+ assert.equal(manifest.interactiveCount,27);
+ assert.equal(manifest.decorativeCount,14);
+ assert.equal(manifest.auditedBuildingCount,41);
+});
+test("nearby buildings differ in three or more curated architectural characteristics",()=>{
+ let compared=0;
+ for(let i=0;i<manifest.assets.length;i++)for(let j=i+1;j<manifest.assets.length;j++){
+  const a=manifest.assets[i],b=manifest.assets[j];
+  if(Math.hypot(a.position[0]-b.position[0],a.position[1]-b.position[1])>22.7)continue;
+  compared++;
+  const props=["archetype","roof","facade","entrance","variant"];
+  const differences=props.filter(k=>a[k]!==b[k]).length;
+  assert.ok(differences>=3,"Nearby "+a.id+" and "+b.id+" differ in only "+differences+" architectural fields");
+ }
+ assert.ok(compared>30);
+});
+test("each building has independent architectural recipe and every OOH slot has a stable anchor",()=>{
+ const recipes=new Set<string>(),slotIds=new Set<string>();
+ for(const asset of manifest.assets){
+  assert.ok(asset.lod.lod1.triangles<=360);
+  const signature=[asset.archetype,asset.roof,asset.facade,asset.entrance,asset.variant].join("|");
+  assert.ok(!recipes.has(signature),"duplicate building signature "+asset.id);
+  recipes.add(signature);
+  for(const slot of asset.advertisingSlots||[]){
+   assert.ok(!slotIds.has(slot.id),"duplicate advertising slot "+slot.id);slotIds.add(slot.id);
+   assert.ok(asset.anchors.includes(slot.anchor),"missing media anchor for "+slot.id);
+  }
+ }
+ assert.ok(slotIds.size>=12);
+ assert.equal(manifest.decorativePlacements.length,14);
+ assert.ok(manifest.decorativePlacements.every((p:{id:string})=>AssetRegistry.get(p.id)?.decorative));
+});
+test("old ambient cuboid buildings are completely removed and replaced with GLB chunks",()=>{
+ const source=fs.readFileSync("src/components/game/WorldScene.tsx","utf8");
+ assert.doesNotMatch(source,/function AmbientBuildings/);
+ assert.doesNotMatch(source,/<AmbientBuildings/);
+ assert.match(source,/<ChunkManager quality=\{quality\}/);
+ const renderer=fs.readFileSync("src/components/game/AssetDistrict.tsx","utf8");
+ assert.doesNotMatch(renderer,/OutdoorCampaignDisplay/);
+ assert.match(renderer,/<CityCampaignMedia /);
+ assert.match(renderer,/GAMEPLAY_HITBOX_/);
 });
