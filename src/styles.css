@@ -453,3 +453,55 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-ai-tender-notice b{font-size:10px;letter-spacing:.08em}
 .mt-ai-tender-notice span{font-size:10px}
 @media(max-width:700px){.mt-rival-totals>span{font-size:8px}.mt-rival-totals b{font-size:15px}.mt-rival-head{align-items:flex-start;flex-direction:column;gap:5px}}
+
+
+/* V4.8: Manual weekly turns and data-grounded executive news. */
+.mt-week-hud{position:absolute;top:16px;right:18px;z-index:18;display:flex;align-items:center;gap:8px;padding:7px 8px 7px 12px;border-radius:13px;background:rgba(33,43,46,.88);color:#eff0eb;box-shadow:0 14px 36px #18232938;backdrop-filter:blur(12px);border:1px solid #e8f1ed28}
+.mt-week-hud-caption{display:flex;align-items:center;gap:8px;min-width:105px}
+.mt-week-hud-caption>svg{color:#c4d6d0}
+.mt-week-hud-caption span{display:flex;flex-direction:column;gap:3px}
+.mt-week-hud-caption b{font-size:12px;letter-spacing:.055em}
+.mt-week-hud-caption small{color:#b8c2bf;font-size:9px;letter-spacing:.06em}
+.mt-week-hud button{border:0;cursor:pointer;white-space:nowrap;border-radius:8px;padding:10px 11px;font-size:11px;font-weight:850;display:flex;align-items:center;gap:7px;min-height:36px}
+.mt-week-news-button{background:#4d5c5d;color:#edf3f0}
+.mt-week-news-button.unread{background:#f0cb8a;color:#483726}
+.mt-week-advance{background:#d5e7dc;color:#304d40}
+.mt-week-advance:hover:not(:disabled){background:#f0f7ed}
+.mt-week-advance:disabled{cursor:not-allowed;opacity:.5}
+.mt-week-backdrop{position:fixed;inset:0;z-index:220;background:#20282cd9;backdrop-filter:blur(12px);display:flex;justify-content:center;align-items:center;padding:24px}
+.mt-week-paper{width:min(1100px,100%);max-height:min(92vh,1030px);display:flex;flex-direction:column;overflow:hidden;background:#f7f6f0;border:1px solid #d9d9ce;color:#292f32;border-radius:16px;box-shadow:0 25px 85px #070d1599}
+.mt-week-paper-top{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:13px 30px;border-bottom:1px solid #d5d8d2;color:#75817e;font-weight:850;font-size:10px;letter-spacing:.11em}
+.mt-week-paper-top span:first-child{display:flex;align-items:center;gap:8px}
+.mt-week-masthead{text-align:center;padding:22px 24px 23px;border-bottom:3px double #718580}
+.mt-week-kicker{color:#72837e;font-size:10px;font-weight:900;letter-spacing:.23em}
+.mt-week-masthead h1{font:clamp(36px,6vw,67px)/1.15 Georgia,"Times New Roman",serif;letter-spacing:-.055em;color:#26353a;margin:8px 0}
+.mt-week-masthead p{font-size:11px;letter-spacing:.1em;font-weight:800;color:#596d6a}
+.mt-week-masthead p span{padding:0 7px}
+.mt-week-paper-ticker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;background:#e9eeeb;border-bottom:1px solid #d7dfd9}
+.mt-week-paper-ticker>div{padding:15px 18px;border-right:1px solid #d2ddd7;display:flex;flex-direction:column;gap:9px}
+.mt-week-paper-ticker>div:last-child{border-right:0}
+.mt-week-paper-ticker small{font-size:9px;color:#778c82;letter-spacing:.10em;font-weight:850}
+.mt-week-paper-ticker strong{font-size:18px;font-weight:800;letter-spacing:-.04em;color:#334a44;font-variant-numeric:tabular-nums}
+.mt-week-editorial{overflow-y:auto;overscroll-behavior:contain;min-height:0;flex:1;padding:22px 29px 30px}
+.mt-week-hero-header{display:flex;align-items:center;gap:9px;color:#4d6159;font-size:10px;letter-spacing:.12em;font-weight:900;padding-bottom:12px;border-bottom:1px solid #aebcb4}
+.mt-week-hero-header span{margin-left:auto;color:#8b9891;font-size:9px}
+.mt-week-story{padding:17px 15px 18px 0;border-bottom:1px solid #dbe0d9}
+.mt-week-story h3{font:22px/1.18 Georgia,"Times New Roman",serif;color:#293d3c;letter-spacing:-.028em;margin:9px 0}
+.mt-week-story>p{font-size:12px;color:#4d5d56;line-height:1.72}
+.mt-week-story-meta{display:flex;align-items:center;gap:7px;color:#6d8c7c;font-size:9px;letter-spacing:.08em;font-weight:900}
+.mt-week-sentiment{margin-left:auto;color:#839188;font-size:9px;letter-spacing:0}
+.mt-week-sentiment.positive{color:#50846b}
+.mt-week-sentiment.negative{color:#af7563}
+.mt-week-evidence{display:flex;flex-direction:column;gap:4px;margin-top:13px;padding-top:9px;border-top:1px dashed #d2d8d0}
+.mt-week-evidence b{font-size:9px;letter-spacing:.095em;color:#83948b}
+.mt-week-evidence span{font-size:10px;color:#829087;line-height:1.6}
+.mt-week-story-feature{background:#edf1ec;border-radius:10px;padding:21px;margin:16px 0;border:1px solid #dfe7de}
+.mt-week-story-feature h3{font-size:clamp(24px,3vw,31px)}
+.mt-week-editorial-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:23px}
+.mt-week-editorial-grid>.mt-week-story:nth-child(even){border-left:1px solid #e1e2dc;padding-left:23px}
+.mt-week-paper-bottom{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:13px 24px;border-top:1px solid #d6ddd4;background:#f1f3ed}
+.mt-week-paper-bottom span{color:#71827a;font-size:10px;display:flex;align-items:center;gap:8px;line-height:1.6}
+.mt-week-paper-bottom button{border:0;display:flex;align-items:center;gap:8px;padding:12px 17px;border-radius:8px;color:#fff;background:#36574b;font-weight:850;white-space:nowrap;cursor:pointer;font-size:12px;min-height:44px}
+.mt-week-paper-bottom button:hover{background:#26493a}
+@media(max-width:800px){.mt-week-hud{right:10px;top:8px;padding:7px;gap:5px}.mt-week-hud-caption{min-width:auto}.mt-week-hud-caption small{font-size:8px}.mt-week-hud button{font-size:10px;padding:8px;min-height:34px}.mt-week-backdrop{padding:6px}.mt-week-paper{max-height:97vh;border-radius:11px}.mt-week-paper-top{padding:11px 14px;font-size:8px}.mt-week-masthead{padding:18px 11px}.mt-week-masthead p{font-size:9px}.mt-week-paper-ticker{grid-template-columns:repeat(2,minmax(0,1fr))}.mt-week-paper-ticker>div{padding:9px 12px}.mt-week-paper-ticker strong{font-size:16px}.mt-week-editorial{padding:14px}.mt-week-editorial-grid{grid-template-columns:1fr}.mt-week-editorial-grid>.mt-week-story:nth-child(even){border-left:0;padding-left:0}.mt-week-paper-bottom{padding:10px 12px}.mt-week-paper-bottom span{font-size:9px}.mt-week-paper-bottom button{font-size:11px;padding:10px}}
+@media(max-width:500px){.mt-week-hud-caption>svg{display:none}.mt-week-hud-caption{min-width:0}.mt-week-hud-caption b{font-size:10px}.mt-week-hud-caption small{font-size:7px}.mt-week-hud button{font-size:9px;padding:8px 7px;gap:4px}.mt-week-news-button svg{display:none}.mt-week-hero-header{flex-wrap:wrap}.mt-week-hero-header span{margin-left:0}.mt-week-paper-bottom{align-items:stretch;flex-direction:column}.mt-week-paper-bottom button{justify-content:center}}
