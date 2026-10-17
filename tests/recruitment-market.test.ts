@@ -1,0 +1,46 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {defaults,migrate,newCEO} from "../src/game/state";
+import {ensureRecruitment,quotedSalary,recruitmentScore,recruitmentFee} from "../src/game/recruitment";
+import {hire,dailyPayroll} from "../src/game/ceo";
+import {endWeek,acknowledgeEdition} from "../src/game/weekly";
+import {employeeById} from "../src/game/data";
+import type {Fx} from "../src/game/store";
+const fx:Fx={toast:()=>{},log:()=>{}};
+const agency=()=>{const s=defaults();s.created=true;s.agencyUnlocked=true;s.ceo=newCEO(55);s.agencyCash=150000000;ensureRecruitment(s);return s;};
+test("weekly board is stable inside one week and survives save restoration",()=>{
+ const s=agency(),initial=structuredClone(s.recruitment);
+ assert.ok(initial&&initial.candidates.length>=7);
+ ensureRecruitment(s);assert.deepEqual(s.recruitment,initial);
+ const saved=migrate(JSON.parse(JSON.stringify(s)));
+ assert.deepEqual(saved.recruitment,initial);
+ const result=endWeek(s,fx);
+ assert.ok(result);assert.equal(s.recruitment?.week,2);
+ assert.notDeepEqual(s.recruitment?.candidates.map(e=>e.id),initial.candidates.map(e=>e.id));
+ acknowledgeEdition(s,result!.id);
+ const next=endWeek(s,fx);assert.equal(next?.weekStarted,3);
+});
+test("starting ability sets salary and signing fees have real cash impact",()=>{
+ for(let rating=0;rating<100;rating++)assert.ok(quotedSalary(rating+1)>=quotedSalary(rating));
+ const s=agency(),e=s.recruitment!.candidates[0],before=s.agencyCash,beforePay=dailyPayroll(s);
+ assert.equal(e.salary,quotedSalary(recruitmentScore(e)));
+ hire(s,fx,e.id);
+ assert.ok(s.staff.includes(e.id));assert.equal(employeeById(e.id)?.salary,e.salary);
+ assert.equal(s.agencyCash,before-recruitmentFee(e));
+ assert.ok(dailyPayroll(s)>beforePay);
+ assert.equal(s.personnel[e.id].skill,e.startingSkill);
+ assert.equal(s.personnel[e.id].morale,e.startingMorale);
+ assert.equal(s.personnel[e.id].fatigue,e.startingFatigue);
+ const hired=migrate(JSON.parse(JSON.stringify(s)));
+ assert.equal(employeeById(e.id)?.salary,e.salary);
+ assert.ok(hired.staff.includes(e.id));
+});
+test("expired applicants are no longer hireable, accepted employees remain after refresh",()=>{
+ const s=agency(),expired=s.recruitment!.candidates[0].id,accepted=s.recruitment!.candidates[1];
+ hire(s,fx,accepted.id);
+ endWeek(s,fx);
+ const headcount=s.staff.length;
+ hire(s,fx,expired);
+ assert.equal(s.staff.length,headcount);
+ assert.equal(employeeById(accepted.id)?.name,accepted.name);
+});

@@ -103,7 +103,7 @@ function talentActivities(s:GameState,c:CEO,day:number){
  if(day%11!==0)return;
  const r=c.rivals[Math.floor(noise("hiring",day)*c.rivals.length)];if(!r||r.cash<7500000)return;
  // Rivals compete for external professionals; temporarily unavailable on the player's recruitment market.
- const candidates=employees.filter(x=>!s.staff.includes(x.id)&&!c.talentMarket?.[x.id]);
+ const candidates=(s.recruitment?.candidates??[]).filter(x=>!s.staff.includes(x.id)&&!c.talentMarket?.[x.id]);
  const hire=candidates[Math.floor(noise(r.id+"recruit",day)*Math.max(1,candidates.length))];
  if(hire&&noise(r.id+"market",day)>.36){
   c.talentMarket[hire.id]={rivalId:r.id,untilDay:day+7};

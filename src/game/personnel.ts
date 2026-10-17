@@ -3,7 +3,7 @@
  */
 import {ceoTalent,clamp,employees,employeeById,money} from "./data";
 import type {Fx} from "./store";
-import type {GameState,PersonnelProfile,WorkStyle,Task} from "./state";
+import type {GameState,PersonnelProfile,Task} from "./state";
 import type {FunctionId} from "./functions";
 
 export const ROLE_IDS=["account","research","strategy","creative","production","media","kol","analytics","operations"] as const;
@@ -26,7 +26,7 @@ export function candidatesForRole(role:string):string[]{
 }
 export function defaultProfile(id:string):PersonnelProfile{
  const e=employeeById(id);
- return {skill:e?.startingSkill??64,morale:78,fatigue:0,xp:0,focus:"balanced"};
+ return {skill:e?.startingSkill??64,morale:e?.startingMorale??78,fatigue:e?.startingFatigue??0,xp:0};
 }
 export function profile(s:GameState,id:string):PersonnelProfile{
  return s.personnel[id]??defaultProfile(id);
@@ -34,7 +34,7 @@ export function profile(s:GameState,id:string):PersonnelProfile{
 export function effectiveCapacity(s:GameState,id:string):number{
  const p=profile(s,id);
  if(p.trainingUntil!==undefined&&p.trainingUntil>(s.ceo?.day??s.clock.day))return 0;
- return p.focus==="quality"?1:2;
+ return 2;
 }
 export function employeeReadiness(s:GameState,id:string):number{
  const p=profile(s,id);
@@ -53,10 +53,8 @@ export function staffRate(s:GameState,id:string,role:string,load:number):{speed:
  const morale=(p.morale-75)/250;
  const lead=leadFor(s,id);
  const mentorship=lead&&lead!==id?0.065:lead===id?0.085:0;
- const focusSpeed=p.focus==="speed"?0.18:p.focus==="quality"?-0.13:0;
- const focusQuality=p.focus==="quality"?8:p.focus==="speed"?-5:0;
- const speed=clamp((.91+skill+morale+mentorship+focusSpeed)*skills*(1-fatigue*.32)/(load>1?1.25:1),.32,1.55);
- const quality=skill*24+morale*18+mentorship*45+focusQuality-fatigue*.2+(primary?2:-6);
+ const speed=clamp((.91+skill+morale+mentorship)*skills*(1-fatigue*.32)/(load>1?1.25:1),.32,1.55);
+ const quality=skill*24+morale*18+mentorship*45-fatigue*.2+(primary?2:-6);
  return {speed,quality};
 }
 export function updatePersonnelDay(s:GameState){
@@ -83,16 +81,6 @@ export function recordDelivery(s:GameState,task:Task){
  p.xp+=4;
  if(p.xp>=20){p.xp-=20;p.skill=clamp(p.skill+2,20,100);}
  p.morale=clamp(p.morale+(task.quality>=80?2:task.quality<60?-2:1),20,100);
-}
-export function setWorkStyle(s:GameState,fx:Fx,id:string,style:WorkStyle){
- const c=s.ceo;if(!c||!s.staff.includes(id)||!["balanced","speed","quality"].includes(style))return;
- const p=s.personnel[id]??(s.personnel[id]=defaultProfile(id));
- if(p.lastFocusWeek===s.clock.week){fx.toast("Work style can be changed once per week.");return;}
- if(style==="quality"&&c.projects.some(pr=>pr.status==="active"&&pr.tasks.filter(t=>t.status==="in_progress"&&t.employee===id).length>1)){
-  fx.toast("Finish or reassign a task before reducing capacity to one slot.");return;
- }
- p.focus=style;p.lastFocusWeek=s.clock.week;
- fx.log(employeeById(id)?.name+" switched to "+style+" delivery focus");
 }
 export function train(s:GameState,fx:Fx,id:string){
  const c=s.ceo,e=employeeById(id);

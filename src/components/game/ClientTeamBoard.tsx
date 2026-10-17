@@ -78,7 +78,7 @@ function TeamCard({team}:{team:ClientTeam}){
     {team.memberIds.length?team.memberIds.map(id=>{
       const e=employeeById(id),busy=!!s.ceo?.projects.some(p=>p.teamId===team.id&&p.status==="active"&&p.tasks.some(t=>t.employee===id&&t.status==="in_progress"));
       return <div key={id} className="mt-squad-member">
-       <div><b>{e?.name??id}{id===team.leadId?" · Client Lead":""}</b><span>{e?.role} · skill {Math.round(P.profile(s,id).skill)} · {P.profile(s,id).focus}</span></div>
+       <div><b>{e?.name??id}{id===team.leadId?" · Client Lead":""}</b><span>{e?.role} · skill {Math.round(P.profile(s,id).skill)}</span></div>
        <div className="mt-squad-actions">
         {id!==team.leadId&&<Button size="sm" variant="outline" onClick={()=>act((d,fx)=>T.changeClientLead(d,fx,team.id,id))}>Lead</Button>}
         <Button size="sm" variant="outline" disabled={busy} title={busy?"Complete assigned work before handover":"Return to talent pool"} onClick={()=>act((d,fx)=>T.leaveClientTeam(d,fx,team.id,id))}><UserRoundX size={14}/></Button>

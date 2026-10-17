@@ -8,11 +8,12 @@ import * as C from "@/game/campaign";
 import * as K from "@/game/ceo";
 import {qualificationQuote} from "@/game/pricingAdvisor";
 import {tenderFor,marketShare,resolveTalentOffer} from "@/game/rivalAI";
-import { ceoPartners, ceoRoles, creatives, employees, insights, mediaChannels, money, objectives, optimizations, positions, researchOptions, segments, surveyCosts, upgrades, BRAND_HQ_REP, type Channel, type UpgradeId } from "@/game/data";
+import { ceoPartners, ceoRoles, creatives, employees, employeeById, insights, mediaChannels, money, objectives, optimizations, positions, researchOptions, segments, surveyCosts, upgrades, BRAND_HQ_REP, type Channel, type UpgradeId } from "@/game/data";
 import { PHASES, PHASE_LABEL } from "@/game/state";
 import {findCityLot,findOffice,currentOffice,cityRival,cityClient,leaseOffice} from "@/game/city";
 import {departmentMetrics} from "@/game/functions";
 import * as P from "@/game/personnel";
+import {recruitmentFee,recruitmentScore} from "@/game/recruitment";
 import {ClientTeamBoard} from "./ClientTeamBoard";
 import {GrowthDesk} from "./GrowthDesk";
 import * as A from "@/game/acquisition";
@@ -114,23 +115,37 @@ export function CEOCommandCenter({onReadEdition}:{onReadEdition?:(id:string)=>vo
       {tab==="pipeline"&&<GrowthDesk onTeams={()=>setTab("teams")}/>}
       {tab==="teams"&&<ClientTeamBoard onPeople={()=>setTab("people")}/>}
        {tab==="people"&&<div className="mt-personnel-grid">
-        <GameSection eyebrow="PEOPLE & CULTURE" title="Talent Pool & Staffing" sub="Recruit, train and develop staff. Assign employees exclusively to a client through the Teams tab." icon={<Users size={19}/>}/>
+        <GameSection eyebrow="PEOPLE & CULTURE" title="Recruitment & Staffing" sub="A random shortlist arrives every End Week. Higher-rated candidates cost more in payroll. Assign hired employees exclusively to client teams." icon={<Users size={19}/>}/>
         <div className="mt-journey-team-summary"><span>Headcount <b>{s.staff.length}/{currentOffice(s).capacity}</b></span><span>Payroll/day <b>{money(K.dailyPayroll(s))}</b></span><span>Available <b>{T.talentPool(s).length}</b></span></div>
-        {employees.map(e=>{const hired=s.staff.includes(e.id),p=P.profile(s,e.id),role=P.primaryRole(e.id);const training=!!p.trainingUntil&&p.trainingUntil>c.day;
-        return <div key={e.id} className={"mt-personnel-card "+(hired?"hired":"")}>
-          <div className="flex justify-between gap-2 items-start"><div><b>{e.name}</b><p className="text-xs text-muted-foreground">{e.role} · {money(e.salary)}/mo</p></div>
-            {hired?<span className="mt-personnel-status">{T.ownerTeam(s,e.id)?"CLIENT SQUAD":training?"TRAINING":"TALENT POOL"}</span>:<Button size="sm" disabled={s.agencyCash<e.salary||s.staff.length>=currentOffice(s).capacity||(c.talentMarket?.[e.id]?.untilDay??0)>c.day} onClick={()=>act((d,fx)=>K.hire(d,fx,e.id))}>Hire</Button>}
-          </div>
-          {hired?<><div className="mt-personnel-values"><span>Expertise <b>{Math.round(p.skill)}</b></span><span>Morale <b>{Math.round(p.morale)}</b></span><span>Fatigue <b>{Math.round(p.fatigue)}</b></span><span>Load <b>{busy[e.id]??0}/{P.effectiveCapacity(s,e.id)}</b></span></div>
+        <div className="mt-market-section"><h4>WEEK {s.clock.week} · RECRUITMENT BOARD</h4><p className="text-xs text-muted-foreground">Candidates and their starting stats are fixed during this week. Unsigned offers expire when you choose End Week.</p></div>
+        {(s.recruitment?.candidates??[]).map(e=>{
+          const unavailable=(c.talentMarket?.[e.id]?.untilDay??0)>c.day;
+          return <div key={e.id} className="mt-personnel-card">
+            <div className="flex justify-between gap-2 items-start">
+              <div><b>{e.name}</b><p className="text-xs text-muted-foreground">{e.role} · {e.skill}</p></div>
+              <Button size="sm" disabled={unavailable||s.agencyCash<recruitmentFee(e)||s.staff.length>=currentOffice(s).capacity} onClick={()=>act((d,fx)=>K.hire(d,fx,e.id))}>{unavailable?"Unavailable":"Hire · "+money(recruitmentFee(e))}</Button>
+            </div>
+            <div className="mt-personnel-values"><span>Skill <b>{e.startingSkill}</b></span><span>Morale <b>{e.startingMorale}</b></span><span>Fatigue <b>{e.startingFatigue}</b></span><span>Rating <b>{recruitmentScore(e)}</b></span></div>
+            <div className="mt-personnel-meter"><span style={{width:e.startingSkill+"%"}}/></div>
+            <p className="text-xs text-muted-foreground mt-1">Salary <b>{money(e.salary)}/mo</b> · One-time recruitment fee {money(recruitmentFee(e))}</p>
+          </div>;
+        })}
+        {!(s.recruitment?.candidates?.length)&&<p className="text-sm text-muted-foreground">No open applicants this week. End Week to receive new candidates.</p>}
+        <div className="mt-market-section"><h4>YOUR EMPLOYEES · {s.staff.length}</h4></div>
+        {s.staff.map(id=>{const e=employeeById(id);if(!e)return null;
+          const p=P.profile(s,id),training=!!p.trainingUntil&&p.trainingUntil>c.day;
+          return <div key={id} className="mt-personnel-card hired">
+            <div className="flex justify-between gap-2 items-start"><div><b>{e.name}</b><p className="text-xs text-muted-foreground">{e.role} · {money(e.salary)}/mo</p></div>
+              <span className="mt-personnel-status">{T.ownerTeam(s,id)?"CLIENT SQUAD":training?"TRAINING":"TALENT POOL"}</span>
+            </div>
+            <div className="mt-personnel-values"><span>Expertise <b>{Math.round(p.skill)}</b></span><span>Morale <b>{Math.round(p.morale)}</b></span><span>Fatigue <b>{Math.round(p.fatigue)}</b></span><span>Load <b>{busy[id]??0}/{P.effectiveCapacity(s,id)}</b></span></div>
             <div className="mt-personnel-meter"><span style={{width:Math.max(0,Math.min(100,p.skill))+"%"}}/></div>
             <div className="mt-personnel-controls">
-              <select aria-label={"Delivery style for "+e.name} value={p.focus} onChange={v=>act((d,fx)=>P.setWorkStyle(d,fx,e.id,v.target.value as import("@/game/state").WorkStyle))}>
-                <option value="balanced">Balanced · 2 slots</option><option value="speed">Speed · fast / lower QA</option><option value="quality">Quality · 1 slot / higher QA</option>
-              </select>
-              <Button size="sm" variant="outline" disabled={training||busy[e.id]>0||s.agencyCash<e.salary*.35} onClick={()=>act((d,fx)=>P.train(d,fx,e.id))}>{training?"Training until Day "+p.trainingUntil:"Train · "+money(e.salary*.35)}</Button>
-              <span className="text-xs text-muted-foreground">{T.ownerTeam(s,e.id)?"Team: "+T.ownerTeam(s,e.id)!.brand:"Available for a client squad"}</span>
-            </div></>:<p className="text-xs text-muted-foreground mt-1">{e.skill} · starting skill {e.startingSkill??64}</p>}
-        </div>})}
+              <Button size="sm" variant="outline" disabled={training||busy[id]>0||s.agencyCash<e.salary*.35} onClick={()=>act((d,fx)=>P.train(d,fx,id))}>{training?"Training until Day "+p.trainingUntil:"Train · "+money(e.salary*.35)}</Button>
+              <span className="text-xs text-muted-foreground">{T.ownerTeam(s,id)?"Team: "+T.ownerTeam(s,id)!.brand:"Available for a client squad"}</span>
+            </div>
+          </div>;
+        })}
       </div>}
       {tab === "finance" && <><GameSection eyebrow="AGENCY FINANCE" title="Understand your cash runway" icon={<Coins size={20}/>} sub="Receivables differ from paid cash. Payroll and direct project costs reduce reserves."/><BarComparison rows={[{label:"Cash reserves",value:Math.max(0,s.agencyCash),display:money(s.agencyCash)},{label:"Receivables",value:Math.max(0,c.totalBilled-c.totalPaid),display:money(c.totalBilled-c.totalPaid)},{label:"Expenses to date",value:Math.max(0,c.totalDirect+c.totalPayroll),display:money(c.totalDirect+c.totalPayroll)}]}/><Row k="Agency cash" v={money(s.agencyCash)} /><Row k="Daily payroll" v={money(K.dailyPayroll(s))} /><Row k="Billed / paid" v={`${money(c.totalBilled)} / ${money(c.totalPaid)}`} /><Row k="Direct costs" v={money(c.totalDirect)} />
         <div className="max-h-64 overflow-auto">{c.ledger.slice(0, 40).map((x, i) => <div key={i} className="flex justify-between text-xs py-0.5"><span>D{x.day} · {x.what}{x.status === "due" ? " (due)" : ""}</span><span className={x.value < 0 ? "text-destructive" : "text-primary"}>{money(x.value)}</span></div>)}</div></>}
