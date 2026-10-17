@@ -4,15 +4,15 @@
   "stories": [
     {
       "id": "ST-20261017-902",
-      "title": "WARC: doanh thu thương hiệu lớn tăng nhanh hơn chi tiêu quảng cáo",
+      "title": "VSMCamp 2026: 'Agentic Marketplace' đặt ra câu hỏi mới cho marketing Việt Nam",
       "domain": "Marketing & Market Research",
-      "date": "2026-10-16",
-      "summary": "Campaign Asia dẫn nghiên cứu WARC cho thấy nhiều thương hiệu lớn tăng doanh thu mà không gia tăng chi phí quảng cáo tương ứng; không nên suy luận rằng quảng cáo kém hiệu quả.",
-      "what": "Campaign Asia dẫn nghiên cứu WARC cho thấy nhiều thương hiệu lớn tăng doanh thu mà không gia tăng chi phí quảng cáo tương ứng; không nên suy luận rằng quảng cáo kém hiệu quả.",
-      "so_what": "Chênh lệch có thể phản ánh cấu trúc ngành, sức mạnh phân phối và hiệu quả thương hiệu; chưa chứng minh quan hệ nhân quả.",
-      "why_you": "Khi làm IMC case, phân tích ad spend cùng brand salience, distribution và pricing.",
-      "action": "Kiểm tra phương pháp WARC và so sánh FMCG với công nghệ.",
-      "confidence": "Medium · báo chuyên ngành, một nguồn",
+      "date": "2026-10-14",
+      "summary": "Ban tổ chức VSMCamp & CSMOSummit giới thiệu chủ đề AI tham gia quyền lựa chọn. Các nguồn truyền thông đang ghi khác nhau về thời điểm diễn ra; không xác nhận lịch khi chưa kiểm tra lại.",
+      "what": "Họp báo VSMCamp/CSMOSummit 2026 công bố chủ đề 'The Agentic Marketplace' ngày 14/10. Tin tức về thời gian tổ chức có chênh lệch giữa nguồn; đây là thông báo chương trình, không phải bằng chứng hành vi người tiêu dùng đã thay đổi.",
+      "so_what": "Khi trợ lý AI giúp người dùng so sánh và lọc sản phẩm, thương hiệu có thể cần chú trọng tính chính xác của thông tin được AI truy xuất; đây là giả thuyết cần nghiên cứu.",
+      "why_you": "Phù hợp marketing case và xây customer journey: thêm giai đoạn AI-assisted discovery để kiểm thử thực nghiệm.",
+      "action": "Chạy 10 truy vấn so sánh thương hiệu, lưu URL mà AI trích và đối chiếu thông tin chính thức.",
+      "confidence": "Medium · chủ đề xác nhận, lịch sự kiện chưa thống nhất",
       "event_type": "Industry development / marketing case",
       "preview": false,
       "tags": [
@@ -23,8 +23,12 @@
       ],
       "sources": [
         {
-          "publisher": "Campaign Asia / WARC",
-          "url": "https://www.campaignasia.com/article/world-s-biggest-brands-spend-less-on-ads-report/4wjycv97r0z0ktp2v0qqk07a4h"
+          "publisher": "VTV, 14/10",
+          "url": "https://vtv.vn/vsmcamp-2026-da-den-luc-thuong-hieu-phai-chinh-phuc-ca-ai-1002610141417324.htm"
+        },
+        {
+          "publisher": "Vietnam News, 15/10",
+          "url": "https://vietnamnews.vn/economy/1802127/sales-marketing-congress-discusses-growing-influence-of-ai.html"
         }
       ]
     },
@@ -56,16 +60,16 @@
     },
     {
       "id": "ST-20261017-203",
-      "title": "Dentsu tái định vị Carat trong chiến lược agency brand",
+      "title": "WARC: doanh thu thương hiệu lớn tăng nhanh hơn chi tiêu quảng cáo",
       "domain": "Marketing & Market Research",
-      "date": "2026-10-15",
-      "summary": "Dentsu giới thiệu định vị mới của Carat, thay thế thông điệp trước đây 'Designing for people'.",
-      "what": "Dentsu giới thiệu định vị mới của Carat, thay thế thông điệp trước đây 'Designing for people'.",
-      "so_what": "Định vị agency cần thể hiện khác biệt khách hàng có thể kiểm chứng, không chỉ thay slogan.",
-      "why_you": "Đây là ví dụ brand positioning B2B để phân tích trong marketing case.",
-      "action": "Đối chiếu proposition mới, dịch vụ và portfolio thực tế.",
+      "date": "2026-10-16",
+      "summary": "Campaign Asia dẫn nghiên cứu WARC cho thấy nhiều thương hiệu lớn tăng doanh thu mà không gia tăng chi phí quảng cáo tương ứng; không nên suy luận rằng quảng cáo kém hiệu quả.",
+      "what": "Campaign Asia dẫn nghiên cứu WARC cho thấy nhiều thương hiệu lớn tăng doanh thu mà không gia tăng chi phí quảng cáo tương ứng; không nên suy luận rằng quảng cáo kém hiệu quả.",
+      "so_what": "Chênh lệch có thể phản ánh cấu trúc ngành, sức mạnh phân phối và hiệu quả thương hiệu; chưa chứng minh quan hệ nhân quả.",
+      "why_you": "Khi làm IMC case, phân tích ad spend cùng brand salience, distribution và pricing.",
+      "action": "Kiểm tra phương pháp WARC và so sánh FMCG với công nghệ.",
       "confidence": "Medium · báo chuyên ngành, một nguồn",
-      "event_type": "Industry development / marketing case",
+      "event_type": "Industry research / ad spending",
       "preview": false,
       "tags": [
         "marketing",
@@ -75,8 +79,8 @@
       ],
       "sources": [
         {
-          "publisher": "Campaign Asia",
-          "url": "https://www.campaignasia.com/article/dentsu-doubles-down-on-agency-brands-with-carat-s-new-positioning/4zbvvefpzvjvm2n6aw1fssr0dg"
+          "publisher": "Campaign Asia / WARC",
+          "url": "https://www.campaignasia.com/article/world-s-biggest-brands-spend-less-on-ads-report/4wjycv97r0z0ktp2v0qqk07a4h"
         }
       ]
     },
