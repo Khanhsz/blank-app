@@ -1,30 +1,27 @@
-# Marketing Tycoon — Agency AI Pricing Desk
+# Agency pricing — built into the existing bid pipeline
 
-## Feature
-A pricing recommendation is available for **qualified** client leads and inside **Pitch Preparation** and **Contract Negotiation**. It uses the existing Gemini scenario service; no new Render service or API key.
+## In-game flow (no optional Pricing Desk)
+1. **Qualify lead**: client size, media budget, delivery scope, timeline, staffing costs and rival pricing determine three sustainable fee quotes immediately. The same deterministic calculation is used locally and by the existing API.
+2. **Automatic Gemini input**: a persistent root game effect requests AI pricing strategy as soon as the lead qualifies, including if the player closes the panel. AI chooses a tier, explains tradeoffs and suggests pitch-preparation actions. No separate "Analyze" button or pricing screen.
+3. **Prepare pitch**: the current competitive-pitch step **includes** three numeric fee quotes directly in the decision flow. Recommended tier is preselected. The player may switch tiers, committing a strategic price decision. A manual selection is preserved if Gemini responds later.
+4. **Submit priced pitch**: every submission carries a real bounded agency fee, even from an older save or when Gemini is offline. Rival competition still runs through the deterministic game engine and is influenced by the selected fee.
+5. **Contract negotiation**: if successful, the submitted fee is the opening negotiation amount. Contract margin, team capacity and client sign chance are calculated normally; client media budget remains separate from agency service fee.
 
-Input to the pricing advisor comes only from existing simulated game state:
-- Client media campaign budget (\`Lead.value\`) and listed agency service fee (\`Lead.fee\`) are **separate**.
-- Client industry, objective, required KPI, scope, delivery duration and difficulty.
-- Staffing count, modeled payroll/overhead/direct/outsourcing from \`forecast()\` and live rival agency fee indices.
-- Fictional client size (small/medium/large/enterprise) is defined for starter leads and inherited by recurring seasonal RFPs. When not supplied, the API infers a coarse category from campaign budget. Campaign scale (growing/regional/national) is a separate media-budget signal, not verified revenue or actual headcount.
+## API and offline behavior
+- Automatically request `POST /api/pricing-advice` from the existing Render Gemini API after qualification, rather than a user-triggered button.
+- Local cost-model quote exists **before** the request and is preserved if the model is unavailable, times out, or is rate limited.
+- Only allow valid API results with the exact matching client-budget/staffing context. AI chooses strategy and language, but cannot invent numbers or outcomes.
+- One API attempt per qualified lead and pricing context per browser session; persistent quote data is saved through the existing game save key.
+- The game uses the existing fictional business-size categories; these should never be presented as verified facts about real companies.
 
-The API returns a bounded competitive, balanced or premium service fee envelope. Gemini chooses one strategy and writes rationale and preparation steps. Actual VND values are calculated by server-side rules, not trusted from the model. The game provides rule-based pricing if Gemini is unconfigured or temporarily unavailable; the interface labels that fallback honestly. Requests are on-demand and throttled.
-
-## Gameplay integration
-- Price advice stored in each \`Lead.pricingAdvice\` with optional fields; old saves remain compatible.
-- The player can select any of the proposed quotes within an open pitch. Only explicit selection sets \`Pitch.bidFee\`.
-- A numeric quote enters \`beginNegotiation()\` as the starting service fee; existing contract margin checks and tender-scoring remain deterministic and cannot be overwritten by the LLM.
-- Client media budget and actual media delivery remain separate from service fees.
-- Price presets still work even without the AI service.
-
-## Deployment
-The existing \`marketing-tycoon-ai-api\` Render service must be redeployed from a commit that includes \`POST /api/pricing-advice\`. If the website deploys first but the API has not yet updated, the price advisor will display a recoverable error; all normal pitch actions remain available.
+## Compatibility
+- Preserve dedicated client squads, staff exclusivity, game clock, rival bids, existing client/project IDs, and save key.
+- Historic prepared pitches without a fee are upgraded to a valid quote at submission; legacy pitch price preferences still map onto a competitive/balanced/premium quote.
+- No new navigation items, tabs, pricing panels, or optional quote-generation controls.
 
 ## Verification
-\`\`\`sh
-npm install --no-audit --no-fund
+```bash
 npm run build
 node --test marketing-tycoon-ai-api/*.test.mjs
-\`\`\`
-Browser QA should test: qualify → request advice → select quote → pitch → negotiate, API quota and no-key fallback, save/reload, and old agency saves. Live pricing model availability and the actual Gemini response cannot be proven by unit tests alone.
+```
+Check a realistic click path: qualifying a customer instantly shows the estimated bid, entering the existing pitch displays three prices, submitting goes to objection, winning starts negotiation at the chosen price; confirm updated Gemini recommendations appear without clicking Analyze and that a late result never overwrites a user's choice.
