@@ -4,6 +4,8 @@ import {CameraControls,Html,ContactShadows,Float} from "@react-three/drei";
 import {useEffect,useRef,useState,useMemo} from "react";
 import * as THREE from "three";
 import type {DistrictKind} from "@/game/city";
+import {AssetRegistry} from "./AssetRegistry";
+import {DistrictManager,ChunkManager} from "./AssetDistrict";
 import type {SceneId,Character,RoomStyle} from "@/game/state";
 
 export interface District {id:string;name:string;kind:DistrictKind;district?:string;occupied?:boolean;x:number;z:number;w:number;d:number;h:number;color:string;locked:boolean}
@@ -98,7 +100,7 @@ function RoadNetwork(){
 }
 function AmbientBuildings({districts}:{districts:District[]}){
  const lots=useMemo(()=>{
-  const used=new Set(districts.map(b=>b.x+","+b.z));
+  const used=new Set([...districts.map(b=>b.x+","+b.z),...AssetRegistry.decorativePlacements.map(p=>p.x+","+p.z)]);
   return cityXs.flatMap((x,i)=>cityZs.map((z,j)=>({x,z,i,j})))
    .filter(v=>!used.has(v.x+","+v.z)&&!(v.x===0&&(v.z===-8||v.z===8)))
    .map(({x,z,i,j})=>({x,z,height:4+((i*5+j*3)%7)*1.6,color:["#c8b3a2","#b6c3b3","#b4aebc","#c1b6a1","#a7b9bd"][((i*3+j)%5)]}));
@@ -175,7 +177,7 @@ function CityPlayer({character,districts,touch,position,active}:{character:Chara
  return <group ref={group} position={[0,.05,0]}><LowPolyPerson c={character} pos={[0,0,0]} walk seed={7}/><mesh position={[0,.03,0]} rotation-x={-Math.PI/2}><ringGeometry args={[.55,.7,24]}/><meshBasicMaterial color="#cf8759" transparent opacity={.58} depthWrite={false}/></mesh></group>;
 }
 
-function Building({b,onSelect,selected}:{b:District;onSelect:(id:string)=>void;selected:boolean}){
+function LegacyBuilding({b,onSelect,selected}:{b:District;onSelect:(id:string)=>void;selected:boolean}){
  const [hover,setHover]=useState(false);
  const liftGroup=useRef<THREE.Group>(null);
  const transparent=b.locked;
@@ -226,8 +228,11 @@ function Building({b,onSelect,selected}:{b:District;onSelect:(id:string)=>void;s
   </Html>
  </group>;
 }
-function City({districts,onSelect,selected,c,touch,position,active}:{districts:District[];onSelect:(id:string)=>void;selected:string|null;c:Character;touch:string;position:React.MutableRefObject<[number,number]>;active:React.MutableRefObject<boolean>}){
- return <><Land/><RoadNetwork/><AmbientBuildings districts={districts}/>{districts.map(b=><Building key={b.id} b={b} selected={selected===b.id} onSelect={onSelect}/>)}
+function City({districts,onSelect,selected,c,touch,position,active,quality}:{districts:District[];onSelect:(id:string)=>void;selected:string|null;c:Character;touch:string;position:React.MutableRefObject<[number,number]>;active:React.MutableRefObject<boolean>;quality:"high"|"low"}){
+ return <><Land/><RoadNetwork/><AmbientBuildings districts={districts}/>
+ <DistrictManager districts={districts} selected={selected} onSelect={onSelect} quality={quality}
+  fallback={b=><LegacyBuilding b={b} selected={selected===b.id} onSelect={onSelect}/>}/>
+ <ChunkManager quality={quality}/>
  {Array.from({length:13},(_,i)=><CityWalker key={i} seed={i+1} c={c}/>)}
  <CityPlayer character={c} districts={districts} touch={touch} position={position} active={active}/>
  </>;
@@ -351,7 +356,7 @@ export function WorldScene({scene,districts,selected,onSelect,onComputerInteract
   <ambientLight intensity={city?.42:.45}/>
   <directionalLight position={[25,37,16]} intensity={city?1.55:2.1} color={city?"#fffefa":"#ffeed9"} castShadow={quality==="high"} shadow-mapSize-width={2048} shadow-mapSize-height={2048} shadow-camera-left={-75} shadow-camera-right={75} shadow-camera-top={75} shadow-camera-bottom={-75} shadow-bias={-.00014}/>
   <directionalLight position={[-12,9,-17]} intensity={city?.5:.65} color={city?"#c2d0d4":"#aeced3"}/>
-  {city?<City districts={memoDistricts} selected={selected} onSelect={onSelect} c={character} touch={moveInput} position={playerPosition} active={playerActive}/>:scene==="room"?<Room r={room} c={character} onComputerInteract={onComputerInteract} onRoomInteract={onRoomInteract} preview={preview} avatarYaw={avatarYaw}/>:<Office c={character} staff={staff} board={scene==="boardroom"} name={officeName} capacity={officeCapacity}/>}
+  {city?<City districts={memoDistricts} selected={selected} onSelect={onSelect} c={character} touch={moveInput} position={playerPosition} active={playerActive} quality={quality}/>:scene==="room"?<Room r={room} c={character} onComputerInteract={onComputerInteract} onRoomInteract={onRoomInteract} preview={preview} avatarYaw={avatarYaw}/>:<Office c={character} staff={staff} board={scene==="boardroom"} name={officeName} capacity={officeCapacity}/>}
   {quality==="high"&&!city&&scene==="room"&&<ContactShadows scale={14} opacity={.2} blur={2.8} far={8} position={[0,-.02,0]}/>}
   <CameraRig scene={scene} districts={memoDistricts} selected={selected} focus={focus} preview={preview} avatarZoom={avatarZoom} player={playerPosition} playerActive={playerActive}/>
  </Canvas>;
