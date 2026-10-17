@@ -43,3 +43,14 @@ test("primary text, secondary text, actions and accent meet normal-text contrast
   assert.ok(ratio(fg,bg)>=4.5,name+" contrast "+ratio(fg,bg).toFixed(2)+" is below 4.5:1");
  }
 });
+
+
+test("game world has no full-width brand header or objective card; independent Week HUD remains",()=>{
+ const app=fs.readFileSync("src/App.tsx","utf8");
+ assert.doesNotMatch(app,/<header className="header">/);
+ assert.doesNotMatch(app,/<aside className="quest">/);
+ assert.doesNotMatch(app,/FROM BEDROOM TO BOARDROOM/);
+ assert.match(app,/<WeekIndicator /);
+ assert.match(app,/<nav className="dock">/);
+ assert.match(app,/aria-label="Settings"/);
+});
