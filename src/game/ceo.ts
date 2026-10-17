@@ -10,6 +10,7 @@ import {candidatesForRole,primaryRole,eligibleForRole,profile,effectiveCapacity,
 import {teamForProject,ownerTeam,startClientTeam,reconcileClientTeams,teamCoverage} from "./clientTeams";
 import {contractBrief} from "./clientMarket";
 import {ensureLocalPricing,qualificationQuote} from "./pricingAdvisor";
+import {activeDealCount,activeDealLimit,proposalMerit,opportunityForecast,acquisitionDay,onProjectCompleted} from "./acquisition";
 
 const OVERHEAD = 160000;
 
@@ -92,6 +93,7 @@ export function ceoDay(s: GameState, c: CEO, fx: Fx) {
   reconcileClientTeams(s);
   updatePersonnelDay(s);
   for (const x of c.ledger) if (x.status === "due" && (x.due ?? 0) <= c.day) { x.status = "paid"; s.agencyCash += x.value; c.totalPaid += x.value; issue(c, fx, "payment", x.lead + x.day, `Received ${money(x.value)} from ${x.lead}`, ["acknowledge"]); }
+  acquisitionDay(s,fx);
   runRivalAgents(s,c,fx);
   if (s.agencyCash < 0) issue(c, fx, "cash", "agency", "Agency cash flow is negative — improve liquidity.", ["finance"]);
 }
@@ -158,6 +160,7 @@ function finishProject(s: GameState, c: CEO, p: Project, fx: Fx) {
   c.reputation.creative = clamp(c.reputation.creative + (p.quality >= 70 ? 3 : -2), 0, 100);
   schedulePayment(c, p, p.fee * 0.4, 7, "Final milestone — payment due");
   issue(c, fx, "renewal", p.id, `${p.brand} wrapped (${p.kpi >= 0 ? "+" : ""}${p.kpi}% KPI, margin ${money(p.margin)}). Renew?`, ["renew", "close"]);
+  onProjectCompleted(s,fx,p);
   fx.log(`CEO: completed ${p.brand}; ${p.kpi}% KPI`);
 }
 
@@ -202,14 +205,19 @@ export function qualify(s: GameState, fx: Fx, id: string) {
 }
 export function decline(s: GameState, id: string) { const l = lead(ceoInit(s)!, id); if (l && ["new", "qualified", "renewal"].includes(l.status)) l.status = "declined"; }
 export function startPitch(s: GameState, fx: Fx, id: string) {
-  const c = ceoInit(s)!, l = lead(c, id); if (!l || l.status !== "qualified"||c.pitch||c.negotiation) return;
+  const c = ceoInit(s)!, l = lead(c, id); if (!l || l.status !== "qualified") return;
+  if(c.pitch||c.negotiation?.status==="open")return fx.toast("Open this client in Deal Room to manage its proposal independently.");
+  if(activeDealCount(c)>=activeDealLimit(s))return fx.toast("Proposal capacity reached. Complete or close another active pitch before starting this one.");
+  c.activeDealId=id;
   const tender=ensureTender(c,l);if(tender?.deadline<=c.day)return fx.toast("Tender has closed; check the market outcome.");
   if (s.agencyCash < 500000) return fx.toast("Need at least 500,000đ for pitch preparation");
   const quote=ensureLocalPricing(s,l);
   s.agencyCash -= 500000; ledger(c, "Pitch team preparation", -500000, l.brand); l.status = "pitch";
   c.pitch = { id, focus: "performance", price: quote.tier==="competitive"?"discount":quote.tier==="premium"?"premium":"standard",
     priceTier:quote.tier,priceSelected:false,bidFee:quote.recommendedFee,
-    team: "balanced", evidence: "research", step: "prepare", quality: 0, objection: null, result: null };
+    team: l.proposal?.delivery??"balanced", evidence:l.proposal?.evidence??"research",
+    proposal:l.proposal?{...l.proposal}:undefined,revisionCount:0,
+    step: "prepare", quality: 0, objection: null, result: null };
 }
 /** All pitch price controls resolve to budget/cost-backed real bids. No arbitrary
  * preset quote or optional advisory side channel can bypass the contract economy.
@@ -257,7 +265,10 @@ export function presentPitch(s: GameState) {
     clamp(Math.round(8+(1-feeRatio)*(l.pref==="cost"?26:12)),-5,15):
     p.price==="discount"?-2:p.price==="premium"?4:8;
 
-  p.quality = clamp(27 + focus + evidence + team + cap * 0.31 + scale + s.reputation / 12 + currentOffice(s).prestige * 0.7 - l.difficulty * 0.17, 15, 98);
+  const proposalBonus=p.proposal?proposalMerit(s,l,p.proposal)*.6:0;
+  const feasibility=p.proposal?opportunityForecast(s,l,pitchFee(l,p),p.proposal):null;
+  const riskPenalty=feasibility?feasibility.risk*.09:0;
+  p.quality = clamp(27 + focus + evidence + team + cap * 0.31 + scale + s.reputation / 12 + currentOffice(s).prestige * 0.7 - l.difficulty * 0.17 + proposalBonus-riskPenalty, 15, 98);
   p.step = "objection";
   p.objection = l.pref === "cost" ? "The CFO demands a fee cut of at least 10%." : l.pref === "creative" ? "The Brand Director doubts your creative differentiation." : "The Marketing Director wants clearer KPIs and measurement.";
   s.agencyCash -= 600000; ledger(c, "Pitch presentation & materials", -600000, l.brand);
@@ -270,8 +281,36 @@ export function answerPitch(s: GameState, answer: string) {
   const top = comps.sort((a, b) => b.evaluation - a.evaluation)[0];
   const winner = playerEval > top.evaluation ? "player" : top.id;
   p.result = { winner, playerScore: Math.round(playerEval), topRival: top.name, topScore: Math.round(top.evaluation), explanation: winner === "player" ? "Your proposal fits the client's criteria better — move to contract negotiation." : "A rival offered stronger capability, experience or commercial terms." };
+  // A close bid can earn a single genuine shortlist revision, never an endless reroll.
+  if(p.proposal&&winner!=="player"&&playerEval>=top.evaluation-7&&(p.revisionCount??0)<1){
+    p.step="revision";l.status="shortlisted";
+    p.objection="Shortlisted: procurement requires stronger proof, delivery or price justification.";
+    return;
+  }
   p.step = "result"; l.status = winner === "player" ? "pitch_won" : "lost";
   if(winner!=="player"){registerRivalWin(s,c,l.id,winner,"competitive pitch");}else{l.relationship+=6;const t=ensureTender(c,l);if(t)t.status="player"}
+}
+export function submitPitchRevision(s:GameState,fx:Fx,decision:"improve"|"withdraw"){
+ const c=ceoInit(s),p=c?.pitch,l=p&&c?.leads.find(x=>x.id===p.id);
+ if(!c||!p||!l||p.step!=="revision")return;
+ if(decision==="withdraw"){p.step="result";l.status="lost";fx.log("Withdrew from shortlist: "+l.brand);return;}
+ const cost=250000;
+ if(s.agencyCash<cost)return fx.toast("Not enough cash to revise proposal");
+ s.agencyCash-=cost;ledger(c,"Pitch revision & validation",-cost,l.brand);
+ p.proposal=l.proposal?{...l.proposal}:p.proposal;
+ p.revisionCount=(p.revisionCount??0)+1;
+ const extra=5+Math.max(0,proposalMerit(s,l,p.proposal))*.22;
+ p.quality=clamp(p.quality+extra,0,99);
+ const comps=l.rivalIds.map(id=>{const r=rival(c,id);return r?{r,score:rivalBidScore(r,l,c.day)}:null})
+  .filter((x):x is {r:NonNullable<ReturnType<typeof rival>>;score:number}=>!!x).sort((a,b)=>b.score-a.score);
+ const top=comps[0],playerEval=clamp(p.quality+ceoRand("revision"+l.id+c.day)*5,0,99);
+ const winner=top&&playerEval<=top.score?top.r.id:"player";
+ p.result={winner,playerScore:Math.round(playerEval),topRival:top?.r.name??"No rival",topScore:Math.round(top?.score??0),
+  explanation:winner==="player"?"Client approved the revised proposal. Proceed to negotiation.":"Final procurement decision: the competing proposal offered stronger value."};
+ p.step="result";l.status=winner==="player"?"pitch_won":"lost";
+ if(winner==="player")l.relationship=clamp(l.relationship+6,0,100);
+ else if(top)registerRivalWin(s,c,l.id,top.r.id,"final procurement");
+ fx.log("Final shortlist decision · "+l.brand+" · "+winner);
 }
 export function closePitch(s: GameState) { const c = ceoInit(s)!; if (c.pitch?.step === "result" && c.pitch.result?.winner !== "player") c.pitch = null; }
 export function beginNegotiation(s: GameState) {
@@ -279,6 +318,11 @@ export function beginNegotiation(s: GameState) {
   l.status = "negotiating"; c.negotiation = { id: l.id, round: 1, fee: pitchFee(l,c.pitch!), scope: l.scope, advance: 30, deadline: l.duration, bonus: 0, trust: l.relationship, notes: ["Pitch won. Contract negotiation begins at your proposed fee."], status: "open", counter: null };
 }
 export function forecast(s: GameState, n: Pick<Negotiation, "fee" | "scope" | "deadline">) {
+  const existing=s.ceo?.negotiation?.id;const custom=existing?s.ceo?.leads.find(l=>l.id===existing):undefined;
+  if(custom?.clientMasterId){
+    const projected=opportunityForecast(s,custom,n.fee,custom.proposal);
+    return {margin:projected.margin,payroll:projected.cost-projected.outsourcing,direct:projected.outsourcing,overhead:0};
+  }
   const base = ceoTaskDefs.reduce((v, t) => v + t.cost, 0) * (n.scope / 8), payroll = dailyPayroll(s) * n.deadline, overhead = n.deadline * currentOffice(s).daily;
   const outsourcing = ceoTaskDefs.filter(t=>!s.staff.some(id=>eligibleForRole(id,t.role))).reduce((a,t)=>a+t.cost*2.1,0);
   return { margin: Math.round(n.fee - base - payroll - overhead - outsourcing), payroll: Math.round(payroll), direct: Math.round(base + outsourcing), overhead };
@@ -329,7 +373,7 @@ export function resolveIssue(s: GameState, fx: Fx, id: string, choice: string) {
     if(t&&!outsourceTeamTask(s,fx,p.id,t.key))return;
   }
   if (i.type === "deadline" && p) { if (choice === "extend") { p.duration += 6; p.clientTrust = (p.clientTrust || 50) - 4; } else if (choice === "outsource") { p.tasks.filter((t) => t.status === "in_progress").forEach((t) => (t.progress = Math.min(t.effort, t.progress + 1.2))); s.agencyCash -= 850000; ledger(c, "Emergency delivery support", -850000, p.brand); } }
-  if (i.type === "renewal" && p) { const ld = lead(c, p.leadId); if (choice === "renew" && ld && (p.clientTrust ?? 0) >= 55) { c.leads.push({ ...ld, id: ld.id + "-renew-" + c.day, status: "renewal", fee: Math.round(ld.fee * 0.88), value: Math.round(ld.value * 0.85), relationship: Math.round(p.clientTrust ?? 55), duration: Math.max(20, ld.duration - 3), scope: Math.max(5, ld.scope - 2) }); fx.toast("Renewal opportunity added to Pipeline"); } else if (choice === "renew") fx.toast("Client isn't satisfied enough to renew."); }
+  if (i.type === "renewal" && p) { const ld = lead(c, p.leadId); if (choice === "renew" && ld && (p.clientTrust ?? 0) >= 55) { c.leads.push({ ...ld, id: ld.id + "-renew-" + c.day, status: "renewal", source:"renewal", discovery:undefined, proposal:undefined, fee: Math.round(ld.fee * 0.88), value: Math.round(ld.value * 0.85), relationship: Math.round(p.clientTrust ?? 55), duration: Math.max(20, ld.duration - 3), scope: Math.max(5, ld.scope - 2) }); fx.toast("Renewal opportunity added to Pipeline"); } else if (choice === "renew") fx.toast("Client isn't satisfied enough to renew."); }
   i.status = "resolved"; i.resolution = choice;
   if (c.speed === 0 && openIssues(c).every((x) => !["capacity", "deadline", "bad-margin", "renewal", "cash", "talent-poach"].includes(x.type))) c.speed = 1;
 }

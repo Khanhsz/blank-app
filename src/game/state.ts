@@ -57,10 +57,27 @@ export interface PricingAdvice {
  headline:string;rationale:string;preparation:string[];risk:string;
  source:"gemini"|"rules";contextKey?:string;
 }
-export interface Lead extends LeadDef { pricingAdvice?:PricingAdvice; qualifyFeePaid?:number; qualifyDepthPaid?:"lean"|"standard"|"deep"; status: "new" | "qualified" | "pitch" | "pitch_won" | "negotiating" | "signed" | "lost" | "declined" | "renewal"; relationship: number; insightKnown?: boolean; lostTo?: string }
+export type OpportunitySource="inbound"|"outbound"|"referral"|"tender"|"renewal";
+export type DiscoveryKey="need"|"budget"|"authority"|"timing";
+export type AcquisitionStage="prospecting"|"discovery"|"nurturing";
+export interface ClientDiscovery {
+ answered:DiscoveryKey[];notes:Partial<Record<DiscoveryKey,string>>;confidence:number;
+ decision?:"pursue"|"nurture"|"no-bid";qualificationReason?:string;
+}
+export interface ProposalPlan {
+ approach:"performance"|"creative"|"cost"|"strategy";
+ evidence:"research"|"portfolio";delivery:"lean"|"balanced"|"specialist";
+ concept:"proof"|"story"|"conversion";selectedTalentIds:string[];
+}
+export interface ClientRelationship {trust:number;lastContactDay:number;wins:number;losses:number;referrals:number;notes:string[];}
+export interface DealSession {pitch:Pitch|null;negotiation:Negotiation|null;}
+export interface Lead extends LeadDef {
+ source?:OpportunitySource;discovery?:ClientDiscovery;outreachAttempts?:number;nurtureUntil?:number;
+ proposal?:ProposalPlan;qualificationReason?:string;referralFrom?:string;
+ pricingAdvice?:PricingAdvice; qualifyFeePaid?:number; qualifyDepthPaid?:"lean"|"standard"|"deep"; status: "new" | "prospecting" | "discovery" | "nurturing" | "qualified" | "pitch" | "shortlisted" | "pitch_won" | "negotiating" | "signed" | "lost" | "declined" | "renewal"; relationship: number; insightKnown?: boolean; lostTo?: string }
 export interface Issue { id: string; type: string; project: string; message: string; choices: string[]; status: "open" | "resolved"; day: number; resolution?: string }
 export interface LedgerEntry { day: number; what: string; value: number; lead: string; status: "paid" | "due"; due?: number; project?: string }
-export interface Pitch { id: string; focus: string; price: string; bidFee?:number; priceTier?:PriceTier; priceSelected?:boolean; team: string; evidence: string; step: "prepare" | "objection" | "result"; quality: number; objection: string | null; result: { winner: string; playerScore: number; topRival: string; topScore: number; explanation: string } | null }
+export interface Pitch { proposal?:ProposalPlan;revisionCount?:number; id: string; focus: string; price: string; bidFee?:number; priceTier?:PriceTier; priceSelected?:boolean; team: string; evidence: string; step: "prepare" | "objection" | "revision" | "result"; quality: number; objection: string | null; result: { winner: string; playerScore: number; topRival: string; topScore: number; explanation: string } | null }
 export interface Negotiation { id: string; round: number; fee: number; scope: number; advance: number; deadline: number; bonus: number; trust: number; notes: string[]; status: "open" | "signed" | "lost" | "walked"; counter: { fee: number; scope: number; advance: number; deadline: number } | null }
 export interface RivalTender {leadId:string;deadline:number;rivalId:string;score:number;fee:number;status:"open"|"won"|"player"|"closed"}
 export interface RivalEvent {id:string;day:number;rivalId:string;kind:"pitch"|"win"|"expand"|"hire"|"poach"|"market"|"loss";message:string}
@@ -77,6 +94,8 @@ export interface WeeklyEdition {
 export interface WeeklyProgress {week:number; pending:WeeklyDecision[]; editions:WeeklyEdition[]; lastAdvanceDay:number}
 export interface GameClock extends WeeklyProgress {day:number}
 export interface CEO {
+  dealSessions?:Record<string,DealSession>;activeDealId?:string|null;
+  clientRelationships?:Record<string,ClientRelationship>;
   clientTeams?:ClientTeam[];
   weekly?:WeeklyProgress;
   tenders?:RivalTender[]; rivalNews?:RivalEvent[]; talentOffers?:TalentOffer[];
@@ -125,7 +144,7 @@ export const newCEO = (reputation: number): CEO => ({
   rivals: ceoRivalDefs.map((v) => ({ ...v })), projects: [], inbox: [], partners: [], ledger: [], history: [],
   reputation: { overall: reputation, creative: 50, performance: 50, strategy: 50, reliability: 60, industries: {} },
   seq: 0, pitch: null, negotiation: null, totalPayroll: 0, totalDirect: 0, totalBilled: 0, totalPaid: 0,
-  clientTeams:[], tenders:[], rivalNews:[], talentOffers:[], salaryPremiums:{}, talentMarket:{}, rivalLastTick:0,
+  clientTeams:[], dealSessions:{}, activeDealId:null, clientRelationships:{}, tenders:[], rivalNews:[], talentOffers:[], salaryPremiums:{}, talentMarket:{}, rivalLastTick:0,
   weekly:{week:1,pending:[],editions:[],lastAdvanceDay:1},
 });
 
@@ -200,6 +219,9 @@ export function migrate(raw: unknown): GameState {
     out.ceo = { ...base, ...out.ceo, reputation: { ...base.reputation, ...out.ceo.reputation, industries: out.ceo.reputation?.industries ?? {} },
       rivals:(Array.isArray(out.ceo.rivals)?out.ceo.rivals:base.rivals).map(r=>({officeTier:1,wins:0,lastMove:"Managing agency operations",...r})),
       clientTeams:Array.isArray(out.ceo.clientTeams)?out.ceo.clientTeams:[],
+      dealSessions:out.ceo.dealSessions&&typeof out.ceo.dealSessions==="object"?out.ceo.dealSessions:{},
+      activeDealId:typeof out.ceo.activeDealId==="string"?out.ceo.activeDealId:(out.ceo.pitch?.id??out.ceo.negotiation?.id??null),
+      clientRelationships:out.ceo.clientRelationships&&typeof out.ceo.clientRelationships==="object"?out.ceo.clientRelationships:{},
       tenders:Array.isArray(out.ceo.tenders)?out.ceo.tenders:[],
       rivalNews:Array.isArray(out.ceo.rivalNews)?out.ceo.rivalNews:[],
       talentOffers:Array.isArray(out.ceo.talentOffers)?out.ceo.talentOffers:[],

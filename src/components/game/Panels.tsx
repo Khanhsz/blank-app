@@ -14,7 +14,7 @@ import {findCityLot,findOffice,currentOffice,cityRival,cityClient,leaseOffice} f
 import {departmentMetrics} from "@/game/functions";
 import * as P from "@/game/personnel";
 import {ClientTeamBoard} from "./ClientTeamBoard";
-import {ClientCatalog} from "./ClientCatalog";
+import {GrowthDesk} from "./GrowthDesk";
 import * as T from "@/game/clientTeams";
 import {CampaignJourney} from "./CampaignJourney";
 
@@ -118,15 +118,7 @@ export function CEOCommandCenter({onReadEdition}:{onReadEdition?:(id:string)=>vo
       <div className="mt-ceo-tabs" role="tablist" aria-label="CEO sections">{TABS.map(t => <button key={t} type="button" role="tab" aria-selected={tab===t} className={"mt-ceo-tab "+(tab===t?"active":"")} onClick={()=>setTab(t)}>{t}{t==="inbox"&&open.length>0?<b>{open.length}</b>:null}</button>)}</div>
       <PhaseScene phase={tab}>
       {tab === "inbox" && (open.length ? open.map((i) => <div key={i.id} className="mt-escalation"><div className="text-xs text-muted-foreground">Day {i.day} · {i.type}</div><p className="text-sm">{i.message}</p><div className="mt-2 flex flex-wrap gap-2">{i.choices.map((ch) => <Button key={ch} size="sm" variant="outline" className="capitalize" onClick={() => act((d, f) => K.resolveIssue(d, f, i.id, ch))}>{ch}</Button>)}</div></div>) : <p className="text-sm text-muted-foreground">Inbox clear. Staff are working autonomously — check the pipeline for new deals.</p>)}
-      {tab === "pipeline" && <>
-        <details className="mt-market-section mt-client-market-accordion"><summary>Browse Client Master Database · 7 industries · Startup / SME / Big Corp</summary>
-          <ClientCatalog mode="agency"/>
-        </details>
-        {c.pitch && <PitchBox />}
-        {c.negotiation && <NegBox />}
-        {!c.pitch && !c.negotiation && c.leads.map((l) => {const quote=qualificationQuote(s,l);return <div key={l.id} className="mt-deal"><div className="flex justify-between"><b>{l.brand}</b><span className="text-xs capitalize text-primary">{l.status.replace("_", " ")}</span></div><p className="text-xs text-muted-foreground">{l.desc}</p><Row k="Service fee" v={money(l.fee)} />{["new","renewal"].includes(l.status)&&<Row k={"Qualify research · "+quote.depth} v={money(quote.fee)}/>}<Row k="Rivals" v={l.rivalIds.join(", ")} />{l.insightKnown && <Row k="Client priority" v={l.pref} />}{l.status==="qualified"&&l.pricingAdvice&&<Row k="Cost-aware bid estimate" v={money(l.pricingAdvice.recommendedFee)} />}{tenderFor(c,l.id)?.status==="open"&&<Row k="Tender deadline" v={"Day "+tenderFor(c,l.id)!.deadline}/>}
-          <div className="mt-2 flex gap-2">{["new", "renewal"].includes(l.status) && <Button size="sm" disabled={s.agencyCash<quote.fee} onClick={() => act((d, f) => K.qualify(d, f, l.id))}>Qualify · {money(quote.fee)}</Button>}{l.status === "qualified" && <Button size="sm" onClick={() => act((d, f) => K.startPitch(d, f, l.id))}>Prepare pitch · 500k</Button>}{["new", "qualified", "renewal"].includes(l.status) && <Button size="sm" variant="ghost" onClick={() => act((d) => K.decline(d, l.id))}>Decline</Button>}</div></div>})}
-      </>}
+      {tab==="pipeline"&&<GrowthDesk onTeams={()=>setTab("teams")}/>}
       {tab==="teams"&&<ClientTeamBoard onPeople={()=>setTab("people")}/>}
        {tab==="people"&&<div className="mt-personnel-grid">
         <GameSection eyebrow="PEOPLE & CULTURE" title="Talent Pool & Staffing" sub="Recruit, train and develop staff. Assign employees exclusively to a client through the Teams tab." icon={<Users size={19}/>}/>
