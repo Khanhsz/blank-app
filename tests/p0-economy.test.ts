@@ -96,6 +96,20 @@ test("agency media uses negotiated client budget for actual spend and proportion
   assert.ok(b.adReach>a.adReach*20,"larger contracted campaign can reach a bigger audience");
 });
 
+test("restoring an older signed agency project reconciles its old scenario-sized media budget",()=>{
+  const {s,p}=agencyWithMedia(260000000);
+  const saved=JSON.parse(JSON.stringify(s));
+  const old=saved.ceo.projects.find((x:{id:string})=>x.id===p.id);
+  delete old.campaign.mediaBudget;
+  old.campaign.media={paid:4000000,creator:4000000,promo:4000000,flyer:2000000};
+  old.campaign.spent=14000000;
+  const restored=migrate(saved),fixed=restored.ceo!.projects.find(x=>x.id===p.id)!;
+  assert.equal(fixed.campaign.mediaBudget,p.adBudget);
+  assert.equal(fixed.campaign.spent,p.mediaSpent);
+  assert.equal(Object.values(fixed.campaign.media).reduce((a,b)=>a+b,0),p.mediaSpent);
+  assert.equal(fixed.mediaReserved,p.adBudget-p.mediaSpent);
+});
+
 test("freelance media keeps original raw spend scoring and legacy saves are compatible",()=>{
   const s=playable(),c=s.campaign;
   c.media={paid:1500000,creator:500000,promo:0,flyer:0};
