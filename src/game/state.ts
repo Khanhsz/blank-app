@@ -22,7 +22,13 @@ export interface Issue { id: string; type: string; project: string; message: str
 export interface LedgerEntry { day: number; what: string; value: number; lead: string; status: "paid" | "due"; due?: number; project?: string }
 export interface Pitch { id: string; focus: string; price: string; team: string; evidence: string; step: "prepare" | "objection" | "result"; quality: number; objection: string | null; result: { winner: string; playerScore: number; topRival: string; topScore: number; explanation: string } | null }
 export interface Negotiation { id: string; round: number; fee: number; scope: number; advance: number; deadline: number; bonus: number; trust: number; notes: string[]; status: "open" | "signed" | "lost" | "walked"; counter: { fee: number; scope: number; advance: number; deadline: number } | null }
+export interface RivalTender {leadId:string;deadline:number;rivalId:string;score:number;fee:number;status:"open"|"won"|"player"|"closed"}
+export interface RivalEvent {id:string;day:number;rivalId:string;kind:"pitch"|"win"|"expand"|"hire"|"poach"|"market"|"loss";message:string}
+export interface TalentOffer {id:string;employeeId:string;rivalId:string;day:number;expires:number;raise:number;bonus:number;status:"open"|"retained"|"left"}
 export interface CEO {
+  tenders?:RivalTender[]; rivalNews?:RivalEvent[]; talentOffers?:TalentOffer[];
+  salaryPremiums?:Record<string,number>; talentMarket?:Record<string,{rivalId:string;untilDay:number}>;
+  rivalLastTick?:number;
   day: number; speed: number; pauseOnIssue: boolean; leads: Lead[]; rivals: Rival[]; projects: Project[]; inbox: Issue[]; partners: string[];
   ledger: LedgerEntry[]; history: { id: string; brand: string; kpi: number; profit: number; quality: number; day: number }[];
   reputation: { overall: number; creative: number; performance: number; strategy: number; reliability: number; industries: Record<string, number> };
@@ -66,6 +72,7 @@ export const newCEO = (reputation: number): CEO => ({
   rivals: ceoRivalDefs.map((v) => ({ ...v })), projects: [], inbox: [], partners: [], ledger: [], history: [],
   reputation: { overall: reputation, creative: 50, performance: 50, strategy: 50, reliability: 60, industries: {} },
   seq: 0, pitch: null, negotiation: null, totalPayroll: 0, totalDirect: 0, totalBilled: 0, totalPaid: 0,
+  tenders:[], rivalNews:[], talentOffers:[], salaryPremiums:{}, talentMarket:{}, rivalLastTick:0,
 });
 
 export const SAVE_KEY = "marketing-tycoon-lovable-v2";
@@ -97,7 +104,15 @@ export function migrate(raw: unknown): GameState {
   if (!["room", "city", "office", "boardroom"].includes(out.scene)) out.scene = out.agencyUnlocked ? "office" : "room";
   if (out.agencyUnlocked && out.ceo) {
     const base = newCEO(out.reputation);
-    out.ceo = { ...base, ...out.ceo, reputation: { ...base.reputation, ...out.ceo.reputation, industries: out.ceo.reputation?.industries ?? {} } };
+    out.ceo = { ...base, ...out.ceo, reputation: { ...base.reputation, ...out.ceo.reputation, industries: out.ceo.reputation?.industries ?? {} },
+      rivals:(Array.isArray(out.ceo.rivals)?out.ceo.rivals:base.rivals).map(r=>({officeTier:1,wins:0,lastMove:"Managing agency operations",...r})),
+      tenders:Array.isArray(out.ceo.tenders)?out.ceo.tenders:[],
+      rivalNews:Array.isArray(out.ceo.rivalNews)?out.ceo.rivalNews:[],
+      talentOffers:Array.isArray(out.ceo.talentOffers)?out.ceo.talentOffers:[],
+      salaryPremiums:out.ceo.salaryPremiums??{},
+      talentMarket:out.ceo.talentMarket??{},
+      rivalLastTick:out.ceo.rivalLastTick??Math.max(0,out.ceo.day-1)
+    };
     // New corporate clients appear in existing CEO saves without resetting
     // relationships, negotiation outcomes, ongoing projects or cash history.
     const priorLeads=Array.isArray(out.ceo.leads)?out.ceo.leads:[];
