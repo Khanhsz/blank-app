@@ -94,6 +94,42 @@ def build_master(spec,lod,output,save_blend):
     for col in (0,1):
      z=(col-.5)*d*.36
      add("side_glass_%s_%s"%(level,col),(w/2+.082,y,z),(.1,.78,min(1.4,d*.17)),3)
+
+  # Keep Blender-authored masters visually aligned with the generated web slice.
+  category=spec["class"]
+  if category=="creative_agency":
+   add("creative_art_fin",(-w*.32,h*.49,d/2+.20),(w*.22,h*.68,.42),4)
+   add("creative_reveal_fin",(w*.32,h*.36,d/2+.27),(w*.16,h*.46,.53),6)
+   add("roof_frame",(0,h+.98,0),(w*.82,.25,d*.72),4)
+   for k in range(3):add("studio_pod_"+str(k),((k-1)*w*.22,h+1.57,0),(w*.17,1.05,d*.47),1)
+  elif category=="media_facility":
+   add("video_wall_frame",(0,h*.63,d/2+.28),(w*.83,h*.35,.46),6)
+   add("video_wall_screen",(0,h*.63,d/2+.54),(w*.75,h*.30,.09),3)
+   for x in (-1,1):add("screen_pillar_"+str(x),(x*w*.43,h*.58,d/2+.52),(.22,h*.45,.38),4)
+   add("rooftop_media_display",(0,h+1.74,0),(w*.74,1.10,d*.54),4)
+  elif category=="rival_agency":
+   add("agency_second_tower",(-w*.23,h*.78,-d*.18),(w*.46,h*.44,d*.52),2)
+   add("agency_vertical_fin",(w*.32,h*.64,d/2+.22),(w*.19,h*.65,.35),4)
+   add("agency_roof_crown",(0,h+1.85,0),(w*.78,1.65,d*.44),6)
+   add("agency_facade_logo",(0,h*.60,d/2+.27),(w*.80,1.3,.38),4)
+  elif category=="corporate_client":
+   for x in (-1,1):add("corporate_atrium_"+str(x),(x*w*.28,h*.47,d/2+.43),(w*.26,h*.76,.56),1)
+   add("corporate_billboard_frame",(0,h*.76,d/2+.24),(w*.72,h*.16,.40),6)
+   add("corporate_billboard_screen",(0,h*.76,d/2+.48),(w*.62,h*.12,.12),4)
+   add("corporate_glass_crown",(0,h+1.87,0),(w*.77,1.55,d*.57),3)
+  elif category=="office_property":
+   add("office_leasing_portico",(0,h*.29,d/2+.27),(w*.83,2.7,.55),1)
+   for x in (-1,1):add("office_facade_fin_"+str(x),(x*w*.42,h*.54,d/2+.27),(.25,h*.69,.56),4)
+   add("office_terrace",(0,h+1.09,0),(w*.68,.55,d*.54),4)
+  elif category=="residential":
+   for x,material_id in ((-1,1),(1,5)):add("residential_wing_"+str(x),(x*w*.28,h*.56,d/2+.24),(w*.3,h*.66,.37),material_id)
+   add("residential_roof_pod",(0,h+1.31,-d*.22),(w*.35,.65,d*.25),4)
+  elif category=="retail_property":
+   add("storefront",(0,h*.38,d/2+.66),(w*.85,2.4,1.0),3)
+   add("retail_signage",(0,h*.38,d/2+1.23),(w*.75,.3,.2),4)
+  elif category=="urban_infrastructure":
+   add("kiosk_display",(0,h*.55,d/2+.35),(w*.70,h*.48,.42),3)
+   add("kiosk_top",(0,h+1.11,0),(w+1,.36,d+.9),4)
   add("rooftop_service",(-w*.23,h+.76,-d*.24),(w*.15,.45,d*.18),6)
   if spec["class"] in ("rival_agency","corporate_client"):
    for side in (-1,1):add("corporate_fin_"+str(side),(side*w*.4,h*.62,d/2+.18),(.16,h*.48,.25),1)
