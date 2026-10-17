@@ -275,7 +275,7 @@ function Room({r,c,onComputerInteract,onRoomInteract,preview=false,avatarYaw=0}:
   <LowPolyPerson c={c} pos={[0,preview?.38:.01,1.35]} yaw={avatarYaw}/>
  </group>;
 }
-function Office({c,staff,board}:{c:Character;staff:number;board:boolean}){
+function Office({c,staff,board,name,capacity}:{c:Character;staff:number;board:boolean;name:string;capacity:number}){
  return <group>
   <Box p={[0,-.15,0]} size={[19,.30,14]} color={board?"#4c4944":"#cbb9a1"}/>
   <Box p={[0,3.3,-7]} size={[19,6.6,.18]} color={board?"#323339":"#e7ded1"}/>
@@ -288,7 +288,7 @@ function Office({c,staff,board}:{c:Character;staff:number;board:boolean}){
     <Html position={[0,3.56,-6.57]} center distanceFactor={16}><div className="boardroom-led">STRATEGY · PITCH · NEGOTIATE</div></Html>
     <LowPolyPerson c={c} pos={[0,0,3]}/>
    </>:<>
-    {Array.from({length:8},(_,i)=>{const x=-6.5+(i%4)*4.2,z=-3.1+Math.floor(i/4)*4;
+    {Array.from({length:capacity<=8?8:capacity<=13?10:12},(_,i)=>{const x=-6.5+(i%4)*4.2,z=-4.3+Math.floor(i/4)*3.8;
       return <group key={i} position={[x,0,z]}>
        <Box p={[0,.85,0]} size={[2.2,.14,1.24]} color="#a4876e"/>
        <Box p={[0,1.25,-.24]} size={[.85,.66,.09]} color="#414a53"/>
@@ -298,7 +298,8 @@ function Office({c,staff,board}:{c:Character;staff:number;board:boolean}){
       </group>;
      })}
     <LowPolyPerson c={c} pos={[7,0,3.5]}/>
-    <Html position={[0,5.18,-6.68]} center distanceFactor={19}><div className="boardroom-led">YOUR AGENCY · PEOPLE AT WORK</div></Html>
+    <Html position={[0,5.18,-6.68]} center distanceFactor={19}><div className="boardroom-led">{name.toUpperCase()} · {staff}/{capacity} PEOPLE</div></Html>
+    {capacity>=12&&<><Box p={[-8,2.7,5.9]} size={[.55,5.25,.7]} color="#829b8e"/><Box p={[8,2.7,5.9]} size={[.55,5.25,.7]} color="#829b8e"/></>}
    </>}
   <ContactShadows opacity={.23} scale={22} blur={2.9} far={10} position={[0,-.005,0]}/>
  </group>;
@@ -324,8 +325,8 @@ function CameraRig({scene,districts,selected,focus,preview,avatarZoom,player,pla
  useFrame(()=>{if(scene==="city"&&playerActive.current&&!selected&&controls.current){const [x,z]=player.current;controls.current.setLookAt(x+34,39,z+39,x,1,z,false)}});
  return <CameraControls ref={controls} smoothTime={.7} maxPolarAngle={Math.PI/2.12} minDistance={5} maxDistance={scene==="city"?170:27} dollySpeed={.65} truckSpeed={.6} />;
 }
-export function WorldScene({scene,districts,selected,onSelect,onComputerInteract,onRoomInteract,character,room,staff,quality,focus,preview,avatarYaw,avatarZoom,moveInput=""}:{
- scene:SceneId;districts:District[];selected:string|null;onSelect:(id:string)=>void;onComputerInteract:()=>void;onRoomInteract:(x:RoomAction)=>void;character:Character;room:RoomStyle;staff:number;quality:"high"|"low";focus?:string|null;preview?:boolean;avatarYaw?:number;avatarZoom?:number;moveInput?:string;
+export function WorldScene({scene,districts,selected,onSelect,onComputerInteract,onRoomInteract,character,room,staff,quality,focus,preview,avatarYaw,avatarZoom,moveInput="",officeCapacity=8,officeName="Starter HQ"}:{
+ scene:SceneId;districts:District[];selected:string|null;onSelect:(id:string)=>void;onComputerInteract:()=>void;onRoomInteract:(x:RoomAction)=>void;character:Character;room:RoomStyle;staff:number;quality:"high"|"low";focus?:string|null;preview?:boolean;avatarYaw?:number;avatarZoom?:number;moveInput?:string;officeCapacity?:number;officeName?:string;
 }){
  const city=scene==="city";
  const memoDistricts=useMemo(()=>districts,[JSON.stringify(districts)]);
@@ -336,7 +337,7 @@ export function WorldScene({scene,districts,selected,onSelect,onComputerInteract
   <ambientLight intensity={.45}/>
   <directionalLight position={[25,37,16]} intensity={2.1} color="#ffeed9" castShadow={quality==="high"} shadow-mapSize-width={2048} shadow-mapSize-height={2048} shadow-camera-left={-75} shadow-camera-right={75} shadow-camera-top={75} shadow-camera-bottom={-75} shadow-bias={-.00014}/>
   <directionalLight position={[-12,9,-17]} intensity={.65} color="#aeced3"/>
-  {city?<City districts={memoDistricts} selected={selected} onSelect={onSelect} c={character} touch={moveInput} position={playerPosition} active={playerActive}/>:scene==="room"?<Room r={room} c={character} onComputerInteract={onComputerInteract} onRoomInteract={onRoomInteract} preview={preview} avatarYaw={avatarYaw}/>:<Office c={character} staff={staff} board={scene==="boardroom"}/>}
+  {city?<City districts={memoDistricts} selected={selected} onSelect={onSelect} c={character} touch={moveInput} position={playerPosition} active={playerActive}/>:scene==="room"?<Room r={room} c={character} onComputerInteract={onComputerInteract} onRoomInteract={onRoomInteract} preview={preview} avatarYaw={avatarYaw}/>:<Office c={character} staff={staff} board={scene==="boardroom"} name={officeName} capacity={officeCapacity}/>}
   {quality==="high"&&!city&&scene==="room"&&<ContactShadows scale={14} opacity={.2} blur={2.8} far={8} position={[0,-.02,0]}/>}
   <CameraRig scene={scene} districts={memoDistricts} selected={selected} focus={focus} preview={preview} avatarZoom={avatarZoom} player={playerPosition} playerActive={playerActive}/>
  </Canvas>;
