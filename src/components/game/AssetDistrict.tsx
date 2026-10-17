@@ -3,6 +3,7 @@ import {useFrame,useThree} from "@react-three/fiber";
 import {Html,useGLTF} from "@react-three/drei";
 import * as THREE from "three";
 import {AssetRegistry} from "./AssetRegistry";
+import {BrickhouseCampaignMedia} from "./BrickhouseCampaignMedia";
 import type {District} from "./WorldScene";
 
 type Props={building:District;selected:boolean;onSelect:(id:string)=>void;quality:"high"|"low";fallback:React.ReactNode};
@@ -98,7 +99,7 @@ export function BuildingInteraction({b,selected,onSelect,quality}:{b:District;se
  return <group position={[b.x,0,b.z]}>
   <LODManager x={b.x} z={b.z} quality={quality} selected={selected} onLOD={next=>setLod(prev=>prev===next?prev:next)}/>
   <ModelGeometry id={b.id} lod={lod} height={b.h} dimensions={[b.w,b.h,b.d]}/>
-  <OutdoorCampaignDisplay b={b}/>
+  {b.id==="office-brick"?<BrickhouseCampaignMedia b={b} lod={lod} onSelect={onSelect}/>:<OutdoorCampaignDisplay b={b}/>}
   {/* Invisible raycast collider. Game interaction is routed through the original b.id. */}
   <mesh name={"GAMEPLAY_HITBOX_"+b.id} position={[0,b.h*.5+.25,0]} onClick={e=>{e.stopPropagation();onSelect(b.id)}}
    onPointerOver={e=>{e.stopPropagation();onHover(true)}} onPointerOut={e=>{e.stopPropagation();onHover(false)}}>
