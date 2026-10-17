@@ -4,7 +4,9 @@ export type Phase = "brief" | "research" | "survey" | "validation" | "strategy" 
 export const PHASES: Phase[] = ["brief", "research", "survey", "validation", "strategy", "creative", "media", "live", "results"];
 export const PHASE_LABEL: Record<Phase, string> = { brief: "Brief", research: "Research", survey: "Survey", validation: "Validate", strategy: "Strategy", creative: "Creative", media: "Media", live: "Live", results: "Review" };
 
+export type AIBriefStatus = "pending" | "generating" | "ready" | "fallback";
 export interface Campaign {
+  briefId: string; aiStatus: AIBriefStatus; aiError?: string | null;
   scenarioIndex: number; aiScenario?: Scenario | null; phase: Phase; day: number; spent: number; research: string[];
   survey: { audience: string; sample: number; question: string } | null; insight: string | null;
   strategy: { segment: string; objective: string; position: string }; creative: string | null;
@@ -43,6 +45,8 @@ export interface GameState {
 }
 
 export const newCampaign = (i: number): Campaign => ({
+  briefId: "brief-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,9),
+  aiStatus:"pending", aiError:null,
   scenarioIndex: i, aiScenario:null, phase: "brief", day: 1, spent: 0, research: [], survey: null, insight: null,
   strategy: { segment: "students", objective: "visits", position: "study" }, creative: null,
   media: { paid: 0, creator: 0, promo: 0, flyer: 0 }, optimization: null, liveMetrics: null, final: null,
@@ -84,6 +88,11 @@ export function migrate(raw: unknown): GameState {
     log: Array.isArray(s.log) ? (s.log as unknown[]).map((l) => (typeof l === "string" ? { t: 0, msg: l } : (l as { t: number; msg: string }))) : [],
     ceo: s.ceo ?? null,
   };
+  // Keep old saves playable; only unaccepted briefs become automatic-AI candidates.
+  if (!out.campaign.briefId || typeof out.campaign.briefId!=="string") out.campaign.briefId=newCampaign(out.campaign.scenarioIndex).briefId;
+  if (out.campaign.aiScenario) out.campaign.aiStatus="ready";
+  else if (out.campaign.phase==="brief" && !["fallback","pending","generating"].includes(out.campaign.aiStatus)) out.campaign.aiStatus="pending";
+  else if (out.campaign.phase!=="brief" && !out.campaign.aiScenario) out.campaign.aiStatus="fallback";
   if (!["room", "city", "office", "boardroom"].includes(out.scene)) out.scene = out.agencyUnlocked ? "office" : "room";
   if (out.agencyUnlocked && out.ceo) {
     const base = newCEO(out.reputation);
