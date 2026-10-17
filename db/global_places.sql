@@ -36,7 +36,7 @@ DECLARE n INTEGER;
 BEGIN
   FOR n IN 0..31 LOOP
     EXECUTE format(
-      'CREATE TABLE IF NOT EXISTS global_places_p%02s PARTITION OF global_places FOR VALUES WITH (MODULUS 32, REMAINDER %s)',
+      'CREATE TABLE IF NOT EXISTS global_places_p%s PARTITION OF global_places FOR VALUES WITH (MODULUS 32, REMAINDER %s)',
       n,n);
   END LOOP;
 END $$;
