@@ -519,3 +519,11 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-week-archive-entry small{font-size:10px;color:#82948a}
 .mt-week-archive-entry>span:last-child{font-size:10px;font-weight:900;color:#618270;white-space:nowrap}
 .mt-week-archive-entry:hover{background:#ebf2e9;border-color:#b9d6c5}
+
+
+/* GLB slice-2: clear in-map discovery and model identity, not hidden behind camera distance. */
+.world-building-label .mt-glb-status{display:inline-flex;align-items:center;margin-left:5px;font-size:8px!important;letter-spacing:.045em;font-weight:900;border-radius:5px;background:#c5e4cd;color:#255b42!important;padding:2px 5px;white-space:nowrap}
+.mt-3d-tour-cta{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);z-index:12;padding:13px 15px;border-radius:12px;border:1px solid #c1dbc9;background:rgba(37,63,67,.94);color:#e9f6ea;box-shadow:0 15px 40px #1e323864;display:flex;align-items:center;gap:14px;font-size:11px;font-weight:900;letter-spacing:.075em;cursor:pointer;white-space:nowrap;backdrop-filter:blur(12px)}
+.mt-3d-tour-cta span{font-size:10px;color:#f0d5ac;letter-spacing:.06em}
+.mt-3d-tour-cta:hover{background:#2e655d;border-color:#bce8cb}
+@media(max-width:720px){.mt-3d-tour-cta{bottom:105px;max-width:calc(100% - 24px);gap:7px;white-space:normal;text-align:center;font-size:9px;padding:11px 9px}.mt-3d-tour-cta span{font-size:8px}}
