@@ -5,7 +5,9 @@
   "scripts": {
     "build": "tsc --noEmit && npm test && vite build",
     "dev": "vite --host 0.0.0.0",
-    "test": "node --import tsx --test tests/*.test.ts"
+    "test": "npm run assets:build && node --import tsx --test tests/*.test.ts",
+    "assets:build": "node tools/asset-factory/build-fallback.mjs",
+    "assets:verify": "node tools/asset-factory/build-fallback.mjs --verify"
   },
   "dependencies": {
     "react": "^19.2.0",
