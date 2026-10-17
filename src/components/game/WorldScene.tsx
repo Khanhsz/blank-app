@@ -134,8 +134,8 @@ function CityPlayer({character,districts,touch,position,active}:{character:Chara
 
 function City({districts,onSelect,selected,c,touch,position,active,quality}:{districts:District[];onSelect:(id:string)=>void;selected:string|null;c:Character;touch:string;position:React.MutableRefObject<[number,number]>;active:React.MutableRefObject<boolean>;quality:"high"|"low"}){
  return <><Land/><RoadNetwork/>
- <DistrictManager districts={districts} selected={selected} onSelect={onSelect} quality={quality}/>
- <ChunkManager quality={quality}/>
+ <DistrictManager districts={districts} selected={selected} onSelect={onSelect}/>
+ <ChunkManager/>
  {Array.from({length:13},(_,i)=><CityWalker key={i} seed={i+1} c={c}/>)}
  <CityPlayer character={c} districts={districts} touch={touch} position={position} active={active}/>
  </>;
