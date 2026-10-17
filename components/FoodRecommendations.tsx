@@ -62,7 +62,7 @@ export default function FoodRecommendations({activity,anchor,onChoose}:Props){
       <div><span className="place-kicker">REAL PLACES FROM OPENSTREETMAP</span><h4>Where to eat & drink nearby</h4></div>
     </div>
     <p className="food-panel-help">Restaurants, cafes, tea shops and dessert spots near your planned stop. No invented ratings, prices or availability.</p>
-    {anchor && <p className="food-anchor"><MapPin size={13}/>{anchor.source==='day'?'Searching around another mapped stop on this day':'Searching around this activity’s map pin'} · approx. 1.4 km radius</p>}
+    {anchor && <p className="food-anchor"><MapPin size={13}/>{anchor.source==='day'?'Searching around another mapped stop on this day':'Searching around this activity’s map pin'} · approx. 900 m radius</p>}
     <div className="food-filters" role="group" aria-label="Food and drink categories">
       <button type="button" className={filter==='all'?'active':''} aria-pressed={filter==='all'} onClick={()=>{setFilter('all');setLimit(8);}}>All places</button>
       <button type="button" className={filter==='food'?'active':''} aria-pressed={filter==='food'} onClick={()=>{setFilter('food');setLimit(8);}}><ChefHat size={14}/> Restaurants</button>
