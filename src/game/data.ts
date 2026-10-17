@@ -161,7 +161,7 @@ export const ceoTaskDefs: TaskDef[] = [
   { key: "analytics", label: "Campaign analytics & client report", role: "analytics", effort: 4, pre: ["creative", "media", "kol"], cost: 1550000 },
 ];
 
-export interface Rival { id: string; name: string; type: string; special: string; rep: number; creative: number; performance: number; strategy: number; people: number; cash: number; price: number; aggression: number; clients: number; officeTier?:number; wins?:number; lastMove?:string; lastMoveDay?:number; focus?: "premium"|"growth"|"creative"|"value"|"strategy" }
+export interface Rival { id: string; name: string; type: string; special: string; rep: number; creative: number; performance: number; strategy: number; people: number; cash: number; price: number; aggression: number; clients: number; officeTier?:number; wins?:number; lastMove?:string; lastMoveDay?:number; focus?: "premium"|"growth"|"creative"|"value"|"strategy"; activeContracts?:{leadId:string;brand:string;finishDay:number;revenue:number}[] }
 export const ceoRivalDefs: Rival[] = [
   { id: "atlas", name: "Atlas Global Network", type: "Full-service Network", special: "Integrated", rep: 83, creative: 76, performance: 76, strategy: 80, people: 54, cash: 480000000, price: 1.22, aggression: 0.63, clients: 12 },
   { id: "pulse", name: "Pulse Performance", type: "Performance Agency", special: "Performance", rep: 72, creative: 58, performance: 92, strategy: 70, people: 24, cash: 165000000, price: 1.08, aggression: 0.78, clients: 7 },
