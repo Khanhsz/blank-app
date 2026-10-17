@@ -99,7 +99,7 @@ export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaig
   return null;
 }
 
-const TABS = ["inbox", "pipeline", "teams", "people", "finance", "rivals", "news", "partners"] as const;
+const TABS = ["inbox", "pipeline", "workforce", "finance", "rivals", "news", "partners"] as const;
 export function CEOCommandCenter({onReadEdition}:{onReadEdition?:(id:string)=>void}) {
   const s = useGame((x) => x);
   const [tab, setTab] = useState<(typeof TABS)[number]>(s.ceo?.activeDealId?"pipeline":"inbox");
@@ -112,41 +112,8 @@ export function CEOCommandCenter({onReadEdition}:{onReadEdition?:(id:string)=>vo
       <div className="mt-ceo-tabs" role="tablist" aria-label="CEO sections">{TABS.map(t => <button key={t} type="button" role="tab" aria-selected={tab===t} className={"mt-ceo-tab "+(tab===t?"active":"")} onClick={()=>setTab(t)}>{t}{t==="inbox"&&open.length>0?<b>{open.length}</b>:null}</button>)}</div>
       <PhaseScene phase={tab}>
       {tab === "inbox" && (open.length ? open.map((i) => <div key={i.id} className="mt-escalation"><div className="text-xs text-muted-foreground">Day {i.day} · {i.type}</div><p className="text-sm">{i.message}</p><div className="mt-2 flex flex-wrap gap-2">{i.choices.map((ch) => <Button key={ch} size="sm" variant="outline" className="capitalize" onClick={() => act((d, f) => K.resolveIssue(d, f, i.id, ch))}>{ch}</Button>)}</div></div>) : <p className="text-sm text-muted-foreground">Inbox clear. Staff are working autonomously — check the pipeline for new deals.</p>)}
-      {tab==="pipeline"&&<GrowthDesk onTeams={()=>setTab("teams")}/>}
-      {tab==="teams"&&<ClientTeamBoard onPeople={()=>setTab("people")}/>}
-       {tab==="people"&&<div className="mt-personnel-grid">
-        <GameSection eyebrow="PEOPLE & CULTURE" title="Recruitment & Staffing" sub="A random shortlist arrives every End Week. Higher-rated candidates cost more in payroll. Assign hired employees exclusively to client teams." icon={<Users size={19}/>}/>
-        <div className="mt-journey-team-summary"><span>Headcount <b>{s.staff.length}/{currentOffice(s).capacity}</b></span><span>Payroll/day <b>{money(K.dailyPayroll(s))}</b></span><span>Available <b>{T.talentPool(s).length}</b></span></div>
-        <div className="mt-market-section"><h4>WEEK {s.clock.week} · RECRUITMENT BOARD</h4><p className="text-xs text-muted-foreground">Candidates and their starting stats are fixed during this week. Unsigned offers expire when you choose End Week.</p></div>
-        {(s.recruitment?.candidates??[]).map(e=>{
-          const unavailable=(c.talentMarket?.[e.id]?.untilDay??0)>c.day;
-          return <div key={e.id} className="mt-personnel-card">
-            <div className="flex justify-between gap-2 items-start">
-              <div><b>{e.name}</b><p className="text-xs text-muted-foreground">{e.role} · {e.skill}</p></div>
-              <Button size="sm" disabled={unavailable||s.agencyCash<recruitmentFee(e)||s.staff.length>=currentOffice(s).capacity} onClick={()=>act((d,fx)=>K.hire(d,fx,e.id))}>{unavailable?"Unavailable":"Hire · "+money(recruitmentFee(e))}</Button>
-            </div>
-            <div className="mt-personnel-values"><span>Skill <b>{e.startingSkill}</b></span><span>Morale <b>{e.startingMorale}</b></span><span>Fatigue <b>{e.startingFatigue}</b></span><span>Rating <b>{recruitmentScore(e)}</b></span></div>
-            <div className="mt-personnel-meter"><span style={{width:e.startingSkill+"%"}}/></div>
-            <p className="text-xs text-muted-foreground mt-1">Salary <b>{money(e.salary)}/mo</b> · One-time recruitment fee {money(recruitmentFee(e))}</p>
-          </div>;
-        })}
-        {!(s.recruitment?.candidates?.length)&&<p className="text-sm text-muted-foreground">No open applicants this week. End Week to receive new candidates.</p>}
-        <div className="mt-market-section"><h4>YOUR EMPLOYEES · {s.staff.length}</h4></div>
-        {s.staff.map(id=>{const e=employeeById(id);if(!e)return null;
-          const p=P.profile(s,id),training=!!p.trainingUntil&&p.trainingUntil>c.day;
-          return <div key={id} className="mt-personnel-card hired">
-            <div className="flex justify-between gap-2 items-start"><div><b>{e.name}</b><p className="text-xs text-muted-foreground">{e.role} · {money(e.salary)}/mo</p></div>
-              <span className="mt-personnel-status">{T.ownerTeam(s,id)?"CLIENT SQUAD":training?"TRAINING":"TALENT POOL"}</span>
-            </div>
-            <div className="mt-personnel-values"><span>Expertise <b>{Math.round(p.skill)}</b></span><span>Morale <b>{Math.round(p.morale)}</b></span><span>Fatigue <b>{Math.round(p.fatigue)}</b></span><span>Load <b>{busy[id]??0}/{P.effectiveCapacity(s,id)}</b></span></div>
-            <div className="mt-personnel-meter"><span style={{width:Math.max(0,Math.min(100,p.skill))+"%"}}/></div>
-            <div className="mt-personnel-controls">
-              <Button size="sm" variant="outline" disabled={training||busy[id]>0||s.agencyCash<e.salary*.35} onClick={()=>act((d,fx)=>P.train(d,fx,id))}>{training?"Training until Day "+p.trainingUntil:"Train · "+money(e.salary*.35)}</Button>
-              <span className="text-xs text-muted-foreground">{T.ownerTeam(s,id)?"Team: "+T.ownerTeam(s,id)!.brand:"Available for a client squad"}</span>
-            </div>
-          </div>;
-        })}
-      </div>}
+      {tab==="pipeline"&&<GrowthDesk onTeams={()=>setTab("workforce")}/>}
+      {tab==="workforce"&&<ClientTeamBoard/>}
       {tab === "finance" && <><GameSection eyebrow="AGENCY FINANCE" title="Understand your cash runway" icon={<Coins size={20}/>} sub="Receivables differ from paid cash. Payroll and direct project costs reduce reserves."/><BarComparison rows={[{label:"Cash reserves",value:Math.max(0,s.agencyCash),display:money(s.agencyCash)},{label:"Receivables",value:Math.max(0,c.totalBilled-c.totalPaid),display:money(c.totalBilled-c.totalPaid)},{label:"Expenses to date",value:Math.max(0,c.totalDirect+c.totalPayroll),display:money(c.totalDirect+c.totalPayroll)}]}/><Row k="Agency cash" v={money(s.agencyCash)} /><Row k="Daily payroll" v={money(K.dailyPayroll(s))} /><Row k="Billed / paid" v={`${money(c.totalBilled)} / ${money(c.totalPaid)}`} /><Row k="Direct costs" v={money(c.totalDirect)} />
         <div className="max-h-64 overflow-auto">{c.ledger.slice(0, 40).map((x, i) => <div key={i} className="flex justify-between text-xs py-0.5"><span>D{x.day} · {x.what}{x.status === "due" ? " (due)" : ""}</span><span className={x.value < 0 ? "text-destructive" : "text-primary"}>{money(x.value)}</span></div>)}</div></>}
       {tab === "news" && <div className="mt-week-archive">
