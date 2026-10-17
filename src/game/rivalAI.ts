@@ -82,12 +82,12 @@ function stepRivalStrategy(c:CEO,r:Rival,day:number){
   logEvent(c,day,r,"expand",r.name+" expanded its headquarters to tier "+r.officeTier+".");
  }else if(r.cash>hirePrice*4&&(pressure>.7||r.people<12)&&noise(r.id+"hire",day)>.24){
   r.cash-=hirePrice;r.people++;
-  const target=focus==="creative"?"creative":focus==="growth"?"performance":focus==="strategy"?"strategy":r.special==="Integrated"?"strategy":"performance";
+  const target: "creative"|"performance"|"strategy"=focus==="creative"?"creative":focus==="growth"?"performance":focus==="strategy"?"strategy":r.special==="Integrated"?"strategy":"performance";
   r[target]=clamp(r[target]+.55,25,99);
   logEvent(c,day,r,"hire",r.name+" recruited a new "+target+" specialist.");
  }else if(r.cash>9000000&&improvement<86&&noise(r.id+"upskill",day)>.55){
   r.cash-=2200000;
-  const skill=focus==="creative"?"creative":focus==="strategy"?"strategy":focus==="growth"?"performance":r.special==="Integrated"?"strategy":"performance";
+  const skill: "creative"|"performance"|"strategy"=focus==="creative"?"creative":focus==="strategy"?"strategy":focus==="growth"?"performance":r.special==="Integrated"?"strategy":"performance";
   r[skill]=clamp(r[skill]+1.4,20,99);
   logEvent(c,day,r,"market",r.name+" invested in "+skill+" capability.");
  }else{
