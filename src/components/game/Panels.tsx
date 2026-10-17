@@ -50,9 +50,48 @@ export function CampaignWorkspace() {
         {mediaChannels.map((m) => <div key={m.id}><div className="flex justify-between text-sm"><span>{m.title}</span><b>{money(media[m.id])}</b></div><input type="range" className="w-full accent-primary" min={0} max={left} step={100000} value={media[m.id]} onChange={(e) => setMedia({ ...media, [m.id]: +e.target.value })} /></div>)}
         <Row k="Allocated" v={`${money(tot)} / ${money(left)}`} />
         <Button className="w-full" disabled={tot < 500000 || tot > left} onClick={() => act((d, f) => C.launch(d, f, media))}>Launch campaign</Button></>; })()}
-      {c.phase === "live" && c.liveMetrics && <><GameSection eyebrow="LIVE CAMPAIGN" title="Monitor and optimize" icon={<Activity size={19}/>} sub="Adjustments cost money but may change outcomes."/><div className="mt-campaign-stats"><GameStat label="INTERIM REACH" value={c.liveMetrics.adReach.toLocaleString()}/><GameStat label="INTERIM UPLIFT" value={c.liveMetrics.pct+"%"}/></div><AnimatedGauge label="Progress toward target" percent={c.liveMetrics.pct/Math.max(1,sc.target)*100} tone="teal"/>
-        {optimizations.map((o) => <Choice key={o.id} onClick={() => act((d, f) => C.optimize(d, f, o.id))} title={`${o.title} · ${money(o.cost)}`} sub={o.desc} />)}</>}
-      {c.phase === "results" && c.final && <><GameSection eyebrow="CAMPAIGN COMPLETE" title="The verdict" icon={<Check size={20}/>} sub="Results are recorded in your career history."/><AnimatedGauge label="Target achievement" percent={c.final.pct/Math.max(1,sc.target)*100} tone="sage"/><Row k="Final KPI" v={`${c.final.outcome} ${sc.unit}`} /><Row k="Uplift" v={`${c.final.pct}% (target +${sc.target}%)`} /><Row k="Fee earned" v={money(sc.fee)} /><Row k="Reward" v={`+${c.final.rep} REP · +${c.final.xp} XP`} />
+      {c.phase === "live" && c.liveMetrics && <><GameSection eyebrow="LIVE CAMPAIGN" title="Monitor and optimize" icon={<Activity size={19}/>} sub="Every day is simulated from your real game choices. No separate simulation screen."/>
+        <div className="rounded-lg border border-border bg-card p-3 space-y-2">
+          <div className="flex items-center justify-between gap-3"><div className="text-sm font-semibold">Campaign delivery</div><div className="text-xs text-muted-foreground">Day {c.simulation?.elapsed ?? 0} / {c.simulation?.duration ?? "?"}</div></div>
+          <AnimatedGauge label="Delivery progress" percent={c.simulation ? c.simulation.elapsed / Math.max(1, c.simulation.duration) * 100 : 0} tone="teal"/>
+          <p className="text-xs text-muted-foreground">Simulated figures for gameplay. Client media is reserved on launch and spent day by day; it is not charged twice.</p>
+        </div>
+        <div className="mt-campaign-stats">
+          <GameStat label="MODELED REACH" value={c.liveMetrics.adReach.toLocaleString()}/>
+          <GameStat label="OBSERVED UPLIFT" value={c.liveMetrics.pct + "%"}/>
+          <GameStat label="ACTUAL MEDIA SPEND" value={money(c.simulation?.actualMediaSpent ?? 0)}/>
+          <GameStat label="AWARENESS INDEX" value={((c.simulation?.awareness ?? .06)*100).toFixed(1)+"%"}/>
+        </div>
+        <AnimatedGauge label="Progress toward target" percent={c.liveMetrics.pct / Math.max(1, sc.target) * 100} tone="teal"/>
+        {!!c.simulation?.days.length && <div className="rounded-lg border border-border bg-card p-3">
+          <div className="mb-3 text-xs font-semibold">Daily KPI uplift (%)</div>
+          <div className="flex h-28 items-end gap-1 overflow-x-auto border-b border-border pb-1">
+            {c.simulation.days.map((d) => <div key={d.day} className="flex min-w-5 flex-1 flex-col justify-end gap-1 text-center" title={`Day ${d.day}: ${d.impressions.toLocaleString()} impressions, ${d.clicks} clicks, ${d.incremental} incremental ${sc.unit}, ${money(d.spend)} media`}>
+              <div className="w-full rounded-t-sm bg-primary/75" style={{height: Math.max(4, Math.min(100, Math.abs(d.upliftPct) / Math.max(1, sc.target * 1.8) * 100))+"%"}}></div>
+              <span className="text-[9px] text-muted-foreground">{d.day}</span>
+            </div>)}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <span>Clicks: {c.simulation.days.reduce((a,d)=>a+d.clicks,0).toLocaleString()}</span>
+            <span>Impressions: {c.simulation.days.reduce((a,d)=>a+d.impressions,0).toLocaleString()}</span>
+            <span>Incremental {sc.unit}: {c.simulation.days.reduce((a,d)=>a+d.incremental,0)}</span>
+          </div>
+          {c.simulation.days.at(-1)?.event && <p className="mt-2 text-xs">Market event: {c.simulation.days.at(-1)?.event}</p>}
+        </div>}
+        <div className="grid grid-cols-2 gap-2">
+          <Button onClick={() => act((d,f)=>C.advanceCampaignDay(d,f,1))}>Run next day →</Button>
+          <Button variant="outline" onClick={() => act((d,f)=>C.advanceCampaignDay(d,f,30))}>Finish delivery</Button>
+        </div>
+        <div className="mt-3 space-y-2">
+          <p className="text-xs font-semibold">One optimization during live delivery (affects future days)</p>
+          {c.optimization
+            ? <p className="rounded-lg bg-muted p-3 text-sm">Chosen: {optimizations.find(o=>o.id===c.optimization)?.title ?? c.optimization}</p>
+            : (c.simulation?.elapsed ?? 0) < 1
+              ? <p className="text-xs text-muted-foreground">Run at least one delivery day to unlock optimization.</p>
+              : optimizations.map((o) => <Choice key={o.id} onClick={() => act((d, f) => C.optimize(d, f, o.id))} title={`${o.title} · ${money(o.cost)}`} sub={o.desc} />)}
+        </div>
+      </>}
+      {c.phase === "results" && c.final && <><GameSection eyebrow="CAMPAIGN COMPLETE" title="The verdict" icon={<Check size={20}/>} sub="Results are recorded in your career history."/><AnimatedGauge label="Target achievement" percent={c.final.pct/Math.max(1,sc.target)*100} tone="sage"/><Row k="Final KPI" v={`${c.final.outcome} ${sc.unit}`} /><Row k="Uplift" v={`${c.final.pct}% (target +${sc.target}%)`} />{c.simulation && <><Row k="Campaign delivery days" v={c.simulation.elapsed + " / " + c.simulation.duration} /><Row k="Media delivered" v={money(c.simulation.actualMediaSpent)} /><Row k="Channel spending" v="Committed budget, no double billing" /></>}<Row k="Fee earned" v={money(sc.fee)} /><Row k="Reward" v={`+${c.final.rep} REP · +${c.final.xp} XP`} />
         <FeedbackStrip tone="positive">Campaign delivered. Reputation, fee and expertise have been recorded.</FeedbackStrip><p className="text-sm text-muted-foreground">Visit the Networking Café or Brand HQ in the city for your next brief.</p></>}
       </PhaseScene>
     </div>
