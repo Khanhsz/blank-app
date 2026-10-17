@@ -28,13 +28,17 @@ function Lamp({x,z}:{x:number;z:number}){
   <mesh position={[0,5.5,0]}><sphereGeometry args={[.35,8,6]}/><meshStandardMaterial color="#fff3cd" emissive="#f9dba3" emissiveIntensity={1.05}/></mesh>
  </group>;
 }
-function LowPolyPerson({c,pos,walk=false,seed=0}:{c:Character;pos:[number,number,number];walk?:boolean;seed?:number}){
+function LowPolyPerson({c,pos,walk=false,seed=0,yaw=0}:{c:Character;pos:[number,number,number];walk?:boolean;seed?:number;yaw?:number}){
  const r=useRef<THREE.Group>(null), arm=useRef<THREE.Group>(null);
- useFrame(({clock})=>{const t=clock.elapsedTime+seed*3;if(r.current){r.current.position.y=pos[1]+Math.sin(t*(walk?6:2.1))*(walk?.065:.028);if(walk)r.current.rotation.y=Math.sin(t*.3)*.15;}if(arm.current)arm.current.rotation.x=Math.sin(t*4)*.18;});
+ useFrame(({clock})=>{const t=clock.elapsedTime+seed*3;if(r.current){r.current.position.y=pos[1]+Math.sin(t*(walk?6:2.1))*(walk?.065:.028);r.current.rotation.y=yaw+(walk?Math.sin(t*.3)*.15:0);}if(arm.current)arm.current.rotation.x=Math.sin(t*4)*.18;});
  return <group ref={r} position={pos}>
   <mesh castShadow position={[0,.82,0]}><capsuleGeometry args={[.23,.72,4,8]}/><meshStandardMaterial color={c.outfit} {...flat}/></mesh>
   <mesh castShadow position={[0,1.57,0]}><sphereGeometry args={[.25,12,9]}/><meshStandardMaterial color={c.skin} roughness={.95}/></mesh>
-  <mesh position={[0,1.74,-.02]} castShadow><sphereGeometry args={[.255,12,8,0,Math.PI*2,0,Math.PI*.55]}/><meshStandardMaterial color={c.hair} roughness={.96}/></mesh>
+  <mesh position={[0,c.hairstyle==="bun"?1.74:1.76,-.02]} castShadow><sphereGeometry args={[.255,12,8,0,Math.PI*2,0,Math.PI*(c.hairstyle==="curly"?.75:.55)]}/><meshStandardMaterial color={c.hair} roughness={.96}/></mesh>
+  {c.hairstyle==="bun"&&<mesh position={[0,1.91,-.12]} castShadow><sphereGeometry args={[.19,10,10]}/><meshStandardMaterial color={c.hair}/></mesh>}
+  {c.hairstyle==="curly"&&[-.19,-.03,.15].map((x,i)=><mesh key={i} position={[x,1.82+i*.04,.06]}><icosahedronGeometry args={[.13,0]}/><meshStandardMaterial color={c.hair} flatShading/></mesh>)}
+  {c.accessory==="headphones"&&<group><mesh position={[0,1.7,0]} rotation={[0,0,Math.PI/2]}><torusGeometry args={[.3,.05,6,16,Math.PI]}/><meshStandardMaterial color="#34343c"/></mesh>{[-.26,.26].map(x=><mesh key={x} position={[x,1.58,0]}><boxGeometry args={[.08,.23,.17]}/><meshStandardMaterial color="#494d58"/></mesh>)}</group>}
+  {c.accessory==="glasses"&&<group position={[0,1.58,.233]}>{[-.13,.13].map(x=><mesh key={x} position={[x,0,0]}><torusGeometry args={[.105,.019,6,12]}/><meshStandardMaterial color="#293947"/></mesh>)}<mesh position={[0,0,0]}><boxGeometry args={[.06,.025,.03]}/><meshStandardMaterial color="#293947"/></mesh></group>}
   <group ref={arm} position={[0,.95,0]}>
    <mesh position={[-.34,-.05,0]} rotation-z={-.12}><capsuleGeometry args={[.085,.41,4,6]}/><meshStandardMaterial color={c.outfit} {...flat}/></mesh>
    <mesh position={[.34,-.05,0]} rotation-z={.12}><capsuleGeometry args={[.085,.41,4,6]}/><meshStandardMaterial color={c.outfit} {...flat}/></mesh>
@@ -141,7 +145,7 @@ function RoomTouchable({type,name,p,label,onInteract}:{type:"board"|"phone"|"war
   <Html center position={label} distanceFactor={11}><button className="room-small-label" onClick={()=>onInteract(type)}>{name} ↗</button></Html>
  </group>;
 }
-function Room({r,c,onComputerInteract,onRoomInteract}:{r:RoomStyle;c:Character;onComputerInteract:()=>void;onRoomInteract:(x:RoomAction)=>void}){
+function Room({r,c,onComputerInteract,onRoomInteract,preview=false,avatarYaw=0}:{r:RoomStyle;c:Character;onComputerInteract:()=>void;onRoomInteract:(x:RoomAction)=>void;preview?:boolean;avatarYaw?:number}){
  return <group>
   <Box p={[0,-.15,0]} size={[11,.30,11]} color="#b79375"/>
   <Box p={[0,2.8,-5.5]} size={[11,5.8,.24]} color={r.wall}/>
@@ -170,7 +174,8 @@ function Room({r,c,onComputerInteract,onRoomInteract}:{r:RoomStyle;c:Character;o
   <RoomTouchable type="board" name="MOODBOARD" p={[.58,2.28,-5.3]} label={[.58,3.42,-5.25]} onInteract={onRoomInteract}/>
   <RoomTouchable type="phone" name="PHONE" p={[-3.31,.99,-3.21]} label={[-3.2,1.7,-3.12]} onInteract={onRoomInteract}/>
   <RoomTouchable type="wardrobe" name="WARDROBE" p={[4.54,1.4,1.72]} label={[4.54,3.25,1.72]} onInteract={onRoomInteract}/>
-  <LowPolyPerson c={c} pos={[0,.01,1.35]}/>
+  {preview&&<group><mesh position={[0,.14,1.35]} castShadow><cylinderGeometry args={[1.25,1.36,.28,16]}/><meshStandardMaterial color="#b88466" flatShading/></mesh><mesh position={[0,.32,1.35]} castShadow><cylinderGeometry args={[1.04,1.16,.09,16]}/><meshStandardMaterial color="#fff0dd" flatShading/></mesh></group>}
+  <LowPolyPerson c={c} pos={[0,preview?.38:.01,1.35]} yaw={avatarYaw}/>
  </group>;
 }
 function Office({c,staff,board}:{c:Character;staff:number;board:boolean}){
@@ -201,7 +206,7 @@ function Office({c,staff,board}:{c:Character;staff:number;board:boolean}){
   <ContactShadows opacity={.23} scale={22} blur={2.9} far={10} position={[0,-.005,0]}/>
  </group>;
 }
-function CameraRig({scene,districts,selected}:{scene:SceneId;districts:District[];selected:string|null}){
+function CameraRig({scene,districts,selected,focus,preview,avatarZoom}:{scene:SceneId;districts:District[];selected:string|null;focus?:string|null;preview?:boolean;avatarZoom?:number}){
  const controls=useRef<any>(null);
  useEffect(()=>{
   const c=controls.current;if(!c)return;
@@ -209,13 +214,20 @@ function CameraRig({scene,districts,selected}:{scene:SceneId;districts:District[
    const building=districts.find(b=>b.id===selected);
    if(building)c.setLookAt(building.x+13,Math.max(15,building.h+12),building.z+16,building.x,building.h*.5,building.z,true);
    else c.setLookAt(31,35,43,0,0,0,true);
-  }else if(scene==="room")c.setLookAt(11.4,10.7,13.8,0,1.25,0,true);
+  }else if(scene==="room"){
+   if(preview)c.setLookAt(2.5*(avatarZoom||1),3.5*(avatarZoom||1),6.3*(avatarZoom||1),0,1.2,1.35,true);
+   else if(focus==="pc")c.setLookAt(-.8,3.2,1,-2.5,1.24,-3.75,true);
+   else if(focus==="board")c.setLookAt(1.9,3.3,-.5,.58,2.28,-5.3,true);
+   else if(focus==="phone")c.setLookAt(-1,2.8,.2,-3.31,.99,-3.21,true);
+   else if(focus==="wardrobe")c.setLookAt(5,3.4,6,4.54,1.4,1.72,true);
+   else c.setLookAt(11.4,10.7,13.8,0,1.25,0,true);
+  }
   else c.setLookAt(19,14,19,0,1,0,true);
- },[scene,selected,districts]);
+ },[scene,selected,districts,focus,preview,avatarZoom]);
  return <CameraControls ref={controls} smoothTime={.7} maxPolarAngle={Math.PI/2.12} minDistance={5} maxDistance={scene==="city"?72:27} dollySpeed={.65} truckSpeed={.6} />;
 }
-export function WorldScene({scene,districts,selected,onSelect,onComputerInteract,onRoomInteract,character,room,staff,quality}:{
- scene:SceneId;districts:District[];selected:string|null;onSelect:(id:string)=>void;onComputerInteract:()=>void;onRoomInteract:(x:RoomAction)=>void;character:Character;room:RoomStyle;staff:number;quality:"high"|"low";
+export function WorldScene({scene,districts,selected,onSelect,onComputerInteract,onRoomInteract,character,room,staff,quality,focus,preview,avatarYaw,avatarZoom}:{
+ scene:SceneId;districts:District[];selected:string|null;onSelect:(id:string)=>void;onComputerInteract:()=>void;onRoomInteract:(x:RoomAction)=>void;character:Character;room:RoomStyle;staff:number;quality:"high"|"low";focus?:string|null;preview?:boolean;avatarYaw?:number;avatarZoom?:number;
 }){
  const city=scene==="city";
  const memoDistricts=useMemo(()=>districts,[JSON.stringify(districts)]);
@@ -225,9 +237,9 @@ export function WorldScene({scene,districts,selected,onSelect,onComputerInteract
   <ambientLight intensity={.45}/>
   <directionalLight position={[25,37,16]} intensity={2.1} color="#ffeed9" castShadow={quality==="high"} shadow-mapSize-width={2048} shadow-mapSize-height={2048} shadow-camera-left={-52} shadow-camera-right={52} shadow-camera-top={52} shadow-camera-bottom={-52} shadow-bias={-.00014}/>
   <directionalLight position={[-12,9,-17]} intensity={.65} color="#aeced3"/>
-  {city?<City districts={memoDistricts} selected={selected} onSelect={onSelect} c={character}/>:scene==="room"?<Room r={room} c={character} onComputerInteract={onComputerInteract} onRoomInteract={onRoomInteract}/>:<Office c={character} staff={staff} board={scene==="boardroom"}/>}
+  {city?<City districts={memoDistricts} selected={selected} onSelect={onSelect} c={character}/>:scene==="room"?<Room r={room} c={character} onComputerInteract={onComputerInteract} onRoomInteract={onRoomInteract} preview={preview} avatarYaw={avatarYaw}/>:<Office c={character} staff={staff} board={scene==="boardroom"}/>}
   {quality==="high"&&!city&&scene==="room"&&<ContactShadows scale={14} opacity={.2} blur={2.8} far={8} position={[0,-.02,0]}/>}
-  <CameraRig scene={scene} districts={memoDistricts} selected={selected}/>
+  <CameraRig scene={scene} districts={memoDistricts} selected={selected} focus={focus} preview={preview} avatarZoom={avatarZoom}/>
  </Canvas>;
 }
 export function hasWebGL(){
