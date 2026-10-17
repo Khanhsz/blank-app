@@ -21,6 +21,14 @@ test("different scales and budgets produce different bounded recommendations",()
  assert.equal(small.companyScale,"growing");
  assert.ok(small.recommendedFee<buildPriceAdvice(sample).recommendedFee);
 });
+test("business scale is independent of marketing budget and changes the fee recommendation",()=>{
+ const enterprise=buildPriceAdvice({...sample,businessSize:"enterprise"},null,"rules");
+ const small=buildPriceAdvice({...sample,businessSize:"small"},null,"rules");
+ assert.equal(enterprise.companyScale,small.companyScale);
+ assert.equal(enterprise.businessSize,"enterprise");
+ assert.equal(small.businessSize,"small");
+ assert.ok(enterprise.options.balanced>small.options.balanced);
+});
 test("invalid numbers are rejected and offline fallback remains playable",()=>{
  assert.throws(()=>validatePricingInput({...sample,mediaBudget:Infinity}),/Invalid media budget/);
  assert.throws(()=>validatePricingInput({...sample,estimatedCost:-1}),/Invalid delivery cost/);
