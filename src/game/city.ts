@@ -52,7 +52,12 @@ export const findOffice=(id?:string)=>officeOptions.find(o=>o.id===id)||starterO
 export const currentOffice=(s:GameState)=>findOffice(s.officeId);
 export const findCityLot=(id:string)=>cityLots.find(l=>l.id===id);
 export const cityRival=(s:GameState,id:string)=>s.ceo?.rivals.find(r=>r.id===id)||ceoRivalDefs.find(r=>r.id===id);
-export const cityClient=(s:GameState,id:string)=>s.ceo?.leads.find(l=>l.id===id)||ceoLeadDefs.find(l=>l.id===id);
+export const cityClient=(s:GameState,id:string)=>{
+ const leads=s.ceo?.leads.filter(l=>l.id===id||l.id.startsWith("market-"+id+"-"))||[];
+ const active=leads.filter(l=>["new","renewal","qualified","pitch","pitch_won","negotiating"].includes(l.status));
+ // Prioritize the latest open tender, then original account record for continuity.
+ return active[active.length-1]||leads[leads.length-1]||ceoLeadDefs.find(l=>l.id===id);
+};
 export function leaseOffice(s:GameState,fx:Fx,id:string){
  const option=officeOptions.find(o=>o.id===id);
  if(!option){fx.toast("This building is not offered for lease");return false}
