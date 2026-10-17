@@ -1,20 +1,20 @@
 
 @import "tailwindcss";
-@theme inline{--color-background:#faf7f1;--color-foreground:#27221f;--color-card:#fffdfa;--color-primary:#bd694a;--color-primary-foreground:#fffaf3;--color-secondary:#f2eadf;--color-secondary-foreground:#3b312a;--color-muted:#f2ece4;--color-muted-foreground:#84766d;--color-border:#e6dace;--color-input:#d9cbbb;--color-accent:#f4e0d6;--color-accent-foreground:#6f402f;--color-destructive:#b8433c}
-*{box-sizing:border-box}html,body,#root{height:100%;margin:0;overflow:hidden}body{font-family:"Avenir Next","Segoe UI",sans-serif;color:#27221f}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
-.game{position:relative;width:100vw;height:100dvh;overflow:hidden;background:#e6dccf}.world{position:absolute;inset:0}.world canvas{display:block}.header{height:68px;position:absolute;z-index:15;top:17px;left:24px;right:24px;display:flex;justify-content:space-between;align-items:center;padding:9px 16px;background:#fffdf7ed;backdrop-filter:blur(16px);border:1px solid white;border-radius:17px;box-shadow:0 15px 50px #2f261f1c;gap:10px}.brand{display:flex;align-items:center;gap:12px}.mark{font:italic 29px Georgia,serif;background:#302923;color:#fff;padding:5px 12px;border-radius:11px}.brand strong{font-size:12px;letter-spacing:.15em;display:block}.brand small{display:block;font-size:9px;letter-spacing:.12em;color:#958779;margin-top:4px}.worldlabel{font-size:12px;font-weight:700;display:flex;gap:8px;align-items:center}.worldlabel small{font-size:10px;color:#9e8d7d;margin-left:10px;letter-spacing:.1em}.live{width:8px;height:8px;background:#c27154;border-radius:50%}.topactions{display:flex;gap:7px}.topactions button,.close{border:1px solid #e8ded4;border-radius:10px;width:37px;height:37px;display:grid;place-items:center;background:white}
-.quest{position:absolute;z-index:10;left:25px;top:110px;width:280px;border-radius:18px;padding:21px;background:#fffdf7ef;backdrop-filter:blur(16px);box-shadow:0 14px 40px #42362a1c}.eyebrow{letter-spacing:.15em;font-weight:800;font-size:10px;color:#af6249;text-transform:uppercase}.quest h2{font:29px/1.05 Georgia,serif;margin:14px 0;letter-spacing:-.03em}.quest p{color:#87766a;font-size:12px;line-height:1.55}.quest button{margin-top:13px;color:#b8674a;font-weight:750;font-size:12px}.stats{position:absolute;bottom:107px;left:25px;z-index:10;display:flex;gap:8px}.stats>div{padding:11px 14px;background:#fffdf7ed;border-radius:12px;font-weight:800;font-size:9px;letter-spacing:.1em;color:#8b7b70;min-width:110px}.stats strong{display:block;color:#27221f;margin-top:6px;font-size:15px;letter-spacing:normal}.stats .darkstat{background:#302923;color:#cfb3a3}.stats .darkstat strong{color:#fff}
-.dock{position:absolute;z-index:15;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:4px;background:#fffdf7ed;backdrop-filter:blur(20px);padding:7px;border-radius:18px;box-shadow:0 19px 45px #30231c39;border:1px solid #fff}.dock button{min-width:82px;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 12px;font-size:10px;font-weight:700;color:#8c7d72}.dock .active{background:#302923;color:white}.clock{z-index:14;position:absolute;right:26px;bottom:26px;border-radius:14px;background:#302923;color:white;display:flex;gap:8px;align-items:center;padding:8px 12px;font-size:12px}.clock button{display:flex;align-items:center;gap:2px;padding:7px;border-radius:7px}.clock button.active{background:#bc704f}.maptip{position:absolute;right:26px;bottom:106px;z-index:5;font-size:11px;background:#fffdf7e6;border-radius:10px;padding:9px 12px}.maptip button{margin-left:10px;color:#a65a42;text-decoration:underline}
-.panel{position:absolute;z-index:12;right:24px;top:100px;bottom:104px;width:min(490px,calc(100vw - 48px));background:#fffdfa;display:flex;flex-direction:column;border:1px solid white;box-shadow:0 25px 80px #382a2240;border-radius:20px;overflow:hidden}.panel>header{display:flex;justify-content:space-between;align-items:start;padding:20px 22px 17px;border-bottom:1px solid #eaded1}.panel>header h2{font:normal 29px/1.05 Georgia,serif;margin:8px 0 0}.panelbody{padding:21px 24px 35px;overflow-y:auto;min-height:0}.onboardpanel{top:110px;bottom:22px}.onboard h1{font:43px/1 Georgia,serif;margin:17px 0;letter-spacing:-.03em}.onboard h1 em{color:#bd694a}.onboard p,.customize p{font-size:13px;color:#8a7869;line-height:1.6}.onboard label,.customize label{display:block;font-size:10px;letter-spacing:.13em;color:#9b8273;font-weight:800;margin:20px 0 9px}.onboard input{width:100%;border:1px solid #e2d6c9;border-radius:11px;padding:12px;outline-color:#bd694a}.choices,.swatches{display:flex;flex-wrap:wrap;gap:7px}.choices button{padding:8px 11px;border-radius:9px;border:1px solid #e7dccc;background:#f7f1ea;font-size:11px}.choices .selected{background:#302923;color:#fff}.swatches button{height:30px;width:30px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 1px #d7c6b8}.onboard .primary{width:100%;background:#bd694a;color:white;border-radius:10px;padding:13px;font-size:13px;font-weight:800;margin:25px 0 13px;display:flex;align-items:center;justify-content:center;gap:10px}.onboard small{color:#9e9185;font-size:10px}.directory{display:grid;gap:9px}.directory button{display:flex;justify-content:space-between;background:#f8f1e9;border-radius:10px;padding:15px;font-weight:800}.fallback{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle,#f4e7d7,#dbc8b7)}.fallback h1{font:45px Georgia,serif}.gridmap{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:600px}.gridmap button{padding:15px;border-radius:9px;background:white}
-@media(max-width:750px){.header{top:8px;left:8px;right:8px;height:59px}.brand strong{font-size:10px}.brand small{font-size:7px}.worldlabel{display:none}.quest{top:80px;left:10px;width:235px;padding:13px}.quest h2{font-size:20px;margin:9px 0}.quest p{display:none}.stats{bottom:79px;left:8px;gap:4px}.stats>div{min-width:70px;font-size:7px;padding:7px}.stats strong{font-size:11px}.dock{bottom:7px;left:8px;transform:none;width:calc(100% - 16px);justify-content:space-around;border-radius:13px}.dock button{min-width:0;flex:1;padding:7px 3px;font-size:9px}.panel{top:auto;left:7px;right:7px;bottom:72px;width:auto;height:67dvh;border-radius:17px}.panel>header{padding:13px 17px}.panel>header h2{font-size:24px}.panelbody{padding:14px 18px}.onboardpanel{top:73px;bottom:7px;height:auto}.onboard h1{font-size:35px}.clock{top:78px;right:8px;bottom:auto;padding:5px}.maptip{display:none}}
+@theme inline{--font-sans:"Be Vietnam Pro",system-ui,sans-serif;--color-background:#eef2f5;--color-foreground:#172a36;--color-card:#ffffff;--color-card-foreground:#172a36;--color-primary:#075b75;--color-primary-foreground:#ffffff;--color-secondary:#e5edf1;--color-secondary-foreground:#203a4b;--color-muted:#eaf0f3;--color-muted-foreground:#405666;--color-border:#a2b3bd;--color-input:#92a9b5;--color-accent:#dbe9ee;--color-accent-foreground:#154a62;--color-destructive:#a33130;--color-destructive-foreground:#ffffff;--color-ring:#075b75;--radius-sm:5px;--radius-md:6px;--radius-lg:8px;--radius-xl:9px;--radius-2xl:10px;--radius-3xl:10px}
+*{box-sizing:border-box}html,body,#root{height:100%;margin:0;overflow:hidden}body{font-family:"Be Vietnam Pro",system-ui,sans-serif;color:#27221f}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
+.game{position:relative;width:100vw;height:100dvh;overflow:hidden;background:#e6dccf}.world{position:absolute;inset:0}.world canvas{display:block}.header{height:68px;position:absolute;z-index:15;top:17px;left:24px;right:24px;display:flex;justify-content:space-between;align-items:center;padding:9px 16px;background:#fffdf7ed;backdrop-filter:blur(16px);border:1px solid white;border-radius:10px;box-shadow:0 15px 50px #2f261f1c;gap:10px}.brand{display:flex;align-items:center;gap:12px}.mark{font:italic 29px "Be Vietnam Pro",system-ui,sans-serif;background:#302923;color:#fff;padding:5px 12px;border-radius:8px}.brand strong{font-size:12px;letter-spacing:.15em;display:block}.brand small{display:block;font-size:9px;letter-spacing:.12em;color:#958779;margin-top:4px}.worldlabel{font-size:12px;font-weight:700;display:flex;gap:8px;align-items:center}.worldlabel small{font-size:10px;color:#9e8d7d;margin-left:10px;letter-spacing:.1em}.live{width:8px;height:8px;background:#c27154;border-radius:50%}.topactions{display:flex;gap:7px}.topactions button,.close{border:1px solid #e8ded4;border-radius:10px;width:37px;height:37px;display:grid;place-items:center;background:white}
+.quest{position:absolute;z-index:10;left:25px;top:110px;width:280px;border-radius:10px;padding:21px;background:#fffdf7ef;backdrop-filter:blur(16px);box-shadow:0 14px 40px #42362a1c}.eyebrow{letter-spacing:.15em;font-weight:800;font-size:10px;color:#af6249;text-transform:uppercase}.quest h2{font:29px/1.05 "Be Vietnam Pro",system-ui,sans-serif;margin:14px 0;letter-spacing:-.03em}.quest p{color:#87766a;font-size:12px;line-height:1.55}.quest button{margin-top:13px;color:#b8674a;font-weight:750;font-size:12px}.stats{position:absolute;bottom:107px;left:25px;z-index:10;display:flex;gap:8px}.stats>div{padding:11px 14px;background:#fffdf7ed;border-radius:8px;font-weight:800;font-size:9px;letter-spacing:.1em;color:#8b7b70;min-width:110px}.stats strong{display:block;color:#27221f;margin-top:6px;font-size:15px;letter-spacing:normal}.stats .darkstat{background:#302923;color:#cfb3a3}.stats .darkstat strong{color:#fff}
+.dock{position:absolute;z-index:15;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:4px;background:#fffdf7ed;backdrop-filter:blur(20px);padding:7px;border-radius:10px;box-shadow:0 19px 45px #30231c39;border:1px solid #fff}.dock button{min-width:82px;border-radius:8px;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 12px;font-size:10px;font-weight:700;color:#8c7d72}.dock .active{background:#302923;color:white}.clock{z-index:14;position:absolute;right:26px;bottom:26px;border-radius:8px;background:#302923;color:white;display:flex;gap:8px;align-items:center;padding:8px 12px;font-size:12px}.clock button{display:flex;align-items:center;gap:2px;padding:7px;border-radius:7px}.clock button.active{background:#bc704f}.maptip{position:absolute;right:26px;bottom:106px;z-index:5;font-size:11px;background:#fffdf7e6;border-radius:10px;padding:9px 12px}.maptip button{margin-left:10px;color:#a65a42;text-decoration:underline}
+.panel{position:absolute;z-index:12;right:24px;top:100px;bottom:104px;width:min(490px,calc(100vw - 48px));background:#fffdfa;display:flex;flex-direction:column;border:1px solid white;box-shadow:0 25px 80px #382a2240;border-radius:10px;overflow:hidden}.panel>header{display:flex;justify-content:space-between;align-items:start;padding:20px 22px 17px;border-bottom:1px solid #eaded1}.panel>header h2{font:normal 29px/1.05 "Be Vietnam Pro",system-ui,sans-serif;margin:8px 0 0}.panelbody{padding:21px 24px 35px;overflow-y:auto;min-height:0}.onboardpanel{top:110px;bottom:22px}.onboard h1{font:43px/1 "Be Vietnam Pro",system-ui,sans-serif;margin:17px 0;letter-spacing:-.03em}.onboard h1 em{color:#bd694a}.onboard p,.customize p{font-size:13px;color:#8a7869;line-height:1.6}.onboard label,.customize label{display:block;font-size:10px;letter-spacing:.13em;color:#9b8273;font-weight:800;margin:20px 0 9px}.onboard input{width:100%;border:1px solid #e2d6c9;border-radius:8px;padding:12px;outline-color:#bd694a}.choices,.swatches{display:flex;flex-wrap:wrap;gap:7px}.choices button{padding:8px 11px;border-radius:9px;border:1px solid #e7dccc;background:#f7f1ea;font-size:11px}.choices .selected{background:#302923;color:#fff}.swatches button{height:30px;width:30px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 1px #d7c6b8}.onboard .primary{width:100%;background:#bd694a;color:white;border-radius:10px;padding:13px;font-size:13px;font-weight:800;margin:25px 0 13px;display:flex;align-items:center;justify-content:center;gap:10px}.onboard small{color:#9e9185;font-size:10px}.directory{display:grid;gap:9px}.directory button{display:flex;justify-content:space-between;background:#f8f1e9;border-radius:10px;padding:15px;font-weight:800}.fallback{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle,#f4e7d7,#dbc8b7)}.fallback h1{font:45px "Be Vietnam Pro",system-ui,sans-serif}.gridmap{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:600px}.gridmap button{padding:15px;border-radius:9px;background:white}
+@media(max-width:750px){.header{top:8px;left:8px;right:8px;height:59px}.brand strong{font-size:10px}.brand small{font-size:7px}.worldlabel{display:none}.quest{top:80px;left:10px;width:235px;padding:13px}.quest h2{font-size:20px;margin:9px 0}.quest p{display:none}.stats{bottom:79px;left:8px;gap:4px}.stats>div{min-width:70px;font-size:7px;padding:7px}.stats strong{font-size:11px}.dock{bottom:7px;left:8px;transform:none;width:calc(100% - 16px);justify-content:space-around;border-radius:8px}.dock button{min-width:0;flex:1;padding:7px 3px;font-size:9px}.panel{top:auto;left:7px;right:7px;bottom:72px;width:auto;height:67dvh;border-radius:10px}.panel>header{padding:13px 17px}.panel>header h2{font-size:24px}.panelbody{padding:14px 18px}.onboardpanel{top:73px;bottom:7px;height:auto}.onboard h1{font-size:35px}.clock{top:78px;right:8px;bottom:auto;padding:5px}.maptip{display:none}}
 
 /* The briefing is diegetic: use the computer in the 3D bedroom. */
-.room-pc-label{white-space:nowrap;border:1px solid #f9eee0;background:#2c2926ed;color:#fff5e8;display:flex;align-items:center;gap:10px;border-radius:11px;padding:10px 13px;box-shadow:0 8px 26px #31282066;font-size:12px;letter-spacing:.08em;font-weight:850;cursor:pointer;transition:transform .15s,background .15s}
+.room-pc-label{white-space:nowrap;border:1px solid #f9eee0;background:#2c2926ed;color:#fff5e8;display:flex;align-items:center;gap:10px;border-radius:8px;padding:10px 13px;box-shadow:0 8px 26px #31282066;font-size:12px;letter-spacing:.08em;font-weight:850;cursor:pointer;transition:transform .15s,background .15s}
 .room-pc-label:hover,.room-pc-label:focus-visible{transform:translateY(-3px);background:#ad6349;outline:2px solid #fff1da}
 .pc-dot{width:8px;height:8px;background:#97d0b1;box-shadow:0 0 12px #97d0b1;border-radius:50%}
-.computer-instruction{position:absolute;z-index:11;bottom:191px;left:25px;background:#fffdf3ed;backdrop-filter:blur(16px);border:1px solid #f5e7d9;padding:12px 15px;box-shadow:0 8px 25px #34241b24;border-radius:13px;display:flex;flex-direction:column;gap:4px;max-width:280px}
+.computer-instruction{position:absolute;z-index:11;bottom:191px;left:25px;background:#fffdf3ed;backdrop-filter:blur(16px);border:1px solid #f5e7d9;padding:12px 15px;box-shadow:0 8px 25px #34241b24;border-radius:8px;display:flex;flex-direction:column;gap:4px;max-width:280px}
 .computer-instruction strong{font-size:12px;color:#332a25}.computer-instruction span{font-size:11px;color:#9a624e;line-height:1.4}
-.fallback-computer{margin-top:30px;background:#bd694a;color:white;font-weight:800;border-radius:13px;padding:16px 22px}
+.fallback-computer{margin-top:30px;background:#bd694a;color:white;font-weight:800;border-radius:8px;padding:16px 22px}
 @media(max-width:750px){.computer-instruction{bottom:151px;left:8px;padding:10px 12px;max-width:242px}.computer-instruction strong{font-size:11px}.computer-instruction span{font-size:10px}}
 
 
@@ -31,10 +31,10 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
  background:linear-gradient(0deg,rgba(46,35,28,.18),transparent 24%),linear-gradient(90deg,rgba(65,43,33,.13),transparent 33%);z-index:0}
 .header{border:1px solid rgba(255,255,255,.85);background:rgba(255,253,248,.94);
  backdrop-filter:blur(22px) saturate(1.12);box-shadow:0 15px 38px rgba(43,29,20,.14)}
-.mark{border-radius:12px;background:linear-gradient(145deg,#342c27,#554339);box-shadow:inset 0 0 0 1px #65554d}
+.mark{border-radius:8px;background:linear-gradient(145deg,#342c27,#554339);box-shadow:inset 0 0 0 1px #65554d}
 .brand strong{font-weight:850;letter-spacing:.14em}
 .brand small{color:#a08e7e;font-weight:600}
-.worldlabel{background:#f7eee5;border:1px solid #f1e7dc;border-radius:14px;padding:9px 13px}
+.worldlabel{background:#f7eee5;border:1px solid #f1e7dc;border-radius:8px;padding:9px 13px}
 .live{box-shadow:0 0 0 5px #bfae9a2a;animation:mt-pulse 2.4s ease-in-out infinite}
 @keyframes mt-pulse{0%,100%{box-shadow:0 0 0 3px #c7795230}55%{box-shadow:0 0 0 7px #c779520b}}
 .quest{border:1px solid rgba(255,255,255,.92);background:rgba(255,250,243,.94);
@@ -59,7 +59,7 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .panel>header h2{font-size:29px;letter-spacing:-.04em}
 .panelbody{scrollbar-color:#cdb7a6 transparent;scrollbar-width:thin}
 .panelbody button:not(.swatches button):not(.choices button):not(.close){
- border-radius:11px}
+ border-radius:8px}
 .onboard p{max-width:330px}
 .onboard .primary{background:linear-gradient(125deg,#c87a55,#ae5c42);box-shadow:0 9px 28px rgba(152,70,45,.2)}
 .onboard .primary:hover{filter:brightness(.96);transform:translateY(-1px)}
@@ -88,15 +88,15 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
  background:#233a3bb5;border:1px solid #8fa9a58a;padding:17px 25px;border-radius:10px;white-space:nowrap}
 .computer-instruction{background:rgba(255,251,244,.95);border:1px solid #fff6ed;
  box-shadow:0 9px 31px #31251c22;backdrop-filter:blur(16px)}
-.world-ambient-panel{border-radius:17px;padding:20px;background:#f8f1e9;border:1px solid #ebdaca;line-height:1.58}
-.world-ambient-panel h3{font:27px/1.13 Georgia,serif;margin:14px 0 9px}
+.world-ambient-panel{border-radius:10px;padding:20px;background:#f8f1e9;border:1px solid #ebdaca;line-height:1.58}
+.world-ambient-panel h3{font:27px/1.13 "Be Vietnam Pro",system-ui,sans-serif;margin:14px 0 9px}
 .world-ambient-panel p{font-size:13px;color:#786a5e}
 .world-item-stat{display:flex;align-items:center;justify-content:space-between;
  padding:12px 0;border-top:1px solid #e7d8c8;margin-top:17px;font-size:12px}
 .world-action{border-radius:10px;padding:11px 14px;margin-top:12px;font-size:12px;font-weight:850;
  color:#fff;background:var(--mt-copper)}
 @media(max-width:750px){
- .header{background:#fffaf3f2;border-radius:13px}
+ .header{background:#fffaf3f2;border-radius:8px}
  .brand strong{font-size:10px}
  .quest{max-width:235px;background:#fff9f0ec}
  .quest h2{font-size:20px}
@@ -128,14 +128,14 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .panelbody button:disabled{opacity:.38}
 .panelbody button:where(:not(:disabled)):active{transform:scale(.985)}
 .panelbody input[type="range"]{accent-color:var(--mt-copper);height:17px;cursor:ew-resize}
-.panelbody .rounded-xl{border-radius:12px}
+.panelbody .rounded-xl{border-radius:8px}
 .mt-eyebrow,.mt-story-label{font-size:10px;color:#a15e43;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
 .mt-story-label{display:block}
 .mt-intro-screen{display:flex;flex-direction:column;gap:14px}
-.mt-intro-title h1{font:normal 42px/1.02 Georgia,serif;letter-spacing:-.045em;margin:11px 0 12px}
+.mt-intro-title h1{font:normal 42px/1.02 "Be Vietnam Pro",system-ui,sans-serif;letter-spacing:-.045em;margin:11px 0 12px}
 .mt-intro-title h1 em{color:var(--mt-copper)}
 .mt-intro-title p{font-size:12.5px;color:#817062;line-height:1.65}
-.mt-avatar-showcase-controls{border:1px solid #e8dacc;border-radius:12px;display:flex;align-items:center;justify-content:space-between;padding:8px 11px;background:#f8f0e5}
+.mt-avatar-showcase-controls{border:1px solid #e8dacc;border-radius:8px;display:flex;align-items:center;justify-content:space-between;padding:8px 11px;background:#f8f0e5}
 .mt-avatar-showcase-controls>span{display:flex;align-items:center;gap:7px;font-size:9px;font-weight:900;letter-spacing:.08em;color:#8c644e}
 .mt-avatar-showcase-controls>div{display:flex;gap:4px}
 .mt-avatar-showcase-controls button{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:#fff;border:1px solid #ebe2d8;color:#6e5c4d}
@@ -150,16 +150,16 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-selector-row{display:flex;gap:6px;flex-wrap:wrap}
 .mt-selector-row button{font-size:11px;padding:9px 11px;border:1px solid #e2d6cb;background:#f9f2ea;border-radius:9px;text-transform:capitalize;font-weight:750;color:#726055}
 .mt-selector-row button.selected,.mt-selector-row button[aria-pressed="true"]{border-color:#4e3d33;color:#fff;background:#34302a}
-.mt-begin-button{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:linear-gradient(116deg,#c37b52,#a9543a);border:1px solid #c28464;border-radius:12px;color:#fff;box-shadow:0 10px 22px #9c49332a;margin-top:8px;font-size:12px;font-weight:900;letter-spacing:.095em}
+.mt-begin-button{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:linear-gradient(116deg,#c37b52,#a9543a);border:1px solid #c28464;border-radius:8px;color:#fff;box-shadow:0 10px 22px #9c49332a;margin-top:8px;font-size:12px;font-weight:900;letter-spacing:.095em}
 .mt-begin-button:hover{filter:brightness(1.04)}
 .mt-intro-caption{font-size:10px;color:#9a887a;text-align:center}
 .mt-character-editor{display:flex;flex-direction:column;gap:20px}
 .mt-character-heading{border-bottom:1px solid #ece0d5;padding-bottom:18px}
-.mt-character-heading h3{font:32px Georgia,serif;letter-spacing:-.04em;margin-top:8px}
+.mt-character-heading h3{font:32px "Be Vietnam Pro",system-ui,sans-serif;letter-spacing:-.04em;margin-top:8px}
 .mt-character-heading p{font-size:12px;color:#837164;margin-top:8px}
 .mt-campaign-stage,.mt-ceo-stage{display:flex;flex-direction:column;gap:18px}
 .mt-phase-content{display:flex;flex-direction:column;gap:14px}
-.mt-timeline{border:1px solid #e8ddcf;background:#f8f1e7;border-radius:15px;padding:13px 15px 20px;margin-bottom:1px}
+.mt-timeline{border:1px solid #e8ddcf;background:#f8f1e7;border-radius:8px;padding:13px 15px 20px;margin-bottom:1px}
 .mt-timeline-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .mt-timeline-head small{font-size:9px;font-weight:900;color:#a0795f;letter-spacing:.13em}
 .mt-timeline-head strong{font-size:17px;color:#382c25}
@@ -173,10 +173,10 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-timeline-point.completed .mt-timeline-line{background:#94b69d}
 .mt-phase-caption{position:absolute;top:32px;font-size:9px;white-space:nowrap;text-align:center;color:#9a5b43;font-weight:900}
 .mt-campaign-hero{border-bottom:1px solid #eee1d5;padding:0 1px 17px}
-.mt-campaign-hero h2{font:33px/1.12 Georgia,serif;letter-spacing:-.04em;color:#302721;margin:7px 0}
+.mt-campaign-hero h2{font:33px/1.12 "Be Vietnam Pro",system-ui,sans-serif;letter-spacing:-.04em;color:#302721;margin:7px 0}
 .mt-campaign-hero p{font-size:12px;color:#817368;line-height:1.55}
 .mt-campaign-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.mt-number-stat{padding:13px;background:#fff8f0;border:1px solid #ede0d1;border-radius:13px;min-width:0}
+.mt-number-stat{padding:13px;background:#fff8f0;border:1px solid #ede0d1;border-radius:8px;min-width:0}
 .mt-number-top{display:flex;align-items:center;gap:8px}
 .mt-number-top span{color:#b47354}
 .mt-number-stat small{font-size:9px;letter-spacing:.11em;font-weight:900;color:#9b806b}
@@ -184,12 +184,12 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-number-sub{display:block;margin-top:4px;color:#97887a;font-size:10px}
 .mt-game-section{display:flex;flex-direction:column;gap:12px}
 .mt-section-head{display:flex;gap:12px;align-items:flex-start}
-.mt-section-symbol{display:grid;place-items:center;flex:0 0 40px;height:40px;background:#f3e5d8;color:#a95e45;border-radius:12px;border:1px solid #efd9c7}
+.mt-section-symbol{display:grid;place-items:center;flex:0 0 40px;height:40px;background:#f3e5d8;color:#a95e45;border-radius:8px;border:1px solid #efd9c7}
 .mt-section-head small{display:block;font-size:9px;color:#ad7256;font-weight:900;letter-spacing:.13em;margin-bottom:7px}
-.mt-section-head h3{font:25px/1.1 Georgia,serif;color:#3b3028;letter-spacing:-.02em}
+.mt-section-head h3{font:25px/1.1 "Be Vietnam Pro",system-ui,sans-serif;color:#3b3028;letter-spacing:-.02em}
 .mt-section-head p{font-size:12px;color:#8d7c6e;line-height:1.55;margin-top:8px}
 .mt-research-choices{display:flex;flex-direction:column;gap:9px}
-.mt-decision{display:flex;align-items:flex-start;gap:12px;text-align:left;width:100%;padding:13px 14px;border:1px solid #ebddd0;background:#fffdf9;border-radius:12px;box-shadow:0 4px 14px #5640300b;transition:border-color .16s ease,box-shadow .16s ease,background .16s ease}
+.mt-decision{display:flex;align-items:flex-start;gap:12px;text-align:left;width:100%;padding:13px 14px;border:1px solid #ebddd0;background:#fffdf9;border-radius:8px;box-shadow:0 4px 14px #5640300b;transition:border-color .16s ease,box-shadow .16s ease,background .16s ease}
 .mt-decision:hover{border-color:#bd957d;background:#fffcf5;box-shadow:0 7px 17px #50382a13}
 .mt-decision.active{border-color:#c17654;background:#fcf0e5;box-shadow:inset 0 0 0 1px #cb8c6c}
 .mt-decision-check{display:grid;place-items:center;height:22px;width:22px;flex:0 0 22px;border-radius:7px;border:1px solid #e0cbbc;color:#b67e63;background:#f9f0e6}
@@ -204,21 +204,21 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-gauge-fill{height:100%;background:#bd694a;border-radius:99px}
 .mt-gauge-fill.teal{background:#659b95}
 .mt-gauge-fill.sage{background:#7fa58c}
-.mt-client-quote{padding:19px 21px!important;font:italic 16px/1.55 Georgia,serif!important;color:#6b4c3a;background:#f7ede1;border-left:4px solid #ba795c;border-radius:4px 12px 12px 4px}
-.mt-chart{display:flex;flex-direction:column;gap:14px;padding:14px;background:#fbf6ee;border:1px solid #ede4d8;border-radius:14px}
+.mt-client-quote{padding:19px 21px!important;font:italic 16px/1.55 "Be Vietnam Pro",system-ui,sans-serif!important;color:#6b4c3a;background:#f7ede1;border-left:4px solid #ba795c;border-radius:4px 8px 8px 4px}
+.mt-chart{display:flex;flex-direction:column;gap:14px;padding:14px;background:#fbf6ee;border:1px solid #ede4d8;border-radius:8px}
 .mt-chart-row{display:flex;flex-direction:column;gap:7px}
 .mt-chart-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px}
 .mt-chart-meta span{color:#65584d;font-weight:750}
 .mt-chart-meta b{color:#48372b;text-align:right;font-size:10px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .mt-chart-rail{height:9px}
 .mt-chart-fill{height:100%;border-radius:99px}
-.mt-feedback{display:flex;align-items:flex-start;gap:10px;padding:13px;background:#f1ede6;border-radius:12px;border:1px solid #e5d9c8;font-size:12px;line-height:1.55;color:#665848}
+.mt-feedback{display:flex;align-items:flex-start;gap:10px;padding:13px;background:#f1ede6;border-radius:8px;border:1px solid #e5d9c8;font-size:12px;line-height:1.55;color:#665848}
 .mt-feedback svg{flex:0 0 auto}
 .mt-feedback.positive{border-color:#cfe2cf;background:#eef6ee;color:#427046}
 .mt-feedback.danger{border-color:#edc9c3;background:#fff1ec;color:#a65846}
 .mt-ceo-heading{display:flex;justify-content:space-between;align-items:center;gap:14px;padding-bottom:4px}
 .mt-ceo-heading small{display:block;font-size:10px;letter-spacing:.15em;font-weight:900;color:#aa6f51}
-.mt-ceo-heading h2{font:30px/1.06 Georgia,serif;letter-spacing:-.03em;margin-top:6px}
+.mt-ceo-heading h2{font:30px/1.06 "Be Vietnam Pro",system-ui,sans-serif;letter-spacing:-.03em;margin-top:6px}
 .mt-ceo-status{display:flex;align-items:center;gap:8px;color:#6d8870;white-space:nowrap;font-size:9px;letter-spacing:.09em;font-weight:900}
 .mt-ceo-status span{background:#93b493;width:8px;height:8px;border-radius:50%;box-shadow:0 0 0 5px #9bc99a33}
 .mt-ceo-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
@@ -229,7 +229,7 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-ceo-tab{text-transform:capitalize;background:#f8eee3;border:1px solid #e9dccd;color:#766254;font-size:11px;font-weight:850;padding:9px 13px;border-radius:9px;white-space:nowrap;display:flex;align-items:center;gap:7px}
 .mt-ceo-tab.active{color:#fff;background:#332d2a;border-color:#332d2a}
 .mt-ceo-tab b{display:inline-grid;place-items:center;min-width:17px;height:17px;padding:2px;background:#bf7453;color:#fff;font-size:9px;border-radius:5px}
-.mt-deal,.mt-project,.mt-employee,.mt-escalation,.mt-rival,.mt-event-room{border:1px solid #eaded2;background:rgba(255,251,245,.94);border-radius:15px;padding:15px;box-shadow:0 4px 14px #4637290d;display:flex;flex-direction:column;gap:11px}
+.mt-deal,.mt-project,.mt-employee,.mt-escalation,.mt-rival,.mt-event-room{border:1px solid #eaded2;background:rgba(255,251,245,.94);border-radius:8px;padding:15px;box-shadow:0 4px 14px #4637290d;display:flex;flex-direction:column;gap:11px}
 .mt-deal b,.mt-project b,.mt-employee b,.mt-rival b{font-weight:850;color:#372e28}
 .mt-deal>div:first-child,.mt-project>div:first-child{gap:9px}
 .mt-deal>div:first-child span,.mt-project>div:first-child span{font-size:10px;color:#b56f4d}
@@ -242,7 +242,7 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-rival{gap:5px}
 .mt-project .mt-gauge{padding:4px 0 0}
 .mt-settings{display:flex;flex-direction:column;gap:18px}
-.mt-setting-entry{display:flex;align-items:center;justify-content:space-between;border:1px solid #eae0d3;border-radius:13px;padding:15px;background:#fdf9f3;gap:16px}
+.mt-setting-entry{display:flex;align-items:center;justify-content:space-between;border:1px solid #eae0d3;border-radius:8px;padding:15px;background:#fdf9f3;gap:16px}
 .mt-setting-entry b{display:block;font-size:12px}
 .mt-setting-entry small{display:block;font-size:10px;color:#867565;line-height:1.5;margin-top:5px}
 .mt-setting-choices{display:flex;gap:6px}
@@ -250,7 +250,7 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-setting-choices button.active{background:#342e29;color:#fff}
 .mt-setting-choices button.danger{background:#ae4f3e;color:#fff}
 .mt-save-controls{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.mt-save-controls button{background:#f6eee4;border:1px solid #e4d8ca;padding:15px 10px;font-size:11px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900}
+.mt-save-controls button{background:#f6eee4;border:1px solid #e4d8ca;padding:15px 10px;font-size:11px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:900}
 .mt-save-controls button:hover{background:#e6d2c1}
 .mt-reset-area{border-top:1px solid #eadbcb;padding-top:14px}
 .mt-reset-area b{display:flex;align-items:center;gap:8px;color:#9e594b;font-size:12px}
@@ -284,11 +284,11 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 
 /* Fast-start loading state and milestone presentation */
 .mt-world-loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:11px;background:radial-gradient(ellipse at 55% 35%,#fbefdf,#d8c9b8);color:#5e4e43;z-index:3}
-.mt-world-loader b{font:26px Georgia,serif}
+.mt-world-loader b{font:26px "Be Vietnam Pro",system-ui,sans-serif}
 .mt-world-loader small{color:#8b786b;letter-spacing:.09em;font-size:10px}
 .mt-world-loader-spin{width:35px;height:35px;border-radius:50%;border:3px solid #e6d5c1;border-top-color:#b3654a;animation:mt-load-spin .8s linear infinite}
 @keyframes mt-load-spin{to{transform:rotate(360deg)}}
-.mt-milestone{position:absolute;z-index:50;left:50%;top:111px;transform:translateX(-50%);pointer-events:none;display:flex;align-items:center;gap:14px;min-width:300px;max-width:calc(100vw - 30px);padding:15px 20px;background:#342b26;color:#fff6e8;border:1px solid #9e816a;border-radius:15px;box-shadow:0 14px 47px #382b2790}
+.mt-milestone{position:absolute;z-index:50;left:50%;top:111px;transform:translateX(-50%);pointer-events:none;display:flex;align-items:center;gap:14px;min-width:300px;max-width:calc(100vw - 30px);padding:15px 20px;background:#342b26;color:#fff6e8;border:1px solid #9e816a;border-radius:8px;box-shadow:0 14px 47px #382b2790}
 .mt-milestone>svg:first-child{color:#edbb81}.mt-milestone>svg:last-child{margin-left:auto;color:#e4b47c}
 .mt-milestone small{display:block;letter-spacing:.16em;font-size:8px;color:#d3b29a;font-weight:900}
 .mt-milestone strong{display:block;font-size:12px;margin-top:6px;letter-spacing:.025em}
@@ -297,7 +297,7 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 
 
 /* Actual avatar steering in the explorable city, sized for touch. */
-.mt-city-controls{position:absolute;bottom:112px;right:21px;z-index:12;display:flex;flex-direction:column;align-items:center;gap:6px;padding:9px;background:#fff9efdc;border:1px solid #fff2e1;border-radius:15px;box-shadow:0 9px 35px #38291e35;backdrop-filter:blur(16px);user-select:none;touch-action:none}
+.mt-city-controls{position:absolute;bottom:112px;right:21px;z-index:12;display:flex;flex-direction:column;align-items:center;gap:6px;padding:9px;background:#fff9efdc;border:1px solid #fff2e1;border-radius:8px;box-shadow:0 9px 35px #38291e35;backdrop-filter:blur(16px);user-select:none;touch-action:none}
 .mt-city-controls>span{font-size:9px;font-weight:900;color:#956d57;letter-spacing:.13em}
 .mt-city-pad{width:116px;height:102px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:4px}
 .mt-city-pad button{display:grid;place-items:center;font-size:15px;border-radius:8px;background:#f2e6d9;border:1px solid #e5d0bd;color:#51463c;font-weight:900;touch-action:none;transition:background .12s,transform .12s}
@@ -310,12 +310,12 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 
 
 /* V4.5 AI Game Master — diegetic optional dynamic client briefs */
-.mt-ai-launcher{display:flex;flex-direction:column;gap:13px;padding:17px;background:linear-gradient(128deg,#f4f0e9,#eff4ee);border:1px solid #d4e2d8;border-radius:15px;box-shadow:0 10px 26px #3445350c}
+.mt-ai-launcher{display:flex;flex-direction:column;gap:13px;padding:17px;background:linear-gradient(128deg,#f4f0e9,#eff4ee);border:1px solid #d4e2d8;border-radius:8px;box-shadow:0 10px 26px #3445350c}
 .mt-ai-launcher-top{display:flex;align-items:center;gap:10px}
-.mt-ai-spark{display:grid;place-items:center;background:#e0eae1;color:#54816a;width:38px;height:38px;border:1px solid #c6dac8;border-radius:11px;flex:0 0 38px}
+.mt-ai-spark{display:grid;place-items:center;background:#e0eae1;color:#54816a;width:38px;height:38px;border:1px solid #c6dac8;border-radius:8px;flex:0 0 38px}
 .mt-ai-launcher-top>div{flex:1;min-width:0}
 .mt-ai-launcher-top small{display:block;font-size:9px;letter-spacing:.15em;font-weight:900;color:#73907f}
-.mt-ai-launcher-top h3{font:23px/1.13 Georgia,serif;letter-spacing:-.03em;color:#334339;margin-top:4px}
+.mt-ai-launcher-top h3{font:23px/1.13 "Be Vietnam Pro",system-ui,sans-serif;letter-spacing:-.03em;color:#334339;margin-top:4px}
 .mt-ai-state{font-size:9px;letter-spacing:.08em;font-weight:900;color:#867d6e;border:1px solid #dfd5c7;background:#f6f1e8;border-radius:7px;padding:6px 8px;white-space:nowrap}
 .mt-ai-state.ready{color:#4a8066;border-color:#c9dfce;background:#e6f2e7}
 .mt-ai-state.loading{color:#926a4e}
@@ -338,15 +338,15 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 
 
 /* The AI Game Master is part of the default career loop, not an optional mode. */
-.mt-ai-notice{display:flex;gap:10px;align-items:flex-start;padding:13px 14px;border-radius:12px;border:1px solid #cbdccc;background:#edf6ee;color:#416c54;line-height:1.45}
+.mt-ai-notice{display:flex;gap:10px;align-items:flex-start;padding:13px 14px;border-radius:8px;border:1px solid #cbdccc;background:#edf6ee;color:#416c54;line-height:1.45}
 .mt-ai-notice>svg{flex:0 0 19px;margin-top:2px}
 .mt-ai-notice strong{display:block;font-size:12px;font-weight:900}
 .mt-ai-notice small{display:block;margin-top:5px;font-size:11px;line-height:1.55;color:#69806e}
 .mt-ai-notice.fallback{border-color:#e9dbc6;background:#fdf4e7;color:#946f4b}
 .mt-ai-notice.fallback small{color:#957b64}
-.mt-ai-waiting{min-height:275px;display:flex;align-items:center;text-align:center;justify-content:center;flex-direction:column;padding:27px 21px;gap:13px;border:1px solid #e5e5db;border-radius:18px;background:linear-gradient(150deg,#fbf6ed,#eef5ef)}
-.mt-ai-waiting-icon{display:grid;place-items:center;height:62px;width:62px;border-radius:18px;background:#e2eee2;border:1px solid #cedecd;color:#51836d;box-shadow:0 10px 25px #5c806522}
-.mt-ai-waiting h2{font:29px/1.1 Georgia,serif;letter-spacing:-.04em;color:#344338;max-width:340px}
+.mt-ai-waiting{min-height:275px;display:flex;align-items:center;text-align:center;justify-content:center;flex-direction:column;padding:27px 21px;gap:13px;border:1px solid #e5e5db;border-radius:10px;background:linear-gradient(150deg,#fbf6ed,#eef5ef)}
+.mt-ai-waiting-icon{display:grid;place-items:center;height:62px;width:62px;border-radius:10px;background:#e2eee2;border:1px solid #cedecd;color:#51836d;box-shadow:0 10px 25px #5c806522}
+.mt-ai-waiting h2{font:29px/1.1 "Be Vietnam Pro",system-ui,sans-serif;letter-spacing:-.04em;color:#344338;max-width:340px}
 .mt-ai-waiting p{font-size:12px;line-height:1.65;color:#708174;max-width:330px}
 .mt-ai-waiting>small{font-size:10px;line-height:1.6;color:#8e998b}
 .mt-ai-waiting-progress{width:min(100%,290px);height:7px;overflow:hidden;border-radius:99px;background:#dce7dc}
@@ -367,12 +367,12 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-map-summary{display:flex;flex-wrap:wrap;gap:9px}
 .mt-map-summary>span{padding:10px 12px;border:1px solid #e4d8c7;background:#f8f0e7;font-size:10px;font-weight:800;color:#795f4d;border-radius:9px}
 .mt-map-summary strong{font-size:15px;color:#ad684d}
-.mt-directory-search{background:#fffdf9;border:1px solid #decec0;color:#3e3228;border-radius:11px;width:100%;padding:13px 15px;font-size:12px}
+.mt-directory-search{background:#fffdf9;border:1px solid #decec0;color:#3e3228;border-radius:8px;width:100%;padding:13px 15px;font-size:12px}
 .mt-directory-filters{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none}
 .mt-directory-filters button{padding:8px 11px;border:1px solid #e6d9ca;background:#f8f0e7;font-size:10px;font-weight:850;color:#806b5b;border-radius:9px;white-space:nowrap}
 .mt-directory-filters button.active{background:#3a322c;border-color:#3a322c;color:#fff}
 .mt-world-directory .directory{display:flex;flex-direction:column;gap:7px}
-.mt-world-directory .directory>button{display:flex;align-items:center;justify-content:space-between;text-align:left;background:#fffaf4;border:1px solid #e8d9ca;padding:13px 15px;border-radius:11px;gap:10px;transition:transform .15s,border-color .15s}
+.mt-world-directory .directory>button{display:flex;align-items:center;justify-content:space-between;text-align:left;background:#fffaf4;border:1px solid #e8d9ca;padding:13px 15px;border-radius:8px;gap:10px;transition:transform .15s,border-color .15s}
 .mt-world-directory .directory>button:hover:not(:disabled){border-color:#b88065;transform:translateX(2px)}
 .mt-world-directory .directory>button:disabled{opacity:.5}
 .mt-world-directory .directory>button span{display:flex;flex-direction:column;gap:5px;min-width:0}
@@ -381,12 +381,12 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-city-building-panel{display:flex;flex-direction:column;gap:17px}
 .mt-location-identity{display:flex;flex-direction:column;gap:5px}
 .mt-location-eyebrow{font-size:10px;color:#af765c;font-weight:900;letter-spacing:.14em}
-.mt-location-identity h3{font:30px/1.06 Georgia,serif;letter-spacing:-.03em;color:#3d3028;margin:4px 0}
+.mt-location-identity h3{font:30px/1.06 "Be Vietnam Pro",system-ui,sans-serif;letter-spacing:-.03em;color:#3d3028;margin:4px 0}
 .mt-location-identity p{font-size:12px;line-height:1.65;color:#8a796a}
 .mt-location-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .mt-location-stat-grid .mt-number-stat{padding:12px}
 .mt-location-stat-grid .mt-number-stat strong{font-size:16px}
-.mt-location-fact{padding:14px;background:#fbf4ea;border:1px solid #eadccc;border-radius:12px}
+.mt-location-fact{padding:14px;background:#fbf4ea;border:1px solid #eadccc;border-radius:8px}
 .mt-location-fact b{font-size:12px;color:#584637}
 .mt-location-fact p{font-size:11px;line-height:1.7;color:#89796a;margin-top:7px}
 .mt-office-comparison{display:flex;flex-direction:column;border-top:1px solid #eadccc;border-bottom:1px solid #eadccc}
@@ -414,10 +414,10 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
  background:#456a73;border-color:#b5d1d4;color:#fff
 }
 .world-building-label.client:hover small,.world-building-label.client.selected small{color:#d8edf0}
-.mt-client-status{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:11px 13px;border:1px solid #d3dfdd;border-radius:11px;background:#eef4f3}
+.mt-client-status{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:11px 13px;border:1px solid #d3dfdd;border-radius:8px;background:#eef4f3}
 .mt-client-status span{font-size:9px;font-weight:900;letter-spacing:.12em;color:#749391}
 .mt-client-status strong{font-size:10px;font-weight:900;color:#426c68;letter-spacing:.04em;text-align:right}
-.mt-client-brief{padding:15px 17px;font:italic 15px/1.58 Georgia,serif;color:#5c6360;border-left:3px solid #94b4b0;background:#f4f7f5;border-radius:4px 11px 11px 4px}
+.mt-client-brief{padding:15px 17px;font:italic 15px/1.58 "Be Vietnam Pro",system-ui,sans-serif;color:#5c6360;border-left:3px solid #94b4b0;background:#f4f7f5;border-radius:4px 8px 8px 4px}
 .mt-client-actions{display:flex;flex-direction:column;gap:10px}
 .mt-client-actions>button{min-height:44px}
 @media(max-width:750px){
@@ -431,7 +431,7 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-rival-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
 .mt-rival-totals>span{padding:13px 9px;border:1px solid #ddd8d0;background:#f4f0eb;border-radius:10px;display:flex;flex-direction:column;gap:8px;font-size:9px;font-weight:900;letter-spacing:.06em;color:#7c7167}
 .mt-rival-totals b{color:#38434c;font-size:18px;font-variant-numeric:tabular-nums}
-.mt-market-section{display:flex;flex-direction:column;gap:10px;padding:13px;border:1px solid #e3ded5;border-radius:13px;background:#faf7f2}
+.mt-market-section{display:flex;flex-direction:column;gap:10px;padding:13px;border:1px solid #e3ded5;border-radius:8px;background:#faf7f2}
 .mt-market-section>h4{font-size:13px;color:#544a43;display:flex;align-items:center;gap:9px;font-weight:900}
 .mt-market-line{display:flex;justify-content:space-between;align-items:center;gap:9px;border-top:1px solid #e9e1d7;padding:9px 1px}
 .mt-market-line>span{display:flex;flex-direction:column;gap:5px}
@@ -456,7 +456,7 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 
 
 /* V4.8: Manual weekly turns and data-grounded executive news. */
-.mt-week-hud{position:absolute;top:16px;right:18px;z-index:18;display:flex;align-items:center;gap:8px;padding:7px 8px 7px 12px;border-radius:13px;background:rgba(33,43,46,.88);color:#eff0eb;box-shadow:0 14px 36px #18232938;backdrop-filter:blur(12px);border:1px solid #e8f1ed28}
+.mt-week-hud{position:absolute;top:16px;right:18px;z-index:18;display:flex;align-items:center;gap:8px;padding:7px 8px 7px 12px;border-radius:8px;background:rgba(33,43,46,.88);color:#eff0eb;box-shadow:0 14px 36px #18232938;backdrop-filter:blur(12px);border:1px solid #e8f1ed28}
 .mt-week-hud-caption{display:flex;align-items:center;gap:8px;min-width:105px}
 .mt-week-hud-caption>svg{color:#c4d6d0}
 .mt-week-hud-caption span{display:flex;flex-direction:column;gap:3px}
@@ -469,12 +469,12 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-week-advance:hover:not(:disabled){background:#f0f7ed}
 .mt-week-advance:disabled{cursor:not-allowed;opacity:.5}
 .mt-week-backdrop{position:fixed;inset:0;z-index:220;background:#20282cd9;backdrop-filter:blur(12px);display:flex;justify-content:center;align-items:center;padding:24px}
-.mt-week-paper{width:min(1100px,100%);max-height:min(92vh,1030px);display:flex;flex-direction:column;overflow:hidden;background:#f7f6f0;border:1px solid #d9d9ce;color:#292f32;border-radius:16px;box-shadow:0 25px 85px #070d1599}
+.mt-week-paper{width:min(1100px,100%);max-height:min(92vh,1030px);display:flex;flex-direction:column;overflow:hidden;background:#f7f6f0;border:1px solid #d9d9ce;color:#292f32;border-radius:10px;box-shadow:0 25px 85px #070d1599}
 .mt-week-paper-top{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:13px 30px;border-bottom:1px solid #d5d8d2;color:#75817e;font-weight:850;font-size:10px;letter-spacing:.11em}
 .mt-week-paper-top span:first-child{display:flex;align-items:center;gap:8px}
 .mt-week-masthead{text-align:center;padding:22px 24px 23px;border-bottom:3px double #718580}
 .mt-week-kicker{color:#72837e;font-size:10px;font-weight:900;letter-spacing:.23em}
-.mt-week-masthead h1{font:clamp(36px,6vw,67px)/1.15 Georgia,"Times New Roman",serif;letter-spacing:-.055em;color:#26353a;margin:8px 0}
+.mt-week-masthead h1{font:clamp(36px,6vw,67px)/1.15 "Be Vietnam Pro",system-ui,sans-serif;letter-spacing:-.055em;color:#26353a;margin:8px 0}
 .mt-week-masthead p{font-size:11px;letter-spacing:.1em;font-weight:800;color:#596d6a}
 .mt-week-masthead p span{padding:0 7px}
 .mt-week-paper-ticker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;background:#e9eeeb;border-bottom:1px solid #d7dfd9}
@@ -486,7 +486,7 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-week-hero-header{display:flex;align-items:center;gap:9px;color:#4d6159;font-size:10px;letter-spacing:.12em;font-weight:900;padding-bottom:12px;border-bottom:1px solid #aebcb4}
 .mt-week-hero-header span{margin-left:auto;color:#8b9891;font-size:9px}
 .mt-week-story{padding:17px 15px 18px 0;border-bottom:1px solid #dbe0d9}
-.mt-week-story h3{font:22px/1.18 Georgia,"Times New Roman",serif;color:#293d3c;letter-spacing:-.028em;margin:9px 0}
+.mt-week-story h3{font:22px/1.18 "Be Vietnam Pro",system-ui,sans-serif;color:#293d3c;letter-spacing:-.028em;margin:9px 0}
 .mt-week-story>p{font-size:12px;color:#4d5d56;line-height:1.72}
 .mt-week-story-meta{display:flex;align-items:center;gap:7px;color:#6d8c7c;font-size:9px;letter-spacing:.08em;font-weight:900}
 .mt-week-sentiment{margin-left:auto;color:#839188;font-size:9px;letter-spacing:0}
@@ -503,17 +503,17 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-week-paper-bottom span{color:#71827a;font-size:10px;display:flex;align-items:center;gap:8px;line-height:1.6}
 .mt-week-paper-bottom button{border:0;display:flex;align-items:center;gap:8px;padding:12px 17px;border-radius:8px;color:#fff;background:#36574b;font-weight:850;white-space:nowrap;cursor:pointer;font-size:12px;min-height:44px}
 .mt-week-paper-bottom button:hover{background:#26493a}
-@media(max-width:800px){.mt-week-hud{right:10px;top:8px;padding:7px;gap:5px}.mt-week-hud-caption{min-width:auto}.mt-week-hud-caption small{font-size:8px}.mt-week-hud button{font-size:10px;padding:8px;min-height:34px}.mt-week-backdrop{padding:6px}.mt-week-paper{max-height:97vh;border-radius:11px}.mt-week-paper-top{padding:11px 14px;font-size:8px}.mt-week-masthead{padding:18px 11px}.mt-week-masthead p{font-size:9px}.mt-week-paper-ticker{grid-template-columns:repeat(2,minmax(0,1fr))}.mt-week-paper-ticker>div{padding:9px 12px}.mt-week-paper-ticker strong{font-size:16px}.mt-week-editorial{padding:14px}.mt-week-editorial-grid{grid-template-columns:1fr}.mt-week-editorial-grid>.mt-week-story:nth-child(even){border-left:0;padding-left:0}.mt-week-paper-bottom{padding:10px 12px}.mt-week-paper-bottom span{font-size:9px}.mt-week-paper-bottom button{font-size:11px;padding:10px}}
+@media(max-width:800px){.mt-week-hud{right:10px;top:8px;padding:7px;gap:5px}.mt-week-hud-caption{min-width:auto}.mt-week-hud-caption small{font-size:8px}.mt-week-hud button{font-size:10px;padding:8px;min-height:34px}.mt-week-backdrop{padding:6px}.mt-week-paper{max-height:97vh;border-radius:8px}.mt-week-paper-top{padding:11px 14px;font-size:8px}.mt-week-masthead{padding:18px 11px}.mt-week-masthead p{font-size:9px}.mt-week-paper-ticker{grid-template-columns:repeat(2,minmax(0,1fr))}.mt-week-paper-ticker>div{padding:9px 12px}.mt-week-paper-ticker strong{font-size:16px}.mt-week-editorial{padding:14px}.mt-week-editorial-grid{grid-template-columns:1fr}.mt-week-editorial-grid>.mt-week-story:nth-child(even){border-left:0;padding-left:0}.mt-week-paper-bottom{padding:10px 12px}.mt-week-paper-bottom span{font-size:9px}.mt-week-paper-bottom button{font-size:11px;padding:10px}}
 @media(max-width:500px){.mt-week-hud-caption>svg{display:none}.mt-week-hud-caption{min-width:0}.mt-week-hud-caption b{font-size:10px}.mt-week-hud-caption small{font-size:7px}.mt-week-hud button{font-size:9px;padding:8px 7px;gap:4px}.mt-week-news-button svg{display:none}.mt-week-hero-header{flex-wrap:wrap}.mt-week-hero-header span{margin-left:0}.mt-week-paper-bottom{align-items:stretch;flex-direction:column}.mt-week-paper-bottom button{justify-content:center}}
 
 
 /* CEO edition archive and concise weekly preferences */
 .mt-week-manual-status{font-size:10px;font-weight:900;color:#4c7566;border-radius:9px;background:#e3efe6;border:1px solid #c5dfca;padding:10px;white-space:nowrap}
 .mt-week-archive{display:flex;flex-direction:column;gap:12px}
-.mt-week-archive-status{display:flex;flex-direction:column;gap:5px;padding:14px 15px;border:1px solid #dce5db;background:#f1f6f0;border-radius:12px}
-.mt-week-archive-status>b{font-size:16px;font-family:Georgia,serif;color:#355449}
+.mt-week-archive-status{display:flex;flex-direction:column;gap:5px;padding:14px 15px;border:1px solid #dce5db;background:#f1f6f0;border-radius:8px}
+.mt-week-archive-status>b{font-size:16px;font-family:"Be Vietnam Pro",system-ui,sans-serif;color:#355449}
 .mt-week-archive-status>span{font-size:11px;color:#788b80}
-.mt-week-archive-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;padding:15px 13px;border:1px solid #e1ded5;background:#fbf9f4;border-radius:12px;cursor:pointer}
+.mt-week-archive-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;padding:15px 13px;border:1px solid #e1ded5;background:#fbf9f4;border-radius:8px;cursor:pointer}
 .mt-week-archive-entry>span:first-child{display:flex;flex-direction:column;gap:5px}
 .mt-week-archive-entry b{font-size:12px;color:#42574d}
 .mt-week-archive-entry small{font-size:10px;color:#82948a}
@@ -523,7 +523,66 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 
 /* GLB slice-2: clear in-map discovery and model identity, not hidden behind camera distance. */
 .world-building-label .mt-glb-status{display:inline-flex;align-items:center;margin-left:5px;font-size:8px!important;letter-spacing:.045em;font-weight:900;border-radius:5px;background:#c5e4cd;color:#255b42!important;padding:2px 5px;white-space:nowrap}
-.mt-3d-tour-cta{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);z-index:12;padding:13px 15px;border-radius:12px;border:1px solid #c1dbc9;background:rgba(37,63,67,.94);color:#e9f6ea;box-shadow:0 15px 40px #1e323864;display:flex;align-items:center;gap:14px;font-size:11px;font-weight:900;letter-spacing:.075em;cursor:pointer;white-space:nowrap;backdrop-filter:blur(12px)}
+.mt-3d-tour-cta{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);z-index:12;padding:13px 15px;border-radius:8px;border:1px solid #c1dbc9;background:rgba(37,63,67,.94);color:#e9f6ea;box-shadow:0 15px 40px #1e323864;display:flex;align-items:center;gap:14px;font-size:11px;font-weight:900;letter-spacing:.075em;cursor:pointer;white-space:nowrap;backdrop-filter:blur(12px)}
 .mt-3d-tour-cta span{font-size:10px;color:#f0d5ac;letter-spacing:.06em}
 .mt-3d-tour-cta:hover{background:#2e655d;border-color:#bce8cb}
 @media(max-width:720px){.mt-3d-tour-cta{bottom:105px;max-width:calc(100% - 24px);gap:7px;white-space:normal;text-align:center;font-size:9px;padding:11px 9px}.mt-3d-tour-cta span{font-size:8px}}
+
+
+/* V4.9 ACCESSIBLE INTERFACE: slate ink, crisp cards, Be Vietnam Pro.
+   Three.js model geometry, light and sky are intentionally unaffected. */
+:root{--mt-font:"Be Vietnam Pro",system-ui,sans-serif;--mt-ink:#172a36;--mt-cream:#eef2f5;--mt-paper:#ffffff;--mt-copper:#9b3c29;--mt-teal:#075b75;--mt-sage:#166b60;--mt-mint:#a6c9c9;--mt-fog:#e3e7e9;--mt-hairline:rgba(23,42,54,.22);--mt-velvet:0 12px 34px rgba(15,33,43,.17)}
+html,body,#root{color:#172a36}
+body,button,input,select,textarea{font-family:var(--mt-font)!important}
+:where(h1,h2,h3,h4,h5,h6){font-family:var(--mt-font)!important;font-style:normal;font-weight:800;letter-spacing:-.028em}
+:where(button,a,input,textarea,select):focus-visible{outline:2px solid #076784;outline-offset:2px}
+::selection{background:#b5d7e2;color:#123444}
+.game{background:#e3e7e9}
+.header,.quest,.panel,.stats>div,.dock,.computer-instruction{background:#fffffff2;border:1px solid #a2b3bd;box-shadow:0 12px 36px rgba(17,35,44,.16);color:#172a36}
+.header,.quest,.panel,.dock{border-radius:10px}
+.panel{background:#ffffff;box-shadow:0 18px 58px rgba(16,32,42,.22)}
+.panel>header{background:#f0f4f6;border-bottom:1px solid #a2b3bd;color:#172a36}
+.panel>header h2,.quest h2,.onboard h1,.mt-intro-title h1,.mt-character-heading h3,.mt-campaign-hero h2,.mt-section-head h3,.mt-ceo-heading h2,.mt-location-identity h3,.mt-ai-waiting h2,.mt-ai-launcher-top h3,.mt-week-masthead h1,.mt-week-story h3,.mt-week-archive-status>b,.world-ambient-panel h3,.fallback h1{font-family:var(--mt-font)!important;font-style:normal;font-weight:800;letter-spacing:-.025em;line-height:1.18;color:#172a36}
+.mt-intro-title h1{font-size:36px}.mt-week-masthead h1{font-size:clamp(28px,5vw,49px)}.mt-week-story h3{font-size:20px}.mt-week-story-feature h3{font-size:clamp(21px,2.8vw,28px)}
+.mark{font-family:var(--mt-font)!important;font-style:normal;font-weight:900;background:#203a4b;color:white}
+.mt-client-brief,.mt-client-quote{font-family:var(--mt-font)!important;font-style:normal;font-weight:500;line-height:1.65}
+.brand strong,.worldlabel,.stats strong{color:#172a36}
+.brand small,.worldlabel small,.quest p,.mt-intro-title p,.mt-character-heading p,.mt-campaign-hero p,.mt-section-head p,.mt-location-identity p,.mt-week-evidence span,.mt-week-paper-bottom span,.mt-week-archive-entry small,.mt-world-directory .directory>button small,.mt-decision small,.mt-number-sub,.mt-client-status span,.mt-market-line small{color:#405666}
+.mt-eyebrow,.mt-story-label,.eyebrow,.mt-section-head small,.mt-location-eyebrow,.mt-week-kicker,.mt-week-story-meta,.mt-week-evidence b,.mt-phase-caption{color:#8b3929}
+.quest button,.onboard .primary,.mt-begin-button,.world-action,.mt-ai-generate,.mt-week-paper-bottom button,.mt-week-advance,.mt-save-controls button{background:#075b75;color:#ffffff;border-color:#075b75;box-shadow:0 4px 12px #075b7533;font-weight:800}
+.quest button:hover,.onboard .primary:hover,.mt-begin-button:hover,.world-action:hover,.mt-ai-generate:hover:not(:disabled),.mt-week-paper-bottom button:hover,.mt-week-advance:hover:not(:disabled),.mt-save-controls button:hover{background:#06465b;color:#fff}
+.topactions button,.close,.mt-ceo-tab,.mt-selector-row button,.mt-setting-choices button,.mt-directory-filters button,.mt-avatar-showcase-controls button{background:#f2f6f8;border:1px solid #9baeb9;color:#243b49}
+.topactions button:hover,.close:hover,.mt-selector-row button:hover,.mt-directory-filters button:hover,.mt-setting-choices button:hover{background:#dbeaf0;color:#153d51;border-color:#387c93}
+.dock button{color:#334e5e}
+.dock button.active,.mt-ceo-tab.active,.mt-selector-row button.selected,.mt-selector-row button[aria-pressed="true"],.mt-directory-filters button.active,.mt-setting-choices button.active,.choices .selected{background:#183a4c;border-color:#183a4c;color:#ffffff}
+.dock button:hover:not(.active),.mt-ceo-tab:hover:not(.active){background:#dcecf1;color:#133e53}
+.stats>div,.mt-number-stat,.mt-rival-totals>span,.mt-setting-entry,.mt-deal,.mt-project,.mt-employee,.mt-escalation,.mt-rival,.mt-event-room,.mt-chart,.mt-market-section,.mt-week-archive-entry,.mt-location-fact,.mt-client-status,.mt-week-archive-status,.mt-timeline,.mt-world-directory .directory>button,.world-ambient-panel{background:#f4f7f9;border:1px solid #aab9c2;color:#192f3c}
+.stats .darkstat{background:#183344;border-color:#183344;color:#d6e7ef}.stats .darkstat strong{color:#ffffff}
+.mt-number-stat small,.mt-rival-metrics>span,.mt-setting-entry small,.mt-week-archive-status>span{color:#405666}
+.mt-number-stat strong,.mt-timeline-head strong,.mt-decision b,.mt-section-head h3,.mt-deal b,.mt-project b,.mt-employee b,.mt-rival b,.mt-location-fact b,.mt-rival-totals b,.mt-market-line b,.mt-week-archive-entry b{color:#172a36}
+.mt-decision,.mt-world-directory .directory>button,.mt-week-archive-entry,.mt-week-story-feature{border-color:#a5b6c0;background:#f9fbfc}
+.mt-decision:hover,.mt-world-directory .directory>button:hover:not(:disabled),.mt-week-archive-entry:hover{border-color:#075b75;background:#e5f0f4}
+.mt-decision.active{border:2px solid #075b75;background:#d9e9f1;box-shadow:0 0 0 1px #075b75}
+.mt-decision.active .mt-decision-check{background:#075b75;color:#ffffff;border-color:#075b75}
+.mt-decision-check{border-color:#7794a2;color:#365b70;background:#fff}
+.mt-feedback{border-color:#9fb3bf;color:#243b49}.mt-feedback.positive{background:#e1f2e8;border-color:#6b9c7d;color:#185139}.mt-feedback.danger{background:#fce9e4;border-color:#c98571;color:#8c2b22}
+.mt-week-paper{border:1px solid #8ea5b0;background:#ffffff;color:#172a36}
+.mt-week-paper-top,.mt-week-masthead,.mt-week-paper-bottom{background:#f0f5f7;color:#243e4e}
+.mt-week-masthead p,.mt-week-hero-header,.mt-week-paper-ticker small,.mt-week-story-meta,.mt-week-evidence b,.mt-week-evidence span{color:#405666}
+.mt-week-paper-ticker{background:#dce9ef;border-bottom:1px solid #9fb4bf}
+.mt-week-paper-ticker strong,.mt-week-story>p,.mt-week-story h3{color:#203541}.mt-week-story-feature{background:#ecf3f6;border-color:#b1c5ce}
+.mt-week-sentiment.positive{color:#136047}.mt-week-sentiment.negative{color:#9b3929}
+.mt-week-hud{background:rgba(19,44,58,.95);border:1px solid #b4cbd2}.mt-week-hud-caption small{color:#e0edf2}
+.mt-week-news-button{background:#345566;color:#ffffff}.mt-week-news-button.unread{background:#f5d49b;color:#493323}
+.mt-world-directory .directory>button b,.mt-office-comparison strong{color:#172a36}
+.mt-directory-search,.mt-onboard-field input,.onboard input,.mt-ai-category select,input[type="text"],input[type="number"],textarea,select{background:#ffffff;border-color:#829eae;color:#172a36}
+input::placeholder,textarea::placeholder{color:#516a7a;opacity:1}
+.mt-ai-waiting,.mt-ai-notice{border-color:#aabcc3;background:#f1f7f9;color:#244357}.mt-ai-notice small,.mt-ai-waiting p,.mt-ai-waiting>small{color:#405666}
+.mt-client-brief{background:#e9f2f6;border-left:3px solid #075b75;color:#243a47}.mt-client-status strong,.mt-location-identity h3{color:#164961}
+.mt-3d-tour-cta{border-color:#a6c9d4;background:#173c4d;color:#ffffff}.mt-3d-tour-cta:hover{background:#075b75}
+.world-building-label{background:#ffffffef;border:1px solid #7899a9;color:#172f3b}.world-building-label small{color:#175974}
+.world-building-label:hover,.world-building-label.selected{background:#075b75;border-color:#075b75;color:#fff}
+.world-building-label:hover small,.world-building-label.selected small{color:#fff}
+.room-pc-label,.room-small-label{background:#183a4c;border-color:#b1cad6;color:#fff}.room-pc-label:hover,.room-small-label:hover{background:#075b75}
+.mt-glb-status{font-family:var(--mt-font);font-style:normal}
+@media(max-width:750px){.header,.quest,.panel,.dock{border-radius:8px}.mt-intro-title h1{font-size:31px}.mt-week-masthead h1{font-size:clamp(26px,8vw,37px)}}
