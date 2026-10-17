@@ -137,15 +137,15 @@ export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaig
   return null;
 }
 
-const TABS = ["inbox", "pipeline", "projects", "people", "finance", "rivals", "partners"] as const;
-export function CEOCommandCenter() {
+const TABS = ["inbox", "pipeline", "projects", "people", "finance", "rivals", "news", "partners"] as const;
+export function CEOCommandCenter({onReadEdition}:{onReadEdition?:(id:string)=>void}) {
   const s = useGame((x) => x);
   const [tab, setTab] = useState<(typeof TABS)[number]>("inbox");
   const c = s.ceo; if (!c) return null;
   const busy = K.capacity(c), open = K.openIssues(c);
   return (
     <div className="mt-ceo-stage">
-      <div className="mt-ceo-heading"><div><small>AGENCY HQ / EXECUTIVE OFFICE</small><h2>{s.agencyName||"Agency Command"}</h2></div><span className="mt-ceo-status">{c.speed===0?"PAUSED":"LIVE OPERATIONS"} <span/></span></div>
+      <div className="mt-ceo-heading"><div><small>AGENCY HQ / EXECUTIVE OFFICE</small><h2>{s.agencyName||"Agency Command"}</h2></div><span className="mt-ceo-status">MANUAL · WEEK {c.weekly?.week??1} <span/></span></div>
       <CEOOverview cash={money(s.agencyCash)} work={c.projects.filter(p=>p.status==="active").length} day={c.day} issues={open.length}/>
       <div className="mt-ceo-tabs" role="tablist" aria-label="CEO sections">{TABS.map(t => <button key={t} type="button" role="tab" aria-selected={tab===t} className={"mt-ceo-tab "+(tab===t?"active":"")} onClick={()=>setTab(t)}>{t}{t==="inbox"&&open.length>0?<b>{open.length}</b>:null}</button>)}</div>
       <PhaseScene phase={tab}>
@@ -161,6 +161,12 @@ export function CEOCommandCenter() {
       {tab === "people" && employees.map((e) => { const h = s.staff.includes(e.id); return <div key={e.id} className="mt-employee"><div><b className="text-sm">{e.name}</b><div className="text-xs text-muted-foreground">{e.role} · {money(e.salary)}/mo{h ? ` · workload ${busy[e.id] || 0}/2` : ""}</div></div>{h ? <span className="text-xs text-primary">On team</span> : <Button size="sm" disabled={s.agencyCash < e.salary||(c.talentMarket?.[e.id]?.untilDay??0)>c.day} onClick={() => act((d, f) => K.hire(d, f, e.id))}>{(c.talentMarket?.[e.id]?.untilDay??0)>c.day?"Under rival offer":"Hire"}</Button>}</div>; })}
       {tab === "finance" && <><GameSection eyebrow="AGENCY FINANCE" title="Understand your cash runway" icon={<Coins size={20}/>} sub="Receivables differ from paid cash. Payroll and direct project costs reduce reserves."/><BarComparison rows={[{label:"Cash reserves",value:Math.max(0,s.agencyCash),display:money(s.agencyCash)},{label:"Receivables",value:Math.max(0,c.totalBilled-c.totalPaid),display:money(c.totalBilled-c.totalPaid)},{label:"Expenses to date",value:Math.max(0,c.totalDirect+c.totalPayroll),display:money(c.totalDirect+c.totalPayroll)}]}/><Row k="Agency cash" v={money(s.agencyCash)} /><Row k="Daily payroll" v={money(K.dailyPayroll(s))} /><Row k="Billed / paid" v={`${money(c.totalBilled)} / ${money(c.totalPaid)}`} /><Row k="Direct costs" v={money(c.totalDirect)} />
         <div className="max-h-64 overflow-auto">{c.ledger.slice(0, 40).map((x, i) => <div key={i} className="flex justify-between text-xs py-0.5"><span>D{x.day} · {x.what}{x.status === "due" ? " (due)" : ""}</span><span className={x.value < 0 ? "text-destructive" : "text-primary"}>{money(x.value)}</span></div>)}</div></>}
+      {tab === "news" && <div className="mt-week-archive">
+       <GameSection eyebrow="WEEKLY BUSINESS JOURNAL" title="The Agency Ledger" icon={<FileText size={19}/>} sub="Each edition is assembled from your recorded decisions, real financial changes, delivered campaigns and rival agency actions."/>
+       <div className="mt-week-archive-status"><b>Planning Week {c.weekly?.week??1}</b><span>Game Day {c.day} · Time advances only when you select End Week</span></div>
+       {(c.weekly?.pending||[]).length>0&&<div className="mt-market-section"><h4><Check size={17}/> Decisions recorded this week</h4>{(c.weekly?.pending||[]).slice(-8).reverse().map(d=><div className="mt-market-line" key={d.id}><span><b>{d.headline}</b><small>{d.detail}</small></span></div>)}</div>}
+       {(c.weekly?.editions||[]).length ? c.weekly!.editions.map(e=><button type="button" className="mt-week-archive-entry" key={e.id} onClick={()=>onReadEdition?.(e.id)}><span><b>Issue {e.weekCompleted}: Week {e.weekStarted} Begins</b><small>Days {e.dayFrom}–{e.dayTo} · {e.articles.length} reports · {e.rivalsWon} rival wins</small></span><span>READ ↗</span></button>) : <p className="text-sm text-muted-foreground">The first edition is published as soon as you end Week 1.</p>}
+      </div>}
       {tab === "rivals" && <>
       <GameSection eyebrow="AUTONOMOUS MARKET" title="Rival Intelligence" icon={<Activity size={19}/>} sub="Rival agencies make their own bids, invest in talent, expand offices and compete for clients as simulated time advances."/>
       <div className="mt-rival-totals"><span>YOUR MARKET SHARE <b>{marketShare(c).player.toFixed(1)}%</b></span><span>RIVAL CONTRACT WINS <b>{c.rivals.reduce((a,r)=>a+(r.wins??0),0)}</b></span><span>OPEN TENDERS <b>{(c.tenders??[]).filter(t=>t.status==="open").length}</b></span></div>
