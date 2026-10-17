@@ -24,6 +24,8 @@ export interface Scenario {
   trueObjective: string;
   channel: Record<Channel, number>;
   reports: Record<string, string>;
+  insightOptions?: {id:string;title:string;desc:string}[];
+  aiMeta?: {category:string;seed:number;label:string};
 }
 
 export const researchOptions = [
