@@ -106,11 +106,12 @@ export const CLIENT_COUNTS={total:CLIENT_DATABASE.length,fortune:CLIENT_DATABASE
  startup:CLIENT_DATABASE.filter(x=>x.segment==="startup").length,
  sme:CLIENT_DATABASE.filter(x=>x.segment==="sme").length,
  bigcorp:CLIENT_DATABASE.filter(x=>x.segment==="bigcorp").length};
-export function queryClients(opts:{sector?:ClientSector|"all";segment?:ClientSegment|"all";search?:string;fortuneOnly?:boolean;sort?:"rank"|"revenue"|"budget"|"awareness"|"name";limit?:number}={}):ClientMaster[]{
+export function queryClients(opts:{sector?:ClientSector|"all";segment?:ClientSegment|"all";search?:string;fortuneOnly?:boolean;sort?:"rank"|"scale"|"revenue"|"budget"|"awareness"|"name";limit?:number}={}):ClientMaster[]{
  let result=CLIENT_DATABASE.filter(x=>(!opts.sector||opts.sector==="all"||x.sector===opts.sector)&&
   (!opts.segment||opts.segment==="all"||x.segment===opts.segment)&&(!opts.fortuneOnly||x.fortuneRank!==null));
  if(opts.search){const q=opts.search.toLowerCase().trim();result=result.filter(x=>x.brand.toLowerCase().includes(q)||x.industry.toLowerCase().includes(q));}
  switch(opts.sort){
+  case "scale":result.sort((a,b)=>b.scaleScore-a.scaleScore);break;
   case "revenue":result.sort((a,b)=>(b.verifiedRevenueUsd??(b.annualRevenueVnd??0)/25000)-(a.verifiedRevenueUsd??(a.annualRevenueVnd??0)/25000)||b.commercialScore-a.commercialScore);break;
   case "budget":result.sort((a,b)=>b.marketingBudgetVnd-a.marketingBudgetVnd);break;
   case "awareness":result.sort((a,b)=>b.brandAwareness-a.brandAwareness);break;

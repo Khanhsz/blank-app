@@ -55,6 +55,8 @@ test("Fortune registry is a genuine subset of top 50 without pretending all seve
 test("company rankings and filters use revenue, commercial budget, sector and brand awareness",()=>{
  const s=queryClients({segment:"sme",sector:"beauty"});
  assert.equal(s.length,4);
+ const scaled=queryClients({sort:"scale"});
+ assert.ok(scaled[0].scaleScore>=scaled[1].scaleScore);
  const revenue=queryClients({segment:"sme",sort:"revenue"});
  assert.ok(revenue[0].annualRevenueVnd!>=revenue[1].annualRevenueVnd!);
  const budget=queryClients({sort:"budget"});

@@ -23,7 +23,7 @@ export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelec
  const game=useGame(x=>x);
  const [sector,setSector]=useState<ClientSector|"all">("all");
  const [segment,setSegment]=useState<ClientSegment|"all">("all");
- const [sort,setSort]=useState<"rank"|"revenue"|"budget"|"awareness"|"name">("rank");
+ const [sort,setSort]=useState<"rank"|"scale"|"revenue"|"budget"|"awareness"|"name">("rank");
  const [query,setQuery]=useState("");
  const [onlyFortune,setOnlyFortune]=useState(false);
  const [shown,setShown]=useState(12);
@@ -45,7 +45,7 @@ export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelec
   <div className="mt-client-filters">
    <label><span>Sector</span><select aria-label="Client sector" value={sector} onChange={e=>{setSector(e.target.value as ClientSector|"all");setShown(12);}}><option value="all">All 7 sectors</option>{SECTORS.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></label>
    <label><span>Company size</span><select aria-label="Client segment" value={segment} onChange={e=>{setSegment(e.target.value as ClientSegment|"all");setShown(12);}}>{segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select></label>
-   <label><span>Sort by</span><select aria-label="Client ranking" value={sort} onChange={e=>setSort(e.target.value as typeof sort)}><option value="rank">Commercial Index</option><option value="revenue">Revenue</option><option value="budget">Marketing Budget</option><option value="awareness">Brand Awareness</option><option value="name">Company Name</option></select></label>
+   <label><span>Sort by</span><select aria-label="Client ranking" value={sort} onChange={e=>setSort(e.target.value as typeof sort)}><option value="rank">Commercial Index</option><option value="scale">Company Scale</option><option value="revenue">Revenue</option><option value="budget">Marketing Budget</option><option value="awareness">Brand Awareness</option><option value="name">Company Name</option></select></label>
    <label className="mt-client-search"><span>Find company</span><div><Search size={15}/><input value={query} onChange={e=>{setQuery(e.target.value);setShown(12);}} aria-label="Search client companies" placeholder="Brand or sector"/></div></label>
    {mode==="agency"&&<label className="mt-client-check"><input type="checkbox" checked={onlyFortune} onChange={e=>{setOnlyFortune(e.target.checked);setShown(12);}}/> Fortune 50 only</label>}
   </div>
