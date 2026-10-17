@@ -1,4 +1,5 @@
 import { ceoLeadDefs, ceoRivalDefs, type Channel, type LeadDef, type Rival, type Scenario } from "./data";
+import {reconcileClientTeams} from "./clientTeams";
 
 export type Phase = "brief" | "planning" | "executing" | "live" | "results" | "research" | "survey" | "validation" | "strategy" | "creative" | "media";
 export const PHASES: Phase[] = ["planning", "executing", "live", "results"];
@@ -46,7 +47,8 @@ export interface ScoreResult { pct: number; outcome: number; adReach: number; qu
 export type WorkStyle="balanced"|"speed"|"quality";
 export interface PersonnelProfile {skill:number;morale:number;fatigue:number;xp:number;focus:WorkStyle;trainingUntil?:number;pendingSkill?:number;lastFocusWeek?:number;}
 export interface Task {preferredEmployee?:string|null; key: string; label: string; role: string; effort: number; pre: string[]; cost: number; status: "backlog" | "assigned" | "in_progress" | "review" | "completed"; progress: number; quality: number; employee: string | null; outsourced: boolean; revised?: boolean; reviewDay?: number; assignedDay?: number; startedDay?: number; doneDay?: number }
-export interface Project { priority?:"normal"|"high"; id: string; leadId: string; brand: string; adBudget: number; fee: number; bonus: number; scope: number; duration: number; industry: string; days: number; status: "active" | "completed"; scenarioIndex: number; startedDay: number; target: number; pitchQuality: number; mediaSpent: number; mediaReserved: number; direct: number; campaign: Campaign; tasks: Task[]; paymentCount: number; payrollAllocated?: number; overheadAllocated?: number; deadlineIssue?: boolean; midpoint?: boolean; kolQuality?: number; reportQuality?: number; kpi?: number; quality?: number; margin?: number; clientTrust?: number; completedDay?: number; legacy?: boolean }
+export interface ClientTeam {id:string;clientId:string;brand:string;memberIds:string[];projectIds:string[];leadId:string|null;status:"forming"|"active"|"closing"|"released";createdDay:number}
+export interface Project { teamId?:string; priority?:"normal"|"high"; id: string; leadId: string; brand: string; adBudget: number; fee: number; bonus: number; scope: number; duration: number; industry: string; days: number; status: "active" | "completed"; scenarioIndex: number; startedDay: number; target: number; pitchQuality: number; mediaSpent: number; mediaReserved: number; direct: number; campaign: Campaign; tasks: Task[]; paymentCount: number; payrollAllocated?: number; overheadAllocated?: number; deadlineIssue?: boolean; midpoint?: boolean; kolQuality?: number; reportQuality?: number; kpi?: number; quality?: number; margin?: number; clientTrust?: number; completedDay?: number; legacy?: boolean }
 export type PriceTier="competitive"|"balanced"|"premium";
 export interface PricingAdvice {
  leadId:string;brand:string;mediaBudget:number;baselineFee:number;
@@ -75,6 +77,7 @@ export interface WeeklyEdition {
 export interface WeeklyProgress {week:number; pending:WeeklyDecision[]; editions:WeeklyEdition[]; lastAdvanceDay:number}
 export interface GameClock extends WeeklyProgress {day:number}
 export interface CEO {
+  clientTeams?:ClientTeam[];
   weekly?:WeeklyProgress;
   tenders?:RivalTender[]; rivalNews?:RivalEvent[]; talentOffers?:TalentOffer[];
   salaryPremiums?:Record<string,number>; talentMarket?:Record<string,{rivalId:string;untilDay:number}>;
@@ -122,7 +125,7 @@ export const newCEO = (reputation: number): CEO => ({
   rivals: ceoRivalDefs.map((v) => ({ ...v })), projects: [], inbox: [], partners: [], ledger: [], history: [],
   reputation: { overall: reputation, creative: 50, performance: 50, strategy: 50, reliability: 60, industries: {} },
   seq: 0, pitch: null, negotiation: null, totalPayroll: 0, totalDirect: 0, totalBilled: 0, totalPaid: 0,
-  tenders:[], rivalNews:[], talentOffers:[], salaryPremiums:{}, talentMarket:{}, rivalLastTick:0,
+  clientTeams:[], tenders:[], rivalNews:[], talentOffers:[], salaryPremiums:{}, talentMarket:{}, rivalLastTick:0,
   weekly:{week:1,pending:[],editions:[],lastAdvanceDay:1},
 });
 
@@ -196,6 +199,7 @@ export function migrate(raw: unknown): GameState {
     const base = newCEO(out.reputation);
     out.ceo = { ...base, ...out.ceo, reputation: { ...base.reputation, ...out.ceo.reputation, industries: out.ceo.reputation?.industries ?? {} },
       rivals:(Array.isArray(out.ceo.rivals)?out.ceo.rivals:base.rivals).map(r=>({officeTier:1,wins:0,lastMove:"Managing agency operations",...r})),
+      clientTeams:Array.isArray(out.ceo.clientTeams)?out.ceo.clientTeams:[],
       tenders:Array.isArray(out.ceo.tenders)?out.ceo.tenders:[],
       rivalNews:Array.isArray(out.ceo.rivalNews)?out.ceo.rivalNews:[],
       talentOffers:Array.isArray(out.ceo.talentOffers)?out.ceo.talentOffers:[],
@@ -218,6 +222,7 @@ export function migrate(raw: unknown): GameState {
     const priorLeads=Array.isArray(out.ceo.leads)?out.ceo.leads:[];
     const knownIds=new Set(priorLeads.map(l=>l.id));
     out.ceo.leads=[...priorLeads,...base.leads.filter(l=>!knownIds.has(l.id))];
+    reconcileClientTeams(out);
   }
   return out;
 }

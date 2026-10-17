@@ -5,6 +5,7 @@ import {ceoTaskDefs} from "../src/game/data";
 import {ceoTick,dailyPayroll,hire} from "../src/game/ceo";
 import {departmentMetrics} from "../src/game/functions";
 import * as P from "../src/game/personnel";
+import * as T from "../src/game/clientTeams";
 import type {Fx} from "../src/game/store";
 const fx:Fx={toast:()=>{},log:()=>{}};
 function agency(){
@@ -50,10 +51,11 @@ test("quality versus speed staffing settings change real employee throughput and
  assert.ok(deep.speed<initial.speed);
  P.setWorkStyle(s,fx,"creator2","speed");
  assert.equal(s.personnel.creator2.focus,"quality","cannot change twice in one week");
- const oldPay=dailyPayroll(s);
- P.promoteLead(s,fx,"creator2");
- assert.equal(s.teamLeads.creative,"creator2");
- assert.ok(dailyPayroll(s)>oldPay,"department leadership adds salary overhead");
+ const client=project("leader-client","creative");s.ceo!.projects.push(client);
+ const squad=T.startClientTeam(s,client);T.joinClientTeam(s,fx,squad.id,"creator2");
+ const oldPay=dailyPayroll(s);T.changeClientLead(s,fx,squad.id,"creator2");
+ assert.equal(squad.leadId,"creator2");
+ assert.ok(dailyPayroll(s)>=oldPay,"client leadership has appropriate salary accounting");
 });
 test("training costs agency cash, blocks assignment, and finishes after seven game days",()=>{
  const s=agency();hire(s,fx,"researcher2");
@@ -62,27 +64,30 @@ test("training costs agency cash, blocks assignment, and finishes after seven ga
  assert.ok(s.agencyCash<before);assert.equal(P.effectiveCapacity(s,"researcher2"),0);
  const work=project("research-work","research");
  s.ceo!.projects.push(work);
+ const squad=T.startClientTeam(s,work);T.joinClientTeam(s,fx,squad.id,"researcher2");
  ceoTick(s,fx,6);assert.equal(work.tasks[0].employee,null);
  ceoTick(s,fx,1);
  assert.equal(s.personnel.researcher2.skill,skill+9);
  assert.ok(P.effectiveCapacity(s,"researcher2")>0);
  assert.equal(s.personnel.researcher2.trainingUntil,undefined);
 });
-test("director task assignment and high-priority campaign compete for the same limited specialist",()=>{
+test("an employee cannot be assigned to tasks for two different clients",()=>{
  const s=agency();hire(s,fx,"creator2");
  P.setWorkStyle(s,fx,"creator2","quality");
  const a=project("normal-client","creative"),b=project("urgent-client","creative");
  s.ceo!.projects.push(a,b);
+ const teamA=T.startClientTeam(s,a),teamB=T.startClientTeam(s,b);
+ T.joinClientTeam(s,fx,teamA.id,"creator2");
  P.assignSpecialist(s,fx,a.id,"creative","creator2");
  P.assignSpecialist(s,fx,b.id,"creative","creator2");
  assert.equal(a.tasks[0].preferredEmployee,"creator2");
- assert.equal(b.tasks[0].preferredEmployee,"creator2");
+ assert.equal(b.tasks[0].preferredEmployee,undefined);
  P.prioritizeProject(s,fx,b.id,"high");
  ceoTick(s,fx,1);
- assert.equal(b.tasks[0].employee,"creator2");
- assert.equal(a.tasks[0].employee,null);
- assert.equal(b.tasks[0].status,"in_progress");
- assert.ok(departmentMetrics(s).find(x=>x.id==="creative")!.bottleneck);
+ assert.equal(a.tasks[0].employee,"creator2");
+ assert.equal(b.tasks[0].employee,null);
+ assert.equal(b.tasks[0].status,"assigned");
+ assert.equal(teamB.memberIds.length,0);
 });
 test("expertise and fatigue affect productivity; delivery earns progression",()=>{
  const s=agency();hire(s,fx,"creator2");

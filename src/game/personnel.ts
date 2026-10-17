@@ -40,9 +40,9 @@ export function employeeReadiness(s:GameState,id:string):number{
  const p=profile(s,id);
  return Math.round(clamp(p.skill*.55+p.morale*.35+(100-p.fatigue)*.10,0,100));
 }
-export function leadFor(s:GameState,role:string):string|null{
- const id=s.teamLeads[FUNCTION_FOR_ROLE[role]??role];
- return id&&s.staff.includes(id)&&primaryRole(id)===role?id:null;
+export function leadFor(s:GameState,id:string):string|null{
+ const team=s.ceo?.clientTeams?.find(t=>t.status==="active"&&t.memberIds.includes(id));
+ return team?.leadId&&team.memberIds.includes(team.leadId)?team.leadId:null;
 }
 export function staffRate(s:GameState,id:string,role:string,load:number):{speed:number;quality:number}{
  if(id==="external")return {speed:1.07,quality:0};
@@ -51,7 +51,7 @@ export function staffRate(s:GameState,id:string,role:string,load:number):{speed:
  const skill=clamp((p.skill-64)/100,-0.35,0.36);
  const fatigue=clamp(p.fatigue/100,0,1);
  const morale=(p.morale-75)/250;
- const lead=leadFor(s,role);
+ const lead=leadFor(s,id);
  const mentorship=lead&&lead!==id?0.065:lead===id?0.085:0;
  const focusSpeed=p.focus==="speed"?0.18:p.focus==="quality"?-0.13:0;
  const focusQuality=p.focus==="quality"?8:p.focus==="speed"?-5:0;
@@ -119,7 +119,9 @@ export function assignSpecialist(s:GameState,fx:Fx,projectId:string,taskKey:stri
  const c=s.ceo,p=c?.projects.find(p=>p.id===projectId&&p.status==="active");
  const t=p?.tasks.find(t=>t.key===taskKey);
  if(!t||!["backlog","assigned"].includes(t.status))return;
- if(employeeId&&(!s.staff.includes(employeeId)||!eligibleForRole(employeeId,t.role)))return fx.toast("Employee not qualified for this workstream.");
+ const team=s.ceo?.clientTeams?.find(team=>team.id===p?.teamId);
+ if(employeeId&&(!s.staff.includes(employeeId)||!team?.memberIds.includes(employeeId)||!eligibleForRole(employeeId,t.role)))
+  return fx.toast("Employee must belong to this dedicated client team and be qualified for the workstream.");
  t.preferredEmployee=employeeId;
  fx.log((employeeId?employeeById(employeeId)?.name:"Automatic assignment")+" designated for "+p!.brand+" · "+t.label);
 }
