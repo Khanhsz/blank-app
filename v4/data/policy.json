@@ -1,0 +1,266 @@
+{
+  "domain": "Current Affairs & Policy",
+  "updated_at": "2026-10-17",
+  "stories": [
+    {
+      "id": "ST-20261017-401",
+      "title": "Quốc hội Việt Nam chuẩn bị xem xét 43 dự thảo luật và nghị quyết",
+      "domain": "Current Affairs & Policy",
+      "date": "2026-10-16",
+      "summary": "Kỳ họp thứ hai Quốc hội khóa XVI dự kiến xem xét 43 dự thảo luật/nghị quyết trong các lĩnh vực kinh doanh, đất đai, nhà ở và phúc lợi; chưa thể coi dự thảo là luật có hiệu lực.",
+      "what": "Kỳ họp thứ hai Quốc hội khóa XVI dự kiến xem xét 43 dự thảo luật/nghị quyết trong các lĩnh vực kinh doanh, đất đai, nhà ở và phúc lợi; chưa thể coi dự thảo là luật có hiệu lực.",
+      "so_what": "Lịch nghị sự có thể báo trước những thay đổi tuân thủ cho doanh nghiệp, nhưng kết quả còn phụ thuộc quá trình thảo luận.",
+      "why_you": "Khi phân tích môi trường kinh doanh Việt Nam, nên tạo policy watchlist theo tình trạng từng dự thảo.",
+      "action": "Theo dõi văn bản cuối cùng được thông qua và thời điểm hiệu lực.",
+      "confidence": "High/Medium · nguồn báo chí; trạng thái pháp lý được chú thích",
+      "event_type": "Policy / public affairs",
+      "preview": false,
+      "tags": [
+        "policy",
+        "geopolitics",
+        "regulation",
+        "Vietnam"
+      ],
+      "sources": [
+        {
+          "publisher": "Vietnam News",
+          "url": "https://vietnamnews.vn/politics-laws/1802185/16th-na-s-second-session-43-draft-laws-and-resolutions-to-be-considered.html"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-402",
+      "title": "Trung Quốc đề xuất bổ sung công nghệ AI vào danh mục kiểm soát xuất khẩu",
+      "domain": "Current Affairs & Policy",
+      "date": "2026-10-16",
+      "summary": "Reuters đưa tin Bắc Kinh đề xuất thay đổi danh mục chuyển giao công nghệ ra nước ngoài, có nội dung liên quan AI, sinh học và năng lượng; đang ở giai đoạn lấy ý kiến.",
+      "what": "Reuters đưa tin Bắc Kinh đề xuất thay đổi danh mục chuyển giao công nghệ ra nước ngoài, có nội dung liên quan AI, sinh học và năng lượng; đang ở giai đoạn lấy ý kiến.",
+      "so_what": "Nếu có hiệu lực, quy định có thể thay đổi cách chuyển giao mô hình/công nghệ, nhưng chưa nên khẳng định sẽ chặn API thương mại.",
+      "why_you": "Với hệ thống AI sử dụng nhà cung cấp quốc tế, đây là loại rủi ro legal/product cần theo dõi.",
+      "action": "Theo dõi bản cuối sau tham vấn và hướng dẫn cấp phép.",
+      "confidence": "High/Medium · nguồn báo chí; trạng thái pháp lý được chú thích",
+      "event_type": "Policy / public affairs",
+      "preview": false,
+      "tags": [
+        "policy",
+        "geopolitics",
+        "regulation",
+        "Vietnam"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters",
+          "url": "https://www.reuters.com/world/asia-pacific/china-proposes-adding-40-ai-biotech-solar-technologies-export-control-list-2026-10-16/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-403",
+      "title": "Hội nghị thượng đỉnh EU đặt giá năng lượng và cạnh tranh với Trung Quốc lên bàn nghị sự",
+      "domain": "Current Affairs & Policy",
+      "date": "2026-10-15",
+      "summary": "Lãnh đạo EU thảo luận giá năng lượng, thâm hụt thương mại, cạnh tranh và ngân sách; các nước còn bất đồng về biện pháp can thiệp.",
+      "what": "Lãnh đạo EU thảo luận giá năng lượng, thâm hụt thương mại, cạnh tranh và ngân sách; các nước còn bất đồng về biện pháp can thiệp.",
+      "so_what": "Các tranh luận chính sách có thể báo hiệu thay đổi rào cản thương mại đối với hàng nhập khẩu, chưa phải một gói quy định đã được ban hành.",
+      "why_you": "Đề tài sát bài tập bảo hộ thương mại: phân biệt chiến lược công nghiệp và biện pháp phòng vệ đã có hiệu lực.",
+      "action": "Theo dõi kết luận Hội đồng châu Âu và luật triển khai sau hội nghị.",
+      "confidence": "High/Medium · nguồn báo chí; trạng thái pháp lý được chú thích",
+      "event_type": "Policy / public affairs",
+      "preview": false,
+      "tags": [
+        "policy",
+        "geopolitics",
+        "regulation",
+        "Vietnam"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters",
+          "url": "https://www.reuters.com/world/china/eu-leaders-tackle-china-exports-energy-prices-budget-summit-2026-10-15/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-404",
+      "title": "Đức yêu cầu thu hẹp đề xuất ngân sách EU trong đàm phán",
+      "domain": "Current Affairs & Policy",
+      "date": "2026-10-16",
+      "summary": "Thủ tướng Đức Friedrich Merz cho rằng dự thảo ngân sách EU cần cắt giảm hơn nữa; đàm phán chưa kết thúc.",
+      "what": "Thủ tướng Đức Friedrich Merz cho rằng dự thảo ngân sách EU cần cắt giảm hơn nữa; đàm phán chưa kết thúc.",
+      "so_what": "Bất đồng giữa quốc gia đóng góp và thụ hưởng có thể ảnh hưởng ưu tiên ngân sách khí hậu, đổi mới và quốc phòng.",
+      "why_you": "Khi đánh giá các chương trình EU có thể hỗ trợ doanh nghiệp, cần phân biệt đề xuất nguồn quỹ và kinh phí đã được cấp.",
+      "action": "Theo dõi các vòng đàm phán và số tiền chính thức.",
+      "confidence": "High/Medium · nguồn báo chí; trạng thái pháp lý được chú thích",
+      "event_type": "Policy / public affairs",
+      "preview": false,
+      "tags": [
+        "policy",
+        "geopolitics",
+        "regulation",
+        "Vietnam"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters",
+          "url": "https://www.reuters.com/business/germanys-merz-says-eu-budget-proposal-must-be-cut-further-2026-10-16/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-405",
+      "title": "IMF khuyến nghị châu Âu tăng trưởng nhanh hơn hoặc giảm vay nợ",
+      "domain": "Current Affairs & Policy",
+      "date": "2026-10-16",
+      "summary": "IMF đưa ra đánh giá về sức bền tài khóa châu Âu, nhấn mạnh cải cách năng suất và quản lý nợ công trong môi trường chi phí vốn cao.",
+      "what": "IMF đưa ra đánh giá về sức bền tài khóa châu Âu, nhấn mạnh cải cách năng suất và quản lý nợ công trong môi trường chi phí vốn cao.",
+      "so_what": "Lựa chọn ngân sách có thể tạo đánh đổi giữa kích thích kinh tế ngắn hạn và nợ dài hạn.",
+      "why_you": "Liên hệ kinh tế quốc tế: khả năng tiêu thụ của EU và áp lực chính sách bảo hộ cần đặt trong bối cảnh tăng trưởng yếu.",
+      "action": "Theo dõi các kế hoạch ngân sách quốc gia được thông qua.",
+      "confidence": "High/Medium · nguồn báo chí; trạng thái pháp lý được chú thích",
+      "event_type": "Policy / public affairs",
+      "preview": false,
+      "tags": [
+        "policy",
+        "geopolitics",
+        "regulation",
+        "Vietnam"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters / IMF",
+          "url": "https://www.reuters.com/business/europe-must-boost-growth-or-borrow-less-keep-debt-sustainable-imf-says-2026-10-16/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-406",
+      "title": "UN cảnh báo khoảng trống tài chính bảo vệ đa dạng sinh học trước COP17",
+      "domain": "Current Affairs & Policy",
+      "date": "2026-10-16",
+      "summary": "AP đưa tin dòng tài chính dành cho bảo vệ tự nhiên vẫn thấp hơn mục tiêu quốc tế khi các nước chuẩn bị họp COP17.",
+      "what": "AP đưa tin dòng tài chính dành cho bảo vệ tự nhiên vẫn thấp hơn mục tiêu quốc tế khi các nước chuẩn bị họp COP17.",
+      "so_what": "Khoảng trống tài trợ khiến các lời hứa bảo tồn khó chuyển thành dự án thực tế; cần xét chất lượng và tính thêm mới của vốn.",
+      "why_you": "Liên hệ ESG và chuỗi cung ứng nhưng không đồng nhất cam kết môi trường với tác động đã được đo.",
+      "action": "Theo dõi quyết định tài chính và tiêu chí đo lường tại COP17.",
+      "confidence": "High/Medium · nguồn báo chí; trạng thái pháp lý được chú thích",
+      "event_type": "Policy / public affairs",
+      "preview": false,
+      "tags": [
+        "policy",
+        "geopolitics",
+        "regulation",
+        "Vietnam"
+      ],
+      "sources": [
+        {
+          "publisher": "Associated Press",
+          "url": "https://apnews.com/article/af7b83c1bd60f1e85c8b2b8637e4523b"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-407",
+      "title": "Tòa án bầu cử Brazil yêu cầu Meta đối xử công bằng với ứng viên",
+      "domain": "Current Affairs & Policy",
+      "date": "2026-10-15",
+      "summary": "AP đưa tin một thẩm phán bầu cử Brazil ra quyết định liên quan nguyên tắc đối xử đồng đều với nội dung của hai chiến dịch; những cáo buộc thiên vị thuật toán vẫn là cáo buộc cần kiểm chứng.",
+      "what": "AP đưa tin một thẩm phán bầu cử Brazil ra quyết định liên quan nguyên tắc đối xử đồng đều với nội dung của hai chiến dịch; những cáo buộc thiên vị thuật toán vẫn là cáo buộc cần kiểm chứng.",
+      "so_what": "Quản trị nền tảng và nội dung tạo tác động chính trị dù hệ thống phân phối thường thiếu minh bạch.",
+      "why_you": "Case quan trọng để nghiên cứu thuật toán phân phối nội dung, fairness và platform governance.",
+      "action": "Phân biệt nội dung phán quyết với các tố cáo chưa được chứng minh.",
+      "confidence": "High/Medium · nguồn báo chí; trạng thái pháp lý được chú thích",
+      "event_type": "Policy / public affairs",
+      "preview": false,
+      "tags": [
+        "policy",
+        "geopolitics",
+        "regulation",
+        "Vietnam"
+      ],
+      "sources": [
+        {
+          "publisher": "Associated Press",
+          "url": "https://apnews.com/article/42270ca42bf27b3c9c30d73961759bc9"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-408",
+      "title": "Nhiều bang Mỹ ban hành quy định bầu cử mới trước bầu cử giữa nhiệm kỳ",
+      "domain": "Current Affairs & Policy",
+      "date": "2026-10-13",
+      "summary": "AP tổng hợp những thay đổi cấp bang về giấy tờ xác nhận cử tri và hình thức bỏ phiếu; một số quy định gặp thách thức pháp lý.",
+      "what": "AP tổng hợp những thay đổi cấp bang về giấy tờ xác nhận cử tri và hình thức bỏ phiếu; một số quy định gặp thách thức pháp lý.",
+      "so_what": "Quy định khác nhau giữa các bang tạo chi phí tuân thủ và tranh luận về quyền tiếp cận bầu cử; các bên có cách đánh giá khác nhau.",
+      "why_you": "Ví dụ về quan hệ giữa luật liên bang, luật bang và thực thi chính sách công.",
+      "action": "Theo dõi phán quyết tòa án và quy định áp dụng cuối cùng từng bang.",
+      "confidence": "High/Medium · nguồn báo chí; trạng thái pháp lý được chú thích",
+      "event_type": "Policy / public affairs",
+      "preview": false,
+      "tags": [
+        "policy",
+        "geopolitics",
+        "regulation",
+        "Vietnam"
+      ],
+      "sources": [
+        {
+          "publisher": "Associated Press",
+          "url": "https://apnews.com/article/afed320c2dba532098b5158d2d0f107c"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-409",
+      "title": "Việt Nam sửa Luật Hải quan theo hướng số hóa thương mại điện tử xuyên biên giới",
+      "domain": "Current Affairs & Policy",
+      "date": "2026-08-23",
+      "summary": "Quốc hội thông qua sửa đổi Luật Hải quan với nội dung quản lý giao dịch thương mại điện tử xuyên biên giới và cơ chế số hóa; các mốc áp dụng quy định cần kiểm tra riêng.",
+      "what": "Quốc hội thông qua sửa đổi Luật Hải quan với nội dung quản lý giao dịch thương mại điện tử xuyên biên giới và cơ chế số hóa; các mốc áp dụng quy định cần kiểm tra riêng.",
+      "so_what": "Doanh nghiệp xuất nhập khẩu có thể phải cập nhật quy trình dữ liệu, chứng từ và kiểm tra rủi ro.",
+      "why_you": "Liên hệ Logistics, Trade Compliance và thương mại điện tử quốc tế.",
+      "action": "Theo dõi nghị định hướng dẫn và thời điểm áp dụng từng điều khoản.",
+      "confidence": "High/Medium · nguồn báo chí; trạng thái pháp lý được chú thích",
+      "event_type": "Policy / public affairs",
+      "preview": false,
+      "tags": [
+        "policy",
+        "geopolitics",
+        "regulation",
+        "Vietnam"
+      ],
+      "sources": [
+        {
+          "publisher": "Vietnam News",
+          "url": "https://vietnamnews.vn/economy/1799591/national-assembly-passes-revised-customs-law-tightening-e-commerce-controls.html"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-410",
+      "title": "Việt Nam công bố gói luật về năng lượng và phát triển đô thị",
+      "domain": "Current Affairs & Policy",
+      "date": "2026-09-10",
+      "summary": "Vietnam News đưa tin các lệnh công bố 15 luật, trong đó có cơ chế mới cho dầu khí và quyền phát triển đô thị của TP.HCM; phải xem từng ngày hiệu lực riêng.",
+      "what": "Vietnam News đưa tin các lệnh công bố 15 luật, trong đó có cơ chế mới cho dầu khí và quyền phát triển đô thị của TP.HCM; phải xem từng ngày hiệu lực riêng.",
+      "so_what": "Thay đổi thẩm quyền có thể tạo cơ hội đầu tư hoặc điều chỉnh thủ tục tại địa phương, nhưng cần văn bản hướng dẫn thực thi.",
+      "why_you": "Với market entry TP.HCM, cập nhật policy landscape trước khi giả định lợi thế đầu tư.",
+      "action": "Đọc toàn văn quy định cụ thể có liên quan ngành đang nghiên cứu.",
+      "confidence": "High/Medium · nguồn báo chí; trạng thái pháp lý được chú thích",
+      "event_type": "Policy / public affairs",
+      "preview": false,
+      "tags": [
+        "policy",
+        "geopolitics",
+        "regulation",
+        "Vietnam"
+      ],
+      "sources": [
+        {
+          "publisher": "Vietnam News",
+          "url": "https://vietnamnews.vn/politics-laws/1799540/new-laws-enacted-on-energy-urban-development-and-defence.html"
+        }
+      ]
+    }
+  ]
+}
