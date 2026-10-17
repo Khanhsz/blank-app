@@ -1,0 +1,134 @@
+{
+  "updated_at": "2026-10-17",
+  "mode": "preview",
+  "disclaimer": "Public demo snapshot from earlier test newsletter; not a live sync with Google Sheets or private user data.",
+  "stories": [
+    {
+      "id": "ST-20261017-901",
+      "title": "RTX Spark mở thêm khả năng local AI, nhưng lợi ích cần được benchmark trên workflow thật",
+      "domain": "Technology & AI",
+      "date": "2026-10-16",
+      "summary": "NVIDIA công bố RTX Spark, tạo thêm lựa chọn xử lý AI trên thiết bị. Thông số công bố không thay thế thử nghiệm độc lập.",
+      "what": "Ngày 16/10, NVIDIA thông báo laptop RTX Spark bắt đầu được bán, có cấu hình công bố tối đa 128 GB unified memory và 1 petaflop AI FP4.",
+      "so_what": "Một số tác vụ AI có thể được triển khai cục bộ, nhưng hiệu năng thực tế, độ chính xác và chi phí cần đo theo từng workload.",
+      "why_you": "Có thể dùng câu chuyện này để thiết kế thí nghiệm so sánh AI agent chạy local và cloud trong nghiên cứu thị trường.",
+      "action": "Thử 10 prompt research giống nhau, đo thời gian, chất lượng nguồn và chi phí.",
+      "confidence": "High · hãng xác nhận công bố",
+      "event_type": "Product announcement",
+      "preview": true,
+      "tags": [
+        "AI",
+        "Local AI",
+        "Agents",
+        "Product"
+      ],
+      "sources": [
+        {
+          "publisher": "NVIDIA Newsroom",
+          "url": "https://nvidianews.nvidia.com/news/nvidia-rtx-spark-pcs-available-today-a-new-beginning-for-windows-pcs"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-902",
+      "title": "Agentic Marketplace đặt lại câu hỏi: thương hiệu được AI đề xuất như thế nào?",
+      "domain": "Marketing & Market Research",
+      "date": "2026-10-14",
+      "summary": "VSMCamp 2026 giới thiệu chủ đề Agentic Marketplace; đây là định hướng thảo luận, không phải số liệu chứng minh thị trường đã chuyển dịch.",
+      "what": "VSMCamp & CSMOSummit 2026 giới thiệu chủ đề The Agentic Marketplace trong các thông tin truyền thông sự kiện.",
+      "so_what": "Các marketer có thêm câu hỏi về cách AI tóm tắt, lựa chọn và giới thiệu thương hiệu; tác động tới hành vi cần được nghiên cứu độc lập.",
+      "why_you": "Có thể bổ sung AI-assisted discovery như một giả thuyết trong customer journey dành cho marketing case.",
+      "action": "Dùng 10 câu hỏi so sánh thương hiệu, đối chiếu câu trả lời AI với thông tin chính thức.",
+      "confidence": "Medium · thông tin từ chủ đề sự kiện",
+      "event_type": "Industry agenda signal",
+      "preview": true,
+      "tags": [
+        "Marketing",
+        "Brand",
+        "AI",
+        "Consumer Research"
+      ],
+      "sources": [
+        {
+          "publisher": "VSMCamp",
+          "url": "https://www.vsmcamp.com/"
+        },
+        {
+          "publisher": "VTV",
+          "url": "https://vtv.vn/vsmcamp-2026-da-den-luc-thuong-hieu-phai-chinh-phuc-ca-ai-1002610141417324.htm"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-903",
+      "title": "Việc làm: tỷ lệ thất nghiệp nhóm trẻ cao hơn bình quân chung trong Q3/2026",
+      "domain": "Employment & Future of Work",
+      "date": "2026-10-03",
+      "summary": "Tỷ lệ thất nghiệp thanh niên 15–24 là 9,07%; trong độ tuổi lao động 2,22%, theo báo cáo chính thức về quý III/2026.",
+      "what": "Cục Thống kê công bố tỷ lệ thất nghiệp thanh niên 15–24 tuổi 9,07% và tỷ lệ thất nghiệp trong độ tuổi lao động 2,22% trong quý III/2026. Hai mẫu khác nhau.",
+      "so_what": "Chỉ số toàn thị trường không nói hết rủi ro của người mới tham gia lao động; tỷ lệ này không cho biết số chỗ thực tập đang mở.",
+      "why_you": "Có thể theo dõi kỹ năng xuất hiện thường xuyên trong các JD ngành marketing và research.",
+      "action": "Lập bảng 20 JD chính thức và phân nhóm các kỹ năng được yêu cầu.",
+      "confidence": "High · nguồn thống kê gốc",
+      "event_type": "Quarterly labor statistics",
+      "preview": true,
+      "tags": [
+        "Vietnam",
+        "Employment",
+        "Skills",
+        "Early career"
+      ],
+      "sources": [
+        {
+          "publisher": "Cục Thống kê Việt Nam",
+          "url": "https://www.nso.gov.vn/tin-tuc-thong-ke/2026/10/thong-cao-bao-chi-ve-tinh-hinh-lao-dong-viec-lam-quy-iii-va-9-thang-nam-2026/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-904",
+      "title": "Danh Võ được The Met lựa chọn cho dự án mặt tiền năm 2027",
+      "domain": "Culture & Art",
+      "date": "2026-10-15",
+      "summary": "The Met công bố dự án nghệ thuật mặt tiền năm 2027 với nghệ sĩ gốc Việt Danh Võ; triển lãm chưa mở.",
+      "what": "The Metropolitan Museum of Art thông báo dự án Genesis Facade Commission của Danh Võ dự kiến trưng bày năm 2027.",
+      "so_what": "Dự án đặt nghệ thuật đương đại trong đối thoại với kiến trúc, lịch sử và không gian công cộng, nhưng các tác động văn hóa chưa thể lượng hóa trước khi trưng bày.",
+      "why_you": "Một trường hợp nghệ sĩ gốc Việt trong nghệ thuật đương đại quốc tế, đáng khám phá từ góc độ bản sắc và di sản.",
+      "action": "Theo dõi concept, văn bản curator và hình ảnh tác phẩm do The Met công bố.",
+      "confidence": "High · bảo tàng công bố kế hoạch",
+      "event_type": "Exhibition announcement",
+      "preview": true,
+      "tags": [
+        "Art",
+        "Architecture",
+        "Vietnamese diaspora",
+        "Culture"
+      ],
+      "sources": [
+        {
+          "publisher": "The Metropolitan Museum of Art",
+          "url": "https://www.metmuseum.org/ja/exhibitions/the-genesis-facade-commission-danh-vo"
+        }
+      ]
+    }
+  ],
+  "links": [],
+  "opportunities": [
+    {
+      "id": "OP-DEMO-001",
+      "type": "Research Experiment",
+      "title": "AI-assisted brand discovery audit",
+      "description": "Thử 10 câu hỏi mua sắm trên các công cụ AI, lưu các nguồn AI sử dụng và chấm độ chính xác. Đây là gợi ý nghiên cứu, không phải chương trình tuyển dụng hay bằng chứng về hành vi mua hàng.",
+      "story_id": "ST-20261017-902",
+      "source_url": "https://www.vsmcamp.com/"
+    },
+    {
+      "id": "OP-DEMO-002",
+      "type": "Research Experiment",
+      "title": "Local AI vs cloud research workflow",
+      "description": "So sánh cùng tác vụ tổng hợp thị trường theo thời gian xử lý, chất lượng trích nguồn và chi phí. Không kết luận hiệu năng phần cứng chỉ từ thông số hãng.",
+      "story_id": "ST-20261017-901",
+      "source_url": "https://nvidianews.nvidia.com/news/nvidia-rtx-spark-pcs-available-today-a-new-beginning-for-windows-pcs"
+    }
+  ]
+}
