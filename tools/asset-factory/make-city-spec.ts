@@ -43,6 +43,29 @@ const masters=[...real,...decorations,...ambient].map((l,i)=>{
   priorAsset:slice.masters.some((x:{id:string})=>x.id===l.id)?"GLB slice-3":"procedural geometry"
  };
 });
+// Deliberate differentiation for adjacent structures; kept in the generating
+// source so npm run assets:build does not erase hand-edited GLB metadata.
+const curatedOverrides:Record<string,Record<string,string|number>>={
+ "office-loft":{roof:"offset"},
+ "ambient-p48-m24":{archetype:"stacked",facade:"grid",entrance:"recessed"},
+ "ambient-p32-m8":{facade:"grid",entrance:"arcade"},
+ "office-tower":{facade:"grid"},
+ "client-vertex":{entrance:"atrium"},
+ "ambient-p0-p40":{roof:"flat",facade:"grid"},
+ "arts-residence-a":{facade:"recessed"},
+ "ambient-m16-m24":{facade:"grid"},
+ "arts-retail":{variant:1},
+ "office-brick":{massing:"three_offset_volumes"}
+};
+for(const master of masters){const custom=curatedOverrides[master.id];if(custom)Object.assign(master,custom)}
+const architecturalProps=["archetype","roof","facade","entrance","variant"] as const;
+for(let i=0;i<masters.length;i++)for(let j=i+1;j<masters.length;j++){
+ const a=masters[i],b=masters[j];
+ const difference=architecturalProps.filter(key=>a[key]!==b[key]).length;
+ if(difference===0)throw Error("Duplicate architectural signature: "+a.id+" / "+b.id);
+ if(Math.hypot(a.x-b.x,a.z-b.z)<=22.7&&difference<3)
+  throw Error("Insufficient nearby architectural differentiation: "+a.id+" / "+b.id+" ("+difference+")");
+}
 if(masters.length!==41||real.length!==27||decorations.length!==4||ambient.length!==10)throw Error("Actual city counts changed: review architecture manifest before building");
 const ids=new Set(masters.map(x=>x.id));
 if(ids.size!==masters.length)throw Error("Duplicate city ID");
