@@ -1,0 +1,266 @@
+{
+  "domain": "Economics & Business",
+  "updated_at": "2026-10-17",
+  "stories": [
+    {
+      "id": "ST-20261017-101",
+      "title": "IMF nâng dự báo tăng trưởng thế giới lên 3,1% nhưng cảnh báo rủi ro AI và năng lượng",
+      "domain": "Economics & Business",
+      "date": "2026-10-13",
+      "summary": "IMF dự báo GDP toàn cầu tăng 3,1% trong 2026, nhỉnh hơn dự báo trước; đầu tư AI hỗ trợ một số nền kinh tế, trong khi rủi ro năng lượng và nợ vẫn lớn.",
+      "what": "IMF dự báo GDP toàn cầu tăng 3,1% trong 2026, nhỉnh hơn dự báo trước; đầu tư AI hỗ trợ một số nền kinh tế, trong khi rủi ro năng lượng và nợ vẫn lớn.",
+      "so_what": "Đà tăng trưởng toàn cầu không đồng đều; doanh nghiệp cần tách nhu cầu AI khỏi sự cải thiện tiêu dùng trên diện rộng.",
+      "why_you": "Dùng góc nhìn này khi phân tích thị trường xuất khẩu Việt Nam: động lực tăng trưởng theo nhóm hàng có thể rất khác nhau.",
+      "action": "Theo dõi dự báo IMF cho thương mại và lạm phát khi có cập nhật.",
+      "confidence": "High · dẫn báo cáo IMF",
+      "event_type": "Recent news / market analysis",
+      "preview": false,
+      "tags": [
+        "economics",
+        "business",
+        "macro",
+        "trade"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters",
+          "url": "https://www.reuters.com/world/china/imf-says-ai-investment-propping-up-global-growth-war-debt-threaten-outlook-2026-10-13/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-102",
+      "title": "WTO cảnh báo xung đột địa chính trị có thể thay đổi dài hạn luồng thương mại",
+      "domain": "Economics & Business",
+      "date": "2026-10-15",
+      "summary": "Lãnh đạo WTO nhận định bất ổn Trung Đông và căng thẳng địa chính trị thúc đẩy đa dạng hóa nguồn cung; dự báo thương mại hàng hóa 2026 được điều chỉnh tăng nhờ nhóm hàng AI.",
+      "what": "Lãnh đạo WTO nhận định bất ổn Trung Đông và căng thẳng địa chính trị thúc đẩy đa dạng hóa nguồn cung; dự báo thương mại hàng hóa 2026 được điều chỉnh tăng nhờ nhóm hàng AI.",
+      "so_what": "Sự dịch chuyển chuỗi cung ứng có thể tồn tại lâu hơn một cú sốc giá cước; tác động cụ thể phụ thuộc ngành và thị trường.",
+      "why_you": "Liên hệ trực tiếp bài toán bảo hộ thương mại và dệt may Việt Nam: kiểm tra chuyển hướng đơn hàng cùng quy tắc xuất xứ.",
+      "action": "Theo dõi biến động điểm đến xuất khẩu và chi phí logistics.",
+      "confidence": "High · phỏng vấn lãnh đạo WTO",
+      "event_type": "Recent news / market analysis",
+      "preview": false,
+      "tags": [
+        "economics",
+        "business",
+        "macro",
+        "trade"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters / WTO",
+          "url": "https://www.reuters.com/business/wto-chief-sees-lasting-impact-trade-middle-east-war-geopolitics-2026-10-15/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-103",
+      "title": "Doanh số bán lẻ Mỹ tăng 0,8% nhưng phần lõi chững lại",
+      "domain": "Economics & Business",
+      "date": "2026-10-15",
+      "summary": "Dữ liệu tháng 9 cho thấy bán lẻ Mỹ tăng 0,8%; giá xăng góp phần lớn, trong khi thước đo doanh số lõi chỉ tăng 0,1%.",
+      "what": "Dữ liệu tháng 9 cho thấy bán lẻ Mỹ tăng 0,8%; giá xăng góp phần lớn, trong khi thước đo doanh số lõi chỉ tăng 0,1%.",
+      "so_what": "Headline doanh số tăng không nhất thiết đồng nghĩa số lượng sản phẩm được mua tăng mạnh; cần xét giá và cấu phần.",
+      "why_you": "Khi làm market sizing hay demand analysis, nên tách nominal growth, inflation và thay đổi mix sản phẩm.",
+      "action": "Theo dõi doanh số điều chỉnh giá và chi tiêu nhóm thu nhập.",
+      "confidence": "High · dữ liệu thống kê Mỹ",
+      "event_type": "Recent news / market analysis",
+      "preview": false,
+      "tags": [
+        "economics",
+        "business",
+        "macro",
+        "trade"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters / US retail data",
+          "url": "https://www.reuters.com/business/us-retail-sales-beat-expectations-september-higher-gasoline-prices-2026-10-15/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-104",
+      "title": "Sản lượng nhà máy Mỹ hồi phục tháng 9 nhưng quý III tăng chậm",
+      "domain": "Economics & Business",
+      "date": "2026-10-16",
+      "summary": "Fed cho biết sản lượng chế tạo Mỹ tăng 0,3% trong tháng 9; tăng trưởng quy năm quý III chỉ 0,7%, thấp hơn 5,6% ở quý II.",
+      "what": "Fed cho biết sản lượng chế tạo Mỹ tăng 0,3% trong tháng 9; tăng trưởng quy năm quý III chỉ 0,7%, thấp hơn 5,6% ở quý II.",
+      "so_what": "Sự hồi phục theo tháng chưa đủ để kết luận chu kỳ công nghiệp mạnh; nhu cầu chip AI và ngành truyền thống có thể phân hóa.",
+      "why_you": "Hữu ích để xây biểu đồ so sánh chu kỳ sản xuất và đánh giá khả năng nhập khẩu nguyên vật liệu.",
+      "action": "Quan sát chỉ số sử dụng công suất và đơn hàng công nghiệp.",
+      "confidence": "High · dẫn công bố Fed",
+      "event_type": "Recent news / market analysis",
+      "preview": false,
+      "tags": [
+        "economics",
+        "business",
+        "macro",
+        "trade"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters / Federal Reserve",
+          "url": "https://www.reuters.com/business/us-manufacturing-output-rises-september-2026-10-16/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-105",
+      "title": "Khảo sát New York Fed ghi nhận áp lực giá dịch vụ vẫn lớn",
+      "domain": "Economics & Business",
+      "date": "2026-10-16",
+      "summary": "Khảo sát doanh nghiệp dịch vụ New York Fed tháng 10 ghi nhận áp lực giá đầu vào và giá bán tăng cùng tâm lý kinh doanh yếu.",
+      "what": "Khảo sát doanh nghiệp dịch vụ New York Fed tháng 10 ghi nhận áp lực giá đầu vào và giá bán tăng cùng tâm lý kinh doanh yếu.",
+      "so_what": "Áp lực giá dịch vụ có thể khiến việc giảm lãi suất khó hơn; kết luận này là kịch bản, không phải quyết định chính sách.",
+      "why_you": "Trong phân tích vĩ mô, dùng nhiều chỉ báo vùng thay vì suy diễn từ một khảo sát lên toàn nước Mỹ.",
+      "action": "Theo dõi CPI dịch vụ và quyết định của Fed.",
+      "confidence": "Medium · khảo sát khu vực",
+      "event_type": "Recent news / market analysis",
+      "preview": false,
+      "tags": [
+        "economics",
+        "business",
+        "macro",
+        "trade"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters / NY Fed",
+          "url": "https://www.reuters.com/business/ny-fed-service-sector-survey-finds-notable-price-pressures-2026-10-16/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-106",
+      "title": "PetroChina được dự báo lãi lớn từ giao dịch dầu giữa bất ổn nguồn cung",
+      "domain": "Economics & Business",
+      "date": "2026-10-16",
+      "summary": "Nguồn tin giao dịch của Reuters dự kiến lợi nhuận PetroChina International năm 2026 có thể đạt kỷ lục; công ty chưa xác nhận chỉ tiêu nội bộ.",
+      "what": "Nguồn tin giao dịch của Reuters dự kiến lợi nhuận PetroChina International năm 2026 có thể đạt kỷ lục; công ty chưa xác nhận chỉ tiêu nội bộ.",
+      "so_what": "Cùng một cú sốc năng lượng có thể gây thiệt hại cho bên mua nhưng tạo lợi thế cho đơn vị có hệ thống nguồn cung linh hoạt.",
+      "why_you": "Case study về risk management: đa dạng nguồn cung và công suất lọc dầu có thể ảnh hưởng lợi nhuận.",
+      "action": "Chờ báo cáo chính thức trước khi dùng số lợi nhuận làm dữ kiện đã kiểm toán.",
+      "confidence": "Medium · dự báo dựa trên nguồn ẩn danh",
+      "event_type": "Recent news / market analysis",
+      "preview": false,
+      "tags": [
+        "economics",
+        "business",
+        "macro",
+        "trade"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters",
+          "url": "https://www.reuters.com/business/energy/petrochina-set-record-trading-profit-war-upends-market-sources-say-2026-10-16/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-107",
+      "title": "Schneider Electric nâng mục tiêu 2026 khi nhu cầu hạ tầng trung tâm dữ liệu tăng",
+      "domain": "Economics & Business",
+      "date": "2026-10-16",
+      "summary": "Schneider Electric nâng dự báo doanh thu và lợi nhuận cốt lõi, cho biết mảng điện và làm mát trung tâm dữ liệu đóng góp quan trọng.",
+      "what": "Schneider Electric nâng dự báo doanh thu và lợi nhuận cốt lõi, cho biết mảng điện và làm mát trung tâm dữ liệu đóng góp quan trọng.",
+      "so_what": "Giá trị chuỗi AI không chỉ nằm ở mô hình; điện, thiết bị công nghiệp và làm mát cũng hưởng lợi từ đầu tư hạ tầng.",
+      "why_you": "Khi phân tích một ngành tăng trưởng nóng, dùng value-chain mapping để tìm nhóm hưởng lợi gián tiếp.",
+      "action": "Đối chiếu doanh thu thực với guidance mới vào kỳ công bố tiếp theo.",
+      "confidence": "High · cập nhật doanh nghiệp",
+      "event_type": "Recent news / market analysis",
+      "preview": false,
+      "tags": [
+        "economics",
+        "business",
+        "macro",
+        "trade"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters / Schneider Electric",
+          "url": "https://www.reuters.com/business/schneider-electric-raises-2026-targets-again-booming-data-centre-demand-2026-10-16/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-108",
+      "title": "CoreWeave biến động mạnh, làm nổi bật rủi ro tài trợ hạ tầng AI bằng nợ",
+      "domain": "Economics & Business",
+      "date": "2026-10-16",
+      "summary": "Cổ phiếu và trái phiếu CoreWeave chịu áp lực trong tuần; chi phí vốn tăng khiến nhà đầu tư kiểm tra đòn bẩy và nguồn thu kỳ vọng.",
+      "what": "Cổ phiếu và trái phiếu CoreWeave chịu áp lực trong tuần; chi phí vốn tăng khiến nhà đầu tư kiểm tra đòn bẩy và nguồn thu kỳ vọng.",
+      "so_what": "AI capex lớn không tương đương lợi nhuận chắc chắn; rủi ro thanh khoản và thời gian thu hồi vốn cần đánh giá riêng.",
+      "why_you": "Áp dụng vào bài toán startup/product: phân biệt tăng trưởng người dùng với unit economics và cash burn.",
+      "action": "Theo dõi yield trái phiếu và backlog chuyển thành doanh thu.",
+      "confidence": "High · dữ liệu thị trường",
+      "event_type": "Recent news / market analysis",
+      "preview": false,
+      "tags": [
+        "economics",
+        "business",
+        "macro",
+        "trade"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters",
+          "url": "https://www.reuters.com/business/coreweave-shares-bonds-headed-steep-weekly-losses-ai-borrowing-concerns-mount-2026-10-16/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-109",
+      "title": "TSMC lãi quý III kỷ lục nhờ AI nhưng vẫn thận trọng về 2027",
+      "domain": "Economics & Business",
+      "date": "2026-10-14",
+      "summary": "TSMC công bố lợi nhuận quý III tăng mạnh nhờ chip AI và duy trì kế hoạch đầu tư lớn; ban lãnh đạo cảnh báo cần thận trọng với triển vọng năm tới.",
+      "what": "TSMC công bố lợi nhuận quý III tăng mạnh nhờ chip AI và duy trì kế hoạch đầu tư lớn; ban lãnh đạo cảnh báo cần thận trọng với triển vọng năm tới.",
+      "so_what": "Nhu cầu AI cấp cao và sức mua thiết bị tiêu dùng có thể không chuyển động đồng pha.",
+      "why_you": "Case study phân tích market concentration và rủi ro phụ thuộc một mắt xích bán dẫn.",
+      "action": "Theo dõi tăng trưởng các nút công nghệ và hoạt động đóng gói tiên tiến.",
+      "confidence": "High · báo cáo kết quả kinh doanh",
+      "event_type": "Recent news / market analysis",
+      "preview": false,
+      "tags": [
+        "economics",
+        "business",
+        "macro",
+        "trade"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters / TSMC",
+          "url": "https://www.reuters.com/world/asia-pacific/tsmc-expected-report-sixth-straight-quarter-record-profit-thanks-ai-boom-2026-10-14/"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-110",
+      "title": "Giá thuê siêu tàu chở dầu giảm từ đỉnh nhưng vẫn ở vùng cao",
+      "domain": "Economics & Business",
+      "date": "2026-10-16",
+      "summary": "Theo Reuters, cước VLCC trên tuyến Gulf of Oman–Trung Quốc giảm theo chỉ số Worldscale so với tuần trước, nhưng căng thẳng vận tải chưa biến mất.",
+      "what": "Theo Reuters, cước VLCC trên tuyến Gulf of Oman–Trung Quốc giảm theo chỉ số Worldscale so với tuần trước, nhưng căng thẳng vận tải chưa biến mất.",
+      "so_what": "Chi phí logistics có thể giảm ngắn hạn mà chưa làm biến mất phụ phí rủi ro của doanh nghiệp nhập khẩu.",
+      "why_you": "Liên hệ quản trị chuỗi cung ứng: nên tách cước vận tải, bảo hiểm và giá nguyên liệu trong mô hình landed cost.",
+      "action": "Quan sát các tuyến vận tải châu Á và diễn biến tàu dầu.",
+      "confidence": "High · dẫn chỉ số cước",
+      "event_type": "Recent news / market analysis",
+      "preview": false,
+      "tags": [
+        "economics",
+        "business",
+        "macro",
+        "trade"
+      ],
+      "sources": [
+        {
+          "publisher": "Reuters / Baltic Exchange",
+          "url": "https://www.reuters.com/business/energy/supertanker-rates-fall-record-highs-2026-10-16/"
+        }
+      ]
+    }
+  ]
+}
