@@ -132,3 +132,29 @@ test("P2: low-trust delivery does not create a guaranteed referral",()=>{
  assert.equal(s.ceo!.leads.length,count);
  assert.equal(A.relationship(s.ceo!,l).wins,1);
 });
+
+test("P1: separate negotiations survive deal switching without overwriting another client's terms",()=>{
+ const s=game(),a=s.ceo!.leads[0],b=s.ceo!.leads[1];
+ a.status="negotiating";b.status="negotiating";
+ A.focusDeal(s,a.id);
+ s.ceo!.negotiation={id:a.id,round:3,fee:41000000,scope:7,advance:30,deadline:25,bonus:0,trust:70,notes:[],status:"open",counter:null};
+ A.focusDeal(s,b.id);
+ assert.equal(s.ceo!.negotiation,null);
+ s.ceo!.negotiation={id:b.id,round:2,fee:93000000,scope:11,advance:20,deadline:40,bonus:0,trust:58,notes:[],status:"open",counter:null};
+ A.focusDeal(s,a.id);
+ assert.equal(s.ceo!.negotiation?.fee,41000000);
+ assert.equal(s.ceo!.negotiation?.round,3);
+ assert.equal(A.activeDealCount(s.ceo!),2);
+ A.focusDeal(s,b.id);
+ assert.equal(s.ceo!.negotiation?.fee,93000000);
+ const restored=migrate(JSON.parse(JSON.stringify(s)));
+ assert.equal(restored.ceo?.dealSessions?.[a.id]?.negotiation?.fee,41000000);
+ assert.equal(restored.ceo?.negotiation?.fee,93000000);
+});
+test("P1: finished and lost pitches release capacity instead of blocking all future clients",()=>{
+ const s=game(),l=s.ceo!.leads[0];
+ s.ceo!.pitch={id:l.id,focus:l.pref,price:"standard",team:"balanced",evidence:"research",step:"result",quality:35,objection:null,result:{winner:"atlas",playerScore:35,topRival:"Atlas",topScore:75,explanation:"Lost"}};
+ assert.equal(A.activeDealCount(s.ceo!),0);
+ s.ceo!.pitch.step="prepare";
+ assert.equal(A.activeDealCount(s.ceo!),1);
+});

@@ -209,10 +209,10 @@ export function focusDeal(s:GameState,id:string){
 }
 export function activeDealCount(c:CEO){
  const ids=new Set<string>();
- if(c.pitch)ids.add(c.pitch.id);
- if(c.negotiation&&["open"].includes(c.negotiation.status))ids.add(c.negotiation.id);
+ if(c.pitch&&["prepare","objection","revision"].includes(c.pitch.step))ids.add(c.pitch.id);
+ if(c.negotiation?.status==="open")ids.add(c.negotiation.id);
  for(const [id,session] of Object.entries(c.dealSessions??{}))
-  if(session.pitch||session.negotiation?.status==="open")ids.add(id);
+  if((session.pitch&&["prepare","objection","revision"].includes(session.pitch.step))||session.negotiation?.status==="open")ids.add(id);
  return ids.size;
 }
 export function activeDealLimit(s:GameState){

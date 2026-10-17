@@ -130,7 +130,7 @@ function DealView({id,back,teams}:{id:string|null;back:()=>void;teams:()=>void})
 }
 export function GrowthDesk({onTeams}:{onTeams:()=>void}){
  const s=useGame(x=>x),c=s.ceo!;
- const [view,setView]=useState<View>("pipeline"),[stage,setStage]=useState("Open"),[query,setQuery]=useState("");
+ const [view,setView]=useState<View>(c.activeDealId?"deal":"pipeline"),[stage,setStage]=useState("Open"),[query,setQuery]=useState("");
  const [current,setCurrent]=useState<string|null>(c.activeDealId??null),[page,setPage]=useState(0);
  const open=c.leads.filter(l=>!["signed","lost","declined"].includes(l.status));
  const matches=c.leads.filter(l=>(stage==="Open"?!["signed","lost","declined"].includes(l.status):stage==="All"||A.opportunityStage(l)===stage)&&l.brand.toLowerCase().includes(query.toLowerCase()));

@@ -15,6 +15,7 @@ import {departmentMetrics} from "@/game/functions";
 import * as P from "@/game/personnel";
 import {ClientTeamBoard} from "./ClientTeamBoard";
 import {GrowthDesk} from "./GrowthDesk";
+import * as A from "@/game/acquisition";
 import * as T from "@/game/clientTeams";
 import {CampaignJourney} from "./CampaignJourney";
 
@@ -48,11 +49,6 @@ export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaig
     const live=s.ceo?.leads.find(x=>x.id===l.id);
     const status=live?.status||"future";
     const tender=s.ceo?tenderFor(s.ceo,l.id):undefined;
-    const activeNegotiation=!!(s.ceo?.negotiation||s.ceo?.pitch);
-    const opportunityOpen=status==="new"||status==="renewal";
-    const quote=live?qualificationQuote(s,live):null;
-    const qualifyAffordable=!!quote&&s.agencyCash>=quote.fee;
-    const canPitch=status==="qualified"&&s.agencyCash>=500000&&!activeNegotiation;
     const scope=l.duration+" days · "+l.scope+" workstreams";
     return <div className="mt-city-building-panel">
       <div className="mt-location-identity"><span className="mt-location-eyebrow">CORPORATE CLIENT HQ · {lot.district}</span><h3>{l.brand}</h3><p>{l.industry} · {l.origin}</p></div>
@@ -61,15 +57,12 @@ export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaig
       {tender?.status==="open"&&<div className="mt-ai-tender-notice"><b>LIVE COMPETITIVE TENDER</b><span>Closes Day {tender.deadline} · Current Day {s.ceo?.day} · Rival bids are active</span></div>}
       <div className="mt-location-stat-grid"><GameStat label="CAMPAIGN BUDGET" value={money(l.value)}/><GameStat label="AGENCY FEE" value={money(l.fee)}/><GameStat label="DIFFICULTY" value={Math.round(l.difficulty)+"/100"}/></div>
       <div className="mt-location-fact"><b>Client requirements</b><p>{l.objective} · {scope}. Preferred capability: {l.pref}. You will compete with other agencies in the city.</p></div>
-      {opportunityOpen&&quote&&<Row k={"Qualification research · "+quote.depth} v={money(quote.fee)}/>}
+      <p className="text-xs text-muted-foreground">Outreach, discovery, qualification, pitch and negotiation are managed in the unified Growth Desk.</p>
       {!s.agencyUnlocked?<FeedbackStrip>This is a potential corporate client. Found your own agency to qualify their lead and compete for the account.</FeedbackStrip>:
        <div className="mt-client-actions">
-        {opportunityOpen&&<Button className="w-full" disabled={!qualifyAffordable} onClick={()=>act((d,fx)=>K.qualify(d,fx,l.id))}>Qualify opportunity · {money(quote?.fee??0)}</Button>}
-        {status==="qualified"&&<Button className="w-full" disabled={!canPitch} onClick={()=>act((d,fx)=>K.startPitch(d,fx,l.id))}>Prepare competitive pitch · 500,000đ</Button>}
-        {status==="qualified"&&activeNegotiation&&<FeedbackStrip>Finish your ongoing pitch or negotiation before beginning another.</FeedbackStrip>}
-        {!["new","renewal","qualified"].includes(status)&&<FeedbackStrip tone={status==="signed"?"positive":"neutral"}>{status==="signed"?"Contract signed — your staff manage delivery in Agency HQ.":status==="lost"?"This opportunity was won by a rival.":status==="declined"?"You previously declined this account.":status==="pitch"||status==="pitch_won"||status==="negotiating"?"This account is progressing through the boardroom.":"Check the active pipeline for this account."}</FeedbackStrip>}
-        <Button variant="outline" className="w-full" onClick={()=>onOpen("ceo")}>Open CEO deal pipeline →</Button>
-       </div>}
+        <Button className="w-full" onClick={()=>{act(d=>A.focusDeal(d,l.id));onOpen("ceo");}}>Open {l.brand} in Growth Desk →</Button>
+        {status==="signed"&&<FeedbackStrip tone="positive">Contract signed. Manage delivery through the dedicated Client Team.</FeedbackStrip>}
+              </div>}
      </div>;
   }
   if(lot?.kind==="office"){
@@ -108,7 +101,7 @@ export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaig
 const TABS = ["inbox", "pipeline", "workforce", "finance", "rivals", "news", "partners"] as const;
 export function CEOCommandCenter({onReadEdition}:{onReadEdition?:(id:string)=>void}) {
   const s = useGame((x) => x);
-  const [tab, setTab] = useState<(typeof TABS)[number]>("inbox");
+  const [tab, setTab] = useState<(typeof TABS)[number]>(s.ceo?.activeDealId?"pipeline":"inbox");
   const c = s.ceo; if (!c) return null;
   const busy = K.capacity(c), open = K.openIssues(c);
   return (
