@@ -5,6 +5,7 @@ import type { Fx } from "./store";
 import { scoreModel } from "./campaign";
 import { ceoRand } from "./data";
 import {currentOffice} from "./city";
+import {runRivalAgents,ensureTender,rivalBidScore,registerRivalWin,resolveTalentOffer} from "./rivalAI";
 
 export const SECONDS_PER_DAY = 2.2;
 const OVERHEAD = 160000;
@@ -34,7 +35,7 @@ export function capacity(c: CEO) {
   return busy;
 }
 const wage = (id: string) => (employeeById(id)?.salary ?? 3000000) / 30;
-export const dailyPayroll = (s: GameState) => s.staff.reduce((a, id) => a + wage(id), 0);
+export const dailyPayroll = (s: GameState) => s.staff.reduce((a, id) => a + wage(id) + (s.ceo?.salaryPremiums?.[id]??0)/30, 0);
 function available(s: GameState, c: CEO, role: string) { const id = ceoTalent[role], busy = capacity(c); return s.staff.includes(id) && (busy[id] || 0) < 2 ? id : null; }
 const partnerFor = (key: string) => (key === "research" ? "research" : key === "creative" ? "production" : key === "media" || key === "kol" ? "media" : null);
 function taskCost(c: CEO, t: Task, p: Project) {
@@ -63,13 +64,7 @@ export function ceoDay(s: GameState, c: CEO, fx: Fx) {
   if (c.day % 30 === 0) for (const pid of c.partners) { const sp = ceoPartners.find((x) => x.id === pid)!; s.agencyCash -= sp.monthly; ledger(c, "Partner retainer · " + sp.name, -sp.monthly, "agency"); }
   for (const p of c.projects) if (p.status === "active") { p.days++; progressProject(s, c, p, fx); }
   for (const x of c.ledger) if (x.status === "due" && (x.due ?? 0) <= c.day) { x.status = "paid"; s.agencyCash += x.value; c.totalPaid += x.value; issue(c, fx, "payment", x.lead + x.day, `Received ${money(x.value)} from ${x.lead}`, ["acknowledge"]); }
-  if (c.day % 8 === 0) for (const r of c.rivals) {
-    const bias = (r.people - r.clients * 2) / 70, u = ceoRand(r.id + c.day);
-    if (u < 0.45 + bias) { r.clients++; r.cash += Math.round(1500000 * r.price); r.rep = clamp(r.rep + 0.35, 20, 99); }
-    else if (u > 0.84) { r.clients = Math.max(1, r.clients - 1); r.rep = clamp(r.rep - 0.8, 20, 99); }
-    if (r.cash > 15000000 && u < 0.19) { r.people++; r.cash -= 9000000; }
-    r.aggression = clamp(r.aggression + (ceoRand(c.day + r.name) - 0.5) * 0.03, 0.3, 0.95);
-  }
+  runRivalAgents(s,c,fx);
   if (s.agencyCash < 0) issue(c, fx, "cash", "agency", "Agency cash flow is negative — improve liquidity.", ["finance"]);
 }
 
@@ -149,8 +144,9 @@ export function ceoMigrateLegacy(s: GameState, fx: Fx) {
 export function hire(s: GameState, fx: Fx, id: string) {
   const e = employees.find((x) => x.id === id);
   if (!e || s.staff.includes(id) || s.agencyCash < e.salary) return;
+  if ((s.ceo?.talentMarket?.[id]?.untilDay??0)> (s.ceo?.day??0))return fx.toast(e.name+" is currently contracted by a rival agency. Available again on day "+s.ceo?.talentMarket?.[id]?.untilDay);
   if (s.staff.length >= currentOffice(s).capacity) return fx.toast("Office desk capacity reached — move to a larger headquarters.");
-  s.staff.push(id); fx.log(`Hired ${e.name} — ${e.role}`); fx.toast(`${e.name} joined the team`);
+  s.staff.push(id); if(s.ceo?.talentMarket)delete s.ceo.talentMarket[id]; fx.log(`Hired ${e.name} — ${e.role}`); fx.toast(`${e.name} joined the team`);
 }
 export function setSpeed(s: GameState, speed: number) { const c = ceoInit(s); if (c) c.speed = speed; }
 export function qualify(s: GameState, fx: Fx, id: string) {
@@ -160,7 +156,8 @@ export function qualify(s: GameState, fx: Fx, id: string) {
 }
 export function decline(s: GameState, id: string) { const l = lead(ceoInit(s)!, id); if (l && ["new", "qualified", "renewal"].includes(l.status)) l.status = "declined"; }
 export function startPitch(s: GameState, fx: Fx, id: string) {
-  const c = ceoInit(s)!, l = lead(c, id); if (!l || l.status !== "qualified") return;
+  const c = ceoInit(s)!, l = lead(c, id); if (!l || l.status !== "qualified"||c.pitch||c.negotiation) return;
+  const tender=ensureTender(c,l);if(tender?.deadline<=c.day)return fx.toast("Tender has closed; check the market outcome.");
   if (s.agencyCash < 500000) return fx.toast("Need at least 500,000đ for pitch preparation");
   s.agencyCash -= 500000; ledger(c, "Pitch team preparation", -500000, l.brand); l.status = "pitch";
   c.pitch = { id, focus: "performance", price: "standard", team: "balanced", evidence: "research", step: "prepare", quality: 0, objection: null, result: null };
@@ -180,16 +177,13 @@ export function presentPitch(s: GameState) {
 export function answerPitch(s: GameState, answer: string) {
   const c = ceoInit(s)!, p = c.pitch, l = p && lead(c, p.id); if (!l || !p || p.step !== "objection") return;
   p.quality += answer === "evidence" ? (l.pref === "performance" ? 10 : 4) : answer === "cut" ? (l.pref === "cost" ? 9 : 2) : answer === "creative" ? (l.pref === "creative" ? 10 : 3) : answer === "promise" ? 5 : 0;
-  const comps = l.rivalIds.map((id) => {
-    const r = rival(c, id)!, fit = l.pref === "performance" ? r.performance : l.pref === "creative" ? r.creative : l.pref === "cost" ? 95 / r.price : r.strategy;
-    return { id, name: r.name, evaluation: clamp(r.rep * 0.26 + fit * 0.44 + Math.min(18, r.people * 0.25) + Math.round((1.3 - r.price) * 13) + ceoRand(l.id + r.id + c.day) * 6, 0, 99) };
-  });
+  const comps = l.rivalIds.map(id=>{const r=rival(c,id)!;return {id,name:r.name,evaluation:rivalBidScore(r,l,c.day)};});
   const playerEval = clamp(p.quality + ceoRand("pitch" + l.id + c.day) * 5, 0, 99);
   const top = comps.sort((a, b) => b.evaluation - a.evaluation)[0];
   const winner = playerEval > top.evaluation ? "player" : top.id;
   p.result = { winner, playerScore: Math.round(playerEval), topRival: top.name, topScore: Math.round(top.evaluation), explanation: winner === "player" ? "Your proposal fits the client's criteria better — move to contract negotiation." : "A rival offered stronger capability, experience or commercial terms." };
   p.step = "result"; l.status = winner === "player" ? "pitch_won" : "lost";
-  if (winner !== "player") { const rv = rival(c, winner)!; rv.clients++; rv.rep = clamp(rv.rep + 1, 0, 100); l.lostTo = rv.name; } else l.relationship += 6;
+  if(winner!=="player"){registerRivalWin(s,c,l.id,winner,"competitive pitch");}else{l.relationship+=6;const t=ensureTender(c,l);if(t)t.status="player"}
 }
 export function closePitch(s: GameState) { const c = ceoInit(s)!; if (c.pitch?.step === "result" && c.pitch.result?.winner !== "player") c.pitch = null; }
 export function beginNegotiation(s: GameState) {
@@ -197,7 +191,7 @@ export function beginNegotiation(s: GameState) {
   l.status = "negotiating"; c.negotiation = { id: l.id, round: 1, fee: l.fee, scope: l.scope, advance: 30, deadline: l.duration, bonus: 0, trust: l.relationship, notes: ["Pitch won. Contract negotiation begins."], status: "open", counter: null };
 }
 export function forecast(s: GameState, n: Pick<Negotiation, "fee" | "scope" | "deadline">) {
-  const base = ceoTaskDefs.reduce((v, t) => v + t.cost, 0) * (n.scope / 8), payroll = dailyPayroll(s) * n.deadline, overhead = n.deadline * OVERHEAD;
+  const base = ceoTaskDefs.reduce((v, t) => v + t.cost, 0) * (n.scope / 8), payroll = dailyPayroll(s) * n.deadline, overhead = n.deadline * currentOffice(s).daily;
   const outsourcing = ceoTaskDefs.filter((t) => !s.staff.includes(ceoTalent[t.role])).reduce((a, t) => a + t.cost * 2.1, 0);
   return { margin: Math.round(n.fee - base - payroll - overhead - outsourcing), payroll: Math.round(payroll), direct: Math.round(base + outsourcing), overhead };
 }
@@ -217,14 +211,14 @@ export function counter(s: GameState, fx: Fx, action: string) {
   n.round++; c.day++;
   const ch = terms(s, n, l), roll = ceoRand(l.id + "neg" + n.round + action + Math.round(n.fee / 1e6));
   if (roll < ch.prob / 100 && n.round >= 3) return sign(s, fx);
-  if (n.round >= 5 || n.trust < 20) { n.status = "lost"; l.status = "lost"; n.notes.push("No agreement; client went another way."); rival(c, l.rivalIds[0])!.clients++; return; }
+  if (n.round >= 5 || n.trust < 20) { n.status = "lost"; l.status = "lost"; n.notes.push("No agreement; client went another way.");registerRivalWin(s,c,l.id,l.rivalIds[0],"negotiation failure"); return; }
   n.counter = { fee: Math.round(n.fee * 0.94), scope: n.scope, advance: Math.min(n.advance, 25), deadline: n.deadline };
   n.notes.push(`Round ${n.round}: ${l.stakeholder} asks for −6% fee and max 25% advance.`);
 }
 export function sign(s: GameState, fx: Fx) {
   const c = ceoInit(s)!, n = c.negotiation; if (!n || n.status !== "open") return; const l = lead(c, n.id)!;
   if (forecast(s, n).margin < 0 && n.round < 3) { issue(c, fx, "bad-margin", l.id, `Proposal risks a loss: ${l.brand}.`, ["review"]); return; }
-  n.status = "signed"; l.status = "signed";
+  n.status = "signed"; l.status = "signed";const tender=ensureTender(c,l);if(tender)tender.status="player";
   const p: Project = { id: "project-" + ++c.seq, leadId: l.id, brand: l.brand, adBudget: l.value, fee: n.fee, bonus: n.bonus, scope: n.scope, duration: n.deadline, industry: l.industry, days: 0, status: "active", scenarioIndex: l.scenario, startedDay: c.day, target: l.target, pitchQuality: c.pitch?.quality || 65, mediaSpent: 0, mediaReserved: l.value, direct: 0, campaign: newCampaign(l.scenario), tasks: ceoTaskDefs.map((t) => ({ ...t, status: "backlog", progress: 0, quality: 0, employee: null, outsourced: false })), paymentCount: 0 };
   c.projects.push(p); schedulePayment(c, p, (n.fee * n.advance) / 100, 0, "Contract advance");
   const e = c.ledger[0]; e.status = "paid"; c.totalPaid += e.value; s.agencyCash += e.value;
@@ -234,6 +228,7 @@ export function sign(s: GameState, fx: Fx) {
 export function closeNegotiation(s: GameState) { const c = ceoInit(s)!; if (c.negotiation && c.negotiation.status !== "open") { c.negotiation = null; c.pitch = null; } }
 export function resolveIssue(s: GameState, fx: Fx, id: string, choice: string) {
   const c = ceoInit(s)!, i = c.inbox.find((x) => x.id === id); if (!i || i.status !== "open") return; const p = proj(c, i.project);
+  if(i.type==="talent-poach"){resolveTalentOffer(s,fx,i.project,choice);return;}
   if (i.type === "capacity" && p && choice === "outsource") {
     const t = p.tasks.find((x) => x.status === "assigned" && !x.employee);
     if (t) { const fee = Math.round(t.cost * 2.1 * (p.scope / 8)); if (s.agencyCash < fee) return fx.toast("Not enough cash to outsource: " + money(fee));
@@ -242,7 +237,7 @@ export function resolveIssue(s: GameState, fx: Fx, id: string, choice: string) {
   if (i.type === "deadline" && p) { if (choice === "extend") { p.duration += 6; p.clientTrust = (p.clientTrust || 50) - 4; } else if (choice === "outsource") { p.tasks.filter((t) => t.status === "in_progress").forEach((t) => (t.progress = Math.min(t.effort, t.progress + 1.2))); s.agencyCash -= 850000; ledger(c, "Emergency delivery support", -850000, p.brand); } }
   if (i.type === "renewal" && p) { const ld = lead(c, p.leadId); if (choice === "renew" && ld && (p.clientTrust ?? 0) >= 55) { c.leads.push({ ...ld, id: ld.id + "-renew-" + c.day, status: "renewal", fee: Math.round(ld.fee * 0.88), value: Math.round(ld.value * 0.85), relationship: Math.round(p.clientTrust ?? 55), duration: Math.max(20, ld.duration - 3), scope: Math.max(5, ld.scope - 2) }); fx.toast("Renewal opportunity added to Pipeline"); } else if (choice === "renew") fx.toast("Client isn't satisfied enough to renew."); }
   i.status = "resolved"; i.resolution = choice;
-  if (c.speed === 0 && openIssues(c).every((x) => !["capacity", "deadline", "bad-margin", "renewal", "cash"].includes(x.type))) c.speed = 1;
+  if (c.speed === 0 && openIssues(c).every((x) => !["capacity", "deadline", "bad-margin", "renewal", "cash", "talent-poach"].includes(x.type))) c.speed = 1;
 }
 export function joinPartner(s: GameState, fx: Fx, id: string) {
   const c = ceoInit(s)!, p = ceoPartners.find((v) => v.id === id); if (!p || c.partners.includes(id) || s.agencyCash < p.deposit) return;
