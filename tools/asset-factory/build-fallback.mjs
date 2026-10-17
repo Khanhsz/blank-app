@@ -10,27 +10,16 @@ import crypto from "node:crypto";
 import {fileURLToPath} from "node:url";
 import {buildBrickhouseModernist,brickhouseAnchors,brickhouseSlots,BRICKHOUSE_ARCHETYPE} from "./brickhouse-modernism.mjs";
 import {buildCityModernist,cityAnchors,cityMediaSlots,CITY_ARCHITECTURE_FAMILIES} from "./city-modernism.mjs";
+import {pbrMaterials,MATERIAL_ROLE,MATERIAL_SYSTEM_VERSION} from "./material-system.mjs";
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),"../..");
 const cfg=JSON.parse(fs.readFileSync(path.join(root,"assets/specs/city-all.modernism.json"),"utf8"));
 const dest=path.join(root,"public/assets/mt-city",cfg.version);
-const palettes={
- clay:["#b88b7e","#dbc3af","#615c65","#9db4b7","#bd674f","#d4c5b4","#354d52"],
- rose:["#bf9caa","#e9d7d4","#665e70","#afc7c9","#bf7d82","#dbbfc0","#455963"],
- mauve:["#9c90ab","#d2c7d6","#585871","#a7c4d3","#ab8b9e","#e1d5d7","#42505e"],
- sand:["#c4b29c","#ebe0ca","#6a6a6b","#acc5c4","#b99677","#ddd5c5","#44565b"],
- sage:["#98aa9a","#d3ddc9","#5b6868","#a7c0b8","#779486","#d2d2bb","#344d4d"],
- slate:["#869ba6","#c6d3d4","#4b6372","#b0cdd1","#688ca0","#d7ddda","#385563"]
-};
-// glTF baseColorFactor expects LINEAR RGB, not raw sRGB hex bytes.
-// Old exporter passed gamma-encoded values, producing the washed-out concrete seen in-game.
-const rgb=h=>[1,3,5].map(i=>{const c=parseInt(h.slice(i,i+2),16)/255;return c<=.04045?c/12.92:((c+.055)/1.055)**2.4});
 const prng=n=>{let s=n>>>0;return()=>((s=Math.imul(1664525,s)+1013904223>>>0)/4294967296)};
 const align=n=>(n+3)&~3;
 const textBytes=s=>Buffer.from(s,"utf8");
 function geometry(asset,lod){
- const [primary,trim,roof,glass,accent,stone,dark]=palettes[asset.palette];
- const materials=[primary,trim,roof,glass,accent,stone,dark];
+ const materials=pbrMaterials(asset);
  const rnd=prng(asset.seed);
  const buckets=materials.map(()=>({positions:[],normals:[],indices:[],triangles:0}));
  function cuboid(cx,cy,cz,w,h,d,m){
@@ -76,8 +65,8 @@ function glb(asset,lod){
   scene:0,scenes:[{nodes:[0]}],
   nodes:[{name:"MT_MASTER_"+asset.id,children:Array.from({length:1+anchors.length},(_,i)=>i+1),extras:{persistentGameEntity:asset.gameplayId||null,assetId:asset.id,lod}}, {name:"VISIBLE_MESH",mesh:0},...anchors],
   meshes:[{name:"merged_facade",primitives}],bufferViews,accessors,buffers:[{byteLength:offset}],
-  materials:materials.map((hex,i)=>({name:"M_"+asset.palette+"_"+i,pbrMetallicRoughness:{baseColorFactor:[...rgb(hex),1],metallicFactor:i===3?.1:0,roughnessFactor:i===3?.62:.92},doubleSided:false})),
-  extras:{id:asset.id,version:cfg.version,source:"node-fallback",height:asset.height,width:asset.width,depth:asset.depth,triangles,tier:asset.tier??1,archetype:asset.id==="office-brick"?BRICKHOUSE_ARCHETYPE:asset.archetype,advertisingSlots:slots}
+  materials,
+  extras:{id:asset.id,version:cfg.version,source:"node-fallback",materialSystem:MATERIAL_SYSTEM_VERSION,height:asset.height,width:asset.width,depth:asset.depth,triangles,tier:asset.tier??1,archetype:asset.id==="office-brick"?BRICKHOUSE_ARCHETYPE:asset.archetype,advertisingSlots:slots}
  };
  const jsonBytes=textBytes(JSON.stringify(json));
  const j=Buffer.concat([jsonBytes,Buffer.alloc(align(jsonBytes.length)-jsonBytes.length,0x20)]);
@@ -115,6 +104,8 @@ function main(){
    }else fs.writeFileSync(file,data.buffer);
    const parsed=parseGLB(data.buffer);
    if(parsed.extras.id!==a.id||parsed.extras.height!==a.height)throw Error("Metadata mismatch "+a.id);
+   if(parsed.extras.materialSystem!==MATERIAL_SYSTEM_VERSION)throw Error("Missing PBR material metadata "+a.id);
+   if(parsed.materials.length!==11||parsed.materials[MATERIAL_ROLE.WINDOW_GLASS].pbrMetallicRoughness.roughnessFactor>=.40)throw Error("Missing PBR glass "+a.id);
    for(const slot of a.id==="office-brick"?brickhouseSlots(a):cityMediaSlots(a)){if(!parsed.nodes.some(x=>x.name===slot.anchor))throw Error("Missing media anchor "+slot.id)}
    if(a.id==="office-brick"){
     if(parsed.extras.archetype!==BRICKHOUSE_ARCHETYPE)throw Error("Brickhouse modernist archetype missing");
@@ -149,7 +140,7 @@ function main(){
    anchors:Object.keys(a.id==="office-brick"?brickhouseAnchors(a):cityAnchors(a)),
    archetype:a.id==="office-brick"?BRICKHOUSE_ARCHETYPE:a.archetype,roof:a.roof,facade:a.facade,entrance:a.entrance,variant:a.variant,
    advertisingSlots:a.id==="office-brick"?brickhouseSlots(a):cityMediaSlots(a),
-   migrationStatus:"replaced",verificationStatus:"binary-pass-browser-pending",lod,tierLOD:tiers,palette:a.palette});
+   migrationStatus:"replaced",verificationStatus:"binary-pass-browser-pending",materialSystem:MATERIAL_SYSTEM_VERSION,lod,tierLOD:tiers,palette:a.palette});
  }
  for(const d of cfg.decorativePlacements)if(!ids.has(d.id))throw Error("Missing placement asset "+d.id);
  const manifest={schemaVersion:2,version:cfg.version,district:cfg.district,units:"meters",up:"Y",front:"+Z",source:"web-fallback-not-blender",
