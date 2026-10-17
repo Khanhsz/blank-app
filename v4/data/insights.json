@@ -1,0 +1,87 @@
+{
+  "updated_at": "2026-10-17",
+  "links": [
+    {
+      "id": "LINK-001",
+      "title": "AI model mới × cách thương hiệu được AI đề xuất",
+      "story_a": "ST-20261017-303",
+      "story_b": "ST-20261017-902",
+      "mechanism": "Sự tiến bộ của model tạo điều kiện cho nghiên cứu AI-assisted discovery; chưa có chứng cứ model cụ thể làm người tiêu dùng chuyển lựa chọn.",
+      "caveat": "Góc nhìn liên ngành dựa trên hai thông tin độc lập; không coi là quan hệ nhân quả.",
+      "sources": [
+        "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-argon/",
+        "https://vtv.vn/vsmcamp-2026-da-den-luc-thuong-hieu-phai-chinh-phuc-ca-ai-1002610141417324.htm"
+      ]
+    },
+    {
+      "id": "LINK-002",
+      "title": "Tài trợ AI hạ tầng × thiết kế chip riêng",
+      "story_a": "ST-20261017-108",
+      "story_b": "ST-20261017-306",
+      "mechanism": "Rủi ro tài chính của hạ tầng AI và kế hoạch chip tự thiết kế đều phản ánh sức ép tối ưu chi phí phục vụ AI; không phải cùng một chuỗi nguyên nhân.",
+      "caveat": "Tình huống nghiên cứu về unit economics; hãng chưa công bố chứng cứ đối chiếu trực tiếp.",
+      "sources": [
+        "https://www.reuters.com/business/coreweave-shares-bonds-headed-steep-weekly-losses-ai-borrowing-concerns-mount-2026-10-16/",
+        "https://www.reuters.com/business/microsoft-plans-huge-deployment-its-own-ai-chips-with-an-eye-saving-costs-2026-10-12/"
+      ]
+    },
+    {
+      "id": "LINK-003",
+      "title": "Automation bán lẻ × tương lai công việc văn phòng",
+      "story_a": "ST-20261017-703",
+      "story_b": "ST-20261017-707",
+      "mechanism": "Kế hoạch tái cấu trúc nhân lực của Kroger và quan điểm WEF về thay đổi tác vụ cho thấy cần tách tự động hóa một công việc khỏi xóa bỏ toàn bộ nghề.",
+      "caveat": "Kroger có nhiều động lực tái cấu trúc; không quy toàn bộ cắt giảm cho AI.",
+      "sources": [
+        "https://www.reuters.com/business/kroger-plans-cut-about-third-corporate-roles-over-next-three-years-bloomberg-2026-10-12/",
+        "https://www.weforum.org/stories/jobs-and-the-future-of-work/ai-work-jobs-intelligence-era/"
+      ]
+    },
+    {
+      "id": "LINK-004",
+      "title": "Cộng đồng fan × ảnh hưởng của thời trang trên mạng xã hội",
+      "story_a": "ST-20261017-204",
+      "story_b": "ST-20261017-606",
+      "mechanism": "Các chuyên gia marketing nhấn mạnh community-fit trong khi tổng kết Fashion Month cho thấy nhiều hệ sinh thái người hâm mộ tham gia tạo tác động truyền thông.",
+      "caveat": "Earned Media Value không phải doanh thu và không chứng minh community engagement gây ra doanh số.",
+      "sources": [
+        "https://www.campaignasia.com/article/fans-first-celebrity-second-canva-and-clear-men-on-entering-markets-through-community/4cqjme0mw9wfy58hqpz5v9hfmw",
+        "https://www.vogue.com/article/who-won-fashion-month-ss27-on-social-media"
+      ]
+    }
+  ],
+  "opportunities": [
+    {
+      "id": "EXP-01",
+      "type": "Research Experiment",
+      "title": "AI-assisted Brand Discovery Audit",
+      "description": "Chọn 5 thương hiệu trong cùng một ngành; chạy 10 câu hỏi so sánh trên các AI assistant, thu thập URL được trích, so đối chiếu với website hãng. Mục tiêu: xác định bias và lỗi nguồn — không suy rộng thành kết quả thị trường.",
+      "source_url": "https://vtv.vn/vsmcamp-2026-da-den-luc-thuong-hieu-phai-chinh-phuc-ca-ai-1002610141417324.htm",
+      "story_id": "ST-20261017-902"
+    },
+    {
+      "id": "EXP-02",
+      "type": "Research Experiment",
+      "title": "Local vs Cloud AI Agent Benchmark",
+      "description": "Dùng cùng 10 tác vụ phân tích thị trường, đo tốc độ, tỉ lệ trích dẫn đúng và tổng chi phí của giải pháp local/cloud. Không khẳng định cấu hình nào tốt hơn khi chưa đo.",
+      "source_url": "https://nvidianews.nvidia.com/news/nvidia-rtx-spark-pcs-available-today-a-new-beginning-for-windows-pcs",
+      "story_id": "ST-20261017-901"
+    },
+    {
+      "id": "EXP-03",
+      "type": "Career Research",
+      "title": "Entry-level Skill Gap Matrix",
+      "description": "Lấy 15–20 mô tả tuyển dụng chính thức (chỉ khi còn mở), nhóm kỹ năng thành research, data, communication, AI literacy; so sánh với portfolio hiện tại. Đây là bài tập nghiên cứu, không phải thông báo vị trí tuyển.",
+      "source_url": "https://www.weforum.org/stories/jobs-and-the-future-of-work/what-skills-do-employers-want-in-the-age-of-ai/",
+      "story_id": "ST-20261017-708"
+    },
+    {
+      "id": "EXP-04",
+      "type": "Culture & Research",
+      "title": "Artist-first Exhibition Model Study",
+      "description": "So sánh mô hình hội chợ do nghệ sĩ tham gia trực tiếp với trưng bày qua phòng tranh: phí, sự tự chủ nghệ thuật, khả năng tiếp cận người xem và giới hạn mô hình.",
+      "source_url": "https://www.theartnewspaper.com/2026/10/16/artist-first-fair-play-launches-to-strong-attendance-but-slow-sales-during-frieze-week",
+      "story_id": "ST-20261017-504"
+    }
+  ]
+}
