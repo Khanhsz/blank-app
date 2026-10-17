@@ -8,6 +8,7 @@ import {currentOffice} from "./city";
 import {runRivalAgents,ensureTender,rivalBidScore,registerRivalWin,resolveTalentOffer} from "./rivalAI";
 import {candidatesForRole,primaryRole,eligibleForRole,profile,effectiveCapacity,employeeReadiness,staffRate,defaultProfile,updatePersonnelDay,recordDelivery} from "./personnel";
 import {teamForProject,ownerTeam,startClientTeam,reconcileClientTeams,teamCoverage} from "./clientTeams";
+import {ensureLocalPricing} from "./pricingAdvisor";
 
 const OVERHEAD = 160000;
 
@@ -188,44 +189,54 @@ export function setSpeed(s: GameState, speed: number) { const c = ceoInit(s); if
 export function qualify(s: GameState, fx: Fx, id: string) {
   const c = ceoInit(s)!, l = lead(c, id); if (!l || !["new", "renewal"].includes(l.status)) return;
   if (s.agencyCash < 180000) return fx.toast("Not enough cash to qualify this lead");
-  s.agencyCash -= 180000; ledger(c, "Lead qualification cost", -180000, l.brand); l.status = "qualified"; l.insightKnown = true; fx.log("Qualified opportunity · " + l.brand);
+  s.agencyCash -= 180000; ledger(c, "Lead qualification cost", -180000, l.brand); l.status = "qualified"; l.insightKnown = true; ensureLocalPricing(s,l); fx.log("Qualified opportunity · " + l.brand);
 }
 export function decline(s: GameState, id: string) { const l = lead(ceoInit(s)!, id); if (l && ["new", "qualified", "renewal"].includes(l.status)) l.status = "declined"; }
 export function startPitch(s: GameState, fx: Fx, id: string) {
   const c = ceoInit(s)!, l = lead(c, id); if (!l || l.status !== "qualified"||c.pitch||c.negotiation) return;
   const tender=ensureTender(c,l);if(tender?.deadline<=c.day)return fx.toast("Tender has closed; check the market outcome.");
   if (s.agencyCash < 500000) return fx.toast("Need at least 500,000đ for pitch preparation");
+  const quote=ensureLocalPricing(s,l);
   s.agencyCash -= 500000; ledger(c, "Pitch team preparation", -500000, l.brand); l.status = "pitch";
-  c.pitch = { id, focus: "performance", price: "standard", team: "balanced", evidence: "research", step: "prepare", quality: 0, objection: null, result: null };
+  c.pitch = { id, focus: "performance", price: quote.tier==="competitive"?"discount":quote.tier==="premium"?"premium":"standard",
+    priceTier:quote.tier,priceSelected:false,bidFee:quote.recommendedFee,
+    team: "balanced", evidence: "research", step: "prepare", quality: 0, objection: null, result: null };
 }
-export function setPitch(s: GameState, key: "focus" | "price" | "team" | "evidence", v: string) {
- const p=ceoInit(s)?.pitch;
- if(p?.step!=="prepare")return;
- p[key]=v;
- if(key==="price")p.bidFee=undefined;
-}
-/** The client pays the quoted service fee, not the media budget. AI offers
- * guidance only: the player must explicitly choose an offered pricing tier.
+/** All pitch price controls resolve to budget/cost-backed real bids. No arbitrary
+ * preset quote or optional advisory side channel can bypass the contract economy.
  */
+export function setPitch(s:GameState,key:"focus"|"price"|"team"|"evidence",v:string){
+ const p=ceoInit(s)?.pitch;
+ if(!p||p.step!=="prepare")return;
+ if(key==="price"){
+  const tier=v==="discount"?"competitive":v==="premium"?"premium":"balanced";
+  applySuggestedFee(s,{toast:()=>{},log:()=>{}},tier);
+ }else p[key]=v;
+}
 export function pitchFee(l:Lead,p:import("./state").Pitch):number{
- if(Number.isFinite(p.bidFee)&&p.bidFee!>=Math.round(l.fee*.65)&&p.bidFee!<=Math.max(l.fee*2.5,1000000000))
-   return Math.round(p.bidFee!);
- const factor=p.price==="discount"?.92:p.price==="premium"?1.15:1;
- return Math.round(l.fee*factor);
+ if(Number.isFinite(p.bidFee)&&p.bidFee!>0&&p.bidFee!<=3000000000)return Math.round(p.bidFee!);
+ // Only old saves lack a priced bid; they are hydrated on pitch preparation.
+ const tier=p.price==="discount"?"competitive":p.price==="premium"?"premium":"balanced";
+ return l.pricingAdvice?.options[tier]??Math.round(l.fee);
 }
 export function applySuggestedFee(s:GameState,fx:Fx,tier:import("./state").PriceTier){
- const c=ceoInit(s),p=c?.pitch,l=p&&c?.leads.find(x=>x.id===p.id),advice=l?.pricingAdvice;
- if(!p||p.step!=="prepare"||!l||!advice)return;
+ const c=ceoInit(s),p=c?.pitch,l=p&&c?.leads.find(x=>x.id===p.id);
+ if(!p||p.step!=="prepare"||!l)return;
+ const advice=ensureLocalPricing(s,l);
  const fee=advice.options[tier];
- if(!Number.isFinite(fee)||fee<advice.feeFloor||fee>advice.feeCeiling||
-    fee<Math.round(l.fee*.65)||fee>Math.max(l.fee*2.5,1000000000)||
-    advice.leadId!==l.id||advice.mediaBudget!==l.value||advice.baselineFee!==l.fee)return fx.toast("Pricing advice expired; refresh your estimate.");
+ if(!Number.isFinite(fee)||fee<advice.feeFloor||fee>advice.feeCeiling)return fx.toast("This bid does not meet the delivery cost requirements.");
  p.price=tier==="competitive"?"discount":tier==="premium"?"premium":"standard";
+ p.priceTier=tier;p.priceSelected=true;
  p.bidFee=Math.round(fee);
- fx.log("Pitch fee selected for "+l.brand+": "+money(p.bidFee));
+ fx.log("Pitch pricing decision · "+l.brand+" · "+money(p.bidFee));
 }
 export function presentPitch(s: GameState) {
   const c = ceoInit(s)!, p = c.pitch, l = p && lead(c, p.id); if (!l || !p || p.step !== "prepare") return;
+  const quote=ensureLocalPricing(s,l);
+  if(!p.priceSelected){
+    p.priceTier=quote.tier;p.bidFee=quote.recommendedFee;
+    p.price=quote.tier==="competitive"?"discount":quote.tier==="premium"?"premium":"standard";
+  }
   const teamReadiness=s.staff.length?s.staff.reduce((sum,id)=>sum+employeeReadiness(s,id),0)/s.staff.length:0;
   const leadStrength=Object.keys(s.teamLeads).length;
   const cap=s.staff.length*10+Math.min(10,s.upgrades.length*2)+teamReadiness*.13+leadStrength*1.5;
