@@ -1,3 +1,4 @@
+import {scenarios} from "../src/game/data";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {defaults,migrate} from "../src/game/state";
@@ -62,4 +63,28 @@ test("old saves receive new optional character attributes and world progress saf
  assert.deepEqual(out.world,{visited:[],contacts:[]});
  assert.equal(out.character.name,"Alex");
  assert.equal(out.campaign.phase,"brief");
+});
+
+
+test("AI-generated evidence, insight options and correct outcome survive local save",()=>{
+ const s=defaults();s.created=true;
+ const sample={...scenarios[0],id:"ai-example123",brand:"AI Example Bakery",industry:"F&B",trueInsight:"trust",trueSegment:"students",trueCreative:"story",budget:12000000,fee:4800000,insightOptions:["awareness","value","location","trust","style"].map(id=>({id,title:"Test "+id,desc:"Distinct hypothesis "+id})),aiMeta:{category:"food",seed:78234,label:"Fictional AI-generated training scenario"},reports:{audit:"Competitor comparison data indicates uncertainty about value.",reviews:"Customers report poor trust before the first purchase.",industry:"Category demand remains broadly stable.",interview:"Prospects repeatedly mention insufficient trust and ask for testimonials."}};
+ assert.equal(C.activateAIBrief(s,fx,sample),true);
+ assert.equal(C.scenarioOf(s.campaign).brand,"AI Example Bakery");
+ C.acceptBrief(s,fx);C.addResearch(s,fx,"reviews");C.toSurvey(s);
+ C.runSurvey(s,fx,{audience:"students",sample:60,question:"barrier"});
+ assert.equal(C.surveyResults(s).reason.includes("trust"),false);
+ C.toValidation(s);C.confirmInsight(s,fx,"trust");
+ assert.equal(C.scoreModel(s,s.campaign).fit.insight,1);
+ const restored=migrate(JSON.parse(JSON.stringify(s)));
+ assert.equal(C.scenarioOf(restored.campaign).id,"ai-example123");
+ assert.equal(C.scenarioOf(restored.campaign).insightOptions?.length,5);
+ assert.equal(restored.campaign.phase,"strategy");
+});
+test("AI brief cannot overwrite campaign already in progress",()=>{
+ const s=defaults();s.created=true;
+ C.acceptBrief(s,fx);
+ const sample={...scenarios[0],id:"ai-something",aiMeta:{category:"coffee",seed:1,label:"Fictional"},insightOptions:["awareness","value","location","trust","style"].map(id=>({id,title:id,desc:id+" detail"}))};
+ assert.equal(C.activateAIBrief(s,fx,sample),false);
+ assert.equal(s.campaign.aiScenario,null);
 });
