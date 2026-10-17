@@ -1,0 +1,47 @@
+name: Build offline OpenStreetMap food database
+on:
+  push:
+    branches:
+      - deploy/tripmate-ai
+    paths:
+      - '.github/workflows/refresh-food-database.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-osm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - name: Check out TripMate
+        uses: actions/checkout@v4
+        with:
+          ref: deploy/tripmate-ai
+          persist-credentials: true
+      - name: Import authentic OSM city extracts
+        run: python3 scripts/import_food_osm.py
+      - name: Validate priority-city coverage and source IDs
+        run: |
+          python3 - <<'PY'
+          import json
+          d = json.load(open('data/food-venues.json',encoding='utf-8'))
+          assert d['schema'] == 1 and d['license'] == 'ODbL-1.0'
+          assert len(d['places']) >= 15
+          assert any(x['slug'] == 'Saigon' and x['count'] >= 15 for x in d['cities'])
+          assert all(p['id'].startswith('node/') and p['osmUrl'].startswith('https://www.openstreetmap.org/node/') for p in d['places'])
+          print('Verified',len(d['places']),'source-backed food POIs in',len(d['cities']),'cities')
+          PY
+      - name: Commit verified static database
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/food-venues.json
+          if git diff --cached --quiet; then
+            echo "Database snapshot is unchanged"
+            exit 0
+          fi
+          git commit -m "Import real OSM food venues from BBBike [skip ci]"
+          git pull --rebase origin deploy/tripmate-ai
+          git push origin HEAD:deploy/tripmate-ai
