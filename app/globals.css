@@ -160,3 +160,9 @@
 .food-show-more{display:block;border:1px solid #b8d6c2;color:#2e7554;background:white;border-radius:9px;font-size:11px;font-weight:700;padding:10px 16px;margin:14px auto 0;cursor:pointer}
 .food-recommendations>.place-source-note{margin-top:14px}
 @media(max-width:640px){.food-recommendations{margin:13px 9px;padding:13px}.food-filters button{font-size:10px;padding:9px 8px}.food-venue-list{grid-template-columns:1fr}.food-panel-head h4{font-size:14px}}
+
+
+/* User-selectable, evidence-based local-eats indicators */
+.food-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.food-tags span{background:#edf6ec;color:#356d42;font-size:9px;font-weight:800;border:1px solid #d5e8d7;border-radius:6px;padding:4px 7px}
+@media (max-width:640px){.food-filters{justify-content:flex-start}.food-filters button{white-space:nowrap}}
