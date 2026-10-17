@@ -3,7 +3,7 @@ import slice from "../../../assets/specs/city-all.modernism.json";
 export interface MasterEntry {
  id:string;class:string;name:string;width:number;depth:number;height:number;
  district:string;x:number;z:number;archetype:string;facade:string;roof:string;entrance:string;variant:number;advertisingSlots:string[];
- floors:number;roof:string;palette:string;seed:number;gameplayId?:string;decorative?:boolean;
+ floors:number;palette:string;seed:number;gameplayId?:string;decorative?:boolean;
 }
 export interface AssetLocation {id:string;x:number;z:number}
 const entries=slice.masters as MasterEntry[];
