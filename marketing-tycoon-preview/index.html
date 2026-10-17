@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#27221f">
+<title>Marketing Tycoon — Start Small. Think Big.</title>
+<style>
+/* MARKETING TYCOON — FIELD NOTES / INTERFACE v2
+   Editorial warmth inspired by modern creative software, with a distinct game identity. */
+:root{
+ --paper:#faf7f1;--white:#fffdf8;--canvas:#ede5d9;--ink:#27221f;--muted:#84766d;--line:#e9e0d6;
+ --orange:#bd694a;--orange-dark:#9d5138;--orange-light:#fae8df;--cream:#f2ece3;
+ --green:#50765c;--mint:#e8f0e7;--warn:#ae733c;--navy:#27221f;--teal:#bd694a;--teal-d:#a9593e;
+ --shadow:0 22px 80px rgba(52,37,25,.16);--display:Georgia,'Iowan Old Style','Palatino Linotype',serif;
+ --sans:'Avenir Next','Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+*{box-sizing:border-box}html,body,#app{width:100%;height:100%;margin:0;overflow:hidden}
+html{font-family:var(--sans);font-size:14px;-webkit-font-smoothing:antialiased}
+body{color:var(--ink);background:#ece4d7}button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.46}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid rgba(189,105,74,.38);outline-offset:2px}
+#world{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.world-shade{pointer-events:none;position:absolute;inset:0;background:linear-gradient(180deg,rgba(50,29,14,.09),transparent 21%,transparent 73%,rgba(34,29,20,.16)),radial-gradient(ellipse at 50% 55%,transparent 40%,rgba(43,31,22,.07) 100%)}
+/* HEADS UP DISPLAY */
+.topbar{z-index:10;position:absolute;left:30px;right:30px;top:26px;display:flex;gap:12px;align-items:center;justify-content:space-between;pointer-events:none}
+.topbar>*{pointer-events:auto}
+.brand{display:flex;gap:12px;align-items:center;min-height:59px;padding:6px 19px 6px 7px;background:rgba(255,252,247,.94);border:1px solid #fff8ed;box-shadow:0 7px 28px rgba(50,35,21,.09);border-radius:15px;backdrop-filter:blur(20px)}
+.brandmark{display:grid;place-items:center;width:44px;height:44px;border-radius:11px;background:var(--orange);font:700 26px var(--display);color:#fffefb;letter-spacing:-3px;transform:none}
+.brandmark span{color:#fff4d3;font:700 18px var(--sans);margin-left:1px}
+.brand strong{display:block;font-size:11px;letter-spacing:1.8px;font-weight:850;color:#29211c}
+.brand small{display:block;font-size:9px;letter-spacing:1.85px;color:#9a8273;font-weight:750;margin-top:5px}
+.status{display:flex;gap:7px;justify-content:flex-end;align-items:center;flex-wrap:wrap;margin-left:auto}
+.stat{display:flex;align-items:center;gap:8px;background:rgba(255,252,247,.94);border:1px solid rgba(255,255,255,.9);padding:12px 15px;border-radius:11px;box-shadow:0 7px 23px rgba(50,35,21,.09);font-size:11px;font-weight:700;white-space:nowrap}
+.stat i{font-style:normal;font-size:16px}.stat b{font-size:13px;letter-spacing:-.25px}.stat small{font-size:8px;font-weight:800;color:#997f6b;letter-spacing:1.5px}
+.stat.career{background:#282723;color:#faf8f2;border-color:#282723;letter-spacing:.15px}
+.icon-button{border:1px solid #fff9ed;border-radius:11px;background:#fffdf8;color:#41312a;width:47px;height:47px;box-shadow:0 7px 22px #49331b16;font-size:22px}
+.icon-button:hover{background:var(--orange-light)}
+.quest-panel{position:absolute;top:111px;left:30px;width:301px;min-width:0;max-width:none;padding:23px 24px 21px;background:rgba(255,252,247,.96);border:1px solid #fff8ed;border-radius:16px;box-shadow:var(--shadow);z-index:4;backdrop-filter:blur(18px)}
+.eyebrow{text-transform:uppercase;letter-spacing:2px;color:var(--orange);font-size:9.5px;font-weight:850}
+.quest-panel .eyebrow{display:flex;align-items:center;gap:6px}
+.quest-panel .eyebrow:before{content:'';width:7px;height:7px;border-radius:50%;background:#77a37a;box-shadow:0 0 0 4px #e5f1e2}
+.quest-panel h3{font:normal 28px/1.1 var(--display);margin:16px 0 11px;letter-spacing:-.9px;color:#29221c}
+.quest-panel p{color:#7d7066;font-size:12px;line-height:1.73;margin:0 0 22px}
+.meter{height:5px;border-radius:6px;background:#e9e1d7;overflow:hidden}.meter>span{display:block;height:100%;background:linear-gradient(90deg,#bd694a,#dc9c67);border-radius:6px;transition:width .4s}
+.quest-step{font-size:9px;font-weight:850;color:#a28b79;display:flex;justify-content:space-between;margin:12px 0 18px;letter-spacing:.9px}
+.button{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:1px solid transparent;border-radius:10px;padding:13px 17px;min-height:43px;background:var(--orange);color:white;font-size:11px;font-weight:850;letter-spacing:.25px;transition:transform .16s ease,background .16s,border .16s,box-shadow .16s}
+.button:hover:not(:disabled){background:var(--orange-dark);transform:translateY(-1px);box-shadow:0 7px 18px #a35d4225}
+.button.secondary{color:#8d4b37;background:#f7e5da;border-color:#f4d8c9}.button.secondary:hover{background:#f3d7c5}
+.button.ghost{background:#f2ece5;color:#62574e;border-color:#eee2d5}.button.ghost:hover{background:#eae0d6}
+.button.danger{background:#f8e8e4;color:#a64e49}.button.full{width:100%}.button.small{min-height:33px;padding:9px 12px;font-size:10px}
+.button-row{display:flex;gap:9px;flex-wrap:wrap}
+.world-panel{position:absolute;right:30px;top:111px;width:247px;padding:22px 22px 19px;border-radius:16px;background:rgba(255,252,247,.90);border:1px solid rgba(255,249,238,.95);box-shadow:0 16px 48px #553b2b21;z-index:3;backdrop-filter:blur(18px)}
+.world-panel h4{font:normal 19px/1.25 var(--display);letter-spacing:-.4px;margin:9px 0 10px}
+.world-panel p{font-size:11px;line-height:1.8;color:#7a6b60;margin:0}.world-panel .tile{font-size:9px;font-weight:850;color:var(--orange);letter-spacing:2.1px}
+.world-panel .guide{font-size:10px;color:#86796e;margin-top:17px;border-top:1px solid #e9e1d7;padding-top:14px;line-height:1.9}
+.scene-hint{position:absolute;bottom:114px;left:50%;transform:translateX(-50%);padding:9px 16px;border:1px solid rgba(255,255,255,.20);border-radius:50px;background:#26211edb;color:#fffbf4;z-index:3;font-size:10px;white-space:nowrap;letter-spacing:.25px;box-shadow:0 9px 25px #221b1730}
+.dock{z-index:7;position:absolute;bottom:24px;left:50%;transform:translateX(-50%);background:#272521ee;box-shadow:0 18px 60px #20191755;display:flex;gap:4px;border:1px solid #62574c;border-radius:18px;padding:7px;max-width:calc(100vw - 24px);overflow-x:auto;scrollbar-width:none;backdrop-filter:blur(18px)}
+.dock button{min-width:79px;white-space:nowrap;border:0;background:transparent;border-radius:12px;color:#b9aca0;padding:10px 13px 9px;font-size:10px;font-weight:750;transition:background .2s,color .2s,transform .2s}
+.dock button:hover{background:#494139;color:#fff}.dock button.active{background:#f7efe5;color:#733f30;box-shadow:0 3px 12px #1112}.dock .nav-icon{font-size:19px;display:block;margin-bottom:6px;filter:saturate(.7)}
+.camera-controls{position:absolute;bottom:30px;right:30px;z-index:4;display:flex;gap:4px;background:#fffaf2;padding:5px;border-radius:12px;border:1px solid white;box-shadow:0 9px 28px #20191730}
+.camera-controls button{height:32px;width:32px;background:transparent;border:0;border-radius:8px;color:#5f5149;font-size:17px;font-weight:700}.camera-controls button:hover{background:#f0e4d8}
+.toast{position:absolute;left:50%;top:102px;transform:translate(-50%,-12px);padding:12px 19px;background:#29231f;color:#fff9ee;font-size:11px;font-weight:750;border:1px solid #ffffff21;border-radius:12px;z-index:30;pointer-events:none;opacity:0;transition:opacity .25s,transform .25s;box-shadow:0 11px 30px #201b1855}.toast.active{opacity:1;transform:translate(-50%,0)}
+/* MODAL + WORKSTATION */
+#modalRoot:empty{display:none}.scrim{z-index:15;position:absolute;inset:0;display:flex;justify-content:flex-end;align-items:stretch;background:rgba(38,32,28,.48);backdrop-filter:blur(6px) saturate(.65);animation:fadein .25s}.scrim.centered{align-items:center;justify-content:center;padding:22px}
+.modal{background:var(--paper);width:min(672px,100vw);height:100%;overflow-y:auto;overflow-x:hidden;box-shadow:-25px 0 85px #2b221d49;animation:slidein .28s cubic-bezier(.22,1,.36,1);scrollbar-color:#d9c8b8 transparent;scrollbar-width:thin}
+.modal.wide{width:min(850px,100vw)}.modal.onboarding{height:auto;max-height:min(830px,calc(100vh - 44px));width:min(1070px,calc(100vw - 40px));border:1px solid rgba(255,248,240,.75);border-radius:21px;box-shadow:0 35px 110px #2b201f70;animation:appear .35s cubic-bezier(.2,1,.4,1)}
+.modalhead{position:sticky;top:0;z-index:5;background:rgba(250,247,241,.96);backdrop-filter:blur(16px);display:flex;justify-content:space-between;gap:16px;align-items:center;padding:27px 37px 22px;border-bottom:1px solid var(--line)}
+.modalhead h2{font:normal 31px/1.12 var(--display);margin:8px 0 0;letter-spacing:-1px}.modalhead .eyebrow{font-size:9px}
+.close{width:39px;height:39px;display:grid;place-items:center;border:1px solid #e9ddd2;border-radius:10px;background:#fffbf5;font-size:22px;color:#716057}.close:hover{background:#f6e7dc}
+.modalbody{padding:29px 37px 55px}.intro{background:#f1e7d9;padding:23px 26px;border-radius:15px;border:1px solid #e8dccc;margin-bottom:25px;position:relative;overflow:hidden}
+.intro:after{content:'✳';position:absolute;right:12px;top:-34px;font:normal 145px var(--display);color:#e6c8b0;opacity:.47;pointer-events:none}
+.intro>*{position:relative;z-index:1}.intro .client-icon{font-size:27px;display:inline-grid;place-items:center;width:48px;height:48px;background:#fffbf5;border:1px solid #e8d7c6;border-radius:12px;margin-bottom:11px}
+.intro h3{font:normal 28px/1.18 var(--display);margin:10px 0;letter-spacing:-.75px;max-width:90%}.intro p{font-size:12px;line-height:1.8;color:#75685e;margin:0;max-width:540px}
+.section-title{font-size:12px;font-weight:850;letter-spacing:.1px;margin:25px 0 12px}.muted{color:#82776d}.small-text{font-size:11px;line-height:1.8}.fine{font-size:10px;color:#998779;line-height:1.75}
+.flex-between{display:flex;align-items:center;justify-content:space-between;gap:12px}.row{display:flex;align-items:center;gap:12px}
+.pill{display:inline-flex;gap:5px;align-items:center;background:#eaf0e7;color:#4d7357;font-size:10px;font-weight:850;padding:8px 11px;border-radius:50px}.pill.amber{background:#f8e9d3;color:#9b672c}.pill.red{background:#fbe7e2;color:#ac574b}
+.line{height:1px;background:var(--line);margin:22px 0}
+.choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.choice{border:1px solid #e5d9ce;background:#fffdfa;padding:20px;text-align:left;border-radius:12px;transition:all .18s;color:#332b25;min-height:93px;position:relative;box-shadow:0 3px 12px #51362305}
+.choice:hover{border-color:#ce947b;transform:translateY(-2px);box-shadow:0 10px 24px #76534015}.choice.selected{background:#f9ede6;border-color:var(--orange);box-shadow:inset 0 0 0 1px var(--orange),0 6px 18px #aa66431a}
+.choice.selected:after{content:'✓';position:absolute;right:11px;top:11px;font-size:10px;border-radius:50%;width:19px;height:19px;display:grid;place-items:center;background:var(--orange);color:#fff}
+.choice b{font-size:12px;display:block;margin-bottom:7px;line-height:1.45}.choice span,.choice small{font-size:11px;color:#84776c;line-height:1.65;display:block}.choice .icon{font-size:22px;display:block;margin-bottom:12px}.choice .price{color:#9e6341;font-weight:800}
+.research-item{display:flex;gap:14px;border:1px solid #e9dfd6;border-radius:12px;padding:17px;margin-bottom:10px;background:#fffdfa;align-items:center;transition:border .15s}
+.research-item:hover{border-color:#d6b6a2}.research-item .symbol{display:grid;place-items:center;border-radius:12px;background:#f3e6da;width:48px;height:48px;font-size:21px;flex-shrink:0}
+.research-item .details{flex:1;min-width:0}.research-item b{font-size:12px}.research-item p{font-size:11px;color:#81776d;line-height:1.65;margin:5px 0}
+.result-box{padding:19px 21px;background:#f1eee6;border:1px solid #e4ded2;border-radius:12px;margin:14px 0}.result-box b{font-size:12px}.result-box p{font-size:11px;color:#665d54;line-height:1.8;margin:7px 0 0}
+.label{display:block;font-size:10px;font-weight:850;margin:17px 0 8px;color:#67574c;letter-spacing:.4px}.field,select{width:100%;padding:13px 14px;min-height:45px;border:1px solid #ded0c3;background:#fffdf9;color:#42372e;border-radius:9px;outline:none;font-size:12px;transition:border .16s,box-shadow .16s}
+.field:focus,select:focus{border-color:#bd694a;box-shadow:0 0 0 3px #bd694a1c}.fieldgroup{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.output-preview{display:grid;grid-template-columns:106px 1fr;gap:18px;align-items:center;background:#302822;color:#fffbf4;padding:21px;border-radius:13px;margin:18px 0}.output-preview .emblem{display:grid;place-items:center;border-radius:10px;background:linear-gradient(150deg,#dfaa76,#bd6346);height:94px;font-size:34px}.output-preview small{display:block;font-size:10px;color:#d6bdac}.output-preview h3{margin:7px 0;font:normal 23px var(--display)}.output-preview p{font-size:11px;color:#dccdc1;line-height:1.7}
+.barline{display:flex;align-items:center;gap:12px;margin:17px 0}.barline>span{font-size:11px;font-weight:800;min-width:104px}.barline input{flex:1;accent-color:#bd694a}.barline>b{min-width:73px;text-align:right;font-size:11px}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:17px 0}.kpi{background:#fffdfa;border:1px solid #e8ded4;border-radius:12px;padding:19px 17px}.kpi small{font-size:10px;color:#988777}.kpi b{display:block;font:normal 33px/1 var(--display);letter-spacing:-1px;margin:13px 0 10px}.kpi span{font-size:10px;color:#84776a}
+.timeline{display:flex;gap:5px;overflow-x:auto;margin:0 0 27px;padding-bottom:4px;scrollbar-width:thin;scrollbar-color:#e1d3c7 transparent}
+.timeline span{min-width:65px;flex:1;padding:9px 6px;text-align:center;font-size:9px;letter-spacing:.15px;font-weight:850;border:1px solid #e9ddd1;background:#f2eae2;color:#a09286;border-radius:6px}
+.timeline span.done{background:#e3ebe2;color:#4f7853;border-color:#d5e3d1}.timeline span.current{background:#bd694a;color:#fff;border-color:#bd694a;box-shadow:0 5px 13px #a8593a20}
+.brief-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:17px 0}.brief-metrics div{padding:17px 14px;background:#fffdfa;border:1px solid #e9e0d7;border-radius:11px}.brief-metrics small{font-size:9px;color:#988778;display:block}.brief-metrics b{font:normal 19px var(--display);margin-top:10px;display:block}
+.log-entry{border-left:2px solid #cb9477;padding:5px 0 5px 15px;margin:12px 0;font-size:11px;line-height:1.75;color:#81746b}.log-entry b{color:#51443b}
+.mini-note{padding:14px 15px;font-size:11px;border-radius:10px;color:#627861;background:#e8eee5;margin-bottom:17px}.client-chat{border-radius:14px;padding:18px;background:#ece3d9;margin:16px 0}.bubble{background:#fffdfa;border-radius:12px 12px 12px 3px;padding:14px 17px;font-size:12px;line-height:1.75;margin:9px 0 0;color:#645950;max-width:95%;box-shadow:0 4px 15px #2c1f160a}.client-chat .meta{font-size:9px;color:#8c7462;font-weight:850;letter-spacing:1.2px}
+.case-card{padding:19px;border:1px solid #e7dbd0;background:#fffdfa;border-radius:11px;margin:9px 0}.case-card h4{font-size:13px;margin:0 0 7px}.case-card p{font-size:11px;line-height:1.7;color:#817266;margin:0 0 11px}.case-card footer{display:flex;gap:13px;font-size:10px;font-weight:800;color:#a16f53}
+.agency-banner{background:linear-gradient(115deg,#312a26,#71513e);color:#fff;padding:26px;border-radius:13px;margin:16px 0}.agency-banner h3{font:normal 29px var(--display);margin:8px 0}.agency-banner p{color:#e3d1c3;font-size:11px;line-height:1.8}
+.note-bubble{background:#faf0e0;border:1px solid #ead9c4;color:#86613e;border-radius:10px;padding:14px 16px;margin:17px 0;font-size:11px;line-height:1.8}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}.staff-name{display:flex;gap:10px;align-items:center}.avatar-emoji{display:grid;place-items:center;width:43px;height:43px;background:#f3e5d9;border-radius:10px;font-size:24px}.hline{display:flex;justify-content:space-between;gap:14px;align-items:center;margin:11px 0}.hline span{font-size:11px;color:#837569}.hline b{font-size:12px}.footer-credit{font-size:10px;color:#a3968b;margin-top:24px}.divider-title{font-size:10px;font-weight:850;letter-spacing:1.8px;color:#ad7358;margin-bottom:16px}
+/* CHARACTER CREATOR / COVER */
+.onboard-layout{display:grid;grid-template-columns:.92fr 1.08fr;min-height:620px}
+.onboard-visual{background:#d9a487;position:relative;overflow:hidden;min-height:620px;display:flex;flex-direction:column;justify-content:space-between;isolation:isolate}
+.onboard-visual:before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 53% 40%,#f8cead 0,#eeb998 34%,#cb8d75 76%,#b87764);z-index:-1}
+.onboard-visual:after{content:'';position:absolute;inset:0;opacity:.11;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.26'/%3E%3C/svg%3E");pointer-events:none}
+.visual-top{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;padding:30px 30px 0;color:#583a32}
+.visual-top b{font-size:10px;letter-spacing:2.1px}.visual-top span{border:1px solid #69432b50;background:#fff4e933;border-radius:30px;padding:8px 13px;font-size:10px;font-weight:800}
+.cover-illustration{position:relative;z-index:2;width:114%;max-height:425px;align-self:center;margin:6px -5% 0;filter:drop-shadow(0 25px 17px #5f312735)}
+.cover-big-number{font:normal 170px/1 var(--display);position:absolute;top:63px;left:20px;letter-spacing:-14px;color:#fff1de40;z-index:1;pointer-events:none}
+.visual-footer{z-index:3;position:relative;display:flex;justify-content:space-between;align-items:end;gap:20px;color:#5b382c;padding:0 31px 31px}
+.visual-footer h3{font:normal 32px/1.12 var(--display);margin:0;letter-spacing:-1.1px}.visual-footer small{display:block;font-size:9px;line-height:1.7;max-width:115px;text-align:right;font-weight:750;letter-spacing:1.2px}
+.onboard-content{padding:47px 43px 34px;background:#faf7f1;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.onboard-content .eyebrow{font-size:10px}.onboard-content h1{font:normal 49px/1.04 var(--display);letter-spacing:-2.6px;margin:15px 0 17px;color:#2a2420}
+.onboard-content h1 em{color:var(--orange);font-weight:normal;font-style:italic}
+.onboard-content p{font-size:12px;color:#817269;line-height:1.85;margin:0 0 15px;max-width:455px}
+.onboard-content .fieldgroup{gap:12px}.onboard-content .label{margin-top:14px}.character-options{display:flex;gap:9px;margin:9px 0;flex-wrap:wrap}
+.swatch{height:33px;width:33px;border-radius:50%;border:3px solid #faf7f1;outline:1px solid #d4c5b6;display:inline-grid;place-items:center;transition:transform .15s}
+.swatch:hover{transform:scale(1.12)}.swatch.selected{outline:2px solid var(--orange);outline-offset:2px}
+.hair-btn{border:1px solid #e0d2c5;padding:9px 13px;background:#fffdfa;border-radius:8px;font-size:11px;color:#6e5d52}
+.hair-btn:hover{border-color:#c38b71}.hair-btn.selected{background:#f4e0d4;border-color:#bd694a;color:#854e39}
+.footer-actions{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-top:26px}.footer-actions .fine{max-width:155px}.onboard-content .footer-actions .button{min-width:210px;min-height:48px}
+/* Extended small utility decorations */
+.chapter-rule{margin:16px 0 4px;height:1px;background:linear-gradient(90deg,#d8b4a0,transparent)}
+@keyframes fadein{from{opacity:0}to{opacity:1}}@keyframes slidein{from{transform:translateX(45px);opacity:.75}to{transform:translateX(0);opacity:1}}@keyframes appear{from{transform:translateY(30px) scale(.985);opacity:.7}to{transform:translateY(0) scale(1);opacity:1}}
+@media(max-width:1100px){.topbar{left:18px;right:18px;top:16px}.quest-panel{left:18px;top:91px;width:265px;padding:18px}.quest-panel h3{font-size:25px}.world-panel{right:18px;top:91px;width:210px;padding:17px}.status{gap:4px}.stat{padding:10px}.scene-hint{bottom:100px}.camera-controls{right:15px;bottom:24px}}
+@media(max-width:850px){.brand{padding:6px 10px 6px 7px}.brand strong{font-size:9px}.brand small{font-size:8px}.brandmark{width:38px;height:38px}.status .career{display:none}.status .stat{padding:9px 10px}.quest-panel{top:85px;width:235px}.world-panel{display:none}.dock{bottom:14px}.modal.onboarding{width:min(720px,calc(100vw - 24px));max-height:calc(100vh - 20px)}.onboard-layout{grid-template-columns:.83fr 1.17fr;min-height:550px}.onboard-visual{min-height:550px}.onboard-content{padding:32px 24px}.onboard-content h1{font-size:38px}.visual-footer h3{font-size:26px}.cover-big-number{font-size:125px}.cover-illustration{max-height:300px}.visual-top{padding:24px 18px 0}.visual-footer{padding:0 19px 24px}.onboard-content .footer-actions{flex-wrap:wrap}.onboard-content .footer-actions .button{width:100%}}
+@media(max-width:650px){.topbar{left:10px;right:10px;top:10px;gap:5px}.brand{min-height:42px;gap:7px}.brandmark{width:33px;height:33px;font-size:20px}.brand strong{max-width:100px;font-size:8px;line-height:1.3;letter-spacing:.8px}.brand small{display:none}.status .stat:nth-child(2){display:none}.status .stat{padding:9px 6px;font-size:10px}.stat small{font-size:7px}.icon-button{width:36px;height:36px}.quest-panel{width:calc(100% - 20px);top:65px;padding:12px 15px;max-width:none;display:grid;grid-template-columns:1fr 1fr;column-gap:10px;border-radius:12px}.quest-panel .eyebrow,.quest-panel h3{grid-column:1}.quest-panel h3{margin:6px 0;font-size:20px}.quest-panel p{grid-row:1/3;grid-column:2;margin:0;font-size:10px;line-height:1.5}.quest-panel .meter,.quest-panel .quest-step,.quest-panel .button{grid-column:1/3}.quest-panel .meter{margin-top:8px}.quest-panel .quest-step{margin:7px 0 2px}.quest-panel .button{display:none}.world-panel,.scene-hint{display:none}.dock{width:calc(100vw - 14px);justify-content:space-between;gap:0;border-radius:13px;bottom:8px;padding:5px}.dock button{flex:1;min-width:49px;padding:8px 4px;font-size:9px}.dock .nav-icon{font-size:17px}.camera-controls{bottom:88px;right:9px}.camera-controls button{width:29px;height:29px}.modalhead{padding:19px 21px}.modalhead h2{font-size:26px}.modalbody{padding:19px 20px 42px}.intro{padding:19px}.intro h3{font-size:24px}.choice-grid{grid-template-columns:1fr 1fr}.choice{padding:13px;min-height:75px}.fieldgroup{grid-template-columns:1fr 1fr;gap:9px}.kpi-grid{grid-template-columns:1fr 1fr}.kpi{padding:13px}.kpi b{font-size:26px}.brief-metrics{grid-template-columns:1fr 1fr}.timeline span{flex:none;min-width:63px}.scrim.centered{padding:8px}.modal.onboarding{width:calc(100vw - 16px);max-height:calc(100vh - 16px);border-radius:13px}.onboard-layout{display:block;min-height:0}.onboard-visual{min-height:175px;height:175px}.cover-illustration{position:absolute;width:53%;height:180px;right:-6px;top:-10px;margin:0}.visual-top{padding:17px}.visual-top span{display:none}.cover-big-number{top:13px;font-size:115px;left:14px}.visual-footer{padding:0 16px 15px}.visual-footer h3{font-size:21px}.visual-footer small{font-size:8px}.onboard-content{padding:22px 21px 24px}.onboard-content h1{font-size:32px;letter-spacing:-1.3px;margin:9px 0}.onboard-content p{font-size:11px;line-height:1.65;margin-bottom:3px}.onboard-content .label{margin-top:12px}.onboard-content .field,.onboard-content select{min-height:40px;padding:9px}.onboard-content .footer-actions{margin-top:14px}.onboard-content .footer-actions .fine{display:none}.onboard-content .footer-actions .button{min-height:42px}.swatch{height:29px;width:29px}.hair-btn{padding:8px 10px}}
+@media(max-height:740px) and (min-width:651px){.modal.onboarding{max-height:calc(100vh - 20px)}.onboard-layout,.onboard-visual{min-height:570px}.onboard-content{padding:25px 34px}.onboard-content h1{font-size:41px;margin:7px 0}.onboard-content p{margin-bottom:3px}.onboard-content .label{margin-top:11px}.onboard-content .footer-actions{margin-top:15px}.cover-illustration{max-height:320px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+/* Icon alignment for vector dock glyphs */
+.dock .nav-icon{display:flex;justify-content:center;align-items:center;height:21px;margin:0 0 6px;filter:none}
+.dock .nav-icon svg{display:block;flex-shrink:0}
+
+</style>
+</head>
+<body>
+<div id="app">
+ <canvas id="world" aria-label="Low-poly 3D marketing world"></canvas>
+ <div class="world-shade"></div>
+ <header class="topbar">
+   <div class="brand"><span class="brandmark">M<span>✳</span></span><div><strong>MARKETING TYCOON</strong><small>THE CREATIVE CAREER GAME</small></div></div>
+   <div id="status" class="status"></div>
+   <button id="saveButton" class="icon-button" title="Lưu game">↓</button>
+ </header>
+ <aside class="quest-panel" id="quest"></aside>
+ <aside class="world-panel" id="worldInfo"></aside>
+ <div class="scene-hint" id="sceneHint"></div>
+ <div class="camera-controls"><button data-action="turn-left" title="Xoay trái">↶</button><button data-action="zoom-in" title="Phóng to">+</button><button data-action="zoom-out" title="Thu nhỏ">−</button><button data-action="turn-right" title="Xoay phải">↷</button></div>
+ <nav id="dock" class="dock" aria-label="Điều hướng game"></nav>
+ <div id="toast" class="toast"></div>
+ <div id="modalRoot"></div>
+</div>
+<script>
+/* Marketing Tycoon — independent, offline, dependency-free 3D projection game. */
+(()=>{'use strict';
+const KEY='marketing-tycoon-save-v1';
+const $=q=>document.querySelector(q);
+const money=n=>new Intl.NumberFormat('vi-VN',{maximumFractionDigits:0}).format(Math.round(n))+'đ';
+const compact=n=>n>=1e6?(n/1e6).toFixed(n%1e6?1:0)+'tr':n>=1e3?(n/1e3).toFixed(0)+'k':String(Math.round(n));
+const esc=x=>String(x??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
+const hash=n=>{let v=(n*9301+49297)%233280;return v/233280};
+const researchOptions=[
+ {id:'audit',icon:'🏪',title:'Khảo sát đối thủ',description:'Điểm bán, mặt bằng giá, khuyến mãi và tuyến đi bộ gần trường.',cost:300000,days:1,quality:1},
+ {id:'reviews',icon:'⭐',title:'Phân tích đánh giá',description:'Tìm mẫu hình trong phản hồi và các yếu tố gây thất vọng.',cost:0,days:1,quality:1},
+ {id:'industry',icon:'📑',title:'Báo cáo thị trường',description:'Ước lượng nhu cầu danh mục từ báo cáo tổng hợp.',cost:700000,days:1,quality:.75},
+ {id:'interview',icon:'🎤',title:'Phỏng vấn tại quán',description:'Tám cuộc trò chuyện chuyên sâu để khám phá rào cản.',cost:500000,days:2,quality:1.4}
+];
+const surveyCosts={20:140000,60:370000,120:720000};
+const mediaChannels=[
+ {id:'paid',title:'Paid social',icon:'📱',base:.95,description:'Tiếp cận tệp mục tiêu theo sở thích và địa bàn.'},
+ {id:'creator',title:'Micro KOC',icon:'🎬',base:1.08,description:'Độ tin cậy từ người sáng tạo nội dung nhỏ.'},
+ {id:'promo',title:'Khuyến mãi tại điểm bán',icon:'🎟️',base:.82,description:'Thúc đẩy quyết định trong ngắn hạn.'},
+ {id:'flyer',title:'Campus / local activation',icon:'📍',base:.65,description:'Tiếp xúc trực tiếp và truyền miệng ở khu vực.'}
+];
+const scenarios=[
+ {id:'coffee',brand:'Mây Corner Coffee',industry:'F&B · Quán cà phê',emoji:'☕',contact:'Linh · Chủ quán',budget:8000000,fee:3200000,days:14,baseline:55,target:25,metric:'lượt khách/ngày',unit:'lượt',summary:'Tăng lượt ghé quán từ sinh viên quanh khu vực, nhưng ngân sách khá hạn chế.',client:'Quán mình nằm sát hai trường đại học nhưng buổi chiều vẫn ít khách. Em có thể giúp mọi người biết đến Mây Corner và thử ghé quán không?',trueInsight:'awareness',trueSegment:'students',truePosition:'study',trueCreative:'study',trueObjective:'visits',channel:{paid:1.1,creator:1.25,promo:.85,flyer:.76},reports:{audit:'Hai quán lân cận xuất hiện thường xuyên trên TikTok và có chỉ dẫn đường đến quán. Giá bán khá tương đồng.',reviews:'Khách đã đến thường đánh giá đồ uống ổn, nhưng nhiều sinh viên nói chưa từng nghe tới quán.',industry:'Nhu cầu đồ uống ngoài hàng tăng ở nhóm sinh viên; báo cáo không chỉ ra vấn đề của quán cụ thể.',interview:'Sáu trong tám sinh viên được hỏi không biết Mây Corner dù thường đi ngang tuyến phố gần đó.'}},
+ {id:'fitness',brand:'Bloom Fit Studio',industry:'Sức khỏe · Phòng tập',emoji:'🏃',contact:'Thảo · Founder',budget:12000000,fee:4800000,days:14,baseline:18,target:30,metric:'đăng ký tư vấn/tuần',unit:'lead',summary:'Tăng đăng ký học thử từ nhân viên văn phòng, thay vì chỉ tăng lượt xem nội dung.',client:'Bọn chị đăng rất nhiều hình lớp tập nhưng số người để lại thông tin không tăng. Chị cần khách tin rằng lớp thực sự phù hợp với người mới.',trueInsight:'trust',trueSegment:'youngpros',truePosition:'proof',trueCreative:'story',trueObjective:'leads',channel:{paid:1.2,creator:1.17,promo:.85,flyer:.4},reports:{audit:'Nhiều đối thủ đang quảng cáo "tập thử miễn phí", nhưng ít công khai trải nghiệm học viên mới.',reviews:'Khách băn khoăn về trình độ cần có và lo bị ép mua gói dài hạn.',industry:'Nhóm lao động trẻ quan tâm sức khỏe, nhưng dữ liệu ngành không giải thích rào cản đăng ký.',interview:'Phần lớn người mới muốn thấy người thật, lớp thật và lịch học linh hoạt trước khi để lại số điện thoại.'}},
+ {id:'fashion',brand:'Moss Streetwear',industry:'Bán lẻ · Thời trang',emoji:'🧢',contact:'Minh · Brand manager',budget:16000000,fee:6400000,days:14,baseline:42,target:28,metric:'đơn hàng/tuần',unit:'đơn',summary:'Chuyển mức độ yêu thích thiết kế thành đơn hàng từ nhóm người trẻ.',client:'Mọi người lưu lookbook khá nhiều mà không mua. Anh muốn một campaign biến phong cách thành lý do chọn sản phẩm Moss.',trueInsight:'style',trueSegment:'genz',truePosition:'style',trueCreative:'creator',trueObjective:'sales',channel:{paid:1.03,creator:1.32,promo:.78,flyer:.6},reports:{audit:'Đối thủ nổi bật bởi video phối đồ hàng ngày thay vì ảnh lookbook một chiều.',reviews:'Nhiều người thích thiết kế nhưng không hình dung được cách phối với đồ có sẵn.',industry:'Người trẻ quan tâm thời trang, nhưng xu hướng chung chưa xác nhận rào cản mua sản phẩm Moss.',interview:'Người được hỏi muốn xem các outfit linh hoạt trên người thực trước khi mua.'}}
+];
+const insights=[{id:'awareness',title:'Thiếu nhận biết',desc:'Khách mục tiêu chưa biết thương hiệu tồn tại.'},{id:'value',title:'Giá trị chưa thuyết phục',desc:'Biết thương hiệu nhưng chưa thấy đáng tiền.'},{id:'location',title:'Vị trí bất tiện',desc:'Nhu cầu có nhưng khó di chuyển.'},{id:'trust',title:'Thiếu niềm tin',desc:'Khách ngại rủi ro khi thử dịch vụ.'},{id:'style',title:'Chưa hình dung cách sử dụng',desc:'Thích ý tưởng nhưng chưa thấy tình huống phù hợp.'}];
+const segments=[{id:'students',title:'Sinh viên gần trường'},{id:'youngpros',title:'Người đi làm trẻ'},{id:'genz',title:'Gen Z yêu phong cách'},{id:'everyone',title:'Mọi người trong thành phố'}];
+const positions=[{id:'study',title:'Điểm hẹn học và nghỉ'},{id:'budget',title:'Giá tốt, tiết kiệm tối đa'},{id:'proof',title:'Trải nghiệm thật, rủi ro thấp'},{id:'style',title:'Phối chất riêng hàng ngày'}];
+const objectives=[{id:'visits',title:'Lượt ghé thực tế'},{id:'leads',title:'Đăng ký / lead'},{id:'sales',title:'Đơn hàng'},{id:'views',title:'Lượt xem / reach'}];
+const creatives=[
+ {id:'study',icon:'📚',title:'Một góc để bạn thuộc về',subtitle:'Student lifestyle · UGC',desc:'Cho thấy khoảnh khắc tụ tập, học bài, nghỉ ngơi trong không gian thật.',cost:850000},
+ {id:'story',icon:'🎞️',title:'Câu chuyện người thật',subtitle:'Testimonial · Social proof',desc:'Khách hàng thật kể lại trải nghiệm; yêu cầu quay và xác minh.',cost:1300000},
+ {id:'creator',icon:'✨',title:'Một ngày cùng creator',subtitle:'Short-form · Creator styling',desc:'Biến cách sử dụng sản phẩm thành câu chuyện dễ chia sẻ.',cost:1500000},
+ {id:'discount',icon:'🏷️',title:'Deal sốc tuần này',subtitle:'Price promotion · Urgency',desc:'Thông điệp kích hoạt mua ngay, dễ tạo kết quả ngắn hạn nhưng có thể làm loãng định vị.',cost:400000}
+];
+const upgrades={research:{name:'Consumer Insight Toolkit',cost:500000,desc:'Tăng độ chính xác khi diễn giải nghiên cứu.'},creative:{name:'Creative Production Network',cost:750000,desc:'Giảm số vòng sửa sáng tạo, cải thiện khả năng triển khai.'},media:{name:'Performance Workspace',cost:650000,desc:'Có thêm thông tin để tối ưu phân phối.'},influencer:{name:'Trusted Creator Directory',cost:450000,desc:'Có danh sách creator đáng tin và chọn đúng tệp hơn.'}};
+const employees=[{id:'researcher',name:'An Phạm',role:'Researcher',emoji:'👩🏻‍💻',salary:1600000,skill:'Insight / Survey',impact:'research'},{id:'planner',name:'Huy Nguyễn',role:'Strategic Planner',emoji:'👨🏽‍💼',salary:2200000,skill:'Strategy / Positioning',impact:'strategy'},{id:'creator',name:'Vy Trần',role:'Creative Lead',emoji:'👩🏼‍🎨',salary:2000000,skill:'Copy / Art Direction',impact:'creative'},{id:'buyer',name:'Tú Lê',role:'Media Buyer',emoji:'👨🏻‍💻',salary:1850000,skill:'Paid Media / Analytics',impact:'media'}];
+const newCampaign=i=>({scenarioIndex:i,phase:'brief',day:1,spent:0,research:[],survey:null,insight:null,strategy:{segment:'students',objective:'visits',position:'study'},creative:null,media:{paid:0,creator:0,promo:0,flyer:0},optimization:null,liveMetrics:null,assignments:{},final:null});
+const defaults=()=>({version:1,created:false,character:{name:'Alex',skin:'#d6a681',outfit:'#4c9589',hair:'#352824',style:'short',interest:'Strategy'},scene:'room',yaw:.78,zoom:1,reputation:0,expertise:0,personalCash:2500000,agencyCash:0,agencyUnlocked:false,agencyName:'',staff:[],upgrades:[],cityUnlocked:false,campaign:newCampaign(0),history:[],log:[],graphics:'high',avatar:{x:0,z:1}});
+let state;try{state=JSON.parse(localStorage.getItem(KEY)||'null')||defaults();if(!state.version||!state.campaign)state=defaults()}catch{state=defaults()}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch{} };
+const current=()=>scenarios[state.campaign.scenarioIndex%scenarios.length];
+let panel=state.created?null:'onboard',selectedResearch=null,localMedia=null,localSurvey={audience:'students',sample:60,question:'barrier'},localCreative=null,localValidation=null,localStrategy=null,interviewed=false,toastTimer;
+const toast=(s)=>{const el=$('#toast');el.textContent=s;el.classList.add('active');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('active'),2600)};
+const log=(s)=>{state.log.unshift({day:state.campaign.day,message:s});state.log=state.log.slice(0,50)};
+function phaseProgress(){return {brief:0,research:1,survey:2,validation:3,strategy:4,creative:5,media:6,live:7,results:8}[state.campaign.phase]??0}
+const phases=['Brief','Research','Survey','Validate','Strategy','Creative','Media','Live','Review'];
+const open=p=>{panel=p;drawUI()};const close=()=>{if(!state.created)return;panel=null;drawUI()};
+const canPay=v=>state.campaign.spent+v<=current().budget;
+const playerMoney=()=>state.agencyUnlocked?state.agencyCash:state.personalCash;
+const editAvatar=(k,v)=>{state.character[k]=v;save();drawUI()};
+const shortMoney=money;
+function focusLabel(){const p=state.campaign.phase;return {brief:'Nhận brief đầu tiên',research:'Tìm dữ liệu đáng tin',survey:'Thiết kế khảo sát',validation:'Chốt consumer insight',strategy:'Ra quyết định chiến lược',creative:'Phát triển big idea',media:'Phân bổ ngân sách',live:'Theo dõi & tối ưu',results:'Trình bày kết quả'}[p]}
+const navPaths={
+ room:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-7h6v7"/>',
+ city:'<rect x="2" y="8" width="7" height="13" rx="1"/><rect x="9" y="3" width="7" height="18" rx="1"/><rect x="16" y="11" width="6" height="10" rx="1"/><path d="M5 11v1m0 3v1m7-9v1m0 3v1m7 2v1"/>',
+ office:'<path d="M4 21V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v16"/><path d="M2 21h20M9 21v-5h6v5M8 8h2m4 0h2M8 12h2m4 0h2"/>',
+ laptop:'<rect x="4" y="4" width="16" height="13" rx="2"/><path d="M2 20h20M10 17v3m4-3v3"/>',
+ phone:'<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 5h4m-2 14h.01"/>',
+ board:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+ wardrobe:'<circle cx="12" cy="8" r="4"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/>'
+};
+const navIcon=id=>`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${navPaths[id]||navPaths.board}</svg>`;
+function renderHUD(){
+ const stage=state.agencyUnlocked?'Agency Founder':state.cityUnlocked?'Freelance Marketer':'Student Marketer';
+ $('#status').innerHTML=`<span class="stat career"><i>◉</i>${stage}</span><span class="stat"><i>₫</i><b>${compact(playerMoney())}</b></span><span class="stat"><i>✦</i><b>${state.reputation}</b><small>REP</small></span><span class="stat"><i>◆</i><b>${state.expertise}</b><small>XP</small></span>`;
+ const pr=phaseProgress();$('#quest').innerHTML=`<div class="eyebrow">NHIỆM VỤ HIỆN TẠI</div><h3>${esc(focusLabel())}</h3><p>${state.campaign.phase==='results'?'Chiến dịch đã hoàn thành. Xem kết quả và chọn bước tiếp theo.':state.agencyUnlocked?'Lãnh đạo đội ngũ và giữ chất lượng dự án.':`Chiến dịch ${esc(current().brand)} • ${state.campaign.day}/${current().days} ngày mô phỏng.`}</p><div class="meter"><span style="width:${(pr+1)/9*100}%"></span></div><div class="quest-step"><span>CAMPAIGN PROGRESS</span><span>${pr+1}/9</span></div><button class="button full small" data-action="open-workstation">${state.campaign.phase==='results'?'XEM SCORECARD':'TIẾP TỤC CAMPAIGN'} →</button>`;
+ $('#worldInfo').innerHTML=state.scene==='room'?`<div class="tile">YOUR FIRST HQ</div><h4>Phòng ngủ, nơi mọi thứ bắt đầu</h4><p>Laptop để chạy campaign. Điện thoại để nhận brief. Bảng trắng để xem roadmap.</p><div class="guide">WASD: di chuyển · Q/E: xoay góc nhìn<br>Nhấp đồ vật để tương tác.</div>`:state.scene==='city'?`<div class="tile">EXPLORE THE CITY</div><h4>Marketing City</h4><p>Mỗi địa điểm mở ra công cụ, mối quan hệ hoặc cơ hội nghề nghiệp có chi phí thực.</p><div class="guide">Nhấp vào tòa nhà để tương tác.<br>Kéo để xoay · cuộn để zoom.</div>`:`<div class="tile">YOUR OWN AGENCY</div><h4>${esc(state.agencyName||'New Agency')}</h4><p>${state.staff.length} nhân viên · ${state.history.length} campaign đã hoàn thành.</p><div class="guide">Agency management → tuyển dụng, tài chính và đội ngũ.</div>`;
+ const nav=[{id:'room',icon:'🏠',text:'Phòng ngủ'},{id:'laptop',icon:'💻',text:'Workstation'},{id:'phone',icon:'📱',text:'Điện thoại'},{id:'board',icon:'📋',text:'Bảng tiến độ'},{id:'wardrobe',icon:'🧍',text:'Nhân vật'}];
+ if(state.cityUnlocked)nav.splice(1,0,{id:'city',icon:'🏙️',text:'Thành phố'});
+ if(state.agencyUnlocked)nav.splice(2,0,{id:'office',icon:'🏢',text:'Agency'});
+ $('#dock').innerHTML=nav.map(n=>`<button class="${state.scene===n.id?'active':''}" data-action="nav-${n.id}"><span class="nav-icon">${navIcon(n.id)}</span>${n.text}</button>`).join('');
+ $('#sceneHint').textContent=state.scene==='room'?'Hãy bắt đầu từ chiếc laptop trên bàn • Click hoặc WASD để khám phá':state.scene==='city'?'Thành phố mở khóa sau chiến dịch đầu tiên • Các công trình đều có chức năng':'Văn phòng: nơi ý tưởng trở thành công việc của cả đội';
+}
+function timeline(){const cur=phaseProgress();return `<div class="timeline">${phases.map((v,i)=>`<span class="${i<cur?'done':i===cur?'current':''}">${v}</span>`).join('')}</div>`}
+function heading(ey,title){return `<div class="eyebrow">${ey}</div><h2>${title}</h2>`}
+function baseModal(title,ey,content,opts={}){const isOn=panel==='onboard',locked=isOn||opts.locked;$('#modalRoot').innerHTML=`<div class="scrim ${isOn?'centered':''}" ${locked?'':'data-action="backdrop"'}><section class="modal ${opts.wide?'wide':''} ${isOn?'onboarding':''}" role="dialog" aria-modal="true">${isOn?'':`<header class="modalhead"><div>${heading(ey,title)}</div><button class="close" data-action="close" aria-label="Đóng">×</button></header>`}<div class="${isOn?'':'modalbody'}">${content}</div></section></div>`}
+function renderOnboard(){
+ const art=`<svg class="cover-illustration" viewBox="0 0 500 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Minh họa phòng ngủ nhỏ của một marketer trẻ">
+ <defs><filter id="roomshadow" x="-30%" y="-40%" width="160%" height="200%"><feGaussianBlur stdDeviation="11"/></filter><linearGradient id="deskface" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#bd7756"/><stop offset="1" stop-color="#8e553c"/></linearGradient></defs>
+ <ellipse cx="258" cy="320" rx="195" ry="42" fill="#713e30" opacity=".2" filter="url(#roomshadow)"/>
+ <polygon points="56,208 251,100 454,213 255,331" fill="#eacbaf" stroke="#a96d54" stroke-width="2"/>
+ <polygon points="56,208 255,331 255,348 56,224" fill="#c18f72"/><polygon points="255,331 454,213 454,228 255,348" fill="#b47b5c"/>
+ <polygon points="56,208 56,105 251,1 251,100" fill="#f6e2c7" stroke="#bd9172" stroke-width="2"/>
+ <polygon points="251,1 454,118 454,213 251,100" fill="#e6baa0" stroke="#bc8769" stroke-width="2"/>
+ <path d="M89 101 169 57 169 137 89 179Z" fill="#f3d0ad" stroke="#bd9777" stroke-width="4"/><path d="M97 103 160 68 160 132 97 166Z" fill="#93c8b9"/><path d="M97 135 160 99" stroke="#faf0d8" stroke-width="5"/><path d="M128 86 128 149" stroke="#faf0d8" stroke-width="4"/>
+ <polygon points="254,58 298,82 298,128 254,104" fill="#f7e8d7" stroke="#b98766" stroke-width="4"/><polygon points="264,76 286,88 286,108 264,96" fill="#edb085"/>
+ <polygon points="80,215 157,173 236,216 158,260" fill="#edb49b" opacity=".75"/>
+ <polygon points="84,187 144,153 206,189 145,227" fill="#d8a58d"/><polygon points="84,187 145,227 145,241 84,201" fill="#a56b57"/><polygon points="145,227 206,189 206,205 145,241" fill="#a16b50"/>
+ <polygon points="88,183 144,153 197,184 142,218" fill="#faf1e3"/>
+ <polygon points="98,183 127,166 149,178 121,195" fill="#fffdf1"/><polygon points="122,198 160,177 185,192 148,214" fill="#efe2cf"/>
+ <polygon points="274,184 367,134 418,164 323,220" fill="#c88660" stroke="#a76c4d" stroke-width="3"/>
+ <polygon points="274,184 323,220 323,232 274,198" fill="#8e573f"/><polygon points="323,220 418,164 418,177 323,232" fill="url(#deskface)"/>
+ <polygon points="290,204 305,213 305,273 290,263" fill="#8e5c44"/><polygon points="392,186 405,178 405,236 392,245" fill="#8e5c44"/>
+ <polygon points="312,175 343,157 374,174 343,193" fill="#2e4547"/><polygon points="312,175 312,133 343,116 343,157" fill="#3b4544"/><polygon points="343,116 376,133 376,174 343,157" fill="#455a58"/><polygon points="319,137 343,124 369,138 369,164 343,150 319,162" fill="#8baea3"/>
+ <polygon points="332,194 359,179 378,190 350,205" fill="#ddd6c5"/><polygon points="334,191 358,178 376,187 351,200" fill="#eff0de"/>
+ <ellipse cx="396" cy="161" rx="14" ry="7" fill="#eee0cf"/><path d="M382 161V150Q396 142 409 150V161" fill="#f2ead8"/><ellipse cx="396" cy="150" rx="13" ry="6" fill="#765542"/>
+ <polygon points="171,254 194,241 217,254 194,268" fill="#b78662"/><polygon points="171,254 194,268 194,294 171,279" fill="#936245"/><polygon points="194,268 217,254 217,280 194,294" fill="#7d503c"/>
+ <polygon points="173,243 195,230 214,242 193,255" fill="#e1af79"/><polygon points="193,254 216,242 216,264 193,277" fill="#bb8060"/>
+ <circle cx="232" cy="204" r="17" fill="#c58d6d"/><path d="M217 202 Q218 183 232 185Q250 184 250 204L241 202 235 196 225 203Z" fill="#493b35"/>
+ <polygon points="220,219 234,228 248,219 250,263 233,274 216,263" fill="#507766"/>
+ <polygon points="216,229 226,225 228,260 217,270 211,260" fill="#456454"/>
+ <polygon points="241,226 252,232 253,258 245,263 240,249" fill="#456454"/>
+ <polygon points="224,271 233,277 231,291 224,298 217,294" fill="#423f39"/><polygon points="236,277 244,270 251,290 242,296 235,290" fill="#423f39"/>
+ <polygon points="410,229 426,220 439,229 423,239" fill="#d8a581"/><polygon points="410,229 423,239 423,262 410,253" fill="#c08e6d"/><polygon points="423,239 439,229 439,252 423,262" fill="#b47c5d"/>
+ <path d="M424 223L421 188M423 205Q407 184 400 190M426 200Q447 174 449 188" fill="none" stroke="#4b7b59" stroke-width="7" stroke-linecap="round"/>
+ <path d="M423 192Q403 175 403 193 409 205 421 207M427 191Q452 169 452 187 442 201 427 204" fill="#629568"/>
+ <g stroke="#f5e9d9" stroke-width="2" opacity=".85"><path d="M76 79L88 79M82 73L82 85"/><path d="M432 84L448 84M440 76L440 92"/><path d="M63 290L73 290M68 285L68 295"/></g>
+ </svg>`;
+ baseModal('','',`<div class="onboard-layout"><div class="onboard-visual"><div class="visual-top"><b>MT® / ORIGINAL STORY</b><span>CHAPTER 01 — 04</span></div><span class="cover-big-number">01</span>${art}<div class="visual-footer"><h3>Every great idea<br>starts somewhere.</h3><small>THE JOURNEY<br>BEGINS HERE ↗</small></div></div><div class="onboard-content"><div class="eyebrow">WELCOME TO MARKETING TYCOON · SEASON 01</div><h1>Start small.<br><em>Think big.</em></h1><p>Từ căn phòng nhỏ đến agency của riêng bạn. Nghiên cứu thị trường, ra quyết định, chạy campaign và xây dựng sự nghiệp marketing — mọi lựa chọn đều có hệ quả.</p><div class="chapter-rule"></div><div class="fieldgroup"><div><label class="label" for="charName">TÊN NHÂN VẬT</label><input class="field" id="charName" maxlength="20" value="${esc(state.character.name)}" placeholder="Tên của bạn"></div><div><label class="label" for="charInterest">CHUYÊN MÔN BAN ĐẦU</label><select id="charInterest">${['Strategy','Creative','Research','Performance'].map(v=>`<option ${v===state.character.interest?'selected':''}>${v}</option>`).join('')}</select></div></div><label class="label">CHỌN TÔNG DA</label><div class="character-options">${['#f0c9a7','#d6a681','#a87256','#6d4639'].map(c=>`<button class="swatch ${state.character.skin===c?'selected':''}" data-action="skin-${c}" style="background:${c}" title="Chọn tông da"></button>`).join('')}</div><label class="label">MÀU TRANG PHỤC</label><div class="character-options">${['#4c9589','#485f9f','#da9075','#9470a8','#303e48'].map(c=>`<button class="swatch ${state.character.outfit===c?'selected':''}" data-action="outfit-${c}" style="background:${c}" title="Chọn trang phục"></button>`).join('')}</div><label class="label">KIỂU TÓC</label><div class="character-options">${['short','bob','curly','long'].map(s=>`<button class="hair-btn ${state.character.style===s?'selected':''}" data-action="style-${s}">${({short:'Ngắn',bob:'Bob',curly:'Xoăn',long:'Dài'})[s]}</button>`).join('')}</div><div class="footer-actions"><span class="fine">PROGRESS IS SAVED LOCALLY<br>NO ACCOUNT REQUIRED</span><button class="button" data-action="start-game">BẮT ĐẦU HÀNH TRÌNH &nbsp; ↗</button></div></div></div>`,{locked:true});
+}
+function renderBrief(){const s=current();return `${timeline()}<div class="intro"><div class="client-icon">${s.emoji}</div><div class="eyebrow">NEW FREELANCE REQUEST</div><h3>${esc(s.brand)}</h3><p>${esc(s.summary)}</p></div><div class="client-chat"><div class="meta">📱 TIN NHẮN TỪ ${esc(s.contact.toUpperCase())}</div><div class="bubble">“${esc(s.client)}”</div></div><div class="brief-metrics"><div><small>Ngân sách của khách</small><b>${money(s.budget)}</b></div><div><small>Phí freelancer (riêng)</small><b>${money(s.fee)}</b></div><div><small>Thời gian</small><b>${s.days} ngày</b></div></div><div class="section-title">Bạn sẽ đi qua toàn bộ vòng đời campaign</div><div class="small-text muted">Research → Survey → Validate → Strategy → Creative → Media → Launch → Optimization → Presentation.</div><div class="note-bubble">💡 Tiền của khách là ngân sách campaign, không phải tiền riêng của bạn. Lựa chọn sai vẫn có thể dẫn tới kết quả kém và mất uy tín.</div><button class="button full" data-action="accept-brief">NHẬN BRIEF & BẮT ĐẦU NGHIÊN CỨU →</button>`}
+function renderResearch(){const c=state.campaign,s=current();return `${timeline()}<div class="intro"><div class="eyebrow">RESEARCH DESK · DAY ${c.day}</div><h3>Đừng đoán trước khi hiểu vấn đề.</h3><p>Thông tin có độ tin cậy và chi phí khác nhau. Bạn phải chọn nguồn phù hợp trước khi khảo sát người tiêu dùng.</p></div><div class="flex-between"><div class="pill">Đã thu thập: ${c.research.length} nguồn</div><div class="pill amber">Còn lại: ${money(s.budget-c.spent)}</div></div><div class="section-title">Chọn nguồn thông tin</div>${researchOptions.map(r=>{const got=c.research.includes(r.id);return `<div class="research-item"><div class="symbol">${r.icon}</div><div class="details"><b>${r.title}</b><p>${r.description}</p><div class="fine">${r.cost?money(r.cost):'Miễn phí'} · ${r.days} ngày</div></div><button class="button small ${got?'secondary':''}" data-action="research-${r.id}" ${got||!canPay(r.cost)?'disabled':''}>${got?'✓ Đã đọc':'Thu thập'}</button></div>${got?`<div class="result-box"><b>Nhận định thu thập</b><p>${esc(s.reports[r.id])}</p></div>`:''}`}).join('')}<div class="note-bubble">Nguồn ngành rất hữu ích cho bối cảnh, nhưng không thay thế được thông tin về khách hàng cụ thể.</div><button class="button full" data-action="to-survey" ${!c.research.length?'disabled':''}>TIẾP TỤC KHẢO SÁT →</button>`}
+function surveyQuality(){let c=state.campaign;if(!c.survey)return 0;return clamp((c.survey.sample===120?.35:c.survey.sample===60?.25:.08)+(c.survey.audience===current().trueSegment?.43:c.survey.audience==='everyone'?.07:.15)+(c.survey.question==='barrier'?.2:.04)+(state.upgrades.includes('research')?.1:0),.1,1)}
+function surveyResults(){const c=state.campaign,s=current(),sur=c.survey;const quality=surveyQuality(),base= Math.round(30+quality*42+hash(c.scenarioIndex*9+sur.sample)*9);return {primary:clamp(base,22,82),other:clamp(Math.round((100-base)*.58),8,58),sample:sur.sample,quality:Math.round(quality*100),reason:insights.find(x=>x.id===s.trueInsight)?.title}}
+function renderSurvey(){const c=state.campaign,s=current();if(c.survey){const r=surveyResults();return `${timeline()}<div class="intro"><div class="eyebrow">FIELD RESEARCH · DAY ${c.day}</div><h3>Kết quả khảo sát (${r.sample} phản hồi)</h3><p>Dữ liệu là mô phỏng và có nhiễu mẫu. Không phải tỷ lệ thị trường thật.</p></div><div class="result-box"><b>Phát hiện nổi bật</b><p>${r.primary}% phản hồi liên quan đến “${esc(r.reason)}”. Khoảng ${r.other}% nhắc đến yếu tố thứ cấp khác. Mức tin cậy phương pháp: ${r.quality}/100.</p></div><div class="kpi-grid"><div class="kpi"><small>Cỡ mẫu</small><b>${r.sample}</b><span>người tham gia</span></div><div class="kpi"><small>Tín hiệu chính</small><b>${r.primary}%</b><span>không phải sự thật tuyệt đối</span></div><div class="kpi"><small>Chất lượng mẫu</small><b>${r.quality}</b><span>/ 100</span></div></div><div class="note-bubble">Nếu bạn khảo sát sai tệp hoặc hỏi thiên lệch, một tỷ lệ cao vẫn chưa chắc phản ánh đúng thị trường mục tiêu.</div><button class="button full" data-action="to-validation">DIỄN GIẢI & VALIDATE INSIGHT →</button>`}
+return `${timeline()}<div class="intro"><div class="eyebrow">SURVEY DESIGN · DAY ${c.day}</div><h3>Một khảo sát tốt không chỉ cần nhiều người.</h3><p>Chọn đúng tệp, cỡ mẫu và câu hỏi có thể quyết định insight tiếp theo.</p></div><div class="section-title">1. Ai sẽ trả lời khảo sát?</div><div class="choice-grid">${segments.map(v=>`<button class="choice ${localSurvey.audience===v.id?'selected':''}" data-action="aud-${v.id}"><b>${v.title}</b><span>${v.id==='everyone'?'Rộng nhưng khó đại diện mục tiêu cụ thể':'Khảo sát nhóm đối tượng được chọn'}</span></button>`).join('')}</div><div class="section-title">2. Quy mô mẫu</div><div class="choice-grid">${[20,60,120].map(v=>`<button class="choice ${localSurvey.sample===v?'selected':''}" data-action="sample-${v}"><b>${v} phản hồi</b><span class="price">${money(surveyCosts[v])}</span></button>`).join('')}</div><div class="section-title">3. Cách đặt câu hỏi</div><div class="choice-grid"><button class="choice ${localSurvey.question==='barrier'?'selected':''}" data-action="question-barrier"><b>“Điều gì khiến bạn chưa thử?”</b><span>Hỏi mở về trở ngại và hành vi thực.</span></button><button class="choice ${localSurvey.question==='leading'?'selected':''}" data-action="question-leading"><b>“Bạn thích ưu đãi của chúng tôi chứ?”</b><span>Câu hỏi dẫn dắt, dễ tạo sai lệch.</span></button></div><div class="note-bubble">Chi phí: ${money(surveyCosts[localSurvey.sample])} · Ngân sách còn ${money(s.budget-c.spent)}</div><button class="button full" data-action="run-survey" ${!canPay(surveyCosts[localSurvey.sample])?'disabled':''}>THỰC HIỆN KHẢO SÁT →</button>`}
+function renderValidation(){const c=state.campaign;return `${timeline()}<div class="intro"><div class="eyebrow">INSIGHT VALIDATION</div><h3>Nguyên nhân thực sự là gì?</h3><p>So sánh desk research và khảo sát. Một insight hữu ích phải lý giải được hành vi, không chỉ lặp lại con số.</p></div>${c.research.map(i=>`<div class="log-entry"><b>${esc(researchOptions.find(r=>r.id===i)?.title)}</b><div>${esc(current().reports[i])}</div></div>`).join('')}<div class="section-title">Chọn giả thuyết chính để làm chiến lược</div><div class="choice-grid">${insights.map(i=>`<button class="choice ${localValidation===i.id?'selected':''}" data-action="insight-${i.id}"><b>${i.title}</b><span>${i.desc}</span></button>`).join('')}</div><div class="note-bubble">Bạn sẽ không thấy “đáp án đúng” ngay lập tức. Kết quả campaign và phản hồi khách hàng sẽ kiểm chứng lựa chọn.</div><button class="button full" data-action="confirm-insight" ${!localValidation?'disabled':''}>CHỐT INSIGHT →</button>`}
+function renderStrategy(){const c=state.campaign;localStrategy=localStrategy||structuredClone(c.strategy);return `${timeline()}<div class="intro"><div class="eyebrow">STRATEGIC PLANNING</div><h3>Marketing là lựa chọn, không phải làm tất cả.</h3><p>Xác định phân khúc, mục tiêu kinh doanh và lời hứa của thương hiệu. Chúng có thể hỗ trợ hoặc triệt tiêu lẫn nhau.</p></div><div class="section-title">Target audience</div><div class="choice-grid">${segments.map(x=>`<button class="choice ${localStrategy.segment===x.id?'selected':''}" data-action="seg-${x.id}"><b>${x.title}</b></button>`).join('')}</div><div class="section-title">Campaign objective</div><div class="choice-grid">${objectives.map(x=>`<button class="choice ${localStrategy.objective===x.id?'selected':''}" data-action="obj-${x.id}"><b>${x.title}</b></button>`).join('')}</div><div class="section-title">Brand positioning</div><div class="choice-grid">${positions.map(x=>`<button class="choice ${localStrategy.position===x.id?'selected':''}" data-action="pos-${x.id}"><b>${x.title}</b></button>`).join('')}</div><div class="note-bubble">Người chơi có thể chọn một objective “đẹp” như reach, nhưng khách hàng đang quan tâm tới kết quả kinh doanh.</div><button class="button full" data-action="confirm-strategy">PHÊ DUYỆT CHIẾN LƯỢC →</button>`}
+function renderCreative(){const c=state.campaign;return `${timeline()}<div class="intro"><div class="eyebrow">CREATIVE STUDIO</div><h3>Biến insight thành ý tưởng.</h3><p>Không phải creative đắt nhất là creative hiệu quả nhất. Mức phù hợp với chiến lược có thể quan trọng hơn chi phí.</p></div><div class="choice-grid">${creatives.map(k=>`<button class="choice ${localCreative===k.id?'selected':''}" data-action="creative-${k.id}"><span class="icon">${k.icon}</span><b>${k.title}</b><small>${k.subtitle}</small><span style="margin-top:7px">${k.desc}</span><span class="price" style="margin-top:9px">${money(k.cost)}</span></button>`).join('')}</div>${localCreative?`<div class="output-preview"><div class="emblem">${creatives.find(x=>x.id===localCreative)?.icon}</div><div><small>CAMPAIGN CONCEPT PREVIEW</small><h3>${creatives.find(x=>x.id===localCreative)?.title}</h3><p>Concept sẽ được triển khai trên các kênh đã chọn ở bước tiếp theo.</p></div></div>`:''}<div class="note-bubble">Ngân sách còn lại trước sản xuất: ${money(current().budget-c.spent)}</div><button class="button full" data-action="confirm-creative" ${!localCreative||!canPay(creatives.find(x=>x.id===localCreative)?.cost||0)?'disabled':''}>SẢN XUẤT & ĐẾN MEDIA PLAN →</button>`}
+function mediaTotal(){return Object.values(localMedia||state.campaign.media).reduce((a,b)=>a+Number(b||0),0)}
+function renderMedia(){const c=state.campaign;localMedia=localMedia||structuredClone(c.media);let remaining=current().budget-c.spent,alloc=mediaTotal();return `${timeline()}<div class="intro"><div class="eyebrow">MEDIA BUDGET LAB</div><h3>Tiêu tiền có chủ đích.</h3><p>Phân bổ tiền giữa bốn kênh. Mỗi kênh có hiệu suất khác nhau tùy ngành hàng và tệp mục tiêu.</p></div><div class="kpi-grid"><div class="kpi"><small>Ngân sách campaign</small><b>${compact(current().budget)}</b></div><div class="kpi"><small>Research + creative</small><b>${compact(c.spent)}</b></div><div class="kpi"><small>Còn phân bổ</small><b>${compact(remaining)}</b></div></div>${mediaChannels.map(m=>`<div class="barline"><span>${m.icon} ${m.title}</span><input type="range" data-media="${m.id}" min="0" max="${Math.floor(remaining/100000)*100000}" step="100000" value="${localMedia[m.id]||0}"><b data-media-value="${m.id}">${compact(localMedia[m.id]||0)}</b></div><div class="fine" style="margin:-8px 0 11px 123px">${m.description}</div>`).join('')}<div class="result-box"><div class="hline"><span>Tổng media budget</span><b id="mediaAllocated">${money(alloc)}</b></div><div class="hline"><span>Dự phòng chưa sử dụng</span><b id="mediaReserve">${money(remaining-alloc)}</b></div><div id="mediaWarning" class="small-text" style="color:${alloc>remaining?'#c45b49':'#689386'}">${alloc>remaining?'Vượt ngân sách!':'Có thể giữ lại tiền để tối ưu giữa campaign.'}</div></div><button class="button full" data-action="launch" ${alloc<500000||alloc>remaining?'disabled':''}>🚀 LAUNCH CAMPAIGN →</button>`}
+function scoreModel(mode='final'){
+ const c=state.campaign,s=current(),fit={insight:c.insight===s.trueInsight?1:0,segment:c.strategy.segment===s.trueSegment?1:0,position:c.strategy.position===s.truePosition?1:0,objective:c.strategy.objective===s.trueObjective?1:0,creative:c.creative===s.trueCreative?1:0};
+ let research=c.research.reduce((a,id)=>a+(researchOptions.find(x=>x.id===id)?.quality||0),0);
+ let qual=(.46+.055*Math.min(3,research)+.11*surveyQuality()+.12*fit.insight+.11*fit.segment+.08*fit.position+.085*fit.objective+.11*fit.creative-Math.max(0,c.day-7)*.012);
+ if(state.agencyUnlocked){const roles={research:'researcher',strategy:'planner',creative:'creator',media:'buyer'};for(const [task,person] of Object.entries(c.assignments||{})){if(!state.staff.includes(person))continue;qual+=person===roles[task]?.034:-.012}}
+ if(state.upgrades.includes('creative'))qual+=.025;
+ let effSpend=Object.entries(c.media).reduce((t,[k,v])=>t+v*(s.channel[k]||.7),0);
+ if(state.upgrades.includes('influencer'))effSpend+=c.media.creator*.05;
+ if(state.upgrades.includes('media'))effSpend+=c.media.paid*.045;
+ if(mode==='interim')effSpend*=.49;
+ let optBonus=mode==='final'?({refresh:fit.creative?3:5,retarget:c.media.paid>0?6:0,promo:c.media.promo>0?3:1,hold:0}[c.optimization]||0):0;
+ let seed=hash(c.scenarioIndex*13+(c.survey?.sample||0)+c.research.length*7)*5-2.5;
+ const pct=Math.round(clamp((effSpend/1e6)*5.6*qual-(mode==='final'?9:6)+optBonus+seed,-12,85));
+ const outcome=Math.round(s.baseline*(1+pct/100));
+ const adReach=Math.round((Object.values(c.media).reduce((a,b)=>a+b,0)/1000)*11.2*qual*(mode==='interim'?.51:1));
+ return {pct,outcome,adReach,quality:Math.round(qual*100),fit,performance:pct>=s.target?'target':pct>=s.target*.7?'near':'under'};
+}
+function renderLive(){const c=state.campaign,s=current(),m=c.liveMetrics||scoreModel('interim'),r=s.budget-c.spent;
+return `${timeline()}<div class="intro"><div class="eyebrow">CAMPAIGN LIVE · DAY ${Math.max(c.day,7)}/${s.days}</div><h3>Vẫn còn thời gian để thay đổi.</h3><p>Đây là dữ liệu giữa kỳ, chưa phải toàn bộ kết quả. Bạn có thể điều chỉnh nhưng mọi lựa chọn đều có chi phí cơ hội.</p></div><div class="kpi-grid"><div class="kpi"><small>Ước tính reach</small><b>${compact(m.adReach)}</b><span>tiếp cận mô phỏng</span></div><div class="kpi"><small>Biến động KPI</small><b>${m.pct>0?'+':''}${m.pct}%</b><span>so với baseline giữa kỳ</span></div><div class="kpi"><small>Ngân sách dự phòng</small><b>${compact(r)}</b><span>chưa sử dụng</span></div></div><div class="section-title">Quyết định giữa chiến dịch</div><div class="choice-grid">${[{id:'refresh',title:'Thay creative',price:Math.min(r,400000),desc:'Nâng độ mới của thông điệp; mất công sản xuất.'},{id:'retarget',title:'Retarget đúng tệp',price:Math.min(r,550000),desc:'Tập trung vào những người từng tương tác.'},{id:'promo',title:'Kích hoạt ưu đãi',price:Math.min(r,300000),desc:'Tăng nhu cầu ngắn hạn nhưng có rủi ro lệch định vị.'},{id:'hold',title:'Giữ nguyên phương án',price:0,desc:'Không tốn thêm ngân sách, chấp nhận tín hiệu hiện tại.'}].map(o=>`<button class="choice" data-action="opt-${o.id}"><b>${o.title}</b><span>${o.desc}</span><span class="price" style="margin-top:8px">${o.price?`+ ${money(o.price)}`:'0đ'}</span></button>`).join('')}</div><div class="note-bubble">Không có quyết định nào đảm bảo thành công. Sự phù hợp chiến lược và thông tin ban đầu vẫn chi phối kết quả.</div>`}
+function renderResults(){const c=state.campaign,s=current(),r=c.final;if(!r)return `<button class="button" data-action="deliver">Trình bày</button>`;return `${timeline()}<div class="intro"><div class="eyebrow">CLIENT PRESENTATION · FINAL REPORT</div><h3>${r.performance==='target'?'🎉 Vượt mục tiêu kinh doanh':r.performance==='near'?'📈 Gần đạt mục tiêu':'🧭 Kết quả chưa đạt kỳ vọng'}</h3><p>${esc(s.contact)} đã phản hồi. Kết quả không chỉ dựa trên reach mà dựa vào KPI kinh doanh, ngân sách và độ tin cậy.</p></div><div class="kpi-grid"><div class="kpi"><small>KPI cuối kỳ</small><b>${r.outcome}</b><span>${s.unit}</span></div><div class="kpi"><small>Uplift vs baseline</small><b>${r.pct>=0?'+':''}${r.pct}%</b><span>mục tiêu +${s.target}%</span></div><div class="kpi"><small>Reach mô phỏng</small><b>${compact(r.adReach)}</b><span>người / lượt tiếp cận</span></div></div><div class="hline"><span>Ngân sách được dùng</span><b>${money(c.spent)}</b></div><div class="hline"><span>Ngân sách hoàn trả (không chi)</span><b>${money(s.budget-c.spent)}</b></div><div class="hline"><span>Phí dịch vụ được nhận</span><b style="color:#2c947e">+ ${money(s.fee)}</b></div>${state.agencyUnlocked?`<div class="hline"><span>Chi phí nhân sự theo kỳ</span><b style="color:#b57851">${money(r.payroll||0)}</b></div>`:''}<div class="result-box"><b>Phản hồi khách hàng</b><p>“${r.performance==='target'?'Kết quả đạt đúng vấn đề chúng tôi muốn giải quyết. Phần trình bày có căn cứ và quản lý chi phí tốt.':r.performance==='near'?'Tôi thấy nhiều tín hiệu tốt, nhưng chúng ta cần kiểm chứng thêm để đạt chỉ tiêu.':'Thương hiệu có hoạt động quảng cáo, nhưng hiệu quả kinh doanh chưa như cam kết. Cần xem lại giả thuyết và phân khúc.'}”</p></div><div class="section-title">Điểm chiến dịch & ảnh hưởng dài hạn</div><div class="hline"><span>Performance score</span><b>${r.qualityScore}/100</b></div><div class="hline"><span>Uy tín nhận được</span><b>+${r.rep} REP</b></div><div class="hline"><span>Chuyên môn tích lũy</span><b>+${r.xp} XP</b></div><div class="note-bubble">Insight thực tế mô phỏng: <b>${insights.find(x=>x.id===s.trueInsight)?.title}</b>. ${c.insight===s.trueInsight?'Bạn đã xác định đúng vấn đề.':'Bạn đã chọn giả thuyết khác, dẫn đến một phần ngân sách kém phù hợp.'} ${c.strategy.objective===s.trueObjective?'Objective sát brief.':'Objective chưa trùng với KPI mà khách quan tâm.'}</div><div class="button-row"><button class="button" data-action="next-client">NHẬN CAMPAIGN TIẾP THEO →</button>${state.cityUnlocked?'<button class="button secondary" data-action="go-city">KHÁM PHÁ THÀNH PHỐ 🏙️</button>':''}</div><div class="footer-credit">Mọi dữ liệu khách hàng, kết quả và phản hồi trong game đều là dữ liệu giả lập phục vụ học tập.</div>`}
+function renderPhone(){const c=state.campaign,s=current();const newMsg=c.phase==='results'?'Kết quả chiến dịch đã được lưu vào portfolio.':c.phase==='brief'?s.client:'Theo dõi deadline, tin nhắn khách hàng và những thay đổi trong campaign.';return `<div class="intro"><div class="eyebrow">SMARTPHONE · INBOX</div><h3>Client messages</h3><p>Các liên hệ mới sẽ mở ra theo danh tiếng và portfolio của bạn.</p></div><div class="client-chat"><div class="meta">${esc(s.contact)} · ${esc(s.brand)}</div><div class="bubble">${esc(newMsg)}</div></div><div class="section-title">Career notifications</div>${state.history.length?`<div class="case-card"><h4>🌆 Bạn đã xây dựng được portfolio!</h4><p>Hoàn thành ${state.history.length} campaign. ${state.cityUnlocked?'Thành phố marketing đã mở cửa cho bạn.':'Hãy tiếp tục phát triển.'}</p></div>`:`<div class="case-card"><h4>🎓 Chào mừng đến với Marketing Tycoon</h4><p>Đây là dự án thực chiến đầu tiên, không có đội ngũ hay nguồn lực ngoài chiếc laptop của bạn.</p></div>`}<button class="button full" data-action="open-workstation">MỞ CAMPAIGN WORKSTATION →</button>`}
+function renderBoard(){return `<div class="intro"><div class="eyebrow">YOUR STRATEGY WALL</div><h3>Campaign roadmap & decision log</h3><p>Mọi lựa chọn đều được lưu để có thể xem lại lý do dẫn tới kết quả.</p></div>${timeline()}<div class="section-title">Tiến độ hiện tại</div><div class="result-box"><b>${esc(current().brand)}</b><p>Bước ${phaseProgress()+1} / 9: ${focusLabel()} · Day ${state.campaign.day}</p></div><div class="section-title">Decision history</div>${state.log.length?state.log.map(x=>`<div class="log-entry"><b>Ngày ${x.day}</b><div>${esc(x.message)}</div></div>`).join(''):'<p class="muted small-text">Chưa có quyết định nào.</p>'}<div class="section-title">Career portfolio</div>${state.history.length?state.history.slice().reverse().map(h=>`<div class="case-card"><h4>${esc(h.brand)} · ${h.outcome>0?'+':''}${h.outcome}% KPI</h4><p>Score ${h.score}/100 · ${money(h.spent)} ngân sách thực chi</p><footer><span>+${h.rep} REP</span><span>+${h.xp} XP</span></footer></div>`).join(''):'<p class="muted small-text">Hoàn thành campaign để xây dựng portfolio.</p>'}`}
+function renderWardrobe(){return `<div class="intro"><div class="eyebrow">CHARACTER STUDIO</div><h3>Your professional identity.</h3><p>Cá tính của nhân vật được lưu trong game và hiển thị trong môi trường 3D. Trang phục chỉ thay đổi ngoại hình, không tăng conversion.</p></div><label class="label">Tên hiển thị</label><input class="field" id="charName" maxlength="20" value="${esc(state.character.name)}"><label class="label">Tông da</label><div class="character-options">${['#f0c9a7','#d6a681','#a87256','#6d4639'].map(c=>`<button class="swatch ${state.character.skin===c?'selected':''}" data-action="skin-${c}" style="background:${c}"></button>`).join('')}</div><label class="label">Trang phục</label><div class="character-options">${['#4c9589','#485f9f','#da9075','#9470a8','#303e48'].map(c=>`<button class="swatch ${state.character.outfit===c?'selected':''}" data-action="outfit-${c}" style="background:${c}"></button>`).join('')}</div><label class="label">Kiểu tóc</label><div class="character-options">${['short','bob','curly','long'].map(s=>`<button class="hair-btn ${state.character.style===s?'selected':''}" data-action="style-${s}">${({short:'Ngắn',bob:'Bob',curly:'Xoăn',long:'Dài'})[s]}</button>`).join('')}</div><div class="section-title">Graphics & accessibility</div><div class="choice-grid">${['high','balanced','low'].map(q=>`<button class="choice ${state.graphics===q?'selected':''}" data-action="graphics-${q}"><b>${({high:'High',balanced:'Balanced',low:'Low'})[q]}</b><span>${q==='low'?'Giảm chi tiết, phù hợp laptop yếu.':q==='balanced'?'Cân bằng hiệu năng.':'Đầy đủ môi trường và vật thể.'}</span></button>`).join('')}</div><div class="footer-actions"><button class="button secondary" data-action="close">HOÀN TẤT</button><button class="button ghost" data-action="reset-game">CHƠI TỪ ĐẦU</button></div>`}
+function renderDistrict(id){const data={research:{emoji:'🔎',title:'Research Lab',summary:'Nghiên cứu có chất lượng cải thiện ước lượng, không đảm bảo thắng.'},creative:{emoji:'🎨',title:'Creative Studio',summary:'Hợp tác với production network, thêm năng lực triển khai.'},media:{emoji:'📊',title:'Media Hub',summary:'Nâng khả năng phân tích và điều chỉnh paid media.'},influencer:{emoji:'🎥',title:'Influencer District',summary:'Tìm creator có tệp người theo dõi phù hợp chiến dịch.'},network:{emoji:'🤝',title:'Networking Café',summary:'Tạo quan hệ và nhận thêm brief để xây dựng portfolio.'},brand:{emoji:'🏙️',title:'Brand Headquarters',summary:'Các thương hiệu lớn tìm đối tác có kinh nghiệm đáng tin.'},cowork:{emoji:'🪑',title:'Coworking Space',summary:'Không gian làm việc chung và cộng tác viên độc lập.'},agency:{emoji:'🏢',title:'Agency Property',summary:'Thành lập agency của riêng bạn khi đủ điều kiện.'}}[id];if(!data)return '';
+ if(upgrades[id]){const upgrade=upgrades[id],owned=state.upgrades.includes(id);return `<div class="intro"><div class="client-icon">${data.emoji}</div><div class="eyebrow">CITY LOCATION</div><h3>${data.title}</h3><p>${data.summary}</p></div><div class="case-card"><h4>${upgrade.name}</h4><p>${upgrade.desc}</p><footer><span>${money(upgrade.cost)}</span><span>${owned?'✓ Đã sở hữu':'ONE-TIME UPGRADE'}</span></footer></div><div class="note-bubble">Hiệu quả chỉ xuất hiện khi phù hợp campaign. Dịch vụ được trừ từ tiền cá nhân/agency, không trừ vào ngân sách quảng cáo của khách.</div><button class="button full" data-action="buy-${id}" ${owned||playerMoney()<upgrade.cost?'disabled':''}>${owned?'✓ ĐÃ MỞ KHÓA':'MUA CÔNG CỤ'} →</button>`}
+ if(id==='network')return `<div class="intro"><div class="client-icon">${data.emoji}</div><div class="eyebrow">NETWORKING EVENT</div><h3>${data.title}</h3><p>${data.summary}</p></div><div class="case-card"><h4>☕ Portfolio review</h4><p>Gặp các chủ doanh nghiệp địa phương. Một hồ sơ thực chiến đáng tin có thể giúp bạn nhận dự án tiếp theo.</p></div><div class="hline"><span>Campaigns completed</span><b>${state.history.length}</b></div><div class="hline"><span>Reputation</span><b>${state.reputation} REP</b></div><button class="button full" data-action="next-client" ${state.campaign.phase!=='results'?'disabled':''}>XIN GIỚI THIỆU KHÁCH HÀNG MỚI →</button>`;
+ if(id==='brand')return `<div class="intro"><div class="client-icon">${data.emoji}</div><div class="eyebrow">CLIENT PIPELINE</div><h3>${data.title}</h3><p>${data.summary}</p></div><div class="case-card"><h4>${state.reputation>=25?'✅ Bạn đã có thể nhận brief từ thương hiệu lớn hơn':'🔒 Cần tối thiểu 25 danh tiếng'}</h4><p>Dự án cần chất lượng công việc, cơ sở dữ liệu và trách nhiệm giải trình cao hơn. Làm campaign để mở cơ hội.</p></div><button class="button full" data-action="next-client" ${state.reputation<25||state.campaign.phase!=='results'?'disabled':''}>NHẬN BRIEF MỚI →</button>`;
+ if(id==='cowork')return `<div class="intro"><div class="client-icon">${data.emoji}</div><div class="eyebrow">INTERMEDIATE CAREER</div><h3>${data.title}</h3><p>${data.summary}</p></div><div class="result-box"><b>Coworking membership · ${money(300000)}</b><p>Mua thẻ coworking một lần, thêm kinh nghiệm cộng tác và mở một số dịch vụ thành phố.</p></div><button class="button full" data-action="buy-cowork" ${state.upgrades.includes('cowork')||playerMoney()<300000?'disabled':''}>${state.upgrades.includes('cowork')?'✓ ĐÃ ĐĂNG KÝ':'THAM GIA COWORKING'}</button>`;
+ if(id==='agency')return renderAgency();return ''}
+function canOpenAgency(){return state.history.length>=3&&state.reputation>=38&&state.expertise>=18&&state.personalCash>=8000000}
+function renderAgency(){if(!state.agencyUnlocked){return `<div class="intro"><div class="client-icon">🏢</div><div class="eyebrow">MAJOR QUEST · YOUR FIRST AGENCY</div><h3>From freelancer to founder.</h3><p>Tên tuổi chưa đủ. Mở agency cần portfolio, chuyên môn, uy tín và nguồn tiền thật để duy trì hoạt động.</p></div>${[{name:'Hoàn thành ít nhất 3 campaign',ok:state.history.length>=3,num:state.history.length+'/3'},{name:'Reputation từ 38 trở lên',ok:state.reputation>=38,num:state.reputation+'/38'},{name:'Expertise từ 18 trở lên',ok:state.expertise>=18,num:state.expertise+'/18'},{name:'Tiền cá nhân tối thiểu 8 triệu',ok:state.personalCash>=8000000,num:compact(state.personalCash)+'/8tr'}].map(r=>`<div class="case-card"><div class="hline"><span>${r.ok?'✅':'🔒'} ${r.name}</span><b>${r.num}</b></div></div>`).join('')}<div class="note-bubble">Chi phí thành lập 8.000.000đ: 3.000.000đ chi phí setup, 5.000.000đ chuyển thành vốn lưu động. Tiền khách hàng và ngân sách media vẫn tách riêng.</div>${canOpenAgency()?`<label class="label">Đặt tên agency</label><input class="field" id="agencyName" maxlength="35" placeholder="VD: Northstar Creative" value="${esc(state.agencyName)}">`:''}<button class="button full" data-action="create-agency" ${!canOpenAgency()?'disabled':''}>THÀNH LẬP AGENCY →</button>`}
+return `<div class="agency-banner"><div class="eyebrow" style="color:#8fdbc0">FOUNDER'S OFFICE</div><h3>${esc(state.agencyName)}</h3><p>Agency không phải tiền vô hạn. Quản lý tiền mặt, nhận dự án phù hợp và tuyển đúng người.</p></div><div class="kpi-grid"><div class="kpi"><small>Agency cash</small><b>${compact(state.agencyCash)}</b></div><div class="kpi"><small>Nhân viên</small><b>${state.staff.length}</b></div><div class="kpi"><small>Payroll/kỳ</small><b>${compact(state.staff.reduce((a,i)=>a+employees.find(e=>e.id===i).salary,0)/2)}</b></div></div><div class="section-title">Hiring marketplace</div>${employees.map(e=>{const hired=state.staff.includes(e.id);return `<div class="research-item"><div class="avatar-emoji">${e.emoji}</div><div class="details"><b>${e.name} · ${e.role}</b><p>${e.skill} · lương ${money(e.salary)}/tháng</p></div><button class="button small ${hired?'secondary':''}" data-action="hire-${e.id}" ${hired||state.agencyCash<e.salary?'disabled':''}>${hired?'✓ Đã tuyển':'Tuyển'}</button></div>`}).join('')}<div class="section-title">Phân công dự án hiện tại</div><div class="fieldgroup">${[{id:'research',title:'Consumer research'},{id:'strategy',title:'Strategic planning'},{id:'creative',title:'Creative production'},{id:'media',title:'Paid media'}].map(t=>`<div><label class="label">${t.title}</label><select data-assignment="${t.id}"><option value="">Tự xử lý</option>${state.staff.map(id=>{const member=employees.find(x=>x.id===id);return `<option value="${id}" ${(state.campaign.assignments||{})[t.id]===id?'selected':''}>${member.name} · ${member.role}</option>`}).join('')}</select></div>`).join('')}</div><div class="note-bubble">Mỗi nhân viên tối đa 2 nhiệm vụ / dự án. Giao đúng chuyên môn tăng chất lượng, giao sai chuyên môn có thể gây thêm rework. Không có nhân sự nào tự động thắng chiến dịch.</div><button class="button full" data-action="open-workstation">QUẢN LÝ CAMPAIGN →</button>`}
+function renderUI(){renderHUD();if(!panel){$('#modalRoot').innerHTML='';return}if(panel==='onboard'){renderOnboard();return}
+ if(panel==='campaign'){const c=state.campaign,fn={brief:renderBrief,research:renderResearch,survey:renderSurvey,validation:renderValidation,strategy:renderStrategy,creative:renderCreative,media:renderMedia,live:renderLive,results:renderResults}[c.phase];baseModal('Campaign Workstation','MARKETING OPS',fn(),{wide:['research','strategy','media','results'].includes(c.phase)});return}
+ if(panel==='phone'){baseModal('Điện thoại','YOUR INBOX',renderPhone());return}
+ if(panel==='board'){baseModal('Strategy Wall','DECISION HISTORY',renderBoard());return}
+ if(panel==='wardrobe'){baseModal('Nhân vật & Cài đặt','CUSTOMIZATION',renderWardrobe());return}
+ if(panel==='agency'){baseModal('Agency Management','COMPANY CONTROL',renderAgency());return}
+ if(panel.startsWith('district-')){const id=panel.split('-')[1];baseModal('Marketing City','CITY LOCATION',renderDistrict(id));return}
+}
+const drawUI=renderUI;
+function addResearch(id){let c=state.campaign,r=researchOptions.find(x=>x.id===id);if(!r||c.phase!=='research'||c.research.includes(id)||!canPay(r.cost))return;c.research.push(id);c.spent+=r.cost;c.day+=r.days;log('Nghiên cứu: '+r.title+' ('+money(r.cost)+')');save();drawUI()}
+function finalize(){const c=state.campaign,s=current();if(c.final)return;const r=scoreModel('final'),qualityScore=clamp(Math.round(34+r.quality*.34+r.pct*.55+(r.fit.insight+r.fit.segment+r.fit.objective)*3),15,99);let rep=clamp(Math.round(6+qualityScore/6),6,25),xp=clamp(Math.round(4+qualityScore/12),5,13);
+ let payroll=0;
+ if(state.agencyUnlocked){payroll=state.staff.reduce((a,i)=>a+employees.find(e=>e.id===i).salary,0)/2;state.agencyCash+=s.fee-payroll-650000;}else state.personalCash+=s.fee;
+ state.reputation+=rep;state.expertise+=xp;c.day=s.days;c.final={...r,qualityScore,rep,xp,payroll};c.phase='results';
+ state.history.push({brand:s.brand,outcome:r.pct,score:qualityScore,spent:c.spent,rep,xp,scenarioIndex:c.scenarioIndex,agency:state.agencyUnlocked});
+ log('Trình bày kết quả: '+r.pct+'% KPI, +'+rep+' REP, +'+xp+' XP');
+ if(!state.cityUnlocked){state.cityUnlocked=true;log('MỞ KHÓA: Marketing City. Cơ hội mới từ network và portfolio.');toast('🌆 Marketing City đã mở khóa!')}
+ else toast('✅ Kết thúc chiến dịch — cập nhật portfolio');save();drawUI()}
+function startNext(){if(state.campaign.phase!=='results')return;const next=(state.campaign.scenarioIndex+1)%scenarios.length;state.campaign=newCampaign(next);state.avatar={x:0,z:1};localMedia=null;localCreative=null;localStrategy=null;localValidation=null;localSurvey={audience:scenarios[next].trueSegment==='genz'?'genz':'students',sample:60,question:'barrier'};log('Có brief mới từ '+current().brand);state.scene=state.agencyUnlocked?'office':'room';save();panel='campaign';drawUI();toast('📩 Bạn có một yêu cầu hợp tác mới')}
+function spendPersonal(v){if(playerMoney()<v)return false;if(state.agencyUnlocked)state.agencyCash-=v;else state.personalCash-=v;return true}
+function action(a){const c=state.campaign,s=current();
+ if(a==='backdrop'){close();return}if(a==='close'){close();return}
+ if(a==='open-workstation'||a==='nav-laptop'){open('campaign');return}
+ if(a==='nav-room'){state.scene='room';save();close();drawUI();return}
+ if(a==='nav-city'||a==='go-city'){if(!state.cityUnlocked){toast('🔒 Hoàn thành chiến dịch đầu để mở City Map');return}state.scene='city';state.zoom=1;state.avatar={x:0,z:1};save();close();drawUI();return}
+ if(a==='nav-office'){if(state.agencyUnlocked){state.scene='office';save();close()}else open('district-agency');return}
+ if(a==='nav-phone'){open('phone');return}if(a==='nav-board'){open('board');return}if(a==='nav-wardrobe'){open('wardrobe');return}
+ if(a==='turn-left'){state.yaw-=.22;save();return}if(a==='turn-right'){state.yaw+=.22;save();return}if(a==='zoom-in'){state.zoom=clamp(state.zoom*1.14,.55,1.7);save();return}if(a==='zoom-out'){state.zoom=clamp(state.zoom/1.14,.55,1.7);save();return}
+ if(a==='start-game'){const n=$('#charName')?.value?.trim();if(n)state.character.name=n;const i=$('#charInterest')?.value;if(i)state.character.interest=i;state.created=true;state.scene='room';log('Ngày đầu tiên: nhận tin nhắn từ '+current().brand);save();panel='phone';drawUI();toast('Chào mừng, '+state.character.name+'!');return}
+ for(const k of ['skin','outfit','style'])if(a.startsWith(k+'-')){const val=a.slice(k.length+1);editAvatar(k,val);return}
+ if(a.startsWith('graphics-')){state.graphics=a.slice(9);save();drawUI();return}
+ if(a==='reset-game'){if(confirm('Xóa toàn bộ tiến độ và bắt đầu lại từ phòng ngủ?')){localStorage.removeItem(KEY);location.reload()}return}
+ if(a==='accept-brief'&&c.phase==='brief'){c.phase='research';log('Nhận brief và xác nhận ngân sách '+money(s.budget));save();drawUI();return}
+ if(a.startsWith('research-')){addResearch(a.slice(9));return}
+ if(a==='to-survey'&&c.phase==='research'&&c.research.length){c.phase='survey';save();drawUI();return}
+ if(a.startsWith('aud-')){localSurvey.audience=a.slice(4);drawUI();return}
+ if(a.startsWith('sample-')){localSurvey.sample=Number(a.slice(7));drawUI();return}
+ if(a.startsWith('question-')){localSurvey.question=a.slice(9);drawUI();return}
+ if(a==='run-survey'&&c.phase==='survey'&&!c.survey){const cost=surveyCosts[localSurvey.sample];if(!canPay(cost))return;c.survey={...localSurvey};c.spent+=cost;c.day+=2;log('Khảo sát '+c.survey.sample+' người: '+c.survey.audience+' · '+money(cost));save();drawUI();return}
+ if(a==='to-validation'&&c.survey){c.phase='validation';save();drawUI();return}
+ if(a.startsWith('insight-')){localValidation=a.slice(8);drawUI();return}
+ if(a==='confirm-insight'&&localValidation){c.insight=localValidation;c.phase='strategy';log('Giả thuyết insight: '+insights.find(x=>x.id===c.insight)?.title);save();drawUI();return}
+ for(const [prefix,key] of [['seg-','segment'],['obj-','objective'],['pos-','position']])if(a.startsWith(prefix)){localStrategy=localStrategy||structuredClone(c.strategy);localStrategy[key]=a.slice(prefix.length);drawUI();return}
+ if(a==='confirm-strategy'&&c.phase==='strategy'){c.strategy=structuredClone(localStrategy||c.strategy);c.phase='creative';log('Chiến lược: '+c.strategy.segment+' / '+c.strategy.position+' / '+c.strategy.objective);save();drawUI();return}
+ if(a.startsWith('creative-')){localCreative=a.slice(9);drawUI();return}
+ if(a==='confirm-creative'&&c.phase==='creative'){const k=creatives.find(x=>x.id===localCreative);if(!k||!canPay(k.cost))return;c.creative=k.id;c.spent+=k.cost;c.day+=2;c.phase='media';log('Sản xuất concept: '+k.title+' ('+money(k.cost)+')');localMedia={paid:0,creator:0,promo:0,flyer:0};save();drawUI();return}
+ if(a==='launch'&&c.phase==='media'){const total=mediaTotal();if(total<500000||total>current().budget-c.spent)return;c.media={...localMedia};c.spent+=total;c.day=Math.max(c.day,7);c.phase='live';c.liveMetrics=scoreModel('interim');log('Campaign live! Media '+money(total)+' trên '+Object.values(c.media).filter(x=>x>0).length+' kênh');save();drawUI();return}
+ if(a.startsWith('opt-')&&c.phase==='live'){const choice=a.slice(4),cost=({refresh:400000,retarget:550000,promo:300000,hold:0})[choice];if(cost==null)return;if(!canPay(cost)){toast('Ngân sách còn lại không đủ. Hãy giữ kế hoạch.');return}c.spent+=cost;c.optimization=choice;c.phase='results';log('Tối ưu: '+choice+' ('+money(cost)+'). Chuẩn bị trình bày kết quả.');finalize();return}
+ if(a==='deliver'){finalize();return}
+ if(a==='next-client'){startNext();return}
+ if(a.startsWith('buy-')){const id=a.slice(4);const item=id==='cowork'?{cost:300000,name:'Coworking Membership'}:upgrades[id];if(!item||state.upgrades.includes(id)||!spendPersonal(item.cost))return;state.upgrades.push(id);if(id==='cowork')state.expertise+=1;log('Mở tiện ích thành phố: '+item.name);save();toast('✨ Đã mở: '+item.name);drawUI();return}
+ if(a==='create-agency'&&canOpenAgency()){const n=($('#agencyName')?.value||'').trim();state.agencyName=n||'Northstar Studio';state.personalCash-=8000000;state.agencyCash=5000000;state.agencyUnlocked=true;state.scene='office';log('THÀNH LẬP '+state.agencyName+'. Startup capital 5.000.000đ.');save();panel='agency';drawUI();toast('🏢 Agency đầu tiên của bạn!');return}
+ if(a.startsWith('hire-')&&state.agencyUnlocked){let id=a.slice(5),e=employees.find(x=>x.id===id);if(!e||state.staff.includes(id)||state.agencyCash<e.salary)return;state.staff.push(id);log('Tuyển nhân viên '+e.name+' — '+e.role);save();drawUI();toast('👥 '+e.name+' đã gia nhập team');return}
+}
+document.addEventListener('click',e=>{const el=e.target.closest('[data-action]');if(!el)return;if(el.dataset.action==='backdrop'&&e.target!==el)return;action(el.dataset.action)});
+document.addEventListener('input',e=>{if(e.target.id==='charName'){state.character.name=e.target.value.slice(0,20);save()}if(e.target.id==='charInterest'){state.character.interest=e.target.value;save()}if(e.target.dataset.assignment){const task=e.target.dataset.assignment,id=e.target.value;let assignments=state.campaign.assignments||(state.campaign.assignments={});if(id&&Object.values(assignments).filter(v=>v===id).length>=2&&assignments[task]!==id){toast('Nhân viên chỉ có thể nhận tối đa 2 nhiệm vụ');drawUI();return}if(id)assignments[task]=id;else delete assignments[task];log('Phân công '+task+': '+(employees.find(x=>x.id===id)?.name||'tự xử lý'));save();drawUI();return}if(e.target.dataset.media){localMedia=localMedia||{...state.campaign.media};localMedia[e.target.dataset.media]=Number(e.target.value);const remain=current().budget-state.campaign.spent,total=mediaTotal();const num= $('#mediaAllocated'),res=$('#mediaReserve'),warning=$('#mediaWarning'),btn=document.querySelector('[data-action="launch"]');if(num)num.textContent=money(total);if(res)res.textContent=money(remain-total);if(warning){warning.textContent=total>remain?'Vượt ngân sách!':'Có thể giữ lại tiền để tối ưu giữa campaign.';warning.style.color=total>remain?'#c45b49':'#689386'}document.querySelectorAll('[data-media-value]').forEach(v=>v.textContent=compact(localMedia[v.dataset.mediaValue]));if(btn)btn.disabled=total>remain||total<500000}});
+$('#saveButton').addEventListener('click',()=>{save();toast('✓ Tiến độ đã được lưu trên máy')});
+// Lightweight isometric 3D polygon renderer (projected world-space geometry, no external API).
+const canvas=$('#world'),ctx=canvas.getContext('2d',{alpha:false});let W=0,H=0,DPR=1,faces=[],labels=[],hits=[],shadows=[],particles=[],hover=null;
+const rgb=color=>{if(!/^#[a-fA-F0-9]{6}$/.test(color))return [114,146,134];return [1,3,5].map(i=>parseInt(color.slice(i,i+2),16))};
+const tint=(hex,m)=>{const a=rgb(hex).map(v=>clamp(Math.round(v*m),0,255));return '#'+a.map(v=>v.toString(16).padStart(2,'0')).join('')};
+let camera={yaw:.78,scale:30,cx:0,cy:0,tx:0,tz:0};
+function resize(){DPR=Math.min(window.devicePixelRatio||1,2);W=window.innerWidth;H=window.innerHeight;canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(DPR,0,0,DPR,0,0)}
+window.addEventListener('resize',resize);resize();
+function setCamera(){camera.yaw=state.yaw;camera.scale=(state.scene==='city'?Math.min(W/65,H/52):Math.min(W/18,H/16))*state.zoom;camera.cx=W*.51;camera.cy=H*(state.scene==='city'?.53:.56);camera.tx=state.scene==='city'?0:0;camera.tz=state.scene==='city'?0:0}
+function project(x,y,z){let dx=x-camera.tx,dz=z-camera.tz,c=Math.cos(camera.yaw),s=Math.sin(camera.yaw),vx=dx*c-dz*s,vz=dx*s+dz*c;return {x:camera.cx+vx*camera.scale,y:camera.cy+(vz*.57-y)*camera.scale,depth:vz}}
+const V=(x,y,z)=>({x,y,z});
+function face(pts,color,stroke=null,layer=2){const ps=pts.map(p=>project(p.x,p.y,p.z));faces.push({ps,color,stroke,layer,order:faces.length,depth:ps.reduce((s,p)=>s+p.depth,0)/ps.length});}
+function quad(x,z,w,d,y,color){face([V(x-w/2,y,z-d/2),V(x+w/2,y,z-d/2),V(x+w/2,y,z+d/2),V(x-w/2,y,z+d/2)],color,null,0)}
+function box3(x,z,w,d,h,color,y=0){let x0=x-w/2,x1=x+w/2,z0=z-d/2,z1=z+d/2,b=y,t=y+h;
+ face([V(x0,b,z0),V(x1,b,z0),V(x1,t,z0),V(x0,t,z0)],tint(color,.83));
+ face([V(x1,b,z0),V(x1,b,z1),V(x1,t,z1),V(x1,t,z0)],tint(color,.75));
+ face([V(x1,b,z1),V(x0,b,z1),V(x0,t,z1),V(x1,t,z1)],tint(color,.9));
+ face([V(x0,b,z1),V(x0,b,z0),V(x0,t,z0),V(x0,t,z1)],tint(color,.78));
+ face([V(x0,t,z0),V(x1,t,z0),V(x1,t,z1),V(x0,t,z1)],tint(color,1.14));
+}
+function pyramid(x,z,r,h,color,y=0){const pts=[V(x-r,y,z-r),V(x+r,y,z-r),V(x+r,y,z+r),V(x-r,y,z+r)],top=V(x,y+h,z);for(let k=0;k<4;k++)face([pts[k],pts[(k+1)%4],top],tint(color,[.75,.93,1.08,.82][k]));}
+function octaTree(x,z,r=1.2,color='#67aa81'){box3(x,z,.29,.3,1.2,'#8b765f');pyramid(x,z,r,r*1.5,color,1);pyramid(x,z,r*.74,r*1.3,tint(color,1.13),2)}
+function patch(x,z,w,d,color){quad(x,z,w,d,.04,color)}
+function shadow(x,z,r=1){
+ // Contact shadows are translucent world-space polygons on top of the floor,
+ // rather than painted behind the floor where they would disappear.
+ for(const [radius,opacity] of [[1.30,'.06'],[.92,'.10']]){
+  const pts=[];
+  for(let i=0;i<14;i++){const a=i/14*Math.PI*2;pts.push(V(x+Math.cos(a)*r*radius,.065,z+Math.sin(a)*r*.62*radius))}
+  face(pts,`rgba(67,40,24,${opacity})`,null,0);
+ }
+}
+function marker(x,y,z,name,action,icon='',small=false){const p=project(x,y,z),base=project(x,0,z);labels.push({...p,name,icon,small});hits.push({...p,bx:base.x,by:base.y,action,r:small?32:65})}
+function addPerson(x,z,char={},mov=0){const v={...state.character,...char};shadow(x,z,.45);const b=Math.sin(mov)*.055;box3(x-.17,z,.16,.21,.65,tint(v.outfit,.68),.05+b);box3(x+.17,z,.16,.21,.65,tint(v.outfit,.65),.05+b);box3(x,z,.66,.38,.84,v.outfit,.68+b);box3(x-.46,z,.19,.32,.68,v.skin,.78+b);box3(x+.46,z,.19,.32,.68,v.skin,.78+b);box3(x,z,.61,.55,.56,v.skin,1.52+b);if(v.style==='long')box3(x,z-.21,.68,.24,.64,v.hair,1.39+b);box3(x,z,.65,.59,v.style==='curly'?.29:.16,v.hair,2.06+b);if(v.style==='bob')box3(x,z+.21,.62,.16,.28,v.hair,1.82+b)}
+function drawRoom(time){
+ quad(0,0,15,13,-.12,'#dcb18d');
+ for(let x=-7;x<7;x+=1.2)quad(x,0,.035,13,-.10,'#d4ae8f');
+ // Open-backed room — walls remain behind interactive furniture.
+ face([V(-7.5,0,-6.5),V(7.5,0,-6.5),V(7.5,5.7,-6.5),V(-7.5,5.7,-6.5)],'#ecd7bd',null,1);
+ face([V(-7.5,0,-6.5),V(-7.5,0,6.5),V(-7.5,5.7,6.5),V(-7.5,5.7,-6.5)],'#d4b99d',null,1);
+ // Room structure and window.
+ box3(-1,-6.40,2.8,.10,2.35,'#f4f6ed',2.35);
+ box3(-1,-6.31,2.25,.05,1.83,'#a6c2b9',2.57);
+ box3(-1,-6.2,.08,.12,1.82,'#f2f5df',2.6);
+ box3(-1,-6.18,2.4,.14,.12,'#fbf5e7',3.40);
+ box3(4.6,-6.15,2.0,.10,1.58,'#fff4da',3.3);
+ box3(4.6,-6.06,1.8,.09,.1,'#d6a76f',4.5);
+ // Rug, bed, shelf.
+ patch(-3.15,2.2,5,3.8,'#e2ab8b');patch(-3.15,2.2,4.6,3.42,'#ebc9ac');
+ box3(-4.4,3.15,3.4,2.5,.45,'#a97567');box3(-4.4,3.15,3.13,2.28,.28,'#f0e6ce',.43);
+ box3(-5.35,2.5,1.0,.68,.15,'#e1a691',.72);box3(-4.4,4.1,2.7,.30,.16,'#dbb5a9',.72);
+ box3(-5.9,-1.6,1.7,1.4,2.8,'#7c9a82');box3(-5.9,-1.6,1.75,1.53,.15,'#e2c6a3',2.73);
+ box3(-5.95,-1.4,1,.65,1.1,'#f2e0c3',2.85);
+ // Desk and equipment.
+ box3(3.4,-3.7,4.1,1.75,.2,'#946b53',1.3);for(const x of [1.62,5.15])box3(x,-3.66,.18,1.35,1.25,'#715a4e');
+ box3(3.13,-4.35,1.48,.15,1.08,'#334750',1.52);box3(3.13,-4.24,1.27,.07,.86,'#d79d73',1.63);
+ box3(3.13,-4.32,.12,.3,.3,'#637e7c',1.4);
+ box3(3.1,-3.33,1.5,.7,.06,'#cbded7',1.54);
+ box3(4.73,-3.52,.40,.62,.055,'#36474f',1.55);
+ box3(4.75,-3.51,.29,.48,.02,'#5b91aa',1.60);
+ box3(1.4,-2.1,1.20,1.16,.26,'#98b9a6',.65);box3(1.4,-2.1,.26,.26,.63,'#789986',.05);
+ box3(-3.8,-5.98,2.5,.12,2.0,'#fbf7e6',1.6);box3(-3.8,-5.87,2.0,.08,1.43,'#f2e5c0',1.9);
+ // Sticky notes: readable motif even when labels are hidden.
+ for(const [x,y,c] of [[-4.5,2.4,'#eca479'],[-3.7,2.7,'#b1dfb6'],[-3.2,2.2,'#eecf72'],[-4,3.6,'#c3c6de']])box3(x,-5.77,.46,.04,.38,c,y);
+ // Wardrobe.
+ box3(6.1,-.12,1.8,2.65,3.9,'#e1c2a0');box3(6.98,-.12,.12,2.7,3.95,'#d5a980');box3(6.12,.88,.25,.12,.12,'#a48663',2);
+ // Plants, lamp and coffee mug.
+ octaTree(5.7,4.3,.68,'#75ad7d');box3(4.93,-4.11,.32,.3,.28,'#e6a571',1.52);
+ box3(-6.5,3.6,.55,.55,1.1,'#e0c59d');pyramid(-6.5,3.6,.45,.85,'#f3e0ab',1.1);
+ // Ambient dust motes on stronger graphics.
+ if(state.graphics==='high')for(let i=0;i<16;i++){let x=-4.1+(i*1.43)%9.3,z=-5+(i*1.11)%9,y=2+Math.sin(time*.0004+i)*.15;box3(x,z,.055,.055,.055,'#f6efdb',y)}
+ addPerson(state.avatar.x,state.avatar.z,{},time*.005);
+ marker(3.1,2.35,-3.75,'LAPTOP','nav-laptop','💻');marker(4.7,2.05,-3.6,'PHONE','nav-phone','📱',true);marker(-3.75,4.45,-5.7,'BOARD','nav-board','📋');marker(6,4,-.1,'WARDROBE','nav-wardrobe','👕');
+}
+const structures=[
+ {x:-21,z:-16,w:8,d:7,h:7,color:'#dba482',name:'RESEARCH LAB',icon:'🔎',action:'district-research'},
+ {x:0,z:-16,w:8,d:7,h:6.7,color:'#aebd9c',name:'CREATIVE STUDIO',icon:'🎨',action:'district-creative'},
+ {x:21,z:-16,w:8,d:7,h:9,color:'#b2abb3',name:'MEDIA HUB',icon:'📊',action:'district-media'},
+ {x:-21,z:16,w:8,d:7,h:6.2,color:'#bca5bb',name:'INFLUENCER',icon:'🎥',action:'district-influencer'},
+ {x:0,z:16,w:8,d:7,h:5,color:'#dcbf8d',name:'NETWORK CAFÉ',icon:'☕',action:'district-network'},
+ {x:21,z:16,w:8,d:7,h:10,color:'#b4c2bd',name:'BRAND HQ',icon:'🏙️',action:'district-brand'},
+ {x:-21,z:0,w:5.7,d:6,h:4,color:'#d3c5aa',name:'COWORKING',icon:'🪑',action:'district-cowork'},
+ {x:21,z:0,w:5.7,d:6,h:state.agencyUnlocked?7:2.0,color:state.agencyUnlocked?'#93b39f':'#c7d4c4',name:state.agencyUnlocked?'YOUR AGENCY':'AGENCY LOT',icon:'🏢',action:'district-agency'}
+];
+function building(b){shadow(b.x,b.z,4.2);box3(b.x,b.z,b.w,b.d,b.h,b.color);box3(b.x,b.z,b.w+.8,b.d+.75,.29,tint(b.color,.8),b.h);
+ box3(b.x,b.z+b.d/2+.075,2.05,.13,2.15,'#446868');box3(b.x,b.z+b.d/2+.15,1.55,.13,1.68,'#8ad4d0');
+ for(let yy=2.3;yy<b.h-1;yy+=2.2)for(let xx=-2.6;xx<=2.7;xx+=2.5){box3(b.x+xx,b.z+b.d/2+.11,1.37,.12,1.17,'#bddad6',yy);box3(b.x+xx,b.z-b.d/2-.11,1.37,.12,1.17,'#bddad6',yy)}
+ box3(b.x,b.z+b.d/2+.58,4.7,1.1,.25,'#f0e6cb',b.h*.4);
+ marker(b.x,b.h+1.95,b.z,b.name,b.action,b.icon);
+}
+function drawCity(time){quad(0,0,66,52,-.25,'#c6d1b6');
+ // Roads and road markings.
+ patch(0,0,67,4.8,'#a29b8d');patch(-11,0,4.2,53,'#a7a091');patch(11,0,4.2,53,'#a7a091');
+ for(let x=-30;x<=30;x+=4)if(Math.abs(x+11)>3&&Math.abs(x-11)>3)patch(x,0,1.6,.12,'#eae4ce');
+ for(let z=-25;z<=25;z+=4){patch(-11,z,.12,1.7,'#eae4ce');patch(11,z,.12,1.7,'#eae4ce')}
+ // Sidewalks and pocket parks.
+ for(const b of structures)patch(b.x,b.z,b.w+2,b.d+2,'#e2d9c9');
+ for(let x=-30;x<=30;x+=4.4){if(Math.abs(x+11)>5&&Math.abs(x-11)>5){octaTree(x,-23,.8,'#69a77c');octaTree(x,24,.9,'#6eaf81')}}
+ for(let z=-19;z<=21;z+=5.5){octaTree(-30,z,1,'#6ca67d');octaTree(30,z,.95,'#7ab18b')}
+ if(state.graphics!=='low')for(let z=-22;z<=23;z+=7){octaTree(-4.8,z,.6,'#7db28a');octaTree(5.2,z,.6,'#7bb08a')}
+ for(let i=0;i<structures.length;i++)building(structures[i]);
+ // Small surrounding city blocks.
+ for(let i=0;i<6;i++){const x=-27+i*10.7,z=i%2===0?-8:7;if(Math.abs(x+21)<6||Math.abs(x-21)<6)continue;box3(x,z,2.4,2.8,1.7+i%3,'#c6d2bd')}
+ if(state.graphics!=='low')for(let i=0;i<10;i++){const speed=.00042+(i%3)*.00005;const z=i%2?-.94:.94;const x=((time*speed*48+i*8)%72)-36;box3(x,z,1.05,.55,.37,i%2?'#e9be78':'#f6f1e3');}
+ const npcCount=state.graphics==='low'?3:7;
+ for(let i=0;i<npcCount;i++){let t=time*.0002+i*1.7,x=-8+(i%3)*7+Math.sin(t)*2.1,z=-18+(i%4)*11+Math.cos(t)*1.1;if(Math.abs(x)>3)continue;addPerson(x,z,{outfit:['#d97a75','#8397b4','#a08a6e'][i%3],skin:'#c59477'},t*5)}
+ addPerson(state.avatar.x,state.avatar.z,{},time*.006);
+}
+function drawOffice(time){quad(0,0,18,14,-.12,'#e4d1b2');
+ face([V(-9,0,-7),V(9,0,-7),V(9,6,-7),V(-9,6,-7)],'#e4d4c0',null,1);
+ face([V(-9,0,-7),V(-9,0,7),V(-9,6,7),V(-9,6,-7)],'#d1bda6',null,1);
+ patch(0,0,8,5,'#e5eeea');
+ box3(0,-6.55,4.3,.1,1.2,'#265a55',3.8);box3(0,-6.46,3.8,.1,.08,'#e7d8a8',4.65);
+ for(let i=0;i<4;i++){let x=-5.3+i*3.5;box3(x,-2.5,2.0,1.1,.22,'#a9866d',1.15);box3(x,-3,1.1,.10,.75,'#415a61',1.36);box3(x,-2.93,.95,.08,.55,'#69a4a3',1.49);box3(x,-1.0,1,1.0,.2,'#8eaaac',.65);
+ if(i<state.staff.length)addPerson(x,-2.1,{outfit:['#8bafa5','#d98b7a','#8191bd','#a989ba'][i]},time*.005+i)}
+ box3(0,4,5.8,2,.25,'#aa815f',1.07);for(const x of [-2.4,0,2.4])box3(x,4,.6,.8,.16,'#a9bdb3',.48);
+ box3(7,-4.7,1.6,1.5,3,'#d7e3d3');octaTree(-7,4,.9,'#73ae86');octaTree(7,4,1,'#75a984');
+ box3(-6.8,-6.6,2,.15,1.7,'#f7f4df',3.3);addPerson(state.avatar.x,state.avatar.z,{},time*.005);
+ marker(0,5,-2.5,'TEAM','agency','👥');marker(0,2.2,4,'CAMPAIGNS','nav-laptop','💻');
+}
+function drawFaces(){faces.sort((a,b)=>a.layer-b.layer||(a.layer===0?a.order-b.order:a.depth-b.depth));for(const o of faces){let ps=o.ps;ctx.beginPath();ctx.moveTo(ps[0].x,ps[0].y);for(let i=1;i<ps.length;i++)ctx.lineTo(ps[i].x,ps[i].y);ctx.closePath();ctx.fillStyle=o.color;ctx.fill();if(state.graphics!=='low'){ctx.lineWidth=.6;ctx.strokeStyle=o.stroke||'#624c3525';ctx.stroke()}}}
+function drawLabels(time){ctx.textAlign='center';for(let label of labels){let active=hover&&hover.action===hits.find(h=>h.name===label.name)?.action;const txt=label.name,fs=label.small?8:state.scene==='city'?9:11;
+ ctx.font=`800 ${fs}px 'Avenir Next',system-ui,sans-serif`;let tw=ctx.measureText(txt).width,pad=label.small?7:10,ww=tw+pad*2+21,x=label.x-ww/2,y=label.y-12;
+ if(state.scene==='city'&&ww>camera.scale*9)ww=Math.min(ww,136);
+ ctx.fillStyle=active?'#934b35':'#fffbf3';ctx.strokeStyle='#8f603b33';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(x,y,ww,26,9);ctx.fill();ctx.stroke();ctx.fillStyle=active?'#fff':'#544138';ctx.font=`800 ${fs}px 'Avenir Next',system-ui,sans-serif`;ctx.fillText(`${label.icon} ${txt}`,x+ww/2,y+16);}}
+function sky(time){const gradient=ctx.createLinearGradient(0,0,0,H);gradient.addColorStop(0,'#ddc5ad');gradient.addColorStop(.44,'#ecdfcd');gradient.addColorStop(1,'#cbd5bb');ctx.fillStyle=gradient;ctx.fillRect(0,0,W,H);
+ const sun=ctx.createRadialGradient(W*.77,H*.13,3,W*.77,H*.13,W*.38);sun.addColorStop(0,'#fff3dcaa');sun.addColorStop(1,'#fff3dc00');ctx.fillStyle=sun;ctx.fillRect(0,0,W,H)}
+let lastTime=0;
+function frame(t){let dt=Math.min(.045,(t-lastTime)/1000||.016);lastTime=t;tick(dt);setCamera();faces=[];labels=[];hits=[];shadows=[];sky(t);
+ if(state.scene==='city')drawCity(t);else if(state.scene==='office')drawOffice(t);else drawRoom(t);
+ // The renderer now draws contact shadows in scene depth order.
+ drawFaces();drawLabels(t);requestAnimationFrame(frame)}
+const held=new Set();let walkSound=0;
+function tick(dt){if(!state.created||panel)return;let dx=0,dz=0;for(const key of held){if(key==='w'||key==='arrowup')dz-=1;if(key==='s'||key==='arrowdown')dz+=1;if(key==='a'||key==='arrowleft')dx-=1;if(key==='d'||key==='arrowright')dx+=1}if(dx||dz){let len=Math.hypot(dx,dz),v=state.scene==='city'?7:3.5;state.avatar.x+=dx/len*v*dt;state.avatar.z+=dz/len*v*dt;const bound=state.scene==='city'?25:state.scene==='office'?7:5.8;state.avatar.x=clamp(state.avatar.x,-bound,bound);state.avatar.z=clamp(state.avatar.z,-bound,bound);walkSound+=dt;if(walkSound>1.1){save();walkSound=0}}}
+window.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;let k=e.key.toLowerCase();if(['arrowleft','arrowright','arrowdown','arrowup',' '].includes(k))e.preventDefault();if(k==='q')state.yaw-=.12;if(k==='e')state.yaw+=.12;if(k==='escape')close();held.add(k)});
+window.addEventListener('keyup',e=>held.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>held.clear());
+let pointer=null;canvas.addEventListener('pointerdown',e=>{pointer={x:e.clientX,y:e.clientY,yaw:state.yaw,drag:false};canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener('pointermove',e=>{if(pointer){const dx=e.clientX-pointer.x;if(Math.abs(dx)>4){pointer.drag=true;state.yaw=pointer.yaw+dx*.006;return}}const match=hits.map(h=>({...h,dist:Math.min(Math.hypot(h.x-e.clientX,h.y-e.clientY),Math.hypot(h.bx-e.clientX,h.by-e.clientY))})).sort((a,b)=>a.dist-b.dist)[0];hover=match&&match.dist<match.r+20?match:null;canvas.style.cursor=hover?'pointer':'grab'});
+canvas.addEventListener('pointerup',e=>{if(!pointer)return;const drag=pointer.drag;pointer=null;save();if(drag)return;const p=hits.map(h=>({...h,dist:Math.min(Math.hypot(h.x-e.clientX,h.y-e.clientY),Math.hypot(h.bx-e.clientX,h.by-e.clientY))})).sort((a,b)=>a.dist-b.dist)[0];if(p&&p.dist<p.r+24){const a=p.action;if(a.startsWith('district-'))open(a);else if(a==='agency')open('agency');else action(a)}});
+canvas.addEventListener('wheel',e=>{e.preventDefault();state.zoom=clamp(state.zoom*(e.deltaY>0?.92:1.08),.55,1.7);save()},{passive:false});
+renderUI();requestAnimationFrame(frame);
+})();
+
+</script>
+</body>
+</html>
