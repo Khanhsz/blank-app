@@ -5,6 +5,7 @@ on:
       - deploy/tripmate-ai
     paths:
       - '.github/workflows/refresh-food-database.yml'
+      - 'scripts/import_food_osm.py'
   workflow_dispatch:
 
 permissions:
@@ -13,7 +14,7 @@ permissions:
 jobs:
   import-osm:
     runs-on: ubuntu-latest
-    timeout-minutes: 22
+    timeout-minutes: 28
     steps:
       - name: Check out TripMate
         uses: actions/checkout@v4
@@ -27,11 +28,14 @@ jobs:
           python3 - <<'PY'
           import json
           d = json.load(open('data/food-venues.json',encoding='utf-8'))
-          assert d['schema'] == 1 and d['license'] == 'ODbL-1.0'
+          assert d['schema'] == 2 and d['license'] == 'ODbL-1.0'
           assert len(d['places']) >= 15
           assert any(x['slug'] == 'Saigon' and x['count'] >= 15 for x in d['cities'])
-          assert all(p['id'].startswith('node/') and p['osmUrl'].startswith('https://www.openstreetmap.org/node/') for p in d['places'])
-          print('Verified',len(d['places']),'source-backed food POIs in',len(d['cities']),'cities')
+          assert all(p['id'].split('/')[0] in ('node','way') and p['osmUrl'].startswith('https://www.openstreetmap.org/') for p in d['places'])
+          saigon = [p for p in d['places'] if p['city']=='Saigon']
+          assert sum(bool(p.get('localFood')) for p in saigon) >= 10, 'No source-tagged local food in Saigon'
+          assert sum(p['id'].startswith('way/') for p in saigon) >= 5, 'Way geometries not imported'
+          print('Verified',len(d['places']),'food POIs, with',sum(bool(p.get('localFood')) for p in d['places']),'local-eats indicators')
           PY
       - name: Commit verified static database
         run: |
