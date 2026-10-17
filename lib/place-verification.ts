@@ -30,14 +30,14 @@ export function verifyMatch(input:{
  const reasons:string[]=[];
  if(similarity<.6)reasons.push('Name mismatch: insufficient shared landmark words.');
  else if(similarity<.85)reasons.push('Name is similar but not identical.');
- if(distance!==null&&distance>5)reasons.push('Location differs by '+distance.toFixed(1)+' km from the itinerary pin.');
+ if(distance!==null&&distance>.75)reasons.push('Location differs by '+distance.toFixed(2)+' km from the itinerary pin; confirm before using it.');
  if(distance===null)reasons.push('No two coordinates available for direct comparison.');
  if(!input.cityInSource&&distance===null)reasons.push('City could not be confirmed from the source.');
- const locationPoints=distance===null?0:distance<=.8?35:distance<=3?30:distance<=5?18:distance<=15?3:0;
+ const locationPoints=distance===null?0:distance<=.75?35:distance<=3?12:distance<=5?5:0;
  const score=Math.max(0,Math.min(100,Math.round(similarity*55+locationPoints+(input.cityInSource?10:0))));
  let level:MatchLevel='review';
  // Wrong city or incomplete name is never silently shown as verified.
  if(similarity<.45||(distance!==null&&distance>30))level='rejected';
- else if(similarity>=.75&&distance!==null&&distance<=3&&score>=76)level='high';
+ else if(similarity>=.85&&distance!==null&&distance<=.75&&score>=88)level='high';
  return {score,level,reasons,nameSimilarity:Number(similarity.toFixed(2)),distanceKm:distance===null?null:Number(distance.toFixed(2))};
 }
