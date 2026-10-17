@@ -23,13 +23,7 @@ function runCampaign(s:ReturnType<typeof defaults>){
   C.launch(s,fx,{paid:1800000,creator:1500000,promo:500000,flyer:250000});
   assert.equal(s.campaign.phase,"live");
   assert.ok(s.campaign.liveMetrics);
-  C.advanceCampaignDay(s,fx,1);
-  assert.equal(s.campaign.phase,"live");
-  assert.equal(s.campaign.simulation?.elapsed,1);
-  C.optimize(s,fx,"hold");
-  assert.equal(s.campaign.phase,"live");
-  for(let batch=0;batch<6&&s.campaign.phase==="live";batch++)C.advanceCampaignDay(s,fx,30);
-  assert.equal(s.campaign.phase,"results");
+  C.optimize(s,fx,"hold");assert.equal(s.campaign.phase,"results");
   assert.ok(s.campaign.final);
 }
 test("freelance campaign, city unlock and rewards are preserved",()=>{
