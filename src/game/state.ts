@@ -50,7 +50,7 @@ export interface Project { priority?:"normal"|"high"; id: string; leadId: string
 export type PriceTier="competitive"|"balanced"|"premium";
 export interface PricingAdvice {
  leadId:string;brand:string;mediaBudget:number;baselineFee:number;
- companyScale:"growing"|"regional"|"national";estimatedCost:number;feeFloor:number;feeCeiling:number;
+ companyScale:"growing"|"regional"|"national";businessSize?:"small"|"medium"|"large"|"enterprise";estimatedCost:number;feeFloor:number;feeCeiling:number;
  options:Record<PriceTier,number>;tier:PriceTier;recommendedFee:number;
  headline:string;rationale:string;preparation:string[];risk:string;
  source:"gemini"|"rules";contextKey?:string;
