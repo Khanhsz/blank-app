@@ -1,0 +1,276 @@
+{
+  "domain": "Lifestyle",
+  "updated_at": "2026-10-17",
+  "stories": [
+    {
+      "id": "ST-20261017-601",
+      "title": "Whole Foods dự báo các xu hướng thực phẩm năm 2027",
+      "domain": "Lifestyle",
+      "date": "2026-10-15",
+      "summary": "Hội đồng xu hướng Whole Foods công bố các dự báo cho năm 2027, gồm truy xuất nguồn gốc, nguyên liệu đơn giản và món ăn lấy cảm hứng từ nhiều nền ẩm thực.",
+      "what": "Hội đồng xu hướng Whole Foods công bố các dự báo cho năm 2027, gồm truy xuất nguồn gốc, nguyên liệu đơn giản và món ăn lấy cảm hứng từ nhiều nền ẩm thực.",
+      "so_what": "Dự báo của một nhà bán lẻ là tín hiệu khám phá, không phải bằng chứng người tiêu dùng mọi thị trường đã thay đổi.",
+      "why_you": "Có thể vận dụng như danh sách giả thuyết cho nghiên cứu F&B tại Việt Nam, thay vì sao chép kết luận về Mỹ.",
+      "action": "Kiểm tra thêm dữ liệu tìm kiếm, doanh số và khảo sát Việt Nam trước khi lập kế hoạch.",
+      "confidence": "Medium · tổng hợp biên tập / dự báo, cần kiểm tra phạm vi",
+      "event_type": "Lifestyle / trend / cultural experience",
+      "preview": false,
+      "tags": [
+        "lifestyle",
+        "travel",
+        "food",
+        "fashion",
+        "consumer"
+      ],
+      "sources": [
+        {
+          "publisher": "Food & Wine / Whole Foods",
+          "url": "https://www.foodandwine.com/whole-foods-2027-trend-report-12172564"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-602",
+      "title": "Loạt khách sạn khai trương mùa thu 2026 nhấn mạnh trải nghiệm và thiết kế",
+      "domain": "Lifestyle",
+      "date": "2026-10-14",
+      "summary": "Condé Nast Traveler tổng hợp các khách sạn mới ở Bắc Mỹ, nhấn mạnh ẩm thực, không gian bản địa và phong cách kiến trúc riêng.",
+      "what": "Condé Nast Traveler tổng hợp các khách sạn mới ở Bắc Mỹ, nhấn mạnh ẩm thực, không gian bản địa và phong cách kiến trúc riêng.",
+      "so_what": "Thiết kế dịch vụ và bối cảnh địa phương trở thành một phần quan trọng của đề xuất trải nghiệm, nhưng đây chỉ là lựa chọn biên tập.",
+      "why_you": "Có thể dùng làm benchmark service design cho du lịch và khách sạn, không suy ra thị trường Việt Nam giống hệt.",
+      "action": "Đọc phân tích concept và trải nghiệm thực của khách khi khách sạn đi vào vận hành.",
+      "confidence": "Medium · tổng hợp biên tập / dự báo, cần kiểm tra phạm vi",
+      "event_type": "Lifestyle / trend / cultural experience",
+      "preview": false,
+      "tags": [
+        "lifestyle",
+        "travel",
+        "food",
+        "fashion",
+        "consumer"
+      ],
+      "sources": [
+        {
+          "publisher": "Condé Nast Traveler",
+          "url": "https://www.cntraveler.com/story/the-most-exciting-hotel-openings-of-fall-2026"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-603",
+      "title": "Xu hướng du lịch mùa thu 'fallcation' thu hút quan tâm",
+      "domain": "Lifestyle",
+      "date": "2026-09-11",
+      "summary": "Condé Nast Traveler phỏng vấn chuyên gia du lịch về việc mùa thu ngày càng hấp dẫn đối với khách đi xa, thay vì mặc định là thấp điểm.",
+      "what": "Condé Nast Traveler phỏng vấn chuyên gia du lịch về việc mùa thu ngày càng hấp dẫn đối với khách đi xa, thay vì mặc định là thấp điểm.",
+      "so_what": "Mùa thấp điểm truyền thống có thể không giữ mức giá thấp nếu nhu cầu dịch chuyển; chưa có chứng cứ cho mọi điểm đến.",
+      "why_you": "Một giả thuyết để nghiên cứu seasonality ở Đà Lạt, Hà Nội hoặc du lịch quốc tế từ Việt Nam.",
+      "action": "So sánh giá phòng/giá bay cùng kỳ qua nhiều năm trước khi kết luận.",
+      "confidence": "Medium · tổng hợp biên tập / dự báo, cần kiểm tra phạm vi",
+      "event_type": "Lifestyle / trend / cultural experience",
+      "preview": false,
+      "tags": [
+        "lifestyle",
+        "travel",
+        "food",
+        "fashion",
+        "consumer"
+      ],
+      "sources": [
+        {
+          "publisher": "Condé Nast Traveler",
+          "url": "https://www.cntraveler.com/story/everyone-seems-to-be-taking-a-fallcation-this-year-what-does-that-mean-for-travel"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-604",
+      "title": "Bright Ideas in Travel 2026 ưu tiên sáng kiến có lợi ích thực tế",
+      "domain": "Lifestyle",
+      "date": "2026-09-22",
+      "summary": "Condé Nast Traveler công bố bộ sưu tập sáng kiến mới của ngành du lịch liên quan sản phẩm, điểm đến và tính bền vững.",
+      "what": "Condé Nast Traveler công bố bộ sưu tập sáng kiến mới của ngành du lịch liên quan sản phẩm, điểm đến và tính bền vững.",
+      "so_what": "Chất lượng trải nghiệm ngày càng cần được đánh giá bằng ảnh hưởng lên cộng đồng và môi trường, không chỉ ảnh đẹp.",
+      "why_you": "Góc hữu ích khi nghiên cứu trải nghiệm địa phương và thiết kế tour có giá trị cộng đồng.",
+      "action": "Đánh giá từng sáng kiến theo bằng chứng vận hành, tránh lấy giải thưởng thay hiệu quả.",
+      "confidence": "Medium · tổng hợp biên tập / dự báo, cần kiểm tra phạm vi",
+      "event_type": "Lifestyle / trend / cultural experience",
+      "preview": false,
+      "tags": [
+        "lifestyle",
+        "travel",
+        "food",
+        "fashion",
+        "consumer"
+      ],
+      "sources": [
+        {
+          "publisher": "Condé Nast Traveler",
+          "url": "https://www.cntraveler.com/story/bright-ideas-in-travel-2026"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-605",
+      "title": "Thử thách CFDA/Vogue Fashion Fund đưa vật liệu sinh học vào thiết kế",
+      "domain": "Lifestyle",
+      "date": "2026-10-16",
+      "summary": "Các nhà thiết kế chung kết CFDA/Vogue Fashion Fund được thử sức với vật liệu thay thế và sinh học trong các mẫu sáng tạo.",
+      "what": "Các nhà thiết kế chung kết CFDA/Vogue Fashion Fund được thử sức với vật liệu thay thế và sinh học trong các mẫu sáng tạo.",
+      "so_what": "Một ý tưởng vật liệu có thể giàu tính biểu tượng nhưng chưa chắc đã đáp ứng độ bền, giá và quy mô cung ứng.",
+      "why_you": "Có thể liên hệ dệt may Việt Nam ở góc thử nghiệm vật liệu và circularity, không tự khẳng định tính bền vững hơn.",
+      "action": "Tìm bằng chứng vòng đời vật liệu và điều kiện sản xuất.",
+      "confidence": "Medium · tổng hợp biên tập / dự báo, cần kiểm tra phạm vi",
+      "event_type": "Lifestyle / trend / cultural experience",
+      "preview": false,
+      "tags": [
+        "lifestyle",
+        "travel",
+        "food",
+        "fashion",
+        "consumer"
+      ],
+      "sources": [
+        {
+          "publisher": "Vogue",
+          "url": "https://www.vogue.com/article/cfda-vogue-fashion-fund-sustainability-challenge-10-16-2026"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-606",
+      "title": "Fashion Month SS27 nhấn mạnh sức ảnh hưởng của những cộng đồng người hâm mộ mới",
+      "domain": "Lifestyle",
+      "date": "2026-10-13",
+      "summary": "Vogue tổng hợp mức tác động truyền thông của mùa thời trang xuân–hè 2027, trong đó người nổi tiếng Đông Nam Á có vị trí đáng chú ý.",
+      "what": "Vogue tổng hợp mức tác động truyền thông của mùa thời trang xuân–hè 2027, trong đó người nổi tiếng Đông Nam Á có vị trí đáng chú ý.",
+      "so_what": "Earned Media Value là chỉ số ước lượng truyền thông, không tương đương doanh thu hay số người thực sự mua sản phẩm.",
+      "why_you": "Một case để phân tích influencer-market fit và sự nổi lên của cộng đồng người hâm mộ xuyên biên giới.",
+      "action": "Đọc phương pháp tính EMV trước khi sử dụng số liệu định lượng.",
+      "confidence": "Medium · tổng hợp biên tập / dự báo, cần kiểm tra phạm vi",
+      "event_type": "Lifestyle / trend / cultural experience",
+      "preview": false,
+      "tags": [
+        "lifestyle",
+        "travel",
+        "food",
+        "fashion",
+        "consumer"
+      ],
+      "sources": [
+        {
+          "publisher": "Vogue",
+          "url": "https://www.vogue.com/article/who-won-fashion-month-ss27-on-social-media"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-607",
+      "title": "Xu hướng thời trang thu–đông 2026 tìm sự cân bằng giữa ứng dụng và biểu đạt",
+      "domain": "Lifestyle",
+      "date": "2026-09-28",
+      "summary": "Vogue tổng hợp các điểm nhấn từ runway mùa thu, như phối lớp, tương phản chất liệu và thay đổi tỷ lệ phom dáng.",
+      "what": "Vogue tổng hợp các điểm nhấn từ runway mùa thu, như phối lớp, tương phản chất liệu và thay đổi tỷ lệ phom dáng.",
+      "so_what": "Xu hướng trên sàn diễn không tự đại diện cho thị hiếu phổ thông; có thể là cảm hứng thị giác và thiết kế.",
+      "why_you": "Gợi ý khám phá thiết kế và cách xu hướng được bản địa hóa trong văn hóa mặc.",
+      "action": "So sánh nội dung runway với street style và sản phẩm thực sự bán tại Việt Nam.",
+      "confidence": "Medium · tổng hợp biên tập / dự báo, cần kiểm tra phạm vi",
+      "event_type": "Lifestyle / trend / cultural experience",
+      "preview": false,
+      "tags": [
+        "lifestyle",
+        "travel",
+        "food",
+        "fashion",
+        "consumer"
+      ],
+      "sources": [
+        {
+          "publisher": "Vogue",
+          "url": "https://www.vogue.com/article/fall-winter-2026-fashion-trends"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-608",
+      "title": "Vogue chọn các mẫu thiết kế nổi bật cho tháng 10/2026",
+      "domain": "Lifestyle",
+      "date": "2026-10-15",
+      "summary": "Bản chọn lọc thời trang tháng 10 của Vogue chú ý đến chất liệu, kết cấu và gợi nhắc Art Deco.",
+      "what": "Bản chọn lọc thời trang tháng 10 của Vogue chú ý đến chất liệu, kết cấu và gợi nhắc Art Deco.",
+      "so_what": "Đây là góc nhìn tuyển chọn của biên tập viên, không phải khảo sát đại diện người tiêu dùng.",
+      "why_you": "Có thể nghiên cứu cách tạp chí tạo editorial curation và xây dựng gu thẩm mỹ.",
+      "action": "Tách xu hướng được nhắc trên báo với dữ liệu tìm kiếm/đặt mua thực tế.",
+      "confidence": "Medium · tổng hợp biên tập / dự báo, cần kiểm tra phạm vi",
+      "event_type": "Lifestyle / trend / cultural experience",
+      "preview": false,
+      "tags": [
+        "lifestyle",
+        "travel",
+        "food",
+        "fashion",
+        "consumer"
+      ],
+      "sources": [
+        {
+          "publisher": "Vogue",
+          "url": "https://www.vogue.com/article/dresses"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-609",
+      "title": "Vogue đề cao sức mạnh phối đồ thay vì chỉ mua sản phẩm mới",
+      "domain": "Lifestyle",
+      "date": "2026-09-22",
+      "summary": "Bài phân tích styling thu 2026 của Vogue cho thấy sự thay đổi cảm nhận thông qua phối lớp, chất liệu và bối cảnh tạo hình.",
+      "what": "Bài phân tích styling thu 2026 của Vogue cho thấy sự thay đổi cảm nhận thông qua phối lớp, chất liệu và bối cảnh tạo hình.",
+      "so_what": "Giá trị thẩm mỹ có thể đến từ cách diễn giải thiết kế, không chỉ chi tiêu cho sản phẩm mới.",
+      "why_you": "Một hướng nghiên cứu visual storytelling và cách trang phục biểu đạt cá tính mà không cần áp đặt chuẩn ngoại hình.",
+      "action": "Xem các ví dụ phối lớp như tài liệu sáng tạo, không coi chúng là chuẩn bắt buộc.",
+      "confidence": "Medium · tổng hợp biên tập / dự báo, cần kiểm tra phạm vi",
+      "event_type": "Lifestyle / trend / cultural experience",
+      "preview": false,
+      "tags": [
+        "lifestyle",
+        "travel",
+        "food",
+        "fashion",
+        "consumer"
+      ],
+      "sources": [
+        {
+          "publisher": "Vogue",
+          "url": "https://www.vogue.com/article/anatomy-of-a-look"
+        }
+      ]
+    },
+    {
+      "id": "ST-20261017-610",
+      "title": "Ẩm thực địa phương tiếp tục là điểm nhấn trong du lịch Việt Nam",
+      "domain": "Lifestyle",
+      "date": "2026-08-25",
+      "summary": "Vietnam News ghi nhận những trải nghiệm ẩm thực như phở, bánh mì và các đặc sản vùng miền đóng vai trò trong cách du khách khám phá Việt Nam.",
+      "what": "Vietnam News ghi nhận những trải nghiệm ẩm thực như phở, bánh mì và các đặc sản vùng miền đóng vai trò trong cách du khách khám phá Việt Nam.",
+      "so_what": "Ẩm thực mang ý nghĩa bản sắc và trải nghiệm; hiệu quả thu hút du lịch ở từng nơi cần đánh giá bằng khảo sát thực tế.",
+      "why_you": "Có thể dùng làm case thiết kế hành trình trải nghiệm du lịch gắn cộng đồng địa phương.",
+      "action": "Tìm review, khảo sát hài lòng và tính xác thực trải nghiệm của các tuyến ẩm thực.",
+      "confidence": "Medium · tổng hợp biên tập / dự báo, cần kiểm tra phạm vi",
+      "event_type": "Lifestyle / trend / cultural experience",
+      "preview": false,
+      "tags": [
+        "lifestyle",
+        "travel",
+        "food",
+        "fashion",
+        "consumer"
+      ],
+      "sources": [
+        {
+          "publisher": "Vietnam News",
+          "url": "https://vietnamnews.vn/life-style/1798236/cuisine-helps-vietnam-stand-out-as-a-tourist-destination.html"
+        }
+      ]
+    }
+  ]
+}
