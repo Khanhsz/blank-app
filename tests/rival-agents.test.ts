@@ -1,3 +1,4 @@
+import {cityClient} from "../src/game/city";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {defaults,newCEO,migrate} from "../src/game/state";
@@ -87,4 +88,22 @@ test("rival economic model keeps scores bounded and avoids duplicate client awar
  assert.equal(registerRivalWin(s,c,l.id,r.id),true);
  assert.equal(registerRivalWin(s,c,l.id,r.id),false);
  assert.equal(r.clients,num+1);
+});
+
+test("fresh fictional corporate tenders recur and become playable through their existing HQ",()=>{
+ const s=game(),c=s.ceo!;
+ for(let i=0;i<27;i++)ceoDay(s,c,fx);
+ assert.equal(c.day,28);
+ const rfp=c.leads.find(l=>l.id==="market-orion-28");
+ assert.ok(rfp,"Day 28 must create a new ORION RFP");
+ assert.equal(rfp.status,"new");
+ assert.equal(cityClient(s,"orion")?.id,rfp.id);
+ assert.ok(c.tenders?.some(t=>t.leadId===rfp.id&&t.status==="open"));
+ const count=c.leads.length;
+ // Rendering a map or reading agency state must not produce extra jobs.
+ for(let i=0;i<5;i++)cityClient(s,"orion");
+ assert.equal(c.leads.length,count);
+ for(let i=0;i<28;i++)ceoDay(s,c,fx);
+ assert.ok(c.leads.some(l=>l.id==="market-sora-56"));
+ assert.equal(new Set(c.leads.map(l=>l.id)).size,c.leads.length);
 });
