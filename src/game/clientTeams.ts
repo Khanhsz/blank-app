@@ -167,8 +167,8 @@ export function teamNeeds(s:GameState,team:ClientTeam){
  if(overloaded.length)warnings.push(overloaded.length+" overworked specialist"+(overloaded.length>1?"s":""));
  if(unavailable.length)warnings.push(unavailable.length+" unavailable specialist"+(unavailable.length>1?"s":""));
  if(remaining!==null&&remaining<=7&&pending.length)warnings.push("Deadline in "+remaining+" days");
- const status=team.status==="closing"?"completed":team.status==="forming"?"needs-staff":
-  missing.length&&remaining!==null&&remaining<=7?"critical":
+ const status=team.status==="closing"?"completed":
+  missing.length&&remaining!==null&&remaining<=7?"critical":team.status==="forming"?"needs-staff":
   missing.length||overloaded.length||unavailable.length?"attention":"on-track";
  return {projects,pending,required,missing,busy,overloaded,unavailable,remaining,warnings,status};
 }
