@@ -16,6 +16,7 @@ export function validatePricingInput(raw){
  return {
   leadId:safeText(raw.leadId,90),brand:safeText(raw.brand,80),industry:safeText(raw.industry,90),
   objective:safeText(raw.objective,160),preference:pref,
+  businessSize:["small","medium","large","enterprise"].includes(raw.businessSize)?raw.businessSize:null,
   mediaBudget:finite(raw.mediaBudget,1000000,10000000000,"media budget"),
   baselineFee:finite(raw.baselineFee,1000000,2000000000,"base fee"),
   scope:finite(raw.scope,1,24,"scope"),
@@ -32,11 +33,12 @@ export const campaignScale=(budget)=>budget>=1000000000?"national":budget>=40000
 export function priceEnvelope(input){
  const x=validatePricingInput(input);
  const scale=campaignScale(x.mediaBudget);
+ const businessSize=x.businessSize??(scale==="national"?"enterprise":scale==="regional"?"large":"small");
  const floor=amount(Math.max(x.baselineFee*.72,x.estimatedCost*1.12));
  const ceiling=amount(Math.max(x.baselineFee*1.45,floor*1.15));
  const complexity=Math.max(0,x.scope-7)*.012;
  const urgency=x.duration<28?.035:0;
- const size=scale==="national"?.025:scale==="regional"?.01:0;
+ const size=businessSize==="enterprise"?.05:businessSize==="large"?.03:businessSize==="medium"?.01:-.01;
  const rival=(x.competitorIndex-1)*.07;
  const intensity=x.intensity>.8?.025:0;
  const anchor=Math.max(floor,Math.min(ceiling,x.baselineFee*(1+complexity+urgency+size+intensity+rival)));
@@ -44,7 +46,7 @@ export function priceEnvelope(input){
  const balanced=Math.max(competitive,amount(anchor));
  const premium=Math.max(balanced,Math.min(ceiling,amount(anchor*1.15)));
  const options={competitive,balanced,premium};
- return {scale,floor,ceiling,options,
+ return {scale,businessSize,floor,ceiling,options,
   risk:x.estimatedCost>competitive?"Cost pressure: competitive pricing may not cover delivery.":"Margins depend on staffing, partner rates and delivery scope."};
 }
 export function heuristicTier(x){
@@ -70,7 +72,7 @@ export function pricePrompt(input){
   "Return JSON only with tier (competitive|balanced|premium), headline (max 100 chars), rationale (max 400 chars), preparation (2-3 clear actions).",
   "Keep the advice tied to marketing budget, campaign scope, delivery days, required staffing, target KPI and rival pricing pressure.",
   "DO NOT return any money amounts or winning probabilities; those are computed by the game engine.",
-  "Lead: "+JSON.stringify({...x,estimatedCompanyScale:bands.scale,allowedFeeOptions:bands.options,estimatedSustainableFloor:bands.floor})
+  "Lead: "+JSON.stringify({...x,estimatedCampaignScale:bands.scale,fictionalBusinessSize:bands.businessSize,allowedFeeOptions:bands.options,estimatedSustainableFloor:bands.floor})
  ].join("\n");
 }
 export function buildPriceAdvice(input,modelResponse=null,source="rules"){
@@ -84,7 +86,7 @@ export function buildPriceAdvice(input,modelResponse=null,source="rules"){
   "Present a KPI measurement plan and evidence-based strategy.",
   "Validate specialist capacity, production dependencies and estimated margin.");
  return {leadId:x.leadId,brand:x.brand,mediaBudget:x.mediaBudget,baselineFee:x.baselineFee,
-  companyScale:bands.scale,estimatedCost:x.estimatedCost,feeFloor:bands.floor,feeCeiling:bands.ceiling,
+  companyScale:bands.scale,businessSize:bands.businessSize,estimatedCost:x.estimatedCost,feeFloor:bands.floor,feeCeiling:bands.ceiling,
   options:bands.options,tier,recommendedFee:bands.options[tier],headline,rationale,preparation,
   risk:bands.risk,source:source==="gemini"?"gemini":"rules"};
 }
