@@ -353,3 +353,50 @@ button:focus-visible{outline:2px solid var(--mt-copper);outline-offset:3px}
 .mt-ai-waiting-progress span{display:block;height:100%;width:33%;background:#649681;border-radius:99px;animation:mt-ai-shimmer 1.6s ease-in-out infinite alternate}
 @keyframes mt-ai-shimmer{0%{transform:translateX(0)}100%{transform:translateX(205%)}}
 @media(prefers-reduced-motion:reduce){.mt-ai-waiting-progress span{animation:none;width:45%}}
+
+
+/* Expanded city: diegetic rival headquarters, real estate and navigation directory. */
+.world-building-label.rival{border-color:#9fb6cb;background:#e7eef7ef;color:#344c69}
+.world-building-label.rival .map-pin{background:#698ca9;box-shadow:0 0 0 3px #698ca92d}
+.world-building-label.office{border-color:#d8c09d;background:#fff2dcef;color:#7c6043}
+.world-building-label.office .map-pin{background:#c49e64;box-shadow:0 0 0 3px #c49e642d}
+.world-building-label.occupied{border-color:#7ba696;background:#395d4cef;color:#ffffff;box-shadow:0 7px 24px #36694e69}
+.world-building-label.occupied .map-pin{background:#b7e0b1;box-shadow:0 0 0 4px #b7e0b12e}
+.world-building-label.rival:hover,.world-building-label.office:hover,.world-building-label.rival.selected,.world-building-label.office.selected{background:#a65f46;color:#fff;border-color:#e5aa87}
+.mt-world-directory{display:flex;flex-direction:column;gap:12px}
+.mt-map-summary{display:flex;flex-wrap:wrap;gap:9px}
+.mt-map-summary>span{padding:10px 12px;border:1px solid #e4d8c7;background:#f8f0e7;font-size:10px;font-weight:800;color:#795f4d;border-radius:9px}
+.mt-map-summary strong{font-size:15px;color:#ad684d}
+.mt-directory-search{background:#fffdf9;border:1px solid #decec0;color:#3e3228;border-radius:11px;width:100%;padding:13px 15px;font-size:12px}
+.mt-directory-filters{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none}
+.mt-directory-filters button{padding:8px 11px;border:1px solid #e6d9ca;background:#f8f0e7;font-size:10px;font-weight:850;color:#806b5b;border-radius:9px;white-space:nowrap}
+.mt-directory-filters button.active{background:#3a322c;border-color:#3a322c;color:#fff}
+.mt-world-directory .directory{display:flex;flex-direction:column;gap:7px}
+.mt-world-directory .directory>button{display:flex;align-items:center;justify-content:space-between;text-align:left;background:#fffaf4;border:1px solid #e8d9ca;padding:13px 15px;border-radius:11px;gap:10px;transition:transform .15s,border-color .15s}
+.mt-world-directory .directory>button:hover:not(:disabled){border-color:#b88065;transform:translateX(2px)}
+.mt-world-directory .directory>button:disabled{opacity:.5}
+.mt-world-directory .directory>button span{display:flex;flex-direction:column;gap:5px;min-width:0}
+.mt-world-directory .directory>button b{font-size:12px;color:#4e3b31}
+.mt-world-directory .directory>button small{font-size:10px;font-weight:500;color:#948376;line-height:1.5}
+.mt-city-building-panel{display:flex;flex-direction:column;gap:17px}
+.mt-location-identity{display:flex;flex-direction:column;gap:5px}
+.mt-location-eyebrow{font-size:10px;color:#af765c;font-weight:900;letter-spacing:.14em}
+.mt-location-identity h3{font:30px/1.06 Georgia,serif;letter-spacing:-.03em;color:#3d3028;margin:4px 0}
+.mt-location-identity p{font-size:12px;line-height:1.65;color:#8a796a}
+.mt-location-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.mt-location-stat-grid .mt-number-stat{padding:12px}
+.mt-location-stat-grid .mt-number-stat strong{font-size:16px}
+.mt-location-fact{padding:14px;background:#fbf4ea;border:1px solid #eadccc;border-radius:12px}
+.mt-location-fact b{font-size:12px;color:#584637}
+.mt-location-fact p{font-size:11px;line-height:1.7;color:#89796a;margin-top:7px}
+.mt-office-comparison{display:flex;flex-direction:column;border-top:1px solid #eadccc;border-bottom:1px solid #eadccc}
+.mt-office-comparison>div{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 1px;border-top:1px solid #ede3d9;font-size:11px}
+.mt-office-comparison>div:first-child{border-top:0}
+.mt-office-comparison span{color:#897969}
+.mt-office-comparison strong{text-align:right;color:#483b33;font-weight:850}
+@media(max-width:750px){
+ .mt-map-summary>span{font-size:9px;padding:8px 9px}
+ .mt-location-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .mt-location-identity h3{font-size:26px}
+ .mt-directory-filters button{font-size:9px}
+}
