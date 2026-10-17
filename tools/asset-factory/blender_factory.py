@@ -16,27 +16,24 @@ from city_modernism import build_city,city_anchors
 from pathlib import Path
 from math import radians
 
-PALETTES={
- "clay":["#b88b7e","#dbc3af","#615c65","#9db4b7","#bd674f","#d4c5b4","#354d52"],
- "rose":["#bf9caa","#e9d7d4","#665e70","#afc7c9","#bf7d82","#dbbfc0","#455963"],
- "mauve":["#9c90ab","#d2c7d6","#585871","#a7c4d3","#ab8b9e","#e1d5d7","#42505e"],
- "sand":["#c4b29c","#ebe0ca","#6a6a6b","#acc5c4","#b99677","#ddd5c5","#44565b"],
- "sage":["#98aa9a","#d3ddc9","#5b6868","#a7c0b8","#779486","#d2d2bb","#344d4d"],
- "slate":["#869ba6","#c6d3d4","#4b6372","#b0cdd1","#688ca0","#d7ddda","#385563"]
-}
-ANCHORS=("ANCHOR_Entrance","ANCHOR_Sign","ANCHOR_Roof","COLLIDER_Footprint")
+PBR_SPEC=json.loads((Path(__file__).resolve().parents[2]/"assets/specs/pbr-materials.json").read_text(encoding="utf-8"))
+PALETTES=PBR_SPEC["palettes"]
+ROLES=PBR_SPEC["roles"]
 def srgb_to_linear(value):
  value=value/255.
  return value/12.92 if value<=.04045 else ((value+.055)/1.055)**2.4
-def material(name,color):
+def material(name,color,role):
+ """Canonical role attributes match the Node glTF writer."""
  mat=bpy.data.materials.new(name)
  rgba=tuple(srgb_to_linear(int(color[i:i+2],16)) for i in (1,3,5))+(1.,)
  mat.diffuse_color=rgba
  mat.use_nodes=True
  node=mat.node_tree.nodes.get("Principled BSDF")
  node.inputs["Base Color"].default_value=rgba
- node.inputs["Roughness"].default_value=.87
- node.inputs["Metallic"].default_value=.07
+ node.inputs["Roughness"].default_value=role["roughness"]
+ node.inputs["Metallic"].default_value=role["metallic"]
+ mat["mt_pbr_role"]=role["name"]
+ mat["mt_material_version"]=PBR_SPEC["version"]
  return mat
 
 def box(name,pos,size,mat):
@@ -61,7 +58,13 @@ def build_master(spec,lod,output,save_blend):
  bpy.ops.object.select_all(action="SELECT")
  bpy.ops.object.delete(use_global=False)
  for mat in list(bpy.data.materials):bpy.data.materials.remove(mat)
- palette=[material(spec["palette"]+"_"+str(i),v) for i,v in enumerate(PALETTES[spec["palette"]])]
+ colors=list(PALETTES[spec["palette"]])
+ if spec["class"]=="client" or spec.get("function") in ("corporate","client"):
+  colors[0]=colors[9]
+  colors[7]="#496e81"
+ elif spec["class"]=="rival":colors[7]="#3f687c"
+ elif spec.get("decorative"):colors[7]=colors[3]
+ palette=[material("MT_"+ROLES[i]["name"]+"_"+spec["palette"],v,ROLES[i]) for i,v in enumerate(colors)]
  rng=random.Random(spec["seed"])
  w,d,h=spec["width"],spec["depth"],spec["height"]
  objects=[]
