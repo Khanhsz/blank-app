@@ -11,6 +11,7 @@ import argparse
 import os
 import random
 import sys
+from brickhouse_modernism import build_brickhouse,brickhouse_anchors
 from pathlib import Path
 from math import radians
 
@@ -67,111 +68,119 @@ def build_master(spec,lod,output,save_blend):
   ob=box(spec["id"]+"_"+name,p,size,palette[m])
   ob["mt_asset_id"]=spec["id"];ob["mt_lod"]=lod
   objects.append(ob);return ob
- add("groundbase",(0,.14,0),(w+.5,.28,d+.5),5)
- add("main_body",(0,.28+h/2,0),(w,h,d),0)
- add("roof_cap",(0,h+.42,0),(w+.5,.42,d+.5),2)
- if spec["roof"] in ("crown","sawtooth"):add("upper_crown",(0,h+1.04,0),(w*.58,.84,d*.65),1)
- if spec["roof"]=="terrace":add("terrace",(0,h+.77,-d*.18),(w*.65,.3,d*.38),1)
- if spec["roof"]=="gable":
-  add("gable_low",(0,h+.85,0),(w*.83,.8,d*.85),2)
-  add("gable_high",(0,h+1.36,0),(w*.42,.4,d*.82),2)
- if spec["roof"]=="canopy":add("canopy",(0,h+.66,d*.2),(w+1,.22,d+1),4)
- add("front_glazing",(0,1.26,d/2+.095),(w*.54,1.9,.14),3)
- add("door_frame",(0,1.22,d/2+.21),(w*.13,2.13,.14),6)
- add("transom",(0,2.38,d/2+.22),(w*.63,.21,.28),1)
- add("sign_panel",(0,3.1,d/2+.21),(w*.72,.6,.21),4)
- if lod==0:
-  floors=min(spec["floors"]-1,10);cols=2 if w<7 else 3
-  for level in range(floors):
-   y=min(h-1.05,3.7+level*(h-4.1)/max(1,floors))
-   for col in range(cols):
-    x=(col-(cols-1)/2)*(w*.23)
-    width=min(1.55,w*.17)
-    add("window_%s_%s"%(level,col),(x,y,d/2+.083),(width,.86,.1),3)
-    add("sill_%s_%s"%(level,col),(x,y+.49,d/2+.14),(width+.14,.11,.16),1)
-    if rng.random()>.65:add("ledge_%s_%s"%(level,col),(x,y-.55,d/2+.16),(width+.2,.12,.22),4)
-   if level%2==0:
-    for col in (0,1):
-     z=(col-.5)*d*.36
-     add("side_glass_%s_%s"%(level,col),(w/2+.082,y,z),(.1,.78,min(1.4,d*.17)),3)
-
-  # Keep Blender-authored masters visually aligned with the generated web slice.
-  category=spec["class"]
-  if category=="creative_agency":
-   add("creative_art_fin",(-w*.32,h*.49,d/2+.20),(w*.22,h*.68,.42),4)
-   add("creative_reveal_fin",(w*.32,h*.36,d/2+.27),(w*.16,h*.46,.53),6)
-   add("roof_frame",(0,h+.98,0),(w*.82,.25,d*.72),4)
-   for k in range(3):add("studio_pod_"+str(k),((k-1)*w*.22,h+1.57,0),(w*.17,1.05,d*.47),1)
-  elif category=="media_facility":
-   add("video_wall_frame",(0,h*.63,d/2+.28),(w*.83,h*.35,.46),6)
-   add("video_wall_screen",(0,h*.63,d/2+.54),(w*.75,h*.30,.09),3)
-   for x in (-1,1):add("screen_pillar_"+str(x),(x*w*.43,h*.58,d/2+.52),(.22,h*.45,.38),4)
-   add("rooftop_media_display",(0,h+1.74,0),(w*.74,1.10,d*.54),4)
-  elif category=="rival_agency":
-   add("agency_second_tower",(-w*.23,h*.78,-d*.18),(w*.46,h*.44,d*.52),2)
-   add("agency_vertical_fin",(w*.32,h*.64,d/2+.22),(w*.19,h*.65,.35),4)
-   add("agency_roof_crown",(0,h+1.85,0),(w*.78,1.65,d*.44),6)
-   add("agency_facade_logo",(0,h*.60,d/2+.27),(w*.80,1.3,.38),4)
-  elif category=="corporate_client":
-   for x in (-1,1):add("corporate_atrium_"+str(x),(x*w*.28,h*.47,d/2+.43),(w*.26,h*.76,.56),1)
-   add("corporate_billboard_frame",(0,h*.76,d/2+.24),(w*.72,h*.16,.40),6)
-   add("corporate_billboard_screen",(0,h*.76,d/2+.48),(w*.62,h*.12,.12),4)
-   add("corporate_glass_crown",(0,h+1.87,0),(w*.77,1.55,d*.57),3)
-  elif category=="office_property":
-   add("office_leasing_portico",(0,h*.29,d/2+.27),(w*.83,2.7,.55),1)
-   for x in (-1,1):add("office_facade_fin_"+str(x),(x*w*.42,h*.54,d/2+.27),(.25,h*.69,.56),4)
-   add("office_terrace",(0,h+1.09,0),(w*.68,.55,d*.54),4)
-  elif category=="residential":
-   for x,material_id in ((-1,1),(1,5)):add("residential_wing_"+str(x),(x*w*.28,h*.56,d/2+.24),(w*.3,h*.66,.37),material_id)
-   add("residential_roof_pod",(0,h+1.31,-d*.22),(w*.35,.65,d*.25),4)
-  elif category=="retail_property":
-   add("storefront",(0,h*.38,d/2+.66),(w*.85,2.4,1.0),3)
-   add("retail_signage",(0,h*.38,d/2+1.23),(w*.75,.3,.2),4)
-  elif category=="urban_infrastructure":
-   add("kiosk_display",(0,h*.55,d/2+.35),(w*.70,h*.48,.42),3)
-   add("kiosk_top",(0,h+1.11,0),(w+1,.36,d+.9),4)
-  add("rooftop_service",(-w*.23,h+.76,-d*.24),(w*.15,.45,d*.18),6)
-  if spec["class"] in ("rival_agency","corporate_client"):
-   for side in (-1,1):add("corporate_fin_"+str(side),(side*w*.4,h*.62,d/2+.18),(.16,h*.48,.25),1)
-  if spec["class"] in ("retail_property","urban_infrastructure"):
-   add("awning",(0,2.35,d/2+.8),(w*.8,.19,1.6),4)
+ if spec["id"]=="office-brick":
+  build_brickhouse(add,spec,lod)
  else:
-  # Low LOD keeps the category silhouette visible in the elevated city view.
-  c=spec["class"]
-  if c=="creative_agency":
-   add("creative_art_fin_lod1",(-w*.32,h*.52,d/2+.19),(w*.24,h*.72,.35),4)
-   add("creative_roof_lod1",(0,h+1.20,0),(w*.75,1.0,d*.54),4)
-  elif c=="media_facility":
-   add("media_video_wall_lod1",(0,h*.64,d/2+.27),(w*.83,h*.34,.37),6)
-   add("media_roof_lod1",(0,h+1.40,0),(w*.70,1.1,d*.5),4)
-  elif c=="rival_agency":
-   add("rival_wing_lod1",(-w*.24,h*.75,-d*.12),(w*.44,h*.43,d*.5),2)
-   add("rival_crown_lod1",(0,h+1.53,0),(w*.77,1.5,d*.5),6)
-  elif c=="corporate_client":
-   add("client_ad_wall_lod1",(0,h*.67,d/2+.34),(w*.76,h*.24,.35),4)
-   add("client_glass_crown_lod1",(0,h+1.60,0),(w*.76,1.45,d*.52),3)
-  elif c=="office_property":
-   add("office_portico_lod1",(0,h*.30,d/2+.25),(w*.85,2.6,.42),1)
-   add("office_deck_lod1",(0,h+1.02,0),(w*.68,.56,d*.55),4)
-  elif c=="residential":
-   add("residence_balcony_lod1",(0,h*.58,d/2+.22),(w*.75,h*.60,.35),1)
-  elif c=="retail_property":
-   add("retail_window_lod1",(0,h*.36,d/2+.46),(w*.83,2.2,.55),3)
-  elif c=="urban_infrastructure":
-   add("kiosk_roof_lod1",(0,h+.92,0),(w+1,.38,d+.8),4)
+  add("groundbase",(0,.14,0),(w+.5,.28,d+.5),5)
+  add("main_body",(0,.28+h/2,0),(w,h,d),0)
+  add("roof_cap",(0,h+.42,0),(w+.5,.42,d+.5),2)
+  if spec["roof"] in ("crown","sawtooth"):add("upper_crown",(0,h+1.04,0),(w*.58,.84,d*.65),1)
+  if spec["roof"]=="terrace":add("terrace",(0,h+.77,-d*.18),(w*.65,.3,d*.38),1)
+  if spec["roof"]=="gable":
+   add("gable_low",(0,h+.85,0),(w*.83,.8,d*.85),2)
+   add("gable_high",(0,h+1.36,0),(w*.42,.4,d*.82),2)
+  if spec["roof"]=="canopy":add("canopy",(0,h+.66,d*.2),(w+1,.22,d+1),4)
+  add("front_glazing",(0,1.26,d/2+.095),(w*.54,1.9,.14),3)
+  add("door_frame",(0,1.22,d/2+.21),(w*.13,2.13,.14),6)
+  add("transom",(0,2.38,d/2+.22),(w*.63,.21,.28),1)
+  add("sign_panel",(0,3.1,d/2+.21),(w*.72,.6,.21),4)
+  if lod==0:
+   floors=min(spec["floors"]-1,10);cols=2 if w<7 else 3
+   for level in range(floors):
+    y=min(h-1.05,3.7+level*(h-4.1)/max(1,floors))
+    for col in range(cols):
+     x=(col-(cols-1)/2)*(w*.23)
+     width=min(1.55,w*.17)
+     add("window_%s_%s"%(level,col),(x,y,d/2+.083),(width,.86,.1),3)
+     add("sill_%s_%s"%(level,col),(x,y+.49,d/2+.14),(width+.14,.11,.16),1)
+     if rng.random()>.65:add("ledge_%s_%s"%(level,col),(x,y-.55,d/2+.16),(width+.2,.12,.22),4)
+    if level%2==0:
+     for col in (0,1):
+      z=(col-.5)*d*.36
+      add("side_glass_%s_%s"%(level,col),(w/2+.082,y,z),(.1,.78,min(1.4,d*.17)),3)
+
+   # Keep Blender-authored masters visually aligned with the generated web slice.
+   category=spec["class"]
+   if category=="creative_agency":
+    add("creative_art_fin",(-w*.32,h*.49,d/2+.20),(w*.22,h*.68,.42),4)
+    add("creative_reveal_fin",(w*.32,h*.36,d/2+.27),(w*.16,h*.46,.53),6)
+    add("roof_frame",(0,h+.98,0),(w*.82,.25,d*.72),4)
+    for k in range(3):add("studio_pod_"+str(k),((k-1)*w*.22,h+1.57,0),(w*.17,1.05,d*.47),1)
+   elif category=="media_facility":
+    add("video_wall_frame",(0,h*.63,d/2+.28),(w*.83,h*.35,.46),6)
+    add("video_wall_screen",(0,h*.63,d/2+.54),(w*.75,h*.30,.09),3)
+    for x in (-1,1):add("screen_pillar_"+str(x),(x*w*.43,h*.58,d/2+.52),(.22,h*.45,.38),4)
+    add("rooftop_media_display",(0,h+1.74,0),(w*.74,1.10,d*.54),4)
+   elif category=="rival_agency":
+    add("agency_second_tower",(-w*.23,h*.78,-d*.18),(w*.46,h*.44,d*.52),2)
+    add("agency_vertical_fin",(w*.32,h*.64,d/2+.22),(w*.19,h*.65,.35),4)
+    add("agency_roof_crown",(0,h+1.85,0),(w*.78,1.65,d*.44),6)
+    add("agency_facade_logo",(0,h*.60,d/2+.27),(w*.80,1.3,.38),4)
+   elif category=="corporate_client":
+    for x in (-1,1):add("corporate_atrium_"+str(x),(x*w*.28,h*.47,d/2+.43),(w*.26,h*.76,.56),1)
+    add("corporate_billboard_frame",(0,h*.76,d/2+.24),(w*.72,h*.16,.40),6)
+    add("corporate_billboard_screen",(0,h*.76,d/2+.48),(w*.62,h*.12,.12),4)
+    add("corporate_glass_crown",(0,h+1.87,0),(w*.77,1.55,d*.57),3)
+   elif category=="office_property":
+    add("office_leasing_portico",(0,h*.29,d/2+.27),(w*.83,2.7,.55),1)
+    for x in (-1,1):add("office_facade_fin_"+str(x),(x*w*.42,h*.54,d/2+.27),(.25,h*.69,.56),4)
+    add("office_terrace",(0,h+1.09,0),(w*.68,.55,d*.54),4)
+   elif category=="residential":
+    for x,material_id in ((-1,1),(1,5)):add("residential_wing_"+str(x),(x*w*.28,h*.56,d/2+.24),(w*.3,h*.66,.37),material_id)
+    add("residential_roof_pod",(0,h+1.31,-d*.22),(w*.35,.65,d*.25),4)
+   elif category=="retail_property":
+    add("storefront",(0,h*.38,d/2+.66),(w*.85,2.4,1.0),3)
+    add("retail_signage",(0,h*.38,d/2+1.23),(w*.75,.3,.2),4)
+   elif category=="urban_infrastructure":
+    add("kiosk_display",(0,h*.55,d/2+.35),(w*.70,h*.48,.42),3)
+    add("kiosk_top",(0,h+1.11,0),(w+1,.36,d+.9),4)
+   add("rooftop_service",(-w*.23,h+.76,-d*.24),(w*.15,.45,d*.18),6)
+   if spec["class"] in ("rival_agency","corporate_client"):
+    for side in (-1,1):add("corporate_fin_"+str(side),(side*w*.4,h*.62,d/2+.18),(.16,h*.48,.25),1)
+   if spec["class"] in ("retail_property","urban_infrastructure"):
+    add("awning",(0,2.35,d/2+.8),(w*.8,.19,1.6),4)
+  else:
+   # Low LOD keeps the category silhouette visible in the elevated city view.
+   c=spec["class"]
+   if c=="creative_agency":
+    add("creative_art_fin_lod1",(-w*.32,h*.52,d/2+.19),(w*.24,h*.72,.35),4)
+    add("creative_roof_lod1",(0,h+1.20,0),(w*.75,1.0,d*.54),4)
+   elif c=="media_facility":
+    add("media_video_wall_lod1",(0,h*.64,d/2+.27),(w*.83,h*.34,.37),6)
+    add("media_roof_lod1",(0,h+1.40,0),(w*.70,1.1,d*.5),4)
+   elif c=="rival_agency":
+    add("rival_wing_lod1",(-w*.24,h*.75,-d*.12),(w*.44,h*.43,d*.5),2)
+    add("rival_crown_lod1",(0,h+1.53,0),(w*.77,1.5,d*.5),6)
+   elif c=="corporate_client":
+    add("client_ad_wall_lod1",(0,h*.67,d/2+.34),(w*.76,h*.24,.35),4)
+    add("client_glass_crown_lod1",(0,h+1.60,0),(w*.76,1.45,d*.52),3)
+   elif c=="office_property":
+    add("office_portico_lod1",(0,h*.30,d/2+.25),(w*.85,2.6,.42),1)
+    add("office_deck_lod1",(0,h+1.02,0),(w*.68,.56,d*.55),4)
+   elif c=="residential":
+    add("residence_balcony_lod1",(0,h*.58,d/2+.22),(w*.75,h*.60,.35),1)
+   elif c=="retail_property":
+    add("retail_window_lod1",(0,h*.36,d/2+.46),(w*.83,2.2,.55),3)
+   elif c=="urban_infrastructure":
+    add("kiosk_roof_lod1",(0,h+.92,0),(w+1,.38,d+.8),4)
  # Preserve independent empty interaction anchors with stable names.
  col=bpy.context.scene.collection
- empty("ANCHOR_Entrance",(0,1.1,d/2+.4),col,{"game_id":spec.get("gameplayId","")})
- empty("ANCHOR_Sign",(0,3.1,d/2+.34),col)
- empty("ANCHOR_Roof",(0,h+1.55,0),col)
- empty("COLLIDER_Footprint",(0,.2,0),col,{"width":w,"depth":d,"height":h})
+ if spec["id"]=="office-brick":
+  for name,position in brickhouse_anchors(spec).items():
+   empty(name,position,col,{"game_id":spec.get("gameplayId","")} if name=="ANCHOR_Entrance" else ({"width":w,"depth":d,"height":h} if name=="COLLIDER_Footprint" else None))
+ else:
+  empty("ANCHOR_Entrance",(0,1.1,d/2+.4),col,{"game_id":spec.get("gameplayId","")})
+  empty("ANCHOR_Sign",(0,3.1,d/2+.34),col)
+  empty("ANCHOR_Roof",(0,h+1.55,0),col)
+  empty("COLLIDER_Footprint",(0,.2,0),col,{"width":w,"depth":d,"height":h})
  bpy.context.scene["asset_id"]=spec["id"]
  bpy.context.scene["persistent_game_entity"]=spec.get("gameplayId","")
  bpy.context.scene["source_spec_version"]=1
+ if spec["id"]=="office-brick":bpy.context.scene["architecture"]="brickhouse-modernist-v1"
  # glTF exporter uses Blender Z-up -> glTF Y-up, orientation correct for +Z entrance.
  bpy.ops.object.select_all(action="DESELECT")
  for ob in objects:ob.select_set(True)
- for name in ANCHORS:bpy.data.objects[name].select_set(True)
+ for name in (tuple(brickhouse_anchors(spec).keys()) if spec["id"]=="office-brick" else ANCHORS):bpy.data.objects[name].select_set(True)
  bpy.context.view_layer.objects.active=objects[0]
  if save_blend:
   bpy.ops.wm.save_as_mainfile(filepath=str(save_blend),compress=True)
