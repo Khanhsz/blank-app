@@ -8,7 +8,7 @@ import {AssetRegistry} from "./AssetRegistry";
 import {DistrictManager,ChunkManager} from "./AssetDistrict";
 import type {SceneId,Character,RoomStyle} from "@/game/state";
 
-export interface District {id:string;name:string;kind:DistrictKind;district?:string;occupied?:boolean;x:number;z:number;w:number;d:number;h:number;color:string;locked:boolean}
+export interface District {id:string;name:string;kind:DistrictKind;district?:string;occupied?:boolean;tier?:number;x:number;z:number;w:number;d:number;h:number;color:string;locked:boolean}
 type RoomAction="board"|"phone"|"wardrobe";
 const ink="#302b28",cream="#e9dbc8",teal="#70a39b",copper="#bd694a";
 const flat={flatShading:true,roughness:0.86,metalness:0.02};
