@@ -112,11 +112,11 @@ export function migrate(raw: unknown): GameState {
     ceo: s.ceo ?? null,
   };
   // One global week from the bedroom onwards. CEO legacy saves retain their accumulated date.
-  const savedDay = s.clock?.day ?? (s.agencyUnlocked ? s.ceo?.day : s.campaign?.day) ?? 1;
+  const savedDay = s.agencyUnlocked ? Math.max(s.clock?.day??1,s.ceo?.day??1) : (s.clock?.day ?? s.campaign?.day ?? 1);
   const day = Math.max(1,Math.floor(Number(savedDay)||1));
   const oldWeekly = s.clock ?? s.ceo?.weekly;
   out.clock = {
-    day, week: Math.max(1,oldWeekly?.week ?? Math.floor((day-1)/7)+1),
+    day, week: Math.max(Math.floor((day-1)/7)+1,oldWeekly?.week??1),
     pending: Array.isArray(oldWeekly?.pending)?oldWeekly.pending:[],
     editions: Array.isArray(oldWeekly?.editions)?oldWeekly.editions:[],
     lastAdvanceDay: oldWeekly?.lastAdvanceDay ?? day
