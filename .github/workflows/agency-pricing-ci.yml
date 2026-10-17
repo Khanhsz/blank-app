@@ -1,0 +1,28 @@
+name: Marketing Tycoon Agency Pricing
+
+on:
+  push:
+    branches:
+      - deploy/marketing-tycoon-lovable-world
+  pull_request:
+    branches:
+      - deploy/marketing-tycoon-lovable-world
+
+permissions:
+  contents: read
+
+jobs:
+  pricing-and-game-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck, full gameplay tests and build
+        run: npm run build
+      - name: Verify Gemini input guards and bounded pricing logic
+        run: node --test marketing-tycoon-ai-api/*.test.mjs

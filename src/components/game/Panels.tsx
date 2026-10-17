@@ -1,9 +1,10 @@
 import { useState } from "react";
-import {BriefcaseBusiness,Coins,FlaskConical,Target,Clapperboard,ChartNoAxesCombined,Handshake,Users,FileText,Activity,ShieldCheck,Check} from "lucide-react";
+import {BriefcaseBusiness,Coins,FlaskConical,Target,Clapperboard,ChartNoAxesCombined,Handshake,Users,FileText,Activity,ShieldCheck,Check,Sparkles} from "lucide-react";
 import {AnimatedGauge,BarComparison,CampaignTimeline,DecisionCard,FeedbackStrip,GameSection,GameStat,PhaseScene,CEOOverview,RivalLandscape} from "./GameVisuals";
 import { Button } from "@/components/ui/button";
 import {AutomaticBriefNotice,AutomaticBriefWaiting} from "./AIBriefLauncher";
-import { act, useGame } from "@/game/store";
+import { act, useGame, getState } from "@/game/store";
+import {pricingContext,pricingFingerprint,requestPricingAdvice} from "@/game/pricingAdvisor";
 import * as C from "@/game/campaign";
 import * as K from "@/game/ceo";
 import {tenderFor,marketShare,resolveTalentOffer} from "@/game/rivalAI";
@@ -20,6 +21,43 @@ const Choice = ({ on, onClick, title, sub }: { on?: boolean; onClick: () => void
   <DecisionCard active={on} onClick={onClick} title={title} description={sub}/>
 );
 const Row = ({ k, v }: { k: string; v: React.ReactNode }) => <div className="flex justify-between border-b border-border py-1.5 text-sm"><span className="text-muted-foreground">{k}</span><b>{v}</b></div>;
+
+function AIPriceCard({leadId,canQuote=false}:{leadId:string;canQuote?:boolean}){
+ const s=useGame(x=>x),l=s.ceo?.leads.find(x=>x.id===leadId);
+ const [loading,setLoading]=useState(false),[error,setError]=useState("");
+ if(!l)return null;
+ const context=pricingContext(s,l),fingerprint=pricingFingerprint(context);
+ const advice=l.pricingAdvice,valid=!!advice&&advice.contextKey===fingerprint;
+ const labels={competitive:"Competitive",balanced:"Balanced",premium:"Premium"} as const;
+ const currentFee=s.ceo?.pitch?.id===l.id&&s.ceo.pitch?.step==="prepare"?K.pitchFee(l,s.ceo.pitch):null;
+ async function refresh(){
+  if(loading)return;
+  setLoading(true);setError("");
+  try{
+   const result=await requestPricingAdvice(context);
+   const live=getState(),liveLead=live.ceo?.leads.find(a=>a.id===l.id);
+   if(!liveLead||!["new","qualified","pitch","pitch_won","negotiating"].includes(liveLead.status)||
+      pricingFingerprint(pricingContext(live,liveLead))!==fingerprint)return;
+   act(d=>{const target=d.ceo?.leads.find(a=>a.id===l.id);if(target)target.pricingAdvice=result;});
+  }catch(e){setError(e instanceof Error?e.message:"Pricing analysis unavailable");}
+  finally{setLoading(false);}
+ }
+ return <div className="rounded-xl border border-border bg-card p-3 space-y-2 mt-3" aria-label={"Agency fee advisor "+l.brand}>
+  <div className="flex flex-wrap justify-between items-center gap-2"><strong className="text-sm flex items-center gap-1"><Sparkles size={16}/> AI Pricing Desk</strong><span className="text-xs text-muted-foreground">{valid?(advice?.source==="gemini"?"Gemini-backed recommendation":"Rule-based fallback"):"Not yet analyzed"}</span></div>
+  <p className="text-xs text-muted-foreground">Client media budget {money(l.value)} · {l.scope} workstreams · {l.duration} days. The service fee is quoted separately.</p>
+  <Button size="sm" variant="outline" disabled={loading} onClick={refresh}>{loading?"Analyzing budget & delivery…":valid?"Refresh pricing advice":"Analyze and recommend fee"}</Button>
+  {error&&<p role="alert" className="text-xs text-destructive">{error}</p>}
+  {valid&&advice&&<>
+   <div className="grid grid-cols-2 gap-2 text-xs"><div><span className="text-muted-foreground">Client size / campaign scale</span><div className="font-semibold capitalize">{advice.businessSize??"Estimated"} · {advice.companyScale}</div></div><div><span className="text-muted-foreground">Estimated delivery cost</span><div className="font-semibold">{money(advice.estimatedCost)}</div></div></div>
+   <div className="rounded-lg bg-muted px-3 py-2"><span className="text-xs text-muted-foreground">Recommended service fee · {labels[advice.tier]}</span><div className="text-lg font-bold">{money(advice.recommendedFee)}</div><small>{advice.headline}</small></div>
+   <div className="grid grid-cols-3 gap-1.5">{(["competitive","balanced","premium"] as const).map(t=><div key={t} className="rounded-md bg-muted/50 px-1.5 py-2 text-center"><small className="block text-muted-foreground">{labels[t]}</small><b className="text-xs">{money(advice.options[t])}</b>{canQuote&&<Button className="w-full mt-1" size="sm" variant={currentFee===advice.options[t]?"default":"outline"} onClick={()=>act((d,fx)=>K.applySuggestedFee(d,fx,t))}>{currentFee===advice.options[t]?"Selected":"Use"}</Button>}</div>)}</div>
+   <p className="text-xs">{advice.rationale}</p>
+   <div className="text-xs text-muted-foreground">Preparation: {advice.preparation.join(" · ")}</div>
+   <small className="text-xs text-muted-foreground">Minimum sustainable fee {money(advice.feeFloor)} · {advice.risk} AI does not determine tender winners.</small>
+  </>}
+  {advice&&!valid&&<p className="text-xs text-muted-foreground">Staffing, competitor prices or client scope changed. Refresh the fee recommendation.</p>}
+ </div>;
+}
 
 export function CampaignWorkspace(){ return <CampaignJourney/>; }
 
@@ -117,7 +155,7 @@ export function CEOCommandCenter({onReadEdition}:{onReadEdition?:(id:string)=>vo
       {tab === "pipeline" && <>
         {c.pitch && <PitchBox />}
         {c.negotiation && <NegBox />}
-        {!c.pitch && !c.negotiation && c.leads.map((l) => <div key={l.id} className="mt-deal"><div className="flex justify-between"><b>{l.brand}</b><span className="text-xs capitalize text-primary">{l.status.replace("_", " ")}</span></div><p className="text-xs text-muted-foreground">{l.desc}</p><Row k="Service fee" v={money(l.fee)} /><Row k="Rivals" v={l.rivalIds.join(", ")} />{l.insightKnown && <Row k="Client priority" v={l.pref} />}{tenderFor(c,l.id)?.status==="open"&&<Row k="Tender deadline" v={"Day "+tenderFor(c,l.id)!.deadline}/>}
+        {!c.pitch && !c.negotiation && c.leads.map((l) => <div key={l.id} className="mt-deal"><div className="flex justify-between"><b>{l.brand}</b><span className="text-xs capitalize text-primary">{l.status.replace("_", " ")}</span></div><p className="text-xs text-muted-foreground">{l.desc}</p><Row k="Service fee" v={money(l.fee)} /><Row k="Rivals" v={l.rivalIds.join(", ")} />{l.insightKnown && <Row k="Client priority" v={l.pref} />}{tenderFor(c,l.id)?.status==="open"&&<Row k="Tender deadline" v={"Day "+tenderFor(c,l.id)!.deadline}/>}{l.status==="qualified"&&<AIPriceCard leadId={l.id}/>}
           <div className="mt-2 flex gap-2">{["new", "renewal"].includes(l.status) && <Button size="sm" onClick={() => act((d, f) => K.qualify(d, f, l.id))}>Qualify · 180k</Button>}{l.status === "qualified" && <Button size="sm" onClick={() => act((d, f) => K.startPitch(d, f, l.id))}>Prepare pitch · 500k</Button>}{["new", "qualified", "renewal"].includes(l.status) && <Button size="sm" variant="ghost" onClick={() => act((d) => K.decline(d, l.id))}>Decline</Button>}</div></div>)}
       </>}
       {tab==="teams"&&<ClientTeamBoard onPeople={()=>setTab("people")}/>}
@@ -166,17 +204,18 @@ void ceoRoles;
 
 function PitchBox() {
   const p = useGame((x) => x.ceo!.pitch!);
+  const lead = useGame((x) => x.ceo?.leads.find(l=>l.id===p.id));
   const opts = { focus: ["performance", "creative", "cost", "strategy"], evidence: ["research", "portfolio"], team: ["balanced", "specialist", "lean"], price: ["standard", "premium", "discount"] } as const;
   return <div className="mt-event-room"><GameSection eyebrow="COMPETITIVE PITCH" title={"Boardroom · "+p.id} icon={<BriefcaseBusiness size={22}/>} sub="Evidence, creative angle, team and pricing change your chance of winning."/>
-    {p.step === "prepare" && <>{(Object.keys(opts) as (keyof typeof opts)[]).map((k) => <div key={k}><div className="text-xs capitalize">{k}</div><div className="flex flex-wrap gap-1">{opts[k].map((v) => <button key={v} onClick={() => act((d) => K.setPitch(d, k, v))} className={`rounded-full px-2 py-0.5 text-xs ${p[k] === v ? "bg-primary text-primary-foreground" : "bg-muted"}`}>{v}</button>)}</div></div>)}<Button className="w-full" onClick={() => act(K.presentPitch)}>Present pitch · 600k</Button></>}
+    {p.step === "prepare" && <>{(Object.keys(opts) as (keyof typeof opts)[]).map((k) => <div key={k}><div className="text-xs capitalize">{k}</div><div className="flex flex-wrap gap-1">{opts[k].map((v) => <button key={v} onClick={() => act((d) => K.setPitch(d, k, v))} className={`rounded-full px-2 py-0.5 text-xs ${p[k] === v ? "bg-primary text-primary-foreground" : "bg-muted"}`}>{v}</button>)}</div></div>)}<Row k="Proposed agency fee" v={lead?money(K.pitchFee(lead,p)):"—"}/><AIPriceCard leadId={p.id} canQuote/><Button className="w-full" onClick={() => act(K.presentPitch)}>Present pitch · 600k</Button></>}
     {p.step === "objection" && <><p className="text-sm">Objection: {p.objection}</p><div className="grid grid-cols-2 gap-2">{[["evidence", "Show evidence"], ["cut", "Offer fee cut"], ["creative", "Show creative"], ["promise", "Promise results"]].map(([a, t]) => <Button key={a} size="sm" variant="outline" onClick={() => act((d) => K.answerPitch(d, a))}>{t}</Button>)}</div></>}
     {p.step === "result" && p.result && <><p className="text-sm">You {p.result.playerScore} vs {p.result.topRival} {p.result.topScore}. {p.result.explanation}</p>{p.result.winner === "player" ? <Button className="w-full" onClick={() => act(K.beginNegotiation)}>Negotiate contract</Button> : <Button className="w-full" variant="outline" onClick={() => act(K.closePitch)}>Close</Button>}</>}
   </div>;
 }
 function NegBox() {
   const s = useGame((x) => x); const n = s.ceo!.negotiation!; const l = s.ceo!.leads.find((x) => x.id === n.id)!; const t = K.terms(s, n, l);
-  return <div className="mt-event-room"><GameSection eyebrow="CONTRACT NEGOTIATION" title={"Round "+n.round} icon={<Handshake size={22}/>} sub="Price, scope, terms and trust determine whether the client signs."/><Row k="Fee" v={money(n.fee)} /><Row k="Scope / advance / days" v={`${n.scope} / ${n.advance}% / ${n.deadline}`} /><Row k="Forecast margin" v={money(t.margin)} /><Row k="Signing chance" v={`${t.prob}%`} />
-    <div className="max-h-24 overflow-auto text-xs text-muted-foreground">{n.notes.map((x, i) => <div key={i}>{x}</div>)}</div>
+  return <div className="mt-event-room"><GameSection eyebrow="CONTRACT NEGOTIATION" title={"Round "+n.round} icon={<Handshake size={22}/>} sub="Price, scope, terms and trust determine whether the client signs."/><Row k="Fee" v={money(n.fee)} /><Row k="Client media budget" v={money(l.value)} /><Row k="Scope / advance / days" v={`${n.scope} / ${n.advance}% / ${n.deadline}`} /><Row k="Forecast margin" v={money(t.margin)} /><Row k="Signing chance" v={`${t.prob}%`} />
+    <AIPriceCard leadId={l.id}/><div className="max-h-24 overflow-auto text-xs text-muted-foreground">{n.notes.map((x, i) => <div key={i}>{x}</div>)}</div>
     {n.status === "open" ? <div className="grid grid-cols-2 gap-2">{[["maintain", "Hold terms"], ["discount", "−9% fee"], ["scope", "Cut scope"], ["bonus", "KPI bonus"], ["advance", "Lower advance"], ["deadline", "+5 days"], ...(n.counter ? [["accept", "Accept counter"]] : []), ["walk", "Walk away"]].map(([a, x]) => <Button key={a} size="sm" variant={a === "accept" ? "default" : "outline"} onClick={() => act((d, f) => K.counter(d, f, a))}>{x}</Button>)}</div>
       : <Button className="w-full" variant="outline" onClick={() => act(K.closeNegotiation)}>Close ({n.status})</Button>}
   </div>;
