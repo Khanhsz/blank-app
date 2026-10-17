@@ -6,6 +6,7 @@ import * as THREE from "three";
 import type {DistrictKind} from "@/game/city";
 import {AssetRegistry} from "./AssetRegistry";
 import {DistrictManager,ChunkManager} from "./AssetDistrict";
+import {CityPerfProbe} from "./CityPerfProbe";
 import type {SceneId,Character,RoomStyle} from "@/game/state";
 
 export interface District {id:string;name:string;kind:DistrictKind;district?:string;occupied?:boolean;tier?:number;x:number;z:number;w:number;d:number;h:number;color:string;locked:boolean}
@@ -343,6 +344,7 @@ export function WorldScene({scene,districts,selected,onSelect,onComputerInteract
   <directionalLight position={[-12,9,-17]} intensity={city?.5:.65} color={city?"#c2d0d4":"#aeced3"}/>
   {city?<City districts={memoDistricts} selected={selected} onSelect={onSelect} c={character} touch={moveInput} position={playerPosition} active={playerActive} quality={quality}/>:scene==="room"?<Room r={room} c={character} onComputerInteract={onComputerInteract} onRoomInteract={onRoomInteract} preview={preview} avatarYaw={avatarYaw}/>:<Office c={character} staff={staff} board={scene==="boardroom"} name={officeName} capacity={officeCapacity}/>}
   {quality==="high"&&!city&&scene==="room"&&<ContactShadows scale={14} opacity={.2} blur={2.8} far={8} position={[0,-.02,0]}/>}
+  {city&&<CityPerfProbe/>}
   <CameraRig scene={scene} districts={memoDistricts} selected={selected} focus={focus} preview={preview} avatarZoom={avatarZoom} player={playerPosition} playerActive={playerActive}/>
  </Canvas>;
 }
