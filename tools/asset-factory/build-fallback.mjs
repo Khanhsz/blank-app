@@ -90,8 +90,12 @@ export function parseGLB(buffer){
 function main(){
  fs.mkdirSync(dest,{recursive:true});
  const ids=new Set(),out=[],qa=[];let extraTierFiles=0,extraTierBytes=0,extraTierTris=0;
+ const sampleOnly=process.argv.includes("--sample");
+ const representativeIds=new Set(["office-brick","client-bloom","rival-muse","creative","arts-residence-a","office-tower"]);
+ const chosen=sampleOnly?cfg.masters.filter(x=>representativeIds.has(x.id)):cfg.masters;
+ if(sampleOnly&&chosen.length!==representativeIds.size)throw Error("Incomplete six-asset PBR QA sample");
  if(cfg.masters.length!==cfg.auditedBuildingCount||cfg.masters.length!==41)throw Error("Incomplete whole-city manifest; expected all audited building instances");
- for(const a of cfg.masters){
+ for(const a of chosen){
   if(ids.has(a.id))throw Error("Duplicate ID: "+a.id);ids.add(a.id);
   if(!Number.isInteger(a.seed)||a.width<=0||a.height<=0||a.depth<=0||a.floors<1)throw Error("Invalid asset spec "+a.id);
   const lod={};for(const mode of [0,1]){
@@ -141,6 +145,11 @@ function main(){
    archetype:a.id==="office-brick"?BRICKHOUSE_ARCHETYPE:a.archetype,roof:a.roof,facade:a.facade,entrance:a.entrance,variant:a.variant,
    advertisingSlots:a.id==="office-brick"?brickhouseSlots(a):cityMediaSlots(a),
    migrationStatus:"replaced",verificationStatus:"binary-pass-browser-pending",materialSystem:MATERIAL_SYSTEM_VERSION,lod,tierLOD:tiers,palette:a.palette});
+ }
+ if(sampleOnly){
+  if(out.length!==6||qa.some(x=>x.highTriangles>1800))throw Error("Six-asset material slice failed");
+  console.log("PBR REPRESENTATIVE SLICE",JSON.stringify({validatedMasters:6,generatedPrimaryGLBs:12,representativeIds:[...representativeIds],materialSystem:MATERIAL_SYSTEM_VERSION}));
+  return;
  }
  for(const d of cfg.decorativePlacements)if(!ids.has(d.id))throw Error("Missing placement asset "+d.id);
  const manifest={schemaVersion:2,version:cfg.version,district:cfg.district,units:"meters",up:"Y",front:"+Z",source:"web-fallback-not-blender",
