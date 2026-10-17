@@ -6,7 +6,7 @@ import {PHASES,PHASE_LABEL} from "@/game/state";
 
 export const mtEase=[.22,1,.36,1] as const;
 export const mtMotion={micro:.16,panel:.38,scene:.75};
-export function GameSection({eyebrow,title,sub,icon,children}: {eyebrow:string;title:string;sub?:string;icon?:ReactNode;children:ReactNode}){
+export function GameSection({eyebrow,title,sub,icon,children}: {eyebrow:string;title:string;sub?:string;icon?:ReactNode;children?:ReactNode}){
  return <section className="mt-game-section"><div className="mt-section-head">{icon&&<span className="mt-section-symbol">{icon}</span>}<div><small>{eyebrow}</small><h3>{title}</h3>{sub&&<p>{sub}</p>}</div></div>{children}</section>;
 }
 const icons=[FileCheck2,FlaskConical,Users,ShieldCheck,Target,Lightbulb,Clapperboard,Radio,Activity] as const;
