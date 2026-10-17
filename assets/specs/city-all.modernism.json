@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "version": "modernist-city-v2",
+  "version": "modernist-city-v3-pbr",
   "district": "Marketing City",
   "source": "src/game/city.ts + WorldScene.tsx ambient grid + curated architecture",
   "units": "m",
