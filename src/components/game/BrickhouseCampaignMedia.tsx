@@ -48,11 +48,11 @@ export function BrickhouseCampaignMedia({b,lod,onSelect}:{b:District;lod:0|1;onS
  useEffect(()=>()=>{lettering?.dispose()},[lettering]);
  // Slot dimensions correspond to architectural housings exported in GLB.
  return <group name="BRICKHOUSE_STUDIO_MEDIA">
-  {anchors.dooh&&creative&&<mesh name="brickhouse-dooh-main" position={[anchors.dooh.x,anchors.dooh.y,anchors.dooh.z+.06]}>
+  {anchors.dooh&&creative&&<mesh name="brickhouse-dooh-main" position={[anchors.dooh.x,anchors.dooh.y,anchors.dooh.z+.23]}>
    <planeGeometry args={[b.w*.416,b.h*.125]}/>
    <meshBasicMaterial map={creative} toneMapped={false} side={THREE.FrontSide}/>
   </mesh>}
-  {anchors.ooh&&creative&&<mesh name="brickhouse-ooh-parapet" position={[anchors.ooh.x,anchors.ooh.y,anchors.ooh.z+.085]}>
+  {anchors.ooh&&creative&&<mesh name="brickhouse-ooh-parapet" position={[anchors.ooh.x,anchors.ooh.y,anchors.ooh.z+.16]}>
    <planeGeometry args={[b.w*.398,.75]}/>
    <meshBasicMaterial map={creative} toneMapped={false}/>
   </mesh>}
