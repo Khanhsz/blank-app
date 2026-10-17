@@ -1,6 +1,6 @@
 /** Read-only AI pricing intelligence. Client and game rules remain authoritative. */
 import {forecast} from "./ceo";
-import {buildPriceAdvice} from "../../marketing-tycoon-ai-api/pricing.mjs";
+import {buildPriceAdvice,qualificationFee,qualificationDepthOf} from "../../marketing-tycoon-ai-api/pricing.mjs";
 import type {GameState,Lead,PricingAdvice} from "./state";
 
 const API="https://marketing-tycoon-ai-api.onrender.com";
@@ -36,17 +36,37 @@ export function validatedAdvice(raw:unknown,x:PricingContext):PricingAdvice{
  if(!["competitive","balanced","premium"].includes(a.tier)||a.recommendedFee!==a.options[a.tier])throw Error("Invalid AI strategy");
  if(!["gemini","rules"].includes(a.source)||typeof a.rationale!=="string"||!Array.isArray(a.preparation))throw Error("Invalid pricing explanation");
  if(a.recommendedFee<Math.max(0,x.estimatedCost*.8))throw Error("Price is below viable delivery cost");
- return {...a,contextKey:pricingFingerprint(x)};
+ // All VND costs are recalculated from server-shared rules; AI and remote
+ // clients can recommend a diligence level but cannot inject a currency value.
+ const depth=["lean","standard","deep"].includes(a.qualificationDepth??"")?
+   a.qualificationDepth! : qualificationDepthOf(x) as "lean"|"standard"|"deep";
+ return {...a,qualificationDepth:depth,qualificationFee:qualificationFee(x,depth),contextKey:pricingFingerprint(x)};
 }
 /** A fee quote is part of every lead and pitch, even when the AI service is offline.
  * The same bounded formula runs on the server and in the browser.
  */
 export function ensureLocalPricing(s:GameState,l:Lead):PricingAdvice{
  const context=pricingContext(s,l),key=pricingFingerprint(context);
- if(l.pricingAdvice?.contextKey===key)return l.pricingAdvice;
+ if(l.pricingAdvice?.contextKey===key){
+   if(typeof l.pricingAdvice.qualificationFee==="number"&&l.pricingAdvice.qualificationFee>0)return l.pricingAdvice;
+   l.pricingAdvice=validatedAdvice(l.pricingAdvice,context);
+   return l.pricingAdvice;
+ }
  const local=validatedAdvice(buildPriceAdvice(context,null,"rules"),context);
  l.pricingAdvice=local;
  return local;
+}
+
+/** Pure cost quote: usable on Pipeline and Client HQ before the player pays.
+ * It reads an AI depth only if the analysis exactly matches the active lead.
+ * Otherwise it uses the same deterministic local pricing as the remote API.
+ */
+export function qualificationQuote(s:GameState,l:Lead){
+ const context=pricingContext(s,l),key=pricingFingerprint(context);
+ const depth=l.pricingAdvice?.contextKey===key&&
+   ["lean","standard","deep"].includes(l.pricingAdvice?.qualificationDepth??"")
+    ?l.pricingAdvice!.qualificationDepth!:qualificationDepthOf(context);
+ return {fee:qualificationFee(context,depth),depth,source:l.pricingAdvice?.contextKey===key?l.pricingAdvice.source:"rules"};
 }
 
 export async function requestPricingAdvice(x:PricingContext,signal?:AbortSignal):Promise<PricingAdvice>{

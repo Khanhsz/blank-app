@@ -4,6 +4,7 @@
  * "Company size" means inferred campaign scale, not verified company revenue.
  */
 export const PRICE_TIERS=["competitive","balanced","premium"];
+export const QUALIFICATION_DEPTHS=["lean","standard","deep"];
 const amount=(n)=>Math.round(n/100000)*100000;
 const safeText=(x,max=200)=>typeof x==="string"?x.trim().slice(0,max):"";
 const finite=(x,min,max,name)=>{
@@ -30,6 +31,25 @@ export function validatePricingInput(raw){
  };
 }
 export const campaignScale=(budget)=>budget>=1000000000?"national":budget>=400000000?"regional":"growing";
+/** Prospect research and RFP validation costs agency cash, not client media spend.
+ * Calibrated game economy: larger and harder contracts require more due diligence.
+ */
+export function qualificationDepthOf(input){
+ const x=validatePricingInput(input);
+ if(x.businessSize==="enterprise"&&x.scope>=10||x.difficulty>=78)return "deep";
+ if(x.mediaBudget<300000000&&x.scope<=7&&x.difficulty<58)return "lean";
+ return "standard";
+}
+export function qualificationFee(input,depth="standard"){
+ const x=validatePricingInput(input);
+ const selected=QUALIFICATION_DEPTHS.includes(depth)?depth:"standard";
+ const businessSize=x.businessSize??(campaignScale(x.mediaBudget)==="national"?"enterprise":campaignScale(x.mediaBudget)==="regional"?"large":"small");
+ const sizeFactor={small:.86,medium:1,large:1.2,enterprise:1.42}[businessSize];
+ const workload=85000+x.mediaBudget*.00013+Math.max(0,x.scope-4)*17500+
+  x.difficulty*1800+Math.max(0,x.competitorIndex-1)*95000;
+ const depthFactor={lean:.86,standard:1,deep:1.22}[selected];
+ return Math.max(90000,Math.min(1400000,Math.round(workload*sizeFactor*depthFactor/10000)*10000));
+}
 export function priceEnvelope(input){
  const x=validatePricingInput(input);
  const scale=campaignScale(x.mediaBudget);
@@ -59,17 +79,19 @@ export const PRICING_SCHEMA={
  properties:{
   tier:{type:"STRING",enum:PRICE_TIERS},
   headline:{type:"STRING"},
+  qualificationDepth:{type:"STRING",enum:QUALIFICATION_DEPTHS},
   rationale:{type:"STRING"},
   preparation:{type:"ARRAY",minItems:2,maxItems:3,items:{type:"STRING"}}
  },
- required:["tier","headline","rationale","preparation"]
+ required:["tier","qualificationDepth","headline","rationale","preparation"]
 };
 export function pricePrompt(input){
  const x=validatePricingInput(input),bands=priceEnvelope(x);
  return [
   "You advise a FICTIONAL marketing agency in a management simulation. No external market research or real company data is provided.",
   "Select one of the provided bid strategies for the client's REQUEST FOR PROPOSAL, and explain why. Never claim verified company revenue or market prices.",
-  "Return JSON only with tier (competitive|balanced|premium), headline (max 100 chars), rationale (max 400 chars), preparation (2-3 clear actions).",
+  "Return JSON only with tier (competitive|balanced|premium), qualificationDepth (lean|standard|deep), headline (max 100 chars), rationale (max 400 chars), preparation (2-3 clear actions).",
+  "qualificationDepth is the work needed to VALIDATE a prospective client before pitching: stakeholder interviews, budget verification, competitor research and RFP diligence. Recommend deep for high-complexity major accounts and lean for small straightforward briefs.",
   "Keep the advice tied to marketing budget, campaign scope, delivery days, required staffing, target KPI and rival pricing pressure.",
   "DO NOT return any money amounts or winning probabilities; those are computed by the game engine.",
   "Lead: "+JSON.stringify({...x,estimatedCampaignScale:bands.scale,fictionalBusinessSize:bands.businessSize,allowedFeeOptions:bands.options,estimatedSustainableFloor:bands.floor})
@@ -78,6 +100,8 @@ export function pricePrompt(input){
 export function buildPriceAdvice(input,modelResponse=null,source="rules"){
  const x=validatePricingInput(input),bands=priceEnvelope(x);
  const tier=PRICE_TIERS.includes(modelResponse?.tier)?modelResponse.tier:heuristicTier(x);
+ const qualificationDepth=QUALIFICATION_DEPTHS.includes(modelResponse?.qualificationDepth)?modelResponse.qualificationDepth:qualificationDepthOf(x);
+ const qualificationCost=qualificationFee(x,qualificationDepth);
  const headline=safeText(modelResponse?.headline,100)||"Price the pitch around the client's budget and delivery workload";
  const rationale=safeText(modelResponse?.rationale,450)||
    "Compare the media budget, scope and delivery costs. Select a sustainable fee before competing with rival agencies.";
@@ -87,6 +111,6 @@ export function buildPriceAdvice(input,modelResponse=null,source="rules"){
   "Validate specialist capacity, production dependencies and estimated margin.");
  return {leadId:x.leadId,brand:x.brand,mediaBudget:x.mediaBudget,baselineFee:x.baselineFee,
   companyScale:bands.scale,businessSize:bands.businessSize,estimatedCost:x.estimatedCost,feeFloor:bands.floor,feeCeiling:bands.ceiling,
-  options:bands.options,tier,recommendedFee:bands.options[tier],headline,rationale,preparation,
+  options:bands.options,tier,recommendedFee:bands.options[tier],qualificationDepth,qualificationFee:qualificationCost,headline,rationale,preparation,
   risk:bands.risk,source:source==="gemini"?"gemini":"rules"};
 }

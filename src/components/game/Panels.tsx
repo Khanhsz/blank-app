@@ -6,6 +6,7 @@ import {AutomaticBriefNotice,AutomaticBriefWaiting} from "./AIBriefLauncher";
 import { act, useGame } from "@/game/store";
 import * as C from "@/game/campaign";
 import * as K from "@/game/ceo";
+import {qualificationQuote} from "@/game/pricingAdvisor";
 import {tenderFor,marketShare,resolveTalentOffer} from "@/game/rivalAI";
 import { ceoPartners, ceoRoles, creatives, employees, insights, mediaChannels, money, objectives, optimizations, positions, researchOptions, segments, surveyCosts, upgrades, BRAND_HQ_REP, type Channel, type UpgradeId } from "@/game/data";
 import { PHASES, PHASE_LABEL } from "@/game/state";
@@ -49,7 +50,8 @@ export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaig
     const tender=s.ceo?tenderFor(s.ceo,l.id):undefined;
     const activeNegotiation=!!(s.ceo?.negotiation||s.ceo?.pitch);
     const opportunityOpen=status==="new"||status==="renewal";
-    const qualifyAffordable=s.agencyCash>=180000;
+    const quote=live?qualificationQuote(s,live):null;
+    const qualifyAffordable=!!quote&&s.agencyCash>=quote.fee;
     const canPitch=status==="qualified"&&s.agencyCash>=500000&&!activeNegotiation;
     const scope=l.duration+" days · "+l.scope+" workstreams";
     return <div className="mt-city-building-panel">
@@ -59,9 +61,10 @@ export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaig
       {tender?.status==="open"&&<div className="mt-ai-tender-notice"><b>LIVE COMPETITIVE TENDER</b><span>Closes Day {tender.deadline} · Current Day {s.ceo?.day} · Rival bids are active</span></div>}
       <div className="mt-location-stat-grid"><GameStat label="CAMPAIGN BUDGET" value={money(l.value)}/><GameStat label="AGENCY FEE" value={money(l.fee)}/><GameStat label="DIFFICULTY" value={Math.round(l.difficulty)+"/100"}/></div>
       <div className="mt-location-fact"><b>Client requirements</b><p>{l.objective} · {scope}. Preferred capability: {l.pref}. You will compete with other agencies in the city.</p></div>
+      {opportunityOpen&&quote&&<Row k={"Qualification research · "+quote.depth} v={money(quote.fee)}/>}
       {!s.agencyUnlocked?<FeedbackStrip>This is a potential corporate client. Found your own agency to qualify their lead and compete for the account.</FeedbackStrip>:
        <div className="mt-client-actions">
-        {opportunityOpen&&<Button className="w-full" disabled={!qualifyAffordable} onClick={()=>act((d,fx)=>K.qualify(d,fx,l.id))}>Qualify opportunity · 180,000đ</Button>}
+        {opportunityOpen&&<Button className="w-full" disabled={!qualifyAffordable} onClick={()=>act((d,fx)=>K.qualify(d,fx,l.id))}>Qualify opportunity · {money(quote?.fee??0)}</Button>}
         {status==="qualified"&&<Button className="w-full" disabled={!canPitch} onClick={()=>act((d,fx)=>K.startPitch(d,fx,l.id))}>Prepare competitive pitch · 500,000đ</Button>}
         {status==="qualified"&&activeNegotiation&&<FeedbackStrip>Finish your ongoing pitch or negotiation before beginning another.</FeedbackStrip>}
         {!["new","renewal","qualified"].includes(status)&&<FeedbackStrip tone={status==="signed"?"positive":"neutral"}>{status==="signed"?"Contract signed — your staff manage delivery in Agency HQ.":status==="lost"?"This opportunity was won by a rival.":status==="declined"?"You previously declined this account.":status==="pitch"||status==="pitch_won"||status==="negotiating"?"This account is progressing through the boardroom.":"Check the active pipeline for this account."}</FeedbackStrip>}
@@ -121,8 +124,8 @@ export function CEOCommandCenter({onReadEdition}:{onReadEdition?:(id:string)=>vo
         </details>
         {c.pitch && <PitchBox />}
         {c.negotiation && <NegBox />}
-        {!c.pitch && !c.negotiation && c.leads.map((l) => <div key={l.id} className="mt-deal"><div className="flex justify-between"><b>{l.brand}</b><span className="text-xs capitalize text-primary">{l.status.replace("_", " ")}</span></div><p className="text-xs text-muted-foreground">{l.desc}</p><Row k="Service fee" v={money(l.fee)} /><Row k="Rivals" v={l.rivalIds.join(", ")} />{l.insightKnown && <Row k="Client priority" v={l.pref} />}{l.status==="qualified"&&l.pricingAdvice&&<Row k="Cost-aware bid estimate" v={money(l.pricingAdvice.recommendedFee)} />}{tenderFor(c,l.id)?.status==="open"&&<Row k="Tender deadline" v={"Day "+tenderFor(c,l.id)!.deadline}/>}
-          <div className="mt-2 flex gap-2">{["new", "renewal"].includes(l.status) && <Button size="sm" onClick={() => act((d, f) => K.qualify(d, f, l.id))}>Qualify · 180k</Button>}{l.status === "qualified" && <Button size="sm" onClick={() => act((d, f) => K.startPitch(d, f, l.id))}>Prepare pitch · 500k</Button>}{["new", "qualified", "renewal"].includes(l.status) && <Button size="sm" variant="ghost" onClick={() => act((d) => K.decline(d, l.id))}>Decline</Button>}</div></div>)}
+        {!c.pitch && !c.negotiation && c.leads.map((l) => {const quote=qualificationQuote(s,l);return <div key={l.id} className="mt-deal"><div className="flex justify-between"><b>{l.brand}</b><span className="text-xs capitalize text-primary">{l.status.replace("_", " ")}</span></div><p className="text-xs text-muted-foreground">{l.desc}</p><Row k="Service fee" v={money(l.fee)} />{["new","renewal"].includes(l.status)&&<Row k={"Qualify research · "+quote.depth} v={money(quote.fee)}/>}<Row k="Rivals" v={l.rivalIds.join(", ")} />{l.insightKnown && <Row k="Client priority" v={l.pref} />}{l.status==="qualified"&&l.pricingAdvice&&<Row k="Cost-aware bid estimate" v={money(l.pricingAdvice.recommendedFee)} />}{tenderFor(c,l.id)?.status==="open"&&<Row k="Tender deadline" v={"Day "+tenderFor(c,l.id)!.deadline}/>}
+          <div className="mt-2 flex gap-2">{["new", "renewal"].includes(l.status) && <Button size="sm" disabled={s.agencyCash<quote.fee} onClick={() => act((d, f) => K.qualify(d, f, l.id))}>Qualify · {money(quote.fee)}</Button>}{l.status === "qualified" && <Button size="sm" onClick={() => act((d, f) => K.startPitch(d, f, l.id))}>Prepare pitch · 500k</Button>}{["new", "qualified", "renewal"].includes(l.status) && <Button size="sm" variant="ghost" onClick={() => act((d) => K.decline(d, l.id))}>Decline</Button>}</div></div>})}
       </>}
       {tab==="teams"&&<ClientTeamBoard onPeople={()=>setTab("people")}/>}
        {tab==="people"&&<div className="mt-personnel-grid">

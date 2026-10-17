@@ -60,7 +60,7 @@ async function generatePricingAdvice(input){
   const content=result?.candidates?.[0]?.content?.parts?.filter(p=>typeof p.text==="string").map(p=>p.text).join("");
   if(!content)throw Error("Empty Gemini pricing analysis");
   const reasoning=JSON.parse(content);
-  if(!["competitive","balanced","premium"].includes(reasoning.tier)||!Array.isArray(reasoning.preparation)||reasoning.preparation.length<2)throw Error("Invalid pricing recommendation");
+  if(!["competitive","balanced","premium"].includes(reasoning.tier)||!["lean","standard","deep"].includes(reasoning.qualificationDepth)||!Array.isArray(reasoning.preparation)||reasoning.preparation.length<2)throw Error("Invalid pricing recommendation");
   return buildPriceAdvice(x,reasoning,"gemini");
  }catch(error){
   console.warn("AI pricing fallback:",String(error?.message||"upstream unavailable").slice(0,120));

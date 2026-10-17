@@ -53,11 +53,11 @@ export type PriceTier="competitive"|"balanced"|"premium";
 export interface PricingAdvice {
  leadId:string;brand:string;mediaBudget:number;baselineFee:number;
  companyScale:"growing"|"regional"|"national";businessSize?:"small"|"medium"|"large"|"enterprise";estimatedCost:number;feeFloor:number;feeCeiling:number;
- options:Record<PriceTier,number>;tier:PriceTier;recommendedFee:number;
+ options:Record<PriceTier,number>;tier:PriceTier;recommendedFee:number;qualificationDepth?:"lean"|"standard"|"deep";qualificationFee?:number;
  headline:string;rationale:string;preparation:string[];risk:string;
  source:"gemini"|"rules";contextKey?:string;
 }
-export interface Lead extends LeadDef { pricingAdvice?:PricingAdvice; status: "new" | "qualified" | "pitch" | "pitch_won" | "negotiating" | "signed" | "lost" | "declined" | "renewal"; relationship: number; insightKnown?: boolean; lostTo?: string }
+export interface Lead extends LeadDef { pricingAdvice?:PricingAdvice; qualifyFeePaid?:number; qualifyDepthPaid?:"lean"|"standard"|"deep"; status: "new" | "qualified" | "pitch" | "pitch_won" | "negotiating" | "signed" | "lost" | "declined" | "renewal"; relationship: number; insightKnown?: boolean; lostTo?: string }
 export interface Issue { id: string; type: string; project: string; message: string; choices: string[]; status: "open" | "resolved"; day: number; resolution?: string }
 export interface LedgerEntry { day: number; what: string; value: number; lead: string; status: "paid" | "due"; due?: number; project?: string }
 export interface Pitch { id: string; focus: string; price: string; bidFee?:number; priceTier?:PriceTier; priceSelected?:boolean; team: string; evidence: string; step: "prepare" | "objection" | "result"; quality: number; objection: string | null; result: { winner: string; playerScore: number; topRival: string; topScore: number; explanation: string } | null }
