@@ -35,3 +35,18 @@ export function checkRegistry(cityIds:readonly string[]){
  for(const d of AssetRegistry.decorativePlacements)if(!ids.has(d.id)||!entryMap.get(d.id)?.decorative)issues.push("invalid decorative placement: "+d.id);
  return issues;
 }
+
+
+/** Keeps model geometry and independent OOH/DOOH overlays in the same local space. */
+export function assetScale(id:string,size:{w:number;h:number;d:number}):[number,number,number]{
+ const master=AssetRegistry.get(id);
+ if(!master)throw new Error("Unregistered asset "+id);
+ return [size.w/master.width,size.h/master.height,size.d/master.depth];
+}
+
+/** Hysteresis prevents rapid GLB swapping when a camera hovers at the LOD edge. */
+export function selectCityLOD(distance:number,quality:"high"|"low",selected:boolean,previous:0|1):0|1{
+ if(quality==="low")return 1;
+ if(selected)return 0;
+ return distance<(previous===0?76:64)?0:1;
+}

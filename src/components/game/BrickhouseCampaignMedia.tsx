@@ -30,6 +30,7 @@ function createArtwork(headline:string,week:number,brand:string,kind:"digital"|"
  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=2;return tex;
 }
 export function BrickhouseCampaignMedia({b,lod,onSelect}:{b:District;lod:0|1;onSelect:(id:string)=>void}){
+ const masterWidth=AssetRegistry.get(b.id)?.width??b.w;
  const week=useGame(s=>s.ceo?.weekly?.week??1);
  const brand=useGame(s=>s.campaign.aiScenario?.brand||s.ceo?.leads.find(l=>l.status==="signed")?.brand||"BRICKHOUSE");
  const active=brand==="BRICKHOUSE"?"MAKE IDEAS VISIBLE":brand;
@@ -49,15 +50,15 @@ export function BrickhouseCampaignMedia({b,lod,onSelect}:{b:District;lod:0|1;onS
  // Slot dimensions correspond to architectural housings exported in GLB.
  return <group name="BRICKHOUSE_STUDIO_MEDIA">
   {anchors.dooh&&creative&&<mesh name="brickhouse-dooh-main" position={[anchors.dooh.x,anchors.dooh.y,anchors.dooh.z+.23]}>
-   <planeGeometry args={[b.w*.416,b.h*.125]}/>
+   <planeGeometry args={[masterWidth*.416,b.h*.125]}/>
    <meshBasicMaterial map={creative} toneMapped={false} side={THREE.FrontSide}/>
   </mesh>}
   {anchors.ooh&&creative&&<mesh name="brickhouse-ooh-parapet" position={[anchors.ooh.x,anchors.ooh.y,anchors.ooh.z+.16]}>
-   <planeGeometry args={[b.w*.398,.75]}/>
+   <planeGeometry args={[masterWidth*.398,.75]}/>
    <meshBasicMaterial map={creative} toneMapped={false}/>
   </mesh>}
   {anchors.sign&&lettering&&<mesh name="BRICKHOUSE_STUDIOS_SIGN" position={[anchors.sign.x,anchors.sign.y,anchors.sign.z+.060]}>
-   <planeGeometry args={[b.w*.439,.48]}/>
+   <planeGeometry args={[masterWidth*.439,.48]}/>
    <meshBasicMaterial map={lettering} toneMapped={false}/>
   </mesh>}
   {anchors.activation&&<group name="brickhouse-activation" position={[anchors.activation.x,0,anchors.activation.z]}>

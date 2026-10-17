@@ -7,6 +7,7 @@ import type {DistrictKind} from "@/game/city";
 import {AssetRegistry} from "./AssetRegistry";
 import {DistrictManager,ChunkManager} from "./AssetDistrict";
 import {CityPerfProbe} from "./CityPerfProbe";
+import {CityRoadMarkings} from "./CityRoadMarkings";
 import type {SceneId,Character,RoomStyle} from "@/game/state";
 
 export interface District {id:string;name:string;kind:DistrictKind;district?:string;occupied?:boolean;tier?:number;x:number;z:number;w:number;d:number;h:number;color:string;locked:boolean}
@@ -73,19 +74,17 @@ function RoadNetwork(){
  return <group>
   {roadsZ.map(z=><group key={"street-"+z}>
    <Box p={[0,.026,z]} size={[128,.075,4.3]} color="#65615e"/>
-   {Array.from({length:24},(_,i)=><Box key={i} p={[-61+i*5.3,.068,z]} size={[2.2,.012,.07]} color="#eee2cd"/>)}
+
    <Box p={[0,.09,z+2.52]} size={[128,.14,.42]} color="#efe6da"/>
    <Box p={[0,.09,z-2.52]} size={[128,.14,.42]} color="#efe6da"/>
   </group>)}
   {roadsX.map(x=><group key={"avenue-"+x}>
    <Box p={[x,.032,0]} size={[4.3,.075,107]} color="#65615e"/>
-   {Array.from({length:20},(_,i)=><Box key={i} p={[x,.07,-49+i*5.15]} size={[.08,.016,1.9]} color="#f1e6d4"/>)}
+
    <Box p={[x+2.52,.095,0]} size={[.42,.15,107]} color="#eee2d4"/>
    <Box p={[x-2.52,.095,0]} size={[.42,.15,107]} color="#eee2d4"/>
   </group>)}
-  {roadsX.flatMap(x=>roadsZ.map(z=><group key={x+"-"+z}>
-   {[-1.15,-.52,.12,.76].map((a,i)=><Box key={i} p={[x+a,.115,z+3.15]} size={[.25,.016,.75]} color="#f1eadd"/>)}
-  </group>))}
+  <CityRoadMarkings roadsX={roadsX} roadsZ={roadsZ}/>
   <Box p={[0,.11,0]} size={[12,.19,11]} color="#d3c3ad"/>
   <Box p={[0,.28,0]} size={[10,.17,8.5]} color="#9eb49b"/>
   <mesh position={[0,.53,0]} castShadow><cylinderGeometry args={[2.2,2.35,.35,12]}/><meshStandardMaterial color="#ead6c0" {...flat}/></mesh>
