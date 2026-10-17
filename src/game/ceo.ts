@@ -7,7 +7,6 @@ import { ceoRand } from "./data";
 import {currentOffice} from "./city";
 import {runRivalAgents,ensureTender,rivalBidScore,registerRivalWin,resolveTalentOffer} from "./rivalAI";
 
-export const SECONDS_PER_DAY = 2.2;
 const OVERHEAD = 160000;
 
 export function ceoInit(s: GameState): CEO | null {
@@ -49,9 +48,10 @@ function schedulePayment(c: CEO, p: Project, amount: number, delay: number, what
 }
 
 /** Called by the shared game clock. Returns number of simulated days. */
+/** Explicit simulator entry for tests and manual advancement. Never called by a wall-clock timer. */
 export function ceoTick(s: GameState, fx: Fx, days: number) {
-  const c = ceoInit(s); if (!c || !c.speed) return;
-  for (let i = 0; i < days; i++) { ceoDay(s, c, fx); if (!c.speed) break; }
+  const c = ceoInit(s); if (!c) return;
+  for (let i = 0; i < Math.min(7,Math.max(0,Math.floor(days))); i++) ceoDay(s,c,fx);
 }
 
 export function ceoDay(s: GameState, c: CEO, fx: Fx) {
@@ -152,7 +152,7 @@ export function setSpeed(s: GameState, speed: number) { const c = ceoInit(s); if
 export function qualify(s: GameState, fx: Fx, id: string) {
   const c = ceoInit(s)!, l = lead(c, id); if (!l || !["new", "renewal"].includes(l.status)) return;
   if (s.agencyCash < 180000) return fx.toast("Not enough cash to qualify this lead");
-  s.agencyCash -= 180000; ledger(c, "Lead qualification cost", -180000, l.brand); l.status = "qualified"; l.insightKnown = true; c.day++; fx.log("Qualified opportunity · " + l.brand);
+  s.agencyCash -= 180000; ledger(c, "Lead qualification cost", -180000, l.brand); l.status = "qualified"; l.insightKnown = true; fx.log("Qualified opportunity · " + l.brand);
 }
 export function decline(s: GameState, id: string) { const l = lead(ceoInit(s)!, id); if (l && ["new", "qualified", "renewal"].includes(l.status)) l.status = "declined"; }
 export function startPitch(s: GameState, fx: Fx, id: string) {
@@ -172,7 +172,7 @@ export function presentPitch(s: GameState) {
   p.quality = clamp(27 + focus + evidence + team + cap * 0.31 + scale + s.reputation / 12 + currentOffice(s).prestige * 0.7 - l.difficulty * 0.17, 15, 98);
   p.step = "objection";
   p.objection = l.pref === "cost" ? "The CFO demands a fee cut of at least 10%." : l.pref === "creative" ? "The Brand Director doubts your creative differentiation." : "The Marketing Director wants clearer KPIs and measurement.";
-  s.agencyCash -= 600000; ledger(c, "Pitch presentation & materials", -600000, l.brand); c.day += 2;
+  s.agencyCash -= 600000; ledger(c, "Pitch presentation & materials", -600000, l.brand);
 }
 export function answerPitch(s: GameState, answer: string) {
   const c = ceoInit(s)!, p = c.pitch, l = p && lead(c, p.id); if (!l || !p || p.step !== "objection") return;
@@ -208,7 +208,7 @@ export function counter(s: GameState, fx: Fx, action: string) {
   if (action === "bonus") { n.fee = Math.round(n.fee * 0.94); n.bonus += Math.round(l.fee * 0.1); n.trust += 3; n.notes.push("Fixed fee −6%, added KPI-risk bonus."); }
   if (action === "advance") { n.advance = Math.max(10, n.advance - 10); n.trust += 4; n.notes.push("Lowered advance payment; cash-flow risk rises."); }
   if (action === "deadline") { n.deadline += 5; n.trust -= 2; n.notes.push("Proposed +5 days delivery time."); }
-  n.round++; c.day++;
+  n.round++;
   const ch = terms(s, n, l), roll = ceoRand(l.id + "neg" + n.round + action + Math.round(n.fee / 1e6));
   if (roll < ch.prob / 100 && n.round >= 3) return sign(s, fx);
   if (n.round >= 5 || n.trust < 20) { n.status = "lost"; l.status = "lost"; n.notes.push("No agreement; client went another way.");registerRivalWin(s,c,l.id,l.rivalIds[0],"negotiation failure"); return; }
