@@ -1,11 +1,11 @@
-import { ceoLeadDefs, ceoRivalDefs, type Channel, type LeadDef, type Rival } from "./data";
+import { ceoLeadDefs, ceoRivalDefs, type Channel, type LeadDef, type Rival, type Scenario } from "./data";
 
 export type Phase = "brief" | "research" | "survey" | "validation" | "strategy" | "creative" | "media" | "live" | "results";
 export const PHASES: Phase[] = ["brief", "research", "survey", "validation", "strategy", "creative", "media", "live", "results"];
 export const PHASE_LABEL: Record<Phase, string> = { brief: "Brief", research: "Research", survey: "Survey", validation: "Validate", strategy: "Strategy", creative: "Creative", media: "Media", live: "Live", results: "Review" };
 
 export interface Campaign {
-  scenarioIndex: number; phase: Phase; day: number; spent: number; research: string[];
+  scenarioIndex: number; aiScenario?: Scenario | null; phase: Phase; day: number; spent: number; research: string[];
   survey: { audience: string; sample: number; question: string } | null; insight: string | null;
   strategy: { segment: string; objective: string; position: string }; creative: string | null;
   media: Record<Channel, number>; optimization: string | null;
@@ -43,7 +43,7 @@ export interface GameState {
 }
 
 export const newCampaign = (i: number): Campaign => ({
-  scenarioIndex: i, phase: "brief", day: 1, spent: 0, research: [], survey: null, insight: null,
+  scenarioIndex: i, aiScenario:null, phase: "brief", day: 1, spent: 0, research: [], survey: null, insight: null,
   strategy: { segment: "students", objective: "visits", position: "study" }, creative: null,
   media: { paid: 0, creator: 0, promo: 0, flyer: 0 }, optimization: null, liveMetrics: null, final: null,
 });
