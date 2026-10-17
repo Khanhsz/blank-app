@@ -6,24 +6,15 @@ import {CityCampaignMedia} from "./CityCampaignMedia";
 import {BrickhouseCampaignMedia} from "./BrickhouseCampaignMedia";
 import type {District} from "./WorldScene";
 
-type Props={building:District;selected:boolean;onSelect:(id:string)=>void;quality:"high"|"low"};
+type Props={building:District;selected:boolean;onSelect:(id:string)=>void};
 class AssetErrorBoundary extends Component<{children:React.ReactNode},{error:boolean}>{
  state={error:false};
  static getDerivedStateFromError(){return {error:true}}
  componentDidCatch(error:Error){console.warn("GLB failed to load; keeping interactive property hitbox without rendering legacy architecture:",error.message)}
  render(){return this.state.error?null:this.props.children}
 }
-/** LOD tracks camera without changing existing CameraControls or world coordinates. */
-export function LODManager({x,z,quality,selected,onLOD}:{x:number;z:number;quality:"high"|"low";selected:boolean;onLOD:(lod:0|1)=>void}){
- const camera=useThree(x=>x.camera);
- let elapsed=0;
- useFrame((_,dt)=>{
-  elapsed+=dt;if(elapsed<.5)return;elapsed=0;
-  const d=Math.hypot(camera.position.x-x,camera.position.z-z,camera.position.y*.66);
-  onLOD(quality==="high"&&(selected||d<66)?0:1);
- });
- return null;
-}
+/** Detailed LOD0 is the ONLY city mesh selected at runtime.
+ * Legacy LOD1 exports may exist on disk but the game never requests them. */
 function ModelGeometry({id,lod,dimensions,height,tier=1}:{id:string;lod:0|1;dimensions:[number,number,number];height:number;tier?:number}){
  // useGLTF delegates loading to GLTFLoader and caches by exact versioned URL.
  const src=AssetRegistry.get(id);
@@ -41,11 +32,10 @@ function BuildingVisual({b,lod,onSelect}:{b:District;lod:0|1;onSelect:(id:string
   {b.id==="office-brick"?<BrickhouseCampaignMedia b={b} lod={lod} onSelect={onSelect}/>:<CityCampaignMedia b={b} lod={lod} onSelect={onSelect}/>}
  </>;
 }
-export function BuildingInteraction({b,selected,onSelect,quality}:{b:District;selected:boolean;onSelect:(id:string)=>void;quality:"high"|"low"}){
+export function BuildingInteraction({b,selected,onSelect}:{b:District;selected:boolean;onSelect:(id:string)=>void}){
  const [hot,setHot]=useState(false);
  const [near,setNear]=useState(false);
  const camera=useThree(s=>s.camera);
- const [lod,setLod]=useState<0|1>(quality==="high"&&selected?0:1);
  const onHover=(yes:boolean)=>{setHot(yes);document.body.style.cursor=yes?"pointer":"auto"};
  useEffect(()=>()=>{document.body.style.cursor="auto"},[]);
  // At high-angle city overview, do not draw 27 overlapping HTML nameplates.
@@ -61,10 +51,9 @@ export function BuildingInteraction({b,selected,onSelect,quality}:{b:District;se
  });
  const showLabel=selected||hot||near||b.occupied||(b.id==="agency"&&!b.locked);
  return <group position={[b.x,0,b.z]}>
-  <LODManager x={b.x} z={b.z} quality={quality} selected={selected} onLOD={next=>setLod(prev=>prev===next?prev:next)}/>
-  <AssetErrorBoundary key={AssetRegistry.url(b.id,lod,b.tier)}>
+  <AssetErrorBoundary key={AssetRegistry.url(b.id,0,b.tier)}>
    <Suspense fallback={null}>
-    <BuildingVisual b={b} lod={lod} onSelect={onSelect}/>
+    <BuildingVisual b={b} lod={0} onSelect={onSelect}/>
    </Suspense>
   </AssetErrorBoundary>
   {/* Invisible raycast collider. Game interaction is routed through the original b.id. */}
@@ -96,19 +85,17 @@ export function SafeAssetBuilding(props:Props){
    <Html position={[0,1.8,0]} center><button className="world-building-label" type="button" onClick={()=>props.onSelect(props.building.id)}>{props.building.name}</button></Html>
   </group>;
  }
- return <BuildingInteraction b={props.building} selected={props.selected} onSelect={props.onSelect} quality={props.quality}/>;
+ return <BuildingInteraction b={props.building} selected={props.selected} onSelect={props.onSelect}/>;
 }
-function SceneryModel({id,x,z,quality}:{id:string;x:number;z:number;quality:"high"|"low"}){
+function SceneryModel({id,x,z}:{id:string;x:number;z:number}){
  const entry=AssetRegistry.get(id);
- const [lod,setLod]=useState<0|1>(1);
  if(!entry||!entry.decorative)return null;
  return <group position={[x,0,z]}>
-  <LODManager x={x} z={z} quality={quality} selected={false} onLOD={next=>setLod(prev=>prev===next?prev:next)}/>
-  <ModelGeometry id={id} lod={lod} height={entry.height} dimensions={[entry.width,entry.height,entry.depth]}/>
+  <ModelGeometry id={id} lod={0} height={entry.height} dimensions={[entry.width,entry.height,entry.depth]}/>
  </group>;
 }
 /** Chunks are keyed by block. Unload invisible distant decorative assets. */
-export function ChunkManager({quality}:{quality:"high"|"low"}){
+export function ChunkManager(){
  const camera=useThree(s=>s.camera);
  const [loaded,setLoaded]=useState<Set<string>>(()=>new Set(AssetRegistry.decorativePlacements.map(p=>p.id)));
  let elapsed=0;
@@ -118,10 +105,10 @@ export function ChunkManager({quality}:{quality:"high"|"low"}){
   setLoaded(prev=>prev.size===next.size&&[...prev].every(x=>next.has(x))?prev:next);
  });
  return <group name="MT_CITY_DECORATIVE_CHUNK">{AssetRegistry.decorativePlacements.filter(p=>loaded.has(p.id)).map(p=><AssetErrorBoundary key={p.id}>
-  <Suspense fallback={null}><SceneryModel id={p.id} x={p.x} z={p.z} quality={quality}/></Suspense>
+  <Suspense fallback={null}><SceneryModel id={p.id} x={p.x} z={p.z}/></Suspense>
  </AssetErrorBoundary>)}</group>;
 }
 /** Stable bridge between map entities and the GLB presentation layer. */
-export function DistrictManager({districts,onSelect,selected,quality}:{districts:District[];onSelect:(id:string)=>void;selected:string|null;quality:"high"|"low"}){
- return <group name="MT_CITY_DISTRICTS">{districts.map(b=><SafeAssetBuilding key={b.id} building={b} selected={selected===b.id} onSelect={onSelect} quality={quality}/>)}</group>;
+export function DistrictManager({districts,onSelect,selected}:{districts:District[];onSelect:(id:string)=>void;selected:string|null}){
+ return <group name="MT_CITY_DISTRICTS">{districts.map(b=><SafeAssetBuilding key={b.id} building={b} selected={selected===b.id} onSelect={onSelect}/>)}</group>;
 }
