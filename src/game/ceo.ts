@@ -7,6 +7,7 @@ import { ceoRand } from "./data";
 import {currentOffice} from "./city";
 import {runRivalAgents,ensureTender,rivalBidScore,registerRivalWin,resolveTalentOffer} from "./rivalAI";
 import {candidatesForRole} from "./functions";
+import {reconcileProjectMedia} from "./projectMedia";
 
 const OVERHEAD = 160000;
 
@@ -103,26 +104,14 @@ function progressProject(s: GameState, c: CEO, p: Project, fx: Fx) {
   if (p.tasks.every((t) => t.status === "completed") && p.days >= Math.max(10, Math.floor(p.duration * 0.6))) finishProject(s, c, p, fx);
 }
 
-/** Keep contracted client media spend, booked mix and simulation inputs aligned. */
-function syncProjectMedia(p: Project) {
-  const c=p.campaign;
-  if(!c.mediaBooked)return;
-  const total=clamp(Math.round(p.mediaSpent),0,Math.max(0,p.adBudget));
-  const paid=Math.round(total*.46),creator=Math.round(total*.34),promo=Math.round(total*.13);
-  c.media={paid,creator,promo,flyer:total-paid-creator-promo};
-  c.mediaBudget=p.adBudget;
-  c.spent=total;
-  p.mediaSpent=total;
-  p.mediaReserved=Math.max(0,p.adBudget-total);
-}
 function applyTask(p: Project, t: Task) {
   const co = p.campaign, sc = scenarios[p.scenarioIndex];
   if (t.key === "research") { co.research = ["audit", "reviews", "interview"]; co.survey = { audience: sc.trueSegment, sample: 120, question: "barrier" }; co.insight = t.quality >= 64 ? sc.trueInsight : "value"; co.phase = "planning"; }
   if (t.key === "strategy") { co.strategy = { segment: t.quality >= 65 ? sc.trueSegment : "everyone", objective: sc.trueObjective, position: t.quality >= 65 ? sc.truePosition : "budget" }; co.phase = "executing"; }
   if (t.key === "creative") { co.creative = t.quality >= 68 ? sc.trueCreative : "discount"; co.phase = "executing"; }
-  if (t.key === "media") { co.mediaBooked=true; p.mediaSpent=Math.round(p.adBudget*(p.kolQuality===undefined?.88:.94)); syncProjectMedia(p); }
+  if (t.key === "media") { co.mediaBooked=true; p.mediaSpent=Math.round(p.adBudget*(p.kolQuality===undefined?.88:.94)); reconcileProjectMedia(p); }
   if (t.key === "production") { co.productionReadyDay=p.startedDay+p.days; }
-  if (t.key === "kol") { p.kolQuality=t.quality; if(co.mediaBooked){p.mediaSpent=Math.round(p.adBudget*.94);syncProjectMedia(p);} }
+  if (t.key === "kol") { p.kolQuality=t.quality; if(co.mediaBooked){p.mediaSpent=Math.round(p.adBudget*.94);reconcileProjectMedia(p);} }
   if (t.key === "analytics") { p.reportQuality = t.quality; co.optimization = "retarget"; co.phase = "results"; }
 }
 
