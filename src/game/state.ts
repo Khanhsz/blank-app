@@ -34,11 +34,11 @@ export type SceneId = "room" | "city" | "office" | "boardroom";
 export interface Character { name: string; skin: string; outfit: string; hair: string; interest: string; hairstyle?: "short"|"curly"|"bun"; accessory?: "none"|"headphones"|"glasses" }
 export interface RoomStyle { wall: string; rug: string; plant: boolean; lamp: boolean; shelf: boolean }
 
-export interface WorldProgress {visited:string[];contacts:string[]}
+export interface WorldProgress {visited:string[];contacts:string[];leasedOffices:string[]}
 export interface GameState {
   version: 2; created: boolean; character: Character; room: RoomStyle; scene: SceneId;
   reputation: number; expertise: number; personalCash: number; agencyCash: number; agencyUnlocked: boolean; agencyName: string;
-  staff: string[]; upgrades: string[]; cityUnlocked: boolean; campaign: Campaign;
+  staff: string[]; upgrades: string[]; cityUnlocked: boolean; campaign: Campaign; officeId:string;
   world: WorldProgress;
   history: { brand: string; outcome: number; score: number; spent: number; rep: number; xp: number; scenarioIndex: number; agency: boolean }[];
   log: { t: number; msg: string }[]; graphics: "high" | "low"; ceo: CEO | null;
@@ -57,7 +57,7 @@ export const defaults = (): GameState => ({
   character: { name: "Alex", skin: "#d6a681", outfit: "#4c9589", hair: "#352824", interest: "Strategy", hairstyle:"short", accessory:"none" },
   room: { wall: "#efe4d3", rug: "#bd694a", plant: true, lamp: true, shelf: false },
   scene: "room", reputation: 0, expertise: 0, personalCash: 2500000, agencyCash: 0, agencyUnlocked: false, agencyName: "",
-  staff: [], upgrades: [], cityUnlocked: false, campaign: newCampaign(0), world:{visited:[],contacts:[]}, history: [], log: [], graphics: "high", ceo: null,
+  staff: [], upgrades: [], cityUnlocked: false, campaign: newCampaign(0), officeId:"agency", world:{visited:[],contacts:[],leasedOffices:[]}, history: [], log: [], graphics: "high", ceo: null,
 });
 
 export const newCEO = (reputation: number): CEO => ({
@@ -82,9 +82,10 @@ export function migrate(raw: unknown): GameState {
     character: { ...d.character, ...(s.character ?? {}) },
     room: { ...d.room, ...(s.room ?? {}) },
     campaign: { ...newCampaign(0), ...s.campaign },
+    officeId:typeof s.officeId==="string"?s.officeId:"agency",
     staff: Array.isArray(s.staff) ? s.staff : [], upgrades: Array.isArray(s.upgrades) ? s.upgrades : [],
     history: Array.isArray(s.history) ? s.history : [],
-    world:{visited:Array.isArray(s.world?.visited)?s.world.visited.filter((x):x is string=>typeof x==="string"):[],contacts:Array.isArray(s.world?.contacts)?s.world.contacts.filter((x):x is string=>typeof x==="string"):[]},
+    world:{visited:Array.isArray(s.world?.visited)?s.world.visited.filter((x):x is string=>typeof x==="string"):[],contacts:Array.isArray(s.world?.contacts)?s.world.contacts.filter((x):x is string=>typeof x==="string"):[],leasedOffices:Array.isArray(s.world?.leasedOffices)?s.world.leasedOffices.filter((x):x is string=>typeof x==="string"):[]},
     log: Array.isArray(s.log) ? (s.log as unknown[]).map((l) => (typeof l === "string" ? { t: 0, msg: l } : (l as { t: number; msg: string }))) : [],
     ceo: s.ceo ?? null,
   };
