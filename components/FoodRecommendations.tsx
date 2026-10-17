@@ -25,6 +25,7 @@ export default function FoodRecommendations({activity,anchor,onChoose}:Props){
   const [state,setState]=useState<'idle'|'loading'|'ready'|'error'>('idle');
   const [message,setMessage]=useState('');
   const [coverage,setCoverage]=useState('');
+  const [importedAt,setImportedAt]=useState<string|null>(null);
   const [limit,setLimit]=useState(8);
   const [retry,setRetry]=useState(0);
   const key=anchor?anchor.lat.toFixed(5)+':'+anchor.lng.toFixed(5):'none';
@@ -32,7 +33,7 @@ export default function FoodRecommendations({activity,anchor,onChoose}:Props){
     setFilter(looksLikeDrinks(activity)?'drinks':'all');
   },[activity.id]);
   useEffect(()=>{
-    setLimit(8);setCoverage('');
+    setLimit(8);setCoverage('');setImportedAt(null);
     if(!anchor){setVenues([]);setState('idle');setMessage('No mapped location is available for this day. Add coordinates to a nearby itinerary stop to find local venues.');return;}
     const controller=new AbortController();
     setState('loading');setMessage('');
@@ -47,6 +48,7 @@ export default function FoodRecommendations({activity,anchor,onChoose}:Props){
       if(!response.ok)throw Error(data.error||'Could not load nearby venues.');
       setVenues(Array.isArray(data.places)?data.places:[]);
       setCoverage(data.coverageCity ? 'Offline database · '+data.coverageCity : 'Offline database');
+      setImportedAt(typeof data.updatedAt==='string'?data.updatedAt:null);
       setMessage(data.message||'');
       setState('ready');
     }).catch((error:unknown)=>{
@@ -64,8 +66,8 @@ export default function FoodRecommendations({activity,anchor,onChoose}:Props){
       <div className="food-panel-icon"><Utensils size={18}/></div>
       <div><span className="place-kicker">REAL PLACES FROM OPENSTREETMAP</span><h4>Where to eat & drink nearby</h4></div>
     </div>
-    <p className="food-panel-help">Verified OpenStreetMap restaurants and cafes from a local snapshot. No API key, invented ratings, prices or availability.</p>
-    {coverage && <p className="food-anchor">{coverage} · No live lookup required</p>}
+    <p className="food-panel-help">Real OpenStreetMap records (not independently quality-verified) from a local snapshot. No API key, invented ratings, prices or availability.</p>
+    {coverage && <p className="food-anchor">{coverage} · {importedAt?'Snapshot imported '+new Date(importedAt).toLocaleDateString()+' · ':''}No live lookup required</p>}
     {anchor && <p className="food-anchor"><MapPin size={13}/>{anchor.source==='day'?'Searching around another mapped stop on this day':'Searching around this activity’s map pin'} · up to 2.2 km radius</p>}
     <div className="food-filters" role="group" aria-label="Food and drink categories">
       <button type="button" className={filter==='all'?'active':''} aria-pressed={filter==='all'} onClick={()=>{setFilter('all');setLimit(8);}}>All places</button>
@@ -86,6 +88,7 @@ export default function FoodRecommendations({activity,anchor,onChoose}:Props){
           {(venue.localFood||venue.streetFood)&&<div className="food-tags">{venue.localFood&&<span>Local-style food*</span>}{venue.streetFood&&<span>Street-food tag*</span>}</div>}
           {venue.address&&<p className="food-venue-detail"><MapPin size={12}/>{venue.address}</p>}
           {venue.hours&&<p className="food-venue-detail">Listed hours: {venue.hours} (verify before visiting)</p>}
+          <p className="food-source-evidence">OSM ID: {venue.id} · {venue.lat.toFixed(5)}, {venue.lng.toFixed(5)} · Source: OpenStreetMap</p>
         </div>
         <div className="food-venue-actions">
           {onChoose&&<button className="food-use" type="button" onClick={()=>onChoose(activity.id,venue)}><Check size={14}/> Use this place</button>}
