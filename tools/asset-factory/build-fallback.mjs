@@ -74,7 +74,48 @@ function geometry(asset,lod){
     cuboid(w/2+.082,y,z,.1,.78,Math.min(1.4,d*.17),3);
    }
   }
-  // roof HVAC vents, ledges and facade fins for distinctive silhouettes.
+ 
+  // V2 landmarks: recognizable category silhouettes, distinct from legacy box buildings.
+  // Lower facades extend beyond the main structural cuboid but remain in each plot.
+  if(asset.class==="creative_agency"){
+   cuboid(-w*.32,h*.49,d/2+.20,w*.22,h*.68,.42,4); // giant terracotta art fin
+   cuboid(w*.32,h*.36,d/2+.27,w*.16,h*.46,.53,6);
+   cuboid(0,h+.98,0,w*.82,.25,d*.72,4); // visible orange roof frame
+   for(let k=0;k<3;k++)cuboid((k-1)*w*.22,h+1.57,0,w*.17,1.05,d*.47,1); // studio skylights
+  }else if(asset.class==="media_facility"){
+   cuboid(0,h*.63,d/2+.28,w*.83,h*.35,.46,6); // TVC/video wall
+   cuboid(0,h*.63,d/2+.54,w*.75,h*.30,.09,3);
+   cuboid(-w*.43,h*.58,d/2+.52,.22,h*.45,.38,4);
+   cuboid(w*.43,h*.58,d/2+.52,.22,h*.45,.38,4);
+   cuboid(0,h+1.74,0,w*.74,1.10,d*.54,4); // illuminated rooftop screen
+  }else if(asset.class==="rival_agency"){
+   cuboid(-w*.23,h*.78,-d*.18,w*.46,h*.44,d*.52,2); // competing tower wing
+   cuboid(w*.32,h*.64,d/2+.22,w*.19,h*.65,.35,4); // high-contrast rival fin
+   cuboid(0,h+1.85,0,w*.78,1.65,d*.44,6); // iconic sky-bridge cap
+   cuboid(0,h*.60,d/2+.27,w*.80,1.3,.38,4);
+  }else if(asset.class==="corporate_client"){
+   cuboid(-w*.28,h*.47,d/2+.43,w*.26,h*.76,.56,1); // vertical corporate atrium
+   cuboid(w*.28,h*.47,d/2+.43,w*.26,h*.76,.56,1);
+   cuboid(0,h*.76,d/2+.24,w*.72,h*.16,.40,6); // prominent ad wall
+   cuboid(0,h*.76,d/2+.48,w*.62,h*.12,.12,4);
+   cuboid(0,h+1.87,0,w*.77,1.55,d*.57,3); // glass crown
+  }else if(asset.class==="office_property"){
+   cuboid(0,h*.29,d/2+.27,w*.83,2.7,.55,1); // raised front leasing portico
+   cuboid(-w*.42,h*.54,d/2+.27,.25,h*.69,.56,4);
+   cuboid(w*.42,h*.54,d/2+.27,.25,h*.69,.56,4);
+   cuboid(0,h+1.09,0,w*.68,.55,d*.54,4); // roof deck
+  }else if(asset.class==="residential"){
+   cuboid(-w*.28,h*.56,d/2+.24,w*.3,h*.66,.37,1);
+   cuboid(w*.28,h*.56,d/2+.24,w*.3,h*.66,.37,5);
+   cuboid(0,h+1.31,-d*.22,w*.35,.65,d*.25,4);
+  }else if(asset.class==="retail_property"){
+   cuboid(0,h*.38,d/2+.66,w*.85,2.4,1.0,3); // storefront
+   cuboid(0,h*.38,d/2+1.23,w*.75,.3,.2,4); // shop sign
+  }else if(asset.class==="urban_infrastructure"){
+   cuboid(0,h*.55,d/2+.35,w*.70,h*.48,.42,3);
+   cuboid(0,h+1.11,0,w+1,.36,d+.9,4);
+  }
+ // roof HVAC vents, ledges and facade fins for distinctive silhouettes.
   cuboid(-w*.23,h+.76,-d*.24,w*.15,.45,d*.18,6);
   if(asset.class==="rival_agency"||asset.class==="corporate_client"){
    cuboid(-w*.4,h*.62,d/2+.18,.16,h*.48,.25,1);
