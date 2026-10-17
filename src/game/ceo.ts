@@ -7,12 +7,14 @@ import { ceoRand } from "./data";
 import {currentOffice} from "./city";
 import {runRivalAgents,ensureTender,rivalBidScore,registerRivalWin,resolveTalentOffer} from "./rivalAI";
 import {candidatesForRole,primaryRole,eligibleForRole,profile,effectiveCapacity,employeeReadiness,staffRate,defaultProfile,updatePersonnelDay,recordDelivery} from "./personnel";
+import {teamForProject,ownerTeam,startClientTeam,reconcileClientTeams,teamCoverage} from "./clientTeams";
 
 const OVERHEAD = 160000;
 
 export function ceoInit(s: GameState): CEO | null {
   if (!s.agencyUnlocked) return null;
   if (!s.ceo) {s.ceo = newCEO(s.reputation);s.ceo.day=s.clock.day;s.ceo.weekly=s.clock;}
+  if(!s.ceo.clientTeams)reconcileClientTeams(s);
   return s.ceo;
 }
 const lead = (c: CEO, id: string) => c.leads.find((l) => l.id === id);
@@ -35,11 +37,14 @@ export function capacity(c: CEO) {
   return busy;
 }
 const wage = (id: string) => (employeeById(id)?.salary ?? 3000000) / 30;
-export const dailyPayroll = (s: GameState) => s.staff.reduce((a, id) => a + wage(id)*(Object.values(s.teamLeads).includes(id)?1.12:1) + (s.ceo?.salaryPremiums?.[id]??0)/30, 0);
-function available(s:GameState,c:CEO,role:string,preferred?:string|null){
+const isLead=(s:GameState,id:string)=>!!s.ceo?.clientTeams?.some(t=>t.status!=="released"&&t.leadId===id);
+export const dailyPayroll = (s:GameState)=>s.staff.reduce((a,id)=>a+wage(id)*(isLead(s,id)?1.08:1)+(s.ceo?.salaryPremiums?.[id]??0)/30,0);
+function available(s:GameState,c:CEO,p:Project,role:string,preferred?:string|null){
+ const team=teamForProject(s,p);
+ if(!team||team.status!=="active")return null;
  const busy=capacity(c);
- if(preferred)return s.staff.includes(preferred)&&eligibleForRole(preferred,role)&&(busy[preferred]??0)<effectiveCapacity(s,preferred)?preferred:null;
- const staff=candidatesForRole(role).filter(id=>s.staff.includes(id)&&(busy[id]??0)<effectiveCapacity(s,id));
+ if(preferred)return team.memberIds.includes(preferred)&&s.staff.includes(preferred)&&eligibleForRole(preferred,role)&&(busy[preferred]??0)<effectiveCapacity(s,preferred)?preferred:null;
+ const staff=candidatesForRole(role).filter(id=>team.memberIds.includes(id)&&s.staff.includes(id)&&(busy[id]??0)<effectiveCapacity(s,id));
  staff.sort((a,b)=>{
   const score=(id:string)=>Number(primaryRole(id)===role)*23+employeeReadiness(s,id)*.2-(busy[id]??0)*18;
   return score(b)-score(a);
@@ -71,10 +76,18 @@ export function ceoDay(s: GameState, c: CEO, fx: Fx) {
   const officeCost=currentOffice(s).daily;
   s.agencyCash -= officeCost; ledger(c, "Office overhead · "+s.officeId, -officeCost, "agency");
   const active = c.projects.filter((p) => p.status === "active");
-  for (const ap of active) { ap.payrollAllocated = (ap.payrollAllocated || 0) + pay / active.length; ap.overheadAllocated = (ap.overheadAllocated || 0) + officeCost / active.length; }
+  // Attribute salary cost to the actual dedicated team, not an unrelated client.
+  for(const ap of active){
+   const team=teamForProject(s,ap);
+   const sameClient=active.filter(p=>p.teamId===ap.teamId).length||1;
+   const staffing=team?.memberIds.reduce((v,id)=>v+(employeeById(id)?.salary??3000000)/30*(isLead(s,id)?1.08:1)+(c.salaryPremiums?.[id]??0)/30,0)??0;
+   ap.payrollAllocated=(ap.payrollAllocated||0)+staffing/sameClient;
+   ap.overheadAllocated=(ap.overheadAllocated||0)+officeCost/active.length;
+  }
   if (c.day % 30 === 0) for (const pid of c.partners) { const sp = ceoPartners.find((x) => x.id === pid)!; s.agencyCash -= sp.monthly; ledger(c, "Partner retainer · " + sp.name, -sp.monthly, "agency"); }
   const jobs=c.projects.filter(p=>p.status==="active").sort((a,b)=>Number(b.priority==="high")-Number(a.priority==="high") || (a.duration-a.days)-(b.duration-b.days));
   for(const p of jobs){p.days++;p.campaign.day=c.day;progressProject(s,c,p,fx);}
+  reconcileClientTeams(s);
   updatePersonnelDay(s);
   for (const x of c.ledger) if (x.status === "due" && (x.due ?? 0) <= c.day) { x.status = "paid"; s.agencyCash += x.value; c.totalPaid += x.value; issue(c, fx, "payment", x.lead + x.day, `Received ${money(x.value)} from ${x.lead}`, ["acknowledge"]); }
   runRivalAgents(s,c,fx);
@@ -86,9 +99,9 @@ function progressProject(s: GameState, c: CEO, p: Project, fx: Fx) {
   for (const t of p.tasks) {
     if (t.status === "backlog" && t.pre.every((k) => p.tasks.find((q) => q.key === k)?.status === "completed")) { t.status = "assigned"; t.assignedDay = c.day; }
     if (t.status === "assigned") {
-      const m = available(s, c, t.role,t.preferredEmployee);
+      const m = available(s,c,p,t.role,t.preferredEmployee);
       if (m) { t.employee = m; t.status = "in_progress"; t.startedDay = c.day; }
-      else if (!t.outsourced) { issue(c, fx, "capacity", p.id, `No ${ceoRoles[t.role]} free for ${p.brand}. Outsource or hire.`, ["outsource", "wait"]); continue; }
+      else if (!t.outsourced) { issue(c, fx, "capacity", p.id, `Dedicated team for ${p.brand} needs ${ceoRoles[t.role]}. Add a member to its client squad or outsource.`, ["outsource", "wait"]); continue; }
     }
     if (t.status === "in_progress") {
       const primary=primaryRole(t.employee??"")===t.role,crossTrained=eligibleForRole(t.employee??"",t.role);
@@ -158,7 +171,7 @@ export function ceoMigrateLegacy(s: GameState, fx: Fx) {
   const done:Record<string,boolean>={account:phase!=="brief",research:planningDone,strategy:planningDone,creative:liveDone,production:liveDone,media:liveDone,kol:liveDone,operations:phase!=="brief",analytics:false};
   const tasks: Task[] = ceoTaskDefs.map((t) => ({ ...t, status: done[t.key] ? "completed" : "backlog", progress: done[t.key] ? t.effort : 0, quality: done[t.key] ? 76 : 0, employee: done[t.key] ? "legacy" : null, outsourced: false }));
   const p: Project = { id: "legacy-" + ++c.seq, leadId: "legacy", brand: sc.brand, adBudget: sc.budget, fee: sc.fee, bonus: 0, scope: 2, duration: Math.max(14, sc.days), industry: sc.industry, days: Math.max(0, c.day-(old.startedDay??old.day)), status: "active", scenarioIndex: old.scenarioIndex, startedDay: c.day, target: sc.target, pitchQuality: 70, mediaSpent: Math.min(sc.budget, old.spent), mediaReserved: Math.max(0, sc.budget - old.spent), direct: 0, campaign: structuredClone(old), tasks, paymentCount: 0, legacy: true, clientTrust: 60 };
-  c.projects.push(p); schedulePayment(c, p, sc.fee * 0.3, 0, "Migrated client advance");
+  c.projects.push(p);startClientTeam(s,p);schedulePayment(c, p, sc.fee * 0.3, 0, "Migrated client advance");
   const e = c.ledger[0]; e.status = "paid"; c.totalPaid += e.value; s.agencyCash += e.value;
   fx.log(`Handed ${sc.brand} campaign to the agency team. Founder no longer executes tasks.`);
 }
@@ -245,24 +258,41 @@ export function sign(s: GameState, fx: Fx) {
   if (forecast(s, n).margin < 0 && n.round < 3) { issue(c, fx, "bad-margin", l.id, `Proposal risks a loss: ${l.brand}.`, ["review"]); return; }
   n.status = "signed"; l.status = "signed";const tender=ensureTender(c,l);if(tender)tender.status="player";
   const p: Project = { id: "project-" + ++c.seq, leadId: l.id, brand: l.brand, adBudget: l.value, fee: n.fee, bonus: n.bonus, scope: n.scope, duration: n.deadline, industry: l.industry, days: 0, status: "active", scenarioIndex: l.scenario, startedDay: c.day, target: l.target, pitchQuality: c.pitch?.quality || 65, mediaSpent: 0, mediaReserved: l.value, direct: 0, campaign: newCampaign(l.scenario,c.day), tasks: ceoTaskDefs.map((t) => ({ ...t, status: "backlog", progress: 0, quality: 0, employee: null, outsourced: false })), paymentCount: 0 };
-  c.projects.push(p); schedulePayment(c, p, (n.fee * n.advance) / 100, 0, "Contract advance");
+  c.projects.push(p);
+  startClientTeam(s,p);
+  schedulePayment(c, p, (n.fee * n.advance) / 100, 0, "Contract advance");
   const e = c.ledger[0]; e.status = "paid"; c.totalPaid += e.value; s.agencyCash += e.value;
-  fx.log(`Signed ${l.brand} · service fee ${money(n.fee)}`); issue(c, fx, "signed", p.id, `Signed ${l.brand}. The team runs the campaign from tomorrow.`, ["acknowledge"]);
+  fx.log(`Signed ${l.brand} · service fee ${money(n.fee)}`); issue(c, fx, "signed", p.id, `Signed ${l.brand}. Assemble a dedicated client team in Teams before work begins.`, ["acknowledge"]);
   c.pitch = null;
 }
 export function closeNegotiation(s: GameState) { const c = ceoInit(s)!; if (c.negotiation && c.negotiation.status !== "open") { c.negotiation = null; c.pitch = null; } }
 export function resolveIssue(s: GameState, fx: Fx, id: string, choice: string) {
   const c = ceoInit(s)!, i = c.inbox.find((x) => x.id === id); if (!i || i.status !== "open") return; const p = proj(c, i.project);
   if(i.type==="talent-poach"){resolveTalentOffer(s,fx,i.project,choice);return;}
-  if (i.type === "capacity" && p && choice === "outsource") {
-    const t = p.tasks.find((x) => x.status === "assigned" && !x.employee);
-    if (t) { const fee = Math.round(t.cost * 2.1 * (p.scope / 8)); if (s.agencyCash < fee) return fx.toast("Not enough cash to outsource: " + money(fee));
-      s.agencyCash -= fee; p.direct += fee; c.totalDirect += fee; ledger(c, "Outsourced specialist · " + t.label, -fee, p.brand); t.outsourced = true; t.employee = "external"; t.status = "in_progress"; t.startedDay = c.day; t.cost = 0; }
+  if(i.type==="capacity"&&p&&choice==="outsource"){
+    const t=p.tasks.find(x=>x.status==="assigned"&&!x.employee);
+    if(t&&!outsourceTeamTask(s,fx,p.id,t.key))return;
   }
   if (i.type === "deadline" && p) { if (choice === "extend") { p.duration += 6; p.clientTrust = (p.clientTrust || 50) - 4; } else if (choice === "outsource") { p.tasks.filter((t) => t.status === "in_progress").forEach((t) => (t.progress = Math.min(t.effort, t.progress + 1.2))); s.agencyCash -= 850000; ledger(c, "Emergency delivery support", -850000, p.brand); } }
   if (i.type === "renewal" && p) { const ld = lead(c, p.leadId); if (choice === "renew" && ld && (p.clientTrust ?? 0) >= 55) { c.leads.push({ ...ld, id: ld.id + "-renew-" + c.day, status: "renewal", fee: Math.round(ld.fee * 0.88), value: Math.round(ld.value * 0.85), relationship: Math.round(p.clientTrust ?? 55), duration: Math.max(20, ld.duration - 3), scope: Math.max(5, ld.scope - 2) }); fx.toast("Renewal opportunity added to Pipeline"); } else if (choice === "renew") fx.toast("Client isn't satisfied enough to renew."); }
   i.status = "resolved"; i.resolution = choice;
   if (c.speed === 0 && openIssues(c).every((x) => !["capacity", "deadline", "bad-margin", "renewal", "cash", "talent-poach"].includes(x.type))) c.speed = 1;
+}
+/** Explicit outsource option for a dedicated team unable to cover this role. */
+export function outsourceTeamTask(s:GameState,fx:Fx,projectId:string,taskKey:string):boolean{
+ const c=s.ceo,p=c?.projects.find(p=>p.id===projectId&&p.status==="active");
+ const t=p?.tasks.find(t=>t.key===taskKey);
+ if(!c||!p||!t||t.outsourced||!["assigned","backlog"].includes(t.status))return false;
+ if(!t.pre.every(k=>p.tasks.some(other=>other.key===k&&other.status==="completed"))){
+  fx.toast("Complete prerequisite work before outsourcing.");return false;
+ }
+ const fee=Math.round(t.cost*2.1*(p.scope/8));
+ if(s.agencyCash<fee){fx.toast("Not enough cash to outsource: "+money(fee));return false;}
+ s.agencyCash-=fee;p.direct+=fee;c.totalDirect+=fee;
+ ledger(c,"Outsourced specialist · "+t.label,-fee,p.brand);
+ t.outsourced=true;t.employee="external";t.status="in_progress";t.startedDay=c.day;t.preferredEmployee=null;t.cost=0;
+ fx.log("Outsourced "+t.label+" for "+p.brand+" ("+money(fee)+")");
+ return true;
 }
 export function joinPartner(s: GameState, fx: Fx, id: string) {
   const c = ceoInit(s)!, p = ceoPartners.find((v) => v.id === id); if (!p || c.partners.includes(id) || s.agencyCash < p.deposit) return;

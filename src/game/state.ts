@@ -1,4 +1,5 @@
 import { ceoLeadDefs, ceoRivalDefs, type Channel, type LeadDef, type Rival, type Scenario } from "./data";
+import {reconcileClientTeams} from "./clientTeams";
 
 export type Phase = "brief" | "planning" | "executing" | "live" | "results" | "research" | "survey" | "validation" | "strategy" | "creative" | "media";
 export const PHASES: Phase[] = ["planning", "executing", "live", "results"];
@@ -210,6 +211,7 @@ export function migrate(raw: unknown): GameState {
     const priorLeads=Array.isArray(out.ceo.leads)?out.ceo.leads:[];
     const knownIds=new Set(priorLeads.map(l=>l.id));
     out.ceo.leads=[...priorLeads,...base.leads.filter(l=>!knownIds.has(l.id))];
+    reconcileClientTeams(out);
   }
   return out;
 }
