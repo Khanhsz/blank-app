@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { defaults, loadState, persist, migrate, type GameState } from "./state";
+import {captureDecision} from "./weekly";
 
 export interface Fx { toast: (msg: string) => void; log: (msg: string) => void }
 
@@ -26,6 +27,7 @@ export function act(fn: (s: GameState, fx: Fx) => void) {
     log: (m) => { draft.log.unshift({ t: Date.now(), msg: m }); draft.log = draft.log.slice(0, 80); },
   };
   fn(draft, fx);
+  captureDecision(state,draft);
   state = draft;
   persist(state);
   listeners.forEach((l) => l());
