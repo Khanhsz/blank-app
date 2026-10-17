@@ -36,3 +36,10 @@ World entities, office IDs, budgets, history, rival AI, media art and GLB assets
 - Agency founding retains global date.
 - Eight agency functions show live staffing/workload/dependencies; producer and ops can be hired.
 - Save restoration retains weekly reports, campaign stage, staff, and agency accounts.
+
+## Acceptance commands
+```sh
+npm install --no-audit --no-fund
+npm run build
+```
+For browser QA, verify the Week indicator is already present in Bedroom, then test a complete two-week client brief before founding an agency.
