@@ -78,7 +78,7 @@ export const defaults = (): GameState => ({
 });
 
 export const newCEO = (reputation: number): CEO => ({
-  day: 1, speed: 1, pauseOnIssue: true,
+  day: 1, speed: 0, pauseOnIssue: false,
   leads: ceoLeadDefs.map((x) => ({ ...x, status: "new", relationship: x.trust })),
   rivals: ceoRivalDefs.map((v) => ({ ...v })), projects: [], inbox: [], partners: [], ledger: [], history: [],
   reputation: { overall: reputation, creative: 50, performance: 50, strategy: 50, reliability: 60, industries: {} },
