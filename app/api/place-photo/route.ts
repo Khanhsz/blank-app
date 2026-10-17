@@ -36,7 +36,7 @@ async function retrieve(title:string):Promise<Photo|null>{
  const artist=plain(info?.extmetadata?.Artist?.value||info?.extmetadata?.Credit?.value||'');
  const uri=info?.thumburl;
  if(!license||!allowed(license)||!uri)return null;
- try{const hostname=new URL(uri).hostname;if(hostname!=='upload.wikimedia.org')return null;}
+ try{const hostname=new URL(uri).hostname;if(!['upload.wikimedia.org','thumb.wikimedia.org'].includes(hostname))return null;}
  catch{return null;}
  const licenseUrl=info?.extmetadata?.LicenseUrl?.value;
  const validLicenseUrl=licenseUrl&&/^https:\/\//.test(licenseUrl)?licenseUrl:null;
