@@ -11,7 +11,7 @@ type RoomAction="board"|"phone"|"wardrobe";
 const ink="#302b28",cream="#e9dbc8",teal="#70a39b",copper="#bd694a";
 const flat={flatShading:true,roughness:0.86,metalness:0.02};
 const seeded=(i:number)=>{const v=Math.sin(i*124.521)*43758.5453;return v-Math.floor(v)};
-function Land(){return <mesh rotation-x={-Math.PI/2} position={[0,-.05,0]} receiveShadow><planeGeometry args={[155,140]}/><meshStandardMaterial color="#d7cbb9" {...flat}/></mesh>}
+function Land(){return <mesh rotation-x={-Math.PI/2} position={[0,-.05,0]} receiveShadow><planeGeometry args={[155,140]}/><meshStandardMaterial color="#cbd0ca" {...flat}/></mesh>}
 function Box({p=[0,0,0],size=[1,1,1],color,children,rotation}: {p?:[number,number,number];size?:[number,number,number];color:string;children?:React.ReactNode;rotation?:[number,number,number]}){
  return <mesh position={p} rotation={rotation} castShadow receiveShadow><boxGeometry args={size}/><meshStandardMaterial color={color} {...flat}/>{children}</mesh>
 }
@@ -180,7 +180,7 @@ function Building({b,onSelect,selected}:{b:District;onSelect:(id:string)=>void;s
  const liftGroup=useRef<THREE.Group>(null);
  const transparent=b.locked;
  const isHQ=b.id==="brand"||b.id==="agency"||b.kind==="rival"||b.occupied;
- const isRival=b.kind==="rival",isOffice=b.kind==="office";
+ const isRival=b.kind==="rival",isOffice=b.kind==="office",isClient=b.kind==="client";
  const isCafe=b.id==="network";
 
  useFrame((_,dt)=>{if(liftGroup.current){const goal=selected ? .22 : hover ? .09 : 0;liftGroup.current.position.y+=(goal-liftGroup.current.position.y)*Math.min(1,dt*9)}});
@@ -194,6 +194,20 @@ function Building({b,onSelect,selected}:{b:District;onSelect:(id:string)=>void;s
    {(b.id==="creative"||b.id==="influencer")&&<mesh castShadow position={[0,b.h+1.3,0]} rotation-y={Math.PI/4}><coneGeometry args={[Math.min(b.w,b.d)*.62,1.7,4]}/><meshStandardMaterial color="#6b625a" {...flat}/></mesh>}
    {isHQ&&<Box p={[0,b.h+1.45,0]} size={[b.w*.42,1.6,b.d*.54]} color="#e9d6c5"/>}
    {isRival&&<><Box p={[0,b.h*.71,b.d/2+.16]} size={[b.w*.76,1.23,.29]} color="#333b45"/><Box p={[0,b.h+2.7,0]} size={[.17,2.6,.17]} color="#545963"/></>}
+   {isClient&&<group>
+    {/* Distinctive corporate brand tower: glass arrival foyer, metallic trims and roof crown. */}
+    <Box p={[0,1.8,b.d/2+.55]} size={[b.w*.72,3.05,.82]} color="#a5b8bb"/>
+    <Box p={[0,b.h*.71,b.d/2+.21]} size={[b.w*.82,1.43,.22]} color="#404f59"/>
+    <Box p={[0,b.h*.71,b.d/2+.34]} size={[b.w*.64,.16,.05]} color="#bed0cf"/>
+    {[-1,1].map(side=><Box key={side} p={[side*(b.w*.44),b.h*.52,b.d/2+.16]} size={[.13,b.h*.7,.21]} color="#e6e7df"/>)}
+    <Box p={[0,b.h+1.19,0]} size={[b.w*.73,.63,b.d*.72]} color="#6d7881"/>
+    <mesh position={[0,b.h+2.05,0]} rotation-y={Math.PI*.25} castShadow>
+      <octahedronGeometry args={[.85,0]}/>
+      <meshStandardMaterial color="#e7ebdf" emissive="#7e9ca5" emissiveIntensity={.12} roughness={.57}/>
+    </mesh>
+    {b.id==="client-orion"&&<Box p={[0,b.h+2.8,0]} size={[.18,1.6,.18]} color="#515e69"/>}
+    {b.id==="client-bloom"&&<mesh castShadow position={[b.w*.23,b.h+1.5,0]}><icosahedronGeometry args={[.7,0]}/><meshStandardMaterial color="#c8c0c6" flatShading/></mesh>}
+   </group>}
    {isOffice&&!b.occupied&&<><Box p={[0,b.h*.60,b.d/2+.16]} size={[b.w*.69,1.28,.21]} color="#aa7954"/><Box p={[b.w*.3,b.h+1.2,0]} size={[.19,1.5,.19]} color="#a48f7b"/></>}
    {b.occupied&&<><Box p={[0,b.h*.68,b.d/2+.2]} size={[b.w*.75,1.48,.22]} color="#8db5a5"/><mesh position={[0,b.h+2.8,0]}><octahedronGeometry args={[.8,0]}/><meshStandardMaterial color="#f0c18e" emissive="#d68d51" emissiveIntensity={.35}/></mesh></>}
    {isCafe&&<><Box p={[0,.54,b.d*.56]} size={[b.w+.9,.24,1.4]} color="#dcaf83"/>{[-1,1].map(x=><Box key={x} p={[x*b.w*.42,2.1,b.d*.7]} size={[.25,3.2,.28]} color="#f3d7b0"/>)}</>}
@@ -206,8 +220,8 @@ function Building({b,onSelect,selected}:{b:District;onSelect:(id:string)=>void;s
    {selected&&<mesh position={[0,b.h+1.94,0]}><sphereGeometry args={[.23,9,7]}/><meshBasicMaterial color="#ffdcaa"/></mesh>}
   </group>
   <Html position={[0,b.h+2.8,0]} center distanceFactor={36} style={{pointerEvents:"auto"}}>
-   <button type="button" className={"world-building-label "+(selected?"selected":"")+(transparent?" locked":"")+(b.kind==="rival"?" rival":"")+(b.kind==="office"?" office":"")+(b.occupied?" occupied":"")} onClick={()=>onSelect(b.id)}>
-    <span className="map-pin"/><span>{b.name}</span>{b.occupied?<small>YOUR HQ</small>:b.kind==="rival"?<small>RIVAL</small>:b.kind==="office"?<small>{transparent?"LOCKED":"TO LET"}</small>:transparent?<small>LOCKED</small>:null}
+   <button type="button" className={"world-building-label "+(selected?"selected":"")+(transparent?" locked":"")+(b.kind==="rival"?" rival":"")+(b.kind==="office"?" office":"")+(b.kind==="client"?" client":"")+(b.occupied?" occupied":"")} onClick={()=>onSelect(b.id)}>
+    <span className="map-pin"/><span>{b.name}</span>{b.occupied?<small>YOUR HQ</small>:b.kind==="rival"?<small>RIVAL</small>:b.kind==="office"?<small>{transparent?"LOCKED":"TO LET"}</small>:b.kind==="client"?<small>CLIENT HQ</small>:transparent?<small>LOCKED</small>:null}
    </button>
   </Html>
  </group>;
@@ -332,11 +346,11 @@ export function WorldScene({scene,districts,selected,onSelect,onComputerInteract
  const memoDistricts=useMemo(()=>districts,[JSON.stringify(districts)]);
  const playerPosition=useRef<[number,number]>([0,0]);const playerActive=useRef(false);
  return <Canvas key={scene} shadows={quality==="high"} dpr={quality==="high"?[1,1.65]:[1,1]} gl={{antialias:quality==="high",alpha:false,powerPreference:"high-performance"}} camera={{position:city?[78,73,86]:[11.4,10.7,13.8],fov:42,near:.1,far:260}}>
-  <color attach="background" args={["#f8eddf"]}/><fog attach="fog" args={["#f8eddf",city?150:36,city?235:70]}/>
-  <hemisphereLight args={["#fff7e8","#b8aa97",1.55]}/>
-  <ambientLight intensity={.45}/>
-  <directionalLight position={[25,37,16]} intensity={2.1} color="#ffeed9" castShadow={quality==="high"} shadow-mapSize-width={2048} shadow-mapSize-height={2048} shadow-camera-left={-75} shadow-camera-right={75} shadow-camera-top={75} shadow-camera-bottom={-75} shadow-bias={-.00014}/>
-  <directionalLight position={[-12,9,-17]} intensity={.65} color="#aeced3"/>
+  <color attach="background" args={[city?"#e3e7e9":"#f5eee5"]}/><fog attach="fog" args={[city?"#e3e7e9":"#f5eee5",city?150:36,city?235:70]}/>
+  <hemisphereLight args={[city?"#f0f3f4":"#fff6e8",city?"#adb5b4":"#b8aa97",city?1.35:1.55]}/>
+  <ambientLight intensity={city?.42:.45}/>
+  <directionalLight position={[25,37,16]} intensity={city?1.55:2.1} color={city?"#fffefa":"#ffeed9"} castShadow={quality==="high"} shadow-mapSize-width={2048} shadow-mapSize-height={2048} shadow-camera-left={-75} shadow-camera-right={75} shadow-camera-top={75} shadow-camera-bottom={-75} shadow-bias={-.00014}/>
+  <directionalLight position={[-12,9,-17]} intensity={city?.5:.65} color={city?"#c2d0d4":"#aeced3"}/>
   {city?<City districts={memoDistricts} selected={selected} onSelect={onSelect} c={character} touch={moveInput} position={playerPosition} active={playerActive}/>:scene==="room"?<Room r={room} c={character} onComputerInteract={onComputerInteract} onRoomInteract={onRoomInteract} preview={preview} avatarYaw={avatarYaw}/>:<Office c={character} staff={staff} board={scene==="boardroom"} name={officeName} capacity={officeCapacity}/>}
   {quality==="high"&&!city&&scene==="room"&&<ContactShadows scale={14} opacity={.2} blur={2.8} far={8} position={[0,-.02,0]}/>}
   <CameraRig scene={scene} districts={memoDistricts} selected={selected} focus={focus} preview={preview} avatarZoom={avatarZoom} player={playerPosition} playerActive={playerActive}/>
