@@ -76,15 +76,15 @@ function RoadNetwork(){
 }
 function Building({b,onSelect,selected}:{b:District;onSelect:(id:string)=>void;selected:boolean}){
  const [hover,setHover]=useState(false);
- const [lift,setLift]=useState(0);
+ const liftGroup=useRef<THREE.Group>(null);
  const transparent=b.locked;
  const isHQ=b.id==="brand"||b.id==="agency";
  const isCafe=b.id==="network";
  const windows=useMemo(()=>Array.from({length:Math.max(2,Math.floor(b.h/1.7))},(_,i)=>i),[b.h]);
- useFrame((_,dt)=>setLift(v=>{const goal=selected ? .22 : hover ? .09 : 0;return Math.abs(goal-v)<.001?goal:v+(goal-v)*Math.min(1,dt*9)}));
+ useFrame((_,dt)=>{if(liftGroup.current){const goal=selected ? .22 : hover ? .09 : 0;liftGroup.current.position.y+=(goal-liftGroup.current.position.y)*Math.min(1,dt*9)}});
  const click=(e:any)=>{e.stopPropagation();onSelect(b.id)};
  const wall=transparent?"#c1bdb5":b.color;
- return <group position={[b.x,lift,b.z]}>
+ return <group ref={liftGroup} position={[b.x,0,b.z]}>
   <Box p={[0,.18,0]} size={[b.w+1,.35,b.d+1]} color={selected?"#d5a084":"#e9d9c6"}/>
   <group onPointerOver={e=>{e.stopPropagation();setHover(true);document.body.style.cursor="pointer"}} onPointerOut={()=>{setHover(false);document.body.style.cursor="auto"}} onClick={click}>
    <Box p={[0,b.h*.5+.38,0]} size={[b.w,b.h,b.d]} color={wall}/>
