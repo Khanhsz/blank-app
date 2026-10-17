@@ -1,0 +1,334 @@
+{
+  "schemaVersion": 1,
+  "source": "Curated per-entity architecture for actual cityLots and ambient grid",
+  "buildings": {
+    "research": {
+      "archetype": "courtyard",
+      "palette": "sage",
+      "facade": "ribbon",
+      "roof": "pergola",
+      "entrance": "recessed",
+      "use": "data-lab"
+    },
+    "creative": {
+      "archetype": "stacked",
+      "palette": "clay",
+      "facade": "strips",
+      "roof": "terrace",
+      "entrance": "canopy",
+      "use": "creative"
+    },
+    "media": {
+      "archetype": "industrial",
+      "palette": "slate",
+      "facade": "broadcast",
+      "roof": "sawtooth",
+      "entrance": "loading",
+      "use": "broadcast"
+    },
+    "influencer": {
+      "archetype": "sculptural",
+      "palette": "rose",
+      "facade": "graphic",
+      "roof": "offset",
+      "entrance": "gallery",
+      "use": "creator"
+    },
+    "network": {
+      "archetype": "pavilion",
+      "palette": "sage",
+      "facade": "storefront",
+      "roof": "butterfly",
+      "entrance": "arcade",
+      "use": "retail"
+    },
+    "brand": {
+      "archetype": "tower",
+      "palette": "sand",
+      "facade": "vertical",
+      "roof": "crown",
+      "entrance": "atrium",
+      "use": "corporate"
+    },
+    "cowork": {
+      "archetype": "campus",
+      "palette": "mauve",
+      "facade": "modular",
+      "roof": "green",
+      "entrance": "bridge",
+      "use": "community"
+    },
+    "agency": {
+      "archetype": "podium",
+      "palette": "clay",
+      "facade": "ribbon",
+      "roof": "terrace",
+      "entrance": "portico",
+      "use": "agency"
+    },
+    "rival-atlas": {
+      "archetype": "tower",
+      "palette": "slate",
+      "facade": "vertical",
+      "roof": "spire",
+      "entrance": "atrium",
+      "use": "agency"
+    },
+    "rival-pulse": {
+      "archetype": "sculptural",
+      "palette": "slate",
+      "facade": "zigzag",
+      "roof": "terrace",
+      "entrance": "gallery",
+      "use": "agency"
+    },
+    "rival-muse": {
+      "archetype": "stacked",
+      "palette": "mauve",
+      "facade": "graphic",
+      "roof": "cantilever",
+      "entrance": "arcade",
+      "use": "agency"
+    },
+    "rival-lean": {
+      "archetype": "grid",
+      "palette": "sage",
+      "facade": "modular",
+      "roof": "flat",
+      "entrance": "recessed",
+      "use": "agency"
+    },
+    "rival-north": {
+      "archetype": "courtyard",
+      "palette": "mauve",
+      "facade": "ribbon",
+      "roof": "pergola",
+      "entrance": "bridge",
+      "use": "agency"
+    },
+    "office-loft": {
+      "archetype": "industrial",
+      "palette": "sand",
+      "facade": "ribbon",
+      "roof": "sawtooth",
+      "entrance": "loading",
+      "use": "office"
+    },
+    "office-brick": {
+      "archetype": "brickhouse",
+      "palette": "clay",
+      "facade": "recessed",
+      "roof": "flat",
+      "entrance": "gallery",
+      "use": "office"
+    },
+    "office-harbor": {
+      "archetype": "terraced",
+      "palette": "slate",
+      "facade": "vertical",
+      "roof": "green",
+      "entrance": "canopy",
+      "use": "office"
+    },
+    "office-atrium": {
+      "archetype": "courtyard",
+      "palette": "sand",
+      "facade": "grid",
+      "roof": "pergola",
+      "entrance": "atrium",
+      "use": "office"
+    },
+    "office-tower": {
+      "archetype": "tower",
+      "palette": "slate",
+      "facade": "ribbon",
+      "roof": "crown",
+      "entrance": "portico",
+      "use": "office"
+    },
+    "office-warehouse": {
+      "archetype": "industrial",
+      "palette": "clay",
+      "facade": "shed",
+      "roof": "sawtooth",
+      "entrance": "loading",
+      "use": "office"
+    },
+    "office-skyline": {
+      "archetype": "podium",
+      "palette": "mauve",
+      "facade": "vertical",
+      "roof": "spire",
+      "entrance": "atrium",
+      "use": "office"
+    },
+    "office-boulevard": {
+      "archetype": "grid",
+      "palette": "sand",
+      "facade": "modular",
+      "roof": "terrace",
+      "entrance": "arcade",
+      "use": "office"
+    },
+    "client-orion": {
+      "archetype": "tower",
+      "palette": "slate",
+      "facade": "vertical",
+      "roof": "crown",
+      "entrance": "atrium",
+      "use": "client"
+    },
+    "client-sora": {
+      "archetype": "campus",
+      "palette": "sand",
+      "facade": "ribbon",
+      "roof": "green",
+      "entrance": "bridge",
+      "use": "client"
+    },
+    "client-vertex": {
+      "archetype": "sculptural",
+      "palette": "sage",
+      "facade": "zigzag",
+      "roof": "offset",
+      "entrance": "gallery",
+      "use": "client"
+    },
+    "client-bloom": {
+      "archetype": "terraced",
+      "palette": "rose",
+      "facade": "balcony",
+      "roof": "green",
+      "entrance": "canopy",
+      "use": "client"
+    },
+    "client-apex": {
+      "archetype": "podium",
+      "palette": "sage",
+      "facade": "grid",
+      "roof": "terrace",
+      "entrance": "portico",
+      "use": "client"
+    },
+    "client-northstar": {
+      "archetype": "campus",
+      "palette": "mauve",
+      "facade": "modular",
+      "roof": "pergola",
+      "entrance": "arcade",
+      "use": "client"
+    },
+    "arts-residence-a": {
+      "archetype": "terraced",
+      "palette": "slate",
+      "facade": "balcony",
+      "roof": "green",
+      "entrance": "recessed",
+      "use": "decorative"
+    },
+    "arts-residence-b": {
+      "archetype": "podium",
+      "palette": "sage",
+      "facade": "ribbon",
+      "roof": "terrace",
+      "entrance": "arcade",
+      "use": "decorative"
+    },
+    "arts-retail": {
+      "archetype": "pavilion",
+      "palette": "sand",
+      "facade": "storefront",
+      "roof": "butterfly",
+      "entrance": "arcade",
+      "use": "decorative"
+    },
+    "arts-kiosk": {
+      "archetype": "sculptural",
+      "palette": "sage",
+      "facade": "graphic",
+      "roof": "offset",
+      "entrance": "portico",
+      "use": "decorative"
+    },
+    "ambient-m48-p24": {
+      "archetype": "grid",
+      "palette": "sand",
+      "facade": "modular",
+      "roof": "flat",
+      "entrance": "arcade",
+      "use": "decorative"
+    },
+    "ambient-m32-p24": {
+      "archetype": "terraced",
+      "palette": "sage",
+      "facade": "balcony",
+      "roof": "green",
+      "entrance": "recessed",
+      "use": "decorative"
+    },
+    "ambient-m16-m24": {
+      "archetype": "pavilion",
+      "palette": "clay",
+      "facade": "storefront",
+      "roof": "butterfly",
+      "entrance": "canopy",
+      "use": "decorative"
+    },
+    "ambient-m16-p8": {
+      "archetype": "podium",
+      "palette": "slate",
+      "facade": "vertical",
+      "roof": "terrace",
+      "entrance": "portico",
+      "use": "decorative"
+    },
+    "ambient-p0-p40": {
+      "archetype": "industrial",
+      "palette": "sand",
+      "facade": "shed",
+      "roof": "sawtooth",
+      "entrance": "loading",
+      "use": "decorative"
+    },
+    "ambient-p16-m40": {
+      "archetype": "stacked",
+      "palette": "mauve",
+      "facade": "graphic",
+      "roof": "cantilever",
+      "entrance": "gallery",
+      "use": "decorative"
+    },
+    "ambient-p16-p8": {
+      "archetype": "courtyard",
+      "palette": "sage",
+      "facade": "ribbon",
+      "roof": "pergola",
+      "entrance": "arcade",
+      "use": "decorative"
+    },
+    "ambient-p32-m8": {
+      "archetype": "campus",
+      "palette": "sand",
+      "facade": "modular",
+      "roof": "green",
+      "entrance": "bridge",
+      "use": "decorative"
+    },
+    "ambient-p32-p40": {
+      "archetype": "sculptural",
+      "palette": "clay",
+      "facade": "zigzag",
+      "roof": "offset",
+      "entrance": "canopy",
+      "use": "decorative"
+    },
+    "ambient-p48-m24": {
+      "archetype": "tower",
+      "palette": "slate",
+      "facade": "vertical",
+      "roof": "crown",
+      "entrance": "atrium",
+      "use": "decorative"
+    }
+  }
+}
