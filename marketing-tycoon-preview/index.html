@@ -270,7 +270,7 @@ function renderHUD(){
  const stage=state.agencyUnlocked?'Agency Founder':state.cityUnlocked?'Freelance Marketer':'Student Marketer';
  $('#status').innerHTML=`<span class="stat career"><i>◉</i>${stage}</span><span class="stat"><i>₫</i><b>${compact(playerMoney())}</b></span><span class="stat"><i>✦</i><b>${state.reputation}</b><small>REP</small></span><span class="stat"><i>◆</i><b>${state.expertise}</b><small>XP</small></span>`;
  const pr=phaseProgress();$('#quest').innerHTML=`<div class="eyebrow">NHIỆM VỤ HIỆN TẠI</div><h3>${esc(focusLabel())}</h3><p>${state.campaign.phase==='results'?'Chiến dịch đã hoàn thành. Xem kết quả và chọn bước tiếp theo.':state.agencyUnlocked?'Lãnh đạo đội ngũ và giữ chất lượng dự án.':`Chiến dịch ${esc(current().brand)} • ${state.campaign.day}/${current().days} ngày mô phỏng.`}</p><div class="meter"><span style="width:${(pr+1)/9*100}%"></span></div><div class="quest-step"><span>CAMPAIGN PROGRESS</span><span>${pr+1}/9</span></div><button class="button full small" data-action="open-workstation">${state.campaign.phase==='results'?'XEM SCORECARD':'TIẾP TỤC CAMPAIGN'} →</button>`;
- $('#worldInfo').innerHTML=state.scene==='room'?`<div class="tile">YOUR FIRST HQ</div><h4>Phòng ngủ, nơi mọi thứ bắt đầu</h4><p>Laptop để chạy campaign. Điện thoại để nhận brief. Bảng trắng để xem roadmap.</p><div class="guide">WASD: di chuyển · Q/E: xoay góc nhìn<br>Nhấp đồ vật để tương tác.</div>`:state.scene==='city'?`<div class="tile">EXPLORE THE CITY</div><h4>Marketing City</h4><p>Mỗi địa điểm mở ra công cụ, mối quan hệ hoặc cơ hội nghề nghiệp có chi phí thực.</p><div class="guide">Nhấp vào tòa nhà để tương tác.<br>Kéo để xoay · cuộn để zoom.</div>`:`<div class="tile">YOUR OWN AGENCY</div><h4>${esc(state.agencyName||'New Agency')}</h4><p>${state.staff.length} nhân viên · ${state.history.length} campaign đã hoàn thành.</p><div class="guide">Agency management → tuyển dụng, tài chính và đội ngũ.</div>`;
+ $('#worldInfo').innerHTML=state.scene==='room'?`<div class="tile">YOUR FIRST HQ</div><h4>Phòng ngủ, nơi mọi thứ bắt đầu</h4><p>Laptop để chạy campaign. Điện thoại để nhận brief. Bảng trắng để xem roadmap.</p><div class="guide">WASD: di chuyển · Q/E: xoay góc nhìn<br>Nhấp đồ vật để tương tác.</div>`:state.scene==='city'?`<div class="tile">EXPLORE THE CITY</div><h4>Marketing City</h4><p>Mỗi địa điểm mở ra công cụ, mối quan hệ hoặc cơ hội nghề nghiệp có chi phí thực.</p><div class="guide">Nhấp vào tòa nhà để tương tác.<br>Kéo để xoay · cuộn để zoom.</div>`:`<div class="tile">YOUR OWN AGENCY</div><h4>${esc(state.agencyName||'New Agency')}</h4><p>${state.staff.length} nhân viên · ${activeJobs().length} task đang thực hiện · ${state.history.length} campaign hoàn thành.</p><div class="guide">Nhấp vào team hoặc mở bảng điều hành để giao việc và duyệt kết quả.</div><button class="button full small" style="margin-top:12px" data-action="open-agency">MỞ TEAM OPERATIONS →</button>`;
  const nav=[{id:'room',icon:'🏠',text:'Phòng ngủ'},{id:'laptop',icon:'💻',text:'Workstation'},{id:'phone',icon:'📱',text:'Điện thoại'},{id:'board',icon:'📋',text:'Bảng tiến độ'},{id:'wardrobe',icon:'🧍',text:'Nhân vật'}];
  if(state.cityUnlocked)nav.splice(1,0,{id:'city',icon:'🏙️',text:'Thành phố'});
  if(state.agencyUnlocked)nav.splice(2,0,{id:'office',icon:'🏢',text:'Agency'});
@@ -631,7 +631,16 @@ function drawOffice(time){quad(0,0,18,14,-.12,'#e4d1b2');
  patch(0,0,8,5,'#e5eeea');
  box3(0,-6.55,4.3,.1,1.2,'#265a55',3.8);box3(0,-6.46,3.8,.1,.08,'#e7d8a8',4.65);
  for(let i=0;i<4;i++){let x=-5.3+i*3.5;box3(x,-2.5,2.0,1.1,.22,'#a9866d',1.15);box3(x,-3,1.1,.10,.75,'#415a61',1.36);box3(x,-2.93,.95,.08,.55,'#69a4a3',1.49);box3(x,-1.0,1,1.0,.2,'#8eaaac',.65);
- if(i<state.staff.length)addPerson(x,-2.1,{outfit:['#8bafa5','#d98b7a','#8191bd','#a989ba'][i]},time*.005+i)}
+ if(i<state.staff.length){
+  const member=state.staff[i],jobs=activeJobs().filter(j=>j.employee===member),busy=jobs.length>0;
+  addPerson(x,-2.1,{outfit:['#8bafa5','#d98b7a','#8191bd','#a989ba'][i]},time*(busy?.011:.002)+i);
+  if(busy){
+   const glow=.80+Math.sin(time*.006+i)*.14;
+   box3(x,-2.89,.91,.075,.57,tint('#8bd6c4',glow),1.50);
+   box3(x+.36,-1.60,.14,.22,.05,'#f6ddac',1.03+Math.sin(time*.011+i)*.04);
+  }
+  marker(x,3.0,-2.4,busy?'◉ '+jobs.map(j=>workstreams[j.task].short.toUpperCase()).join(' + '):'○ '+(employeeById(member)?.role||'STAFF').toUpperCase(),'agency','',true);
+ }}
  box3(0,4,5.8,2,.25,'#aa815f',1.07);for(const x of [-2.4,0,2.4])box3(x,4,.6,.8,.16,'#a9bdb3',.48);
  box3(7,-4.7,1.6,1.5,3,'#d7e3d3');octaTree(-7,4,.9,'#73ae86');octaTree(7,4,1,'#75a984');
  box3(-6.8,-6.6,2,.15,1.7,'#f7f4df',3.3);addPerson(state.avatar.x,state.avatar.z,{},time*.005);
