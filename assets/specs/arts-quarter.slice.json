@@ -1,0 +1,223 @@
+{
+  "schemaVersion": 1,
+  "version": "slice-1",
+  "district": "Arts Quarter",
+  "units": "m",
+  "axes": "Y_UP",
+  "face": "positive_z",
+  "seed": 41529,
+  "masters": [
+    {
+      "id": "creative",
+      "class": "creative_agency",
+      "name": "Creative Studio",
+      "width": 10,
+      "depth": 9,
+      "height": 9,
+      "floors": 3,
+      "roof": "sawtooth",
+      "palette": "clay",
+      "seed": 101,
+      "anchors": [
+        "entrance",
+        "sign",
+        "roof",
+        "footprint"
+      ],
+      "gameplayId": "creative"
+    },
+    {
+      "id": "influencer",
+      "class": "media_facility",
+      "name": "Creator District",
+      "width": 10,
+      "depth": 9,
+      "height": 9,
+      "floors": 3,
+      "roof": "terrace",
+      "palette": "rose",
+      "seed": 102,
+      "anchors": [
+        "entrance",
+        "sign",
+        "roof",
+        "footprint"
+      ],
+      "gameplayId": "influencer"
+    },
+    {
+      "id": "rival-muse",
+      "class": "rival_agency",
+      "name": "Muse & Matter",
+      "width": 10,
+      "depth": 10,
+      "height": 13,
+      "floors": 5,
+      "roof": "crown",
+      "palette": "mauve",
+      "seed": 103,
+      "anchors": [
+        "entrance",
+        "sign",
+        "roof",
+        "footprint"
+      ],
+      "gameplayId": "rival-muse"
+    },
+    {
+      "id": "client-bloom",
+      "class": "corporate_client",
+      "name": "Bloom Beauty",
+      "width": 10,
+      "depth": 10,
+      "height": 16,
+      "floors": 6,
+      "roof": "crown",
+      "palette": "rose",
+      "seed": 104,
+      "anchors": [
+        "entrance",
+        "sign",
+        "roof",
+        "footprint"
+      ],
+      "gameplayId": "client-bloom"
+    },
+    {
+      "id": "office-loft",
+      "class": "office_property",
+      "name": "Foundry Loft",
+      "width": 9,
+      "depth": 10,
+      "height": 8,
+      "floors": 3,
+      "roof": "terrace",
+      "palette": "sand",
+      "seed": 105,
+      "anchors": [
+        "entrance",
+        "sign",
+        "roof",
+        "footprint"
+      ],
+      "gameplayId": "office-loft"
+    },
+    {
+      "id": "office-brick",
+      "class": "office_property",
+      "name": "Brickhouse Studios",
+      "width": 10,
+      "depth": 10,
+      "height": 12,
+      "floors": 4,
+      "roof": "flat",
+      "palette": "clay",
+      "seed": 106,
+      "anchors": [
+        "entrance",
+        "sign",
+        "roof",
+        "footprint"
+      ],
+      "gameplayId": "office-brick"
+    },
+    {
+      "id": "arts-residence-a",
+      "class": "residential",
+      "name": "Aster Apartments",
+      "width": 8,
+      "depth": 8,
+      "height": 13,
+      "floors": 4,
+      "roof": "terrace",
+      "palette": "slate",
+      "seed": 107,
+      "anchors": [
+        "entrance",
+        "sign",
+        "roof",
+        "footprint"
+      ],
+      "decorative": true
+    },
+    {
+      "id": "arts-residence-b",
+      "class": "residential",
+      "name": "Willow Row",
+      "width": 8,
+      "depth": 8,
+      "height": 9,
+      "floors": 3,
+      "roof": "gable",
+      "palette": "sage",
+      "seed": 108,
+      "anchors": [
+        "entrance",
+        "sign",
+        "roof",
+        "footprint"
+      ],
+      "decorative": true
+    },
+    {
+      "id": "arts-retail",
+      "class": "retail_property",
+      "name": "Studio Goods",
+      "width": 8,
+      "depth": 8,
+      "height": 7,
+      "floors": 2,
+      "roof": "flat",
+      "palette": "sand",
+      "seed": 109,
+      "anchors": [
+        "entrance",
+        "sign",
+        "roof",
+        "footprint"
+      ],
+      "decorative": true
+    },
+    {
+      "id": "arts-kiosk",
+      "class": "urban_infrastructure",
+      "name": "Corner Kiosk",
+      "width": 5,
+      "depth": 5,
+      "height": 4,
+      "floors": 1,
+      "roof": "canopy",
+      "palette": "sage",
+      "seed": 110,
+      "anchors": [
+        "entrance",
+        "sign",
+        "roof",
+        "footprint"
+      ],
+      "decorative": true
+    }
+  ],
+  "decorativePlacements": [
+    {
+      "id": "arts-residence-a",
+      "x": -48,
+      "z": -24
+    },
+    {
+      "id": "arts-residence-b",
+      "x": -32,
+      "z": -8
+    },
+    {
+      "id": "arts-retail",
+      "x": 0,
+      "z": -40
+    },
+    {
+      "id": "arts-kiosk",
+      "x": 0,
+      "z": -8
+    }
+  ]
+}
