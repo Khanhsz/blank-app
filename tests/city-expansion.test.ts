@@ -1,3 +1,5 @@
+import {ceoLeadDefs} from "../src/game/data";
+import {qualify,startPitch} from "../src/game/ceo";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {defaults,migrate,newCEO} from "../src/game/state";
@@ -5,9 +7,9 @@ import {cityLots,cityCounts,officeOptions,currentOffice,leaseOffice,cityRival} f
 import {ceoDay,hire} from "../src/game/ceo";
 import type {Fx} from "../src/game/store";
 const fx:Fx={toast:()=>{},log:()=>{}};
-test("expanded city has 21 unique functional buildings; original game destinations remain",()=>{
- assert.equal(cityLots.length,21);
- assert.deepEqual(cityCounts,{core:8,rivals:5,offices:8});
+test("expanded city has 27 unique functional buildings; original game destinations remain",()=>{
+ assert.equal(cityLots.length,27);
+ assert.deepEqual(cityCounts,{core:8,rivals:5,offices:8,clients:6});
  assert.equal(new Set(cityLots.map(l=>l.id)).size,21);
  assert.equal(new Set(cityLots.map(l=>l.x+","+l.z)).size,21);
  for(const place of cityLots){assert.ok(Math.abs(place.x)<=49);assert.ok(Math.abs(place.z)<=41);assert.ok(place.w>0&&place.d>0&&place.h>0)}
@@ -70,4 +72,45 @@ test("saves from older versions default to starter HQ without losing progress",(
  assert.equal(loaded.officeId,"agency");
  assert.deepEqual(loaded.world.leasedOffices,[]);
  assert.deepEqual(loaded.world.visited,["network"]);
+});
+
+
+test("six corporate client headquarters map to real CEO opportunities",()=>{
+
+ const clientLots=cityLots.filter(l=>l.kind==="client");
+ assert.equal(clientLots.length,6);
+ for(const lot of clientLots){
+  const lead=ceoLeadDefs.find(x=>x.id===lot.clientId);
+  assert.ok(lead,"Every client HQ must map to an actual procurement brief: "+lot.id);
+  assert.ok(lead!.fee>0);
+  assert.ok(lead!.value>lead!.fee);
+  assert.ok(lead!.rivalIds.length>=1);
+ }
+});
+test("new corporate leads appear in existing CEO saves without resetting negotiations",()=>{
+ const s=defaults();s.agencyUnlocked=true;s.ceo=newCEO(54);
+ const oldIds=new Set(["orion","sora","vertex"]);
+ s.ceo.leads=s.ceo.leads.filter(l=>oldIds.has(l.id));
+ const savedLead=s.ceo.leads.find(x=>x.id==="orion")!;
+ savedLead.status="qualified";savedLead.relationship=79;
+ s.ceo.day=33;
+ const loaded=migrate(JSON.parse(JSON.stringify(s)));
+ assert.equal(loaded.ceo?.leads.length,6);
+ assert.equal(loaded.ceo?.leads.find(l=>l.id==="orion")?.status,"qualified");
+ assert.equal(loaded.ceo?.leads.find(l=>l.id==="orion")?.relationship,79);
+ assert.equal(loaded.ceo?.day,33);
+ assert.ok(loaded.ceo?.leads.find(l=>l.id==="bloom"));
+});
+test("mapped corporate client uses actual qualification and competitive pitch system",()=>{
+ const s=defaults();s.agencyUnlocked=true;s.ceo=newCEO(58);s.agencyCash=6000000;s.staff=["account","research","creative","media"];
+ const l=s.ceo.leads.find(x=>x.id==="bloom")!;
+ assert.equal(l.status,"new");
+ qualify(s,fx,l.id);
+ assert.equal(l.status,"qualified");
+ assert.equal(l.insightKnown,true);
+ const afterQualification=s.agencyCash;
+ startPitch(s,fx,l.id);
+ assert.equal(l.status,"pitch");
+ assert.equal(s.agencyCash,afterQualification-500000);
+ assert.equal(s.ceo.pitch?.id,l.id);
 });
