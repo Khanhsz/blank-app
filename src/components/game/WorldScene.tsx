@@ -2,15 +2,16 @@
 import {Canvas,useFrame} from "@react-three/fiber";
 import {CameraControls,Html,ContactShadows,Float} from "@react-three/drei";
 import {useEffect,useRef,useState,useMemo} from "react";
-import type * as THREE from "three";
+import * as THREE from "three";
+import type {DistrictKind} from "@/game/city";
 import type {SceneId,Character,RoomStyle} from "@/game/state";
 
-export interface District {id:string;name:string;x:number;z:number;w:number;d:number;h:number;color:string;locked:boolean}
+export interface District {id:string;name:string;kind:DistrictKind;district?:string;occupied?:boolean;x:number;z:number;w:number;d:number;h:number;color:string;locked:boolean}
 type RoomAction="board"|"phone"|"wardrobe";
 const ink="#302b28",cream="#e9dbc8",teal="#70a39b",copper="#bd694a";
 const flat={flatShading:true,roughness:0.86,metalness:0.02};
 const seeded=(i:number)=>{const v=Math.sin(i*124.521)*43758.5453;return v-Math.floor(v)};
-function Land(){return <mesh rotation-x={-Math.PI/2} position={[0,-.05,0]} receiveShadow><planeGeometry args={[120,120]}/><meshStandardMaterial color="#d7cbb9" {...flat}/></mesh>}
+function Land(){return <mesh rotation-x={-Math.PI/2} position={[0,-.05,0]} receiveShadow><planeGeometry args={[155,140]}/><meshStandardMaterial color="#d7cbb9" {...flat}/></mesh>}
 function Box({p=[0,0,0],size=[1,1,1],color,children,rotation}: {p?:[number,number,number];size?:[number,number,number];color:string;children?:React.ReactNode;rotation?:[number,number,number]}){
  return <mesh position={p} rotation={rotation} castShadow receiveShadow><boxGeometry args={size}/><meshStandardMaterial color={color} {...flat}/>{children}</mesh>
 }
@@ -48,37 +49,91 @@ function LowPolyPerson({c,pos,walk=false,seed=0,yaw=0}:{c:Character;pos:[number,
  </group>;
 }
 function CityWalker({seed,c}:{seed:number;c:Character}){
- const ref=useRef<THREE.Group>(null),z=seed%2===0?10.45:-10.55;
- useFrame(({clock})=>{if(!ref.current)return;const x=((clock.elapsedTime*(seed%2?-.56:.68)+seed*8)%74+74)%74-37;ref.current.position.x=x;ref.current.rotation.y=seed%2?Math.PI/2:-Math.PI/2;});
+ const ref=useRef<THREE.Group>(null),z=[-16.6,16.6,32.5,-32.5][seed%4];
+ useFrame(({clock})=>{if(!ref.current)return;const x=((clock.elapsedTime*(seed%2?-.56:.68)+seed*9)%117+117)%117-58.5;ref.current.position.x=x;ref.current.rotation.y=seed%2?Math.PI/2:-Math.PI/2;});
  return <group ref={ref} position={[0,.01,z]}><LowPolyPerson c={{...c,outfit:["#bd694a","#7f9687","#9c8cba","#c4a36d"][seed%4],skin:"#b88765"}} pos={[0,0,0]} walk seed={seed}/></group>;
 }
 function Car({seed=0}:{seed:number}){
- const ref=useRef<THREE.Group>(null),z=seed%2?8.1:-8.1;
- useFrame(({clock})=>{if(!ref.current)return;ref.current.position.x=((((clock.elapsedTime*(seed%2?3.4:-2.9))+seed*17)%80)+80)%80-40;});
+ const ref=useRef<THREE.Group>(null),z=[-16,16,32,-32][seed%4];
+ useFrame(({clock})=>{if(!ref.current)return;ref.current.position.x=((((clock.elapsedTime*(seed%2?3.4:-2.9))+seed*17)%126)+126)%126-63;});
  return <group ref={ref} position={[0,.48,z]}>
   <Box color={seed%3===0?"#b86b59":seed%3===1?"#66959a":"#e8b56e"} size={[2.1,.62,1.1]} p={[0,.05,0]}/>
   <Box color="#dce8e5" size={[1.03,.46,.95]} p={[-.08,.53,0]}/>
   {[-.7,.7].map(x=>[-.53,.53].map(z0=><mesh key={String(x)+String(z0)} position={[x,-.22,z0]} rotation-x={Math.PI/2}><cylinderGeometry args={[.28,.28,.15,9]}/><meshStandardMaterial color="#37383c"/></mesh>))}
  </group>;
 }
+
+const cityXs=[-48,-32,-16,0,16,32,48];
+const cityZs=[-40,-24,-8,8,24,40];
+const roadsX=[-40,-24,-8,8,24,40];
+const roadsZ=[-32,-16,0,16,32];
 function RoadNetwork(){
  return <group>
-  {[-8,8].map(z=><group key={"z"+z}><Box p={[0,.035,z]} size={[90,.08,3.7]} color="#605951"/>
-   {Array.from({length:16},(_,i)=><Box key={i} p={[-39+i*5.2,.083,z]} size={[2.1,.02,.08]} color="#e8decf"/>)}</group>)}
-  {[-10.5,10.5].map(x=><group key={"x"+x}><Box p={[x,.04,0]} size={[3.7,.08,64]} color="#605951"/>{Array.from({length:11},(_,i)=><Box key={i} p={[x,.09,-29+i*5.5]} size={[.08,.02,2.1]} color="#e8decf"/>)}</group>)}
-  {[-11,11].map(x=><group key={x}><Box p={[x,.1,0]} size={[.2,.2,68]} color="#f7eadd"/></group>)}
-  <Box p={[0,.1,0]} size={[13,.24,11]} color="#c2bba7"/>
-  <Box p={[0,.25,0]} size={[10,.18,8.5]} color="#a2b695"/>
-  {[-7,7].map(x=>[-7,7].map(z=><group key={x+"-"+z}><Box p={[x,.11,z]} size={[2,.08,2.3]} color="#eadac7"/>{Array.from({length:4},(_,i)=><Box key={i} p={[x-0.78+i*.5,.165,z]} size={[.25,.01,1.6]} color="#f9f0de"/>)}</group>))}
-  <mesh position={[0,.4,0]} castShadow><cylinderGeometry args={[2.3,2.5,.3,12]}/><meshStandardMaterial color="#ecdbcc" {...flat}/></mesh>
-  <mesh position={[0,.72,0]}><cylinderGeometry args={[1.65,1.65,.4,12]}/><meshStandardMaterial color="#6caeb3" metalness={.12} roughness={.38}/></mesh>
-  <mesh position={[0,1.2,0]} castShadow><icosahedronGeometry args={[.53,0]}/><meshStandardMaterial color="#ecede0" {...flat}/></mesh>
-  {[[-5,-3],[-3,3],[4,-2],[3,4],[-32,-5],[32,6],[-13,18],[13,-18],[-14,-20],[14,20]].map(([x,z],i)=><Tree key={i} x={x} z={z} h={1.15+(i%3)*.23} seed={i}/>)}
-  {[[-8,-18],[9,18],[-9,18],[9,-18],[-24,-7],[24,8]].map(([x,z],i)=><Lamp x={x} z={z} key={i}/>)}
-  <Car seed={1}/><Car seed={2}/><Car seed={3}/>
+  {roadsZ.map(z=><group key={"street-"+z}>
+   <Box p={[0,.026,z]} size={[128,.075,4.3]} color="#65615e"/>
+   {Array.from({length:24},(_,i)=><Box key={i} p={[-61+i*5.3,.068,z]} size={[2.2,.012,.07]} color="#eee2cd"/>)}
+   <Box p={[0,.09,z+2.52]} size={[128,.14,.42]} color="#efe6da"/>
+   <Box p={[0,.09,z-2.52]} size={[128,.14,.42]} color="#efe6da"/>
+  </group>)}
+  {roadsX.map(x=><group key={"avenue-"+x}>
+   <Box p={[x,.032,0]} size={[4.3,.075,107]} color="#65615e"/>
+   {Array.from({length:20},(_,i)=><Box key={i} p={[x,.07,-49+i*5.15]} size={[.08,.016,1.9]} color="#f1e6d4"/>)}
+   <Box p={[x+2.52,.095,0]} size={[.42,.15,107]} color="#eee2d4"/>
+   <Box p={[x-2.52,.095,0]} size={[.42,.15,107]} color="#eee2d4"/>
+  </group>)}
+  {roadsX.flatMap(x=>roadsZ.map(z=><group key={x+"-"+z}>
+   {[-1.15,-.52,.12,.76].map((a,i)=><Box key={i} p={[x+a,.115,z+3.15]} size={[.25,.016,.75]} color="#f1eadd"/>)}
+  </group>))}
+  <Box p={[0,.11,0]} size={[12,.19,11]} color="#d3c3ad"/>
+  <Box p={[0,.28,0]} size={[10,.17,8.5]} color="#9eb49b"/>
+  <mesh position={[0,.53,0]} castShadow><cylinderGeometry args={[2.2,2.35,.35,12]}/><meshStandardMaterial color="#ead6c0" {...flat}/></mesh>
+  <mesh position={[0,.78,0]}><cylinderGeometry args={[1.58,1.65,.27,12]}/><meshStandardMaterial color="#78b1b5" roughness={.36}/></mesh>
+  <mesh position={[0,1.18,0]} castShadow><icosahedronGeometry args={[.57,0]}/><meshStandardMaterial color="#faf4e5" {...flat}/></mesh>
+  {[-6,6].flatMap(x=>[-5,5].map(z=><Tree key={x+"-"+z} x={x} z={z} h={.65} seed={x+z+20}/>))}
+  {cityXs.flatMap((x,i)=>[-49,49].map((z,j)=><Tree key={x+"-"+z} x={x} z={z} h={.9+((i+j)%3)*.15} seed={i+j+4}/>))}
+  {roadsX.flatMap(x=>[-46,46].map(z=><Lamp key={x+"_"+z} x={x+3} z={z}/>))}
+  {[-56,-24,8,40,56].flatMap((x,i)=>[-32,32].map((z,j)=><Tree key={i+"_"+j} x={x} z={z+4} h={.6+(i%3)*.16} seed={i+j}/>))}
+  {Array.from({length:7},(_,i)=><Car key={i} seed={i}/>)}
  </group>;
 }
-
+function AmbientBuildings({districts}:{districts:District[]}){
+ const lots=useMemo(()=>{
+  const used=new Set(districts.map(b=>b.x+","+b.z));
+  return cityXs.flatMap((x,i)=>cityZs.map((z,j)=>({x,z,i,j})))
+   .filter(v=>!used.has(v.x+","+v.z)&&!(v.x===0&&(v.z===-8||v.z===8)))
+   .map(({x,z,i,j})=>({x,z,height:4+((i*5+j*3)%7)*1.6,color:["#c8b3a2","#b6c3b3","#b4aebc","#c1b6a1","#a7b9bd"][((i*3+j)%5)]}));
+ },[districts]);
+ return <group>{lots.map((b,i)=><group key={b.x+"-"+b.z} position={[b.x,0,b.z]}>
+   <Box p={[0,b.height/2+.35,0]} size={[8.2,b.height,8.4]} color={b.color}/>
+   <Box p={[0,b.height+.6,0]} size={[8.8,.38,9]} color="#e6dfd4"/>
+   {[-2.3,0,2.3].map((x,j)=><Box key={j} p={[x,2.4,4.26]} size={[1.15,1.52,.09]} color="#c7d8d4"/>)}
+   <Box p={[0,.9,4.35]} size={[2,1.6,.15]} color="#605e61"/>
+   {i%3===0&&<Tree x={4.3} z={4.1} h={.52} seed={i}/>}
+  </group>)}</group>;
+}
+function BuildingWindows({b,muted}:{b:District;muted:boolean}){
+ const mesh=useRef<THREE.InstancedMesh>(null);
+ const transforms=useMemo(()=>{
+  const v:{x:number;y:number;z:number}[]=[];
+  const floors=Math.max(2,Math.floor(b.h/1.7)-1);
+  for(let f=0;f<floors;f++)for(const x of [-.27,0,.27])for(const side of [-1,1]){
+   v.push({x:x*b.w,y:1.45+f*1.6,z:side*(b.d/2+.06)});
+  }
+  return v;
+ },[b.h,b.w,b.d]);
+ useEffect(()=>{
+  if(!mesh.current)return;
+  const obj=new THREE.Object3D();
+  for(let i=0;i<transforms.length;i++){
+   const t=transforms[i];obj.position.set(t.x,t.y,t.z);obj.scale.set(b.w*.16,.78,.105);obj.updateMatrix();
+   mesh.current.setMatrixAt(i,obj.matrix);
+  }
+  mesh.current.instanceMatrix.needsUpdate=true;
+ },[transforms,b.w]);
+ return <instancedMesh ref={mesh} args={[undefined,undefined,transforms.length]} castShadow={false}>
+  <boxGeometry args={[1,1,1]}/><meshStandardMaterial color={muted?"#c9c8c4":"#bfdcd8"} emissive={muted?"#1d1916":"#355b5c"} emissiveIntensity={muted?0:.08} roughness={.46}/>
+ </instancedMesh>;
+}
 function BuildingDoor({b,open}:{b:District;open:boolean}){
  const hinge=useRef<THREE.Group>(null);
  useFrame((_,dt)=>{if(hinge.current){const target=open?-.97:0;hinge.current.rotation.y+=(target-hinge.current.rotation.y)*Math.min(1,dt*5.2)}});
