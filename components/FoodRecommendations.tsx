@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Check, ChefHat, Coffee, ExternalLink, MapPin, RefreshCw, Utensils } from 'lucide-react';
+import { Check, ChefHat, Coffee, ExternalLink, MapPin, RefreshCw, Utensils, Soup } from 'lucide-react';
 import type { Activity } from '@/lib/types';
 
 export type FoodVenue = {
   id:string;name:string;kind:'food'|'drinks';category:string;lat:number;lng:number;
   distanceMeters:number;cuisine:string|null;address:string|null;hours:string|null;
   website:string|null;osmUrl:string;
+  localFood?:boolean;streetFood?:boolean;
 };
-type Filter = 'all'|'food'|'drinks';
+type Filter = 'all'|'food'|'drinks'|'local'|'street';
 type Position = {lat:number;lng:number;source:'activity'|'day'};
 type Props = {
   activity:Activity; anchor:Position|null;
@@ -38,7 +39,7 @@ export default function FoodRecommendations({activity,anchor,onChoose}:Props){
     fetch('/api/food-nearby',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({lat:anchor.lat,lng:anchor.lng,activityTitle:activity.title}),
+      body:JSON.stringify({lat:anchor.lat,lng:anchor.lng,activityTitle:activity.title,filter}),
       signal:controller.signal,
       cache:'no-store'
     }).then(async response=>{
@@ -55,9 +56,9 @@ export default function FoodRecommendations({activity,anchor,onChoose}:Props){
       setState('error');
     });
     return ()=>controller.abort();
-  },[key,retry]);
-  const shown=useMemo(()=>venues.filter(v=>filter==='all'||v.kind===filter).slice(0,limit),[venues,filter,limit]);
-  const available=useMemo(()=>venues.filter(v=>filter==='all'||v.kind===filter).length,[venues,filter]);
+  },[key,retry,filter,activity.title]);
+  const shown=useMemo(()=>venues.slice(0,limit),[venues,limit]);
+  const available=venues.length;
   return <section className="food-recommendations" aria-label="Nearby restaurants and cafes">
     <div className="food-panel-head">
       <div className="food-panel-icon"><Utensils size={18}/></div>
@@ -68,6 +69,8 @@ export default function FoodRecommendations({activity,anchor,onChoose}:Props){
     {anchor && <p className="food-anchor"><MapPin size={13}/>{anchor.source==='day'?'Searching around another mapped stop on this day':'Searching around this activity’s map pin'} · up to 2.2 km radius</p>}
     <div className="food-filters" role="group" aria-label="Food and drink categories">
       <button type="button" className={filter==='all'?'active':''} aria-pressed={filter==='all'} onClick={()=>{setFilter('all');setLimit(8);}}>All places</button>
+      <button type="button" className={filter==='local'?'active':''} aria-pressed={filter==='local'} onClick={()=>{setFilter('local');setLimit(8);}}><Soup size={14}/> Local eats</button>
+      <button type="button" className={filter==='street'?'active':''} aria-pressed={filter==='street'} onClick={()=>{setFilter('street');setLimit(8);}}>Street food</button>
       <button type="button" className={filter==='food'?'active':''} aria-pressed={filter==='food'} onClick={()=>{setFilter('food');setLimit(8);}}><ChefHat size={14}/> Restaurants</button>
       <button type="button" className={filter==='drinks'?'active':''} aria-pressed={filter==='drinks'} onClick={()=>{setFilter('drinks');setLimit(8);}}><Coffee size={14}/> Coffee & drinks</button>
     </div>
@@ -80,6 +83,7 @@ export default function FoodRecommendations({activity,anchor,onChoose}:Props){
         <div className="food-venue-main">
           <div className="food-venue-name"><strong>{venue.name}</strong><span>{iconText(venue.distanceMeters)} away</span></div>
           <p>{venue.category}{venue.cuisine?' · '+venue.cuisine:''}</p>
+          {(venue.localFood||venue.streetFood)&&<div className="food-tags">{venue.localFood&&<span>Local-style food*</span>}{venue.streetFood&&<span>Street-food tag*</span>}</div>}
           {venue.address&&<p className="food-venue-detail"><MapPin size={12}/>{venue.address}</p>}
           {venue.hours&&<p className="food-venue-detail">Listed hours: {venue.hours} (verify before visiting)</p>}
         </div>
@@ -91,6 +95,6 @@ export default function FoodRecommendations({activity,anchor,onChoose}:Props){
       </article>)}</div>
       {available>limit&&<button className="food-show-more" type="button" onClick={()=>setLimit(n=>n+8)}>Show more nearby places</button>}
     </>}
-    <p className="place-source-note">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a> (ODbL). Nearby distance is straight-line, not walking time. Listings, cuisine and opening hours may be incomplete. Coverage and accuracy depend on the last verified OpenStreetMap data import.</p>
+    <p className="place-source-note">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a> (ODbL). Nearby distance is straight-line, not walking time. Listings, cuisine and opening hours may be incomplete. Local/street labels are indicators inferred from OSM cuisine, venue names or tags—not independently verified recommendations. Coverage and accuracy depend on the last OpenStreetMap import.</p>
   </section>;
 }
