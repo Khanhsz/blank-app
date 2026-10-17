@@ -78,6 +78,48 @@ function RoadNetwork(){
   <Car seed={1}/><Car seed={2}/><Car seed={3}/>
  </group>;
 }
+
+function BuildingDoor({b,open}:{b:District;open:boolean}){
+ const hinge=useRef<THREE.Group>(null);
+ useFrame((_,dt)=>{if(hinge.current){const target=open?-.97:0;hinge.current.rotation.y+=(target-hinge.current.rotation.y)*Math.min(1,dt*5.2)}});
+ return <group position={[-b.w*.14,0,b.d/2+.28]} ref={hinge}>
+  <mesh position={[b.w*.14,1.16,0]} castShadow><boxGeometry args={[b.w*.28,2.15,.20]}/><meshStandardMaterial color={b.locked?"#a8a49a":"#405158"} roughness={.55}/></mesh>
+  <mesh position={[b.w*.25,1.25,.14]}><sphereGeometry args={[.09,8,8]}/><meshStandardMaterial color="#dbb589" metalness={.3} roughness={.32}/></mesh>
+ </group>;
+}
+function CityPlayer({character,districts,touch,position,active}:{character:Character;districts:District[];touch:string;position:React.MutableRefObject<[number,number]>;active:React.MutableRefObject<boolean>}){
+ const group=useRef<THREE.Group>(null),pressed=useRef<Set<string>>(new Set());
+ useEffect(()=>{
+  const keydown=(e:KeyboardEvent)=>{
+   const el=e.target as HTMLElement|null;
+   if(el?.closest("input,textarea,select,[contenteditable]"))return;
+   if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","w","a","s","d","W","A","S","D"].includes(e.key)){e.preventDefault();pressed.current.add(e.key.toLowerCase())}
+  };
+  const keyup=(e:KeyboardEvent)=>pressed.current.delete(e.key.toLowerCase());
+  const blur=()=>pressed.current.clear();
+  window.addEventListener("keydown",keydown);window.addEventListener("keyup",keyup);window.addEventListener("blur",blur);
+  return()=>{window.removeEventListener("keydown",keydown);window.removeEventListener("keyup",keyup);window.removeEventListener("blur",blur)};
+ },[]);
+ useFrame((_,dt)=>{
+  if(!group.current)return;
+  const k=pressed.current;
+  let dx=(k.has("d")||k.has("arrowright")||touch==="right"?1:0)-(k.has("a")||k.has("arrowleft")||touch==="left"?1:0);
+  let dz=(k.has("s")||k.has("arrowdown")||touch==="down"?1:0)-(k.has("w")||k.has("arrowup")||touch==="up"?1:0);
+  const length=Math.hypot(dx,dz);
+  active.current=length>0;
+  if(!length)return;
+  dx/=length;dz/=length;
+  const [px,pz]=position.current;
+  let nx=Math.max(-38,Math.min(38,px+dx*dt*5));
+  let nz=Math.max(-28,Math.min(28,pz+dz*dt*5));
+  if(districts.some(b=>Math.abs(nx-b.x)<b.w/2+.9&&Math.abs(nz-b.z)<b.d/2+.9)){nx=px;nz=pz}
+  position.current=[nx,nz];
+  group.current.position.set(nx,.05,nz);
+  group.current.rotation.y=Math.atan2(dx,dz);
+ });
+ return <group ref={group} position={[0,.05,0]}><LowPolyPerson c={character} pos={[0,0,0]} walk seed={7}/><mesh position={[0,.03,0]} rotation-x={-Math.PI/2}><ringGeometry args={[.55,.7,24]}/><meshBasicMaterial color="#cf8759" transparent opacity={.58} depthWrite={false}/></mesh></group>;
+}
+
 function Building({b,onSelect,selected}:{b:District;onSelect:(id:string)=>void;selected:boolean}){
  const [hover,setHover]=useState(false);
  const liftGroup=useRef<THREE.Group>(null);
@@ -102,7 +144,7 @@ function Building({b,onSelect,selected}:{b:District;onSelect:(id:string)=>void;s
      <Box p={[k*b.w*.27,1.45+i*1.6,-b.d/2-.05]} size={[b.w*.16,.76,.11]} color={transparent?"#d1cfc9":"#d2e4e0"}/>
     </group>)}
    </group>)}
-   <Box p={[0,1.16,b.d/2+.17]} size={[b.w*.27,2.1,.21]} color={transparent?"#a9a7a1":"#4c5b5f"}/>
+   <BuildingDoor b={b} open={selected&&!b.locked}/>
    <Box p={[0,.16,b.d/2+1.1]} size={[b.w*.72,.18,1.9]} color="#d6c4b1"/>
    {b.id==="research"&&<group position={[b.w*.25,b.h+1.1,0]}><mesh castShadow><icosahedronGeometry args={[.65,0]}/><meshStandardMaterial color="#eff9f8" {...flat}/></mesh></group>}
    {b.id==="media"&&<Box p={[0,b.h*.66,b.d/2+.1]} size={[b.w*.68,1.52,.18]} color="#384950"/>}
@@ -116,9 +158,10 @@ function Building({b,onSelect,selected}:{b:District;onSelect:(id:string)=>void;s
   </Html>
  </group>;
 }
-function City({districts,onSelect,selected,c}:{districts:District[];onSelect:(id:string)=>void;selected:string|null;c:Character}){
+function City({districts,onSelect,selected,c,touch,position,active}:{districts:District[];onSelect:(id:string)=>void;selected:string|null;c:Character;touch:string;position:React.MutableRefObject<[number,number]>;active:React.MutableRefObject<boolean>}){
  return <><Land/><RoadNetwork/>{districts.map(b=><Building key={b.id} b={b} selected={selected===b.id} onSelect={onSelect}/>)}
  {[0,1,2,3,4,5,6].map(i=><CityWalker key={i} seed={i+1} c={c}/>)}
+ <CityPlayer character={c} districts={districts} touch={touch} position={position} active={active}/>
  </>;
 }
 function RoomComputer({onInteract}:{onInteract:()=>void}){
@@ -206,7 +249,7 @@ function Office({c,staff,board}:{c:Character;staff:number;board:boolean}){
   <ContactShadows opacity={.23} scale={22} blur={2.9} far={10} position={[0,-.005,0]}/>
  </group>;
 }
-function CameraRig({scene,districts,selected,focus,preview,avatarZoom}:{scene:SceneId;districts:District[];selected:string|null;focus?:string|null;preview?:boolean;avatarZoom?:number}){
+function CameraRig({scene,districts,selected,focus,preview,avatarZoom,player,playerActive}:{scene:SceneId;districts:District[];selected:string|null;focus?:string|null;preview?:boolean;avatarZoom?:number;player:React.MutableRefObject<[number,number]>;playerActive:React.MutableRefObject<boolean>}){
  const controls=useRef<any>(null);
  useEffect(()=>{
   const c=controls.current;if(!c)return;
@@ -224,22 +267,24 @@ function CameraRig({scene,districts,selected,focus,preview,avatarZoom}:{scene:Sc
   }
   else c.setLookAt(19,14,19,0,1,0,true);
  },[scene,selected,districts,focus,preview,avatarZoom]);
+ useFrame(()=>{if(scene==="city"&&playerActive.current&&!selected&&controls.current){const [x,z]=player.current;controls.current.setLookAt(x+26,31,z+32,x,1,z,false)}});
  return <CameraControls ref={controls} smoothTime={.7} maxPolarAngle={Math.PI/2.12} minDistance={5} maxDistance={scene==="city"?72:27} dollySpeed={.65} truckSpeed={.6} />;
 }
-export function WorldScene({scene,districts,selected,onSelect,onComputerInteract,onRoomInteract,character,room,staff,quality,focus,preview,avatarYaw,avatarZoom}:{
- scene:SceneId;districts:District[];selected:string|null;onSelect:(id:string)=>void;onComputerInteract:()=>void;onRoomInteract:(x:RoomAction)=>void;character:Character;room:RoomStyle;staff:number;quality:"high"|"low";focus?:string|null;preview?:boolean;avatarYaw?:number;avatarZoom?:number;
+export function WorldScene({scene,districts,selected,onSelect,onComputerInteract,onRoomInteract,character,room,staff,quality,focus,preview,avatarYaw,avatarZoom,moveInput=""}:{
+ scene:SceneId;districts:District[];selected:string|null;onSelect:(id:string)=>void;onComputerInteract:()=>void;onRoomInteract:(x:RoomAction)=>void;character:Character;room:RoomStyle;staff:number;quality:"high"|"low";focus?:string|null;preview?:boolean;avatarYaw?:number;avatarZoom?:number;moveInput?:string;
 }){
  const city=scene==="city";
  const memoDistricts=useMemo(()=>districts,[JSON.stringify(districts)]);
+ const playerPosition=useRef<[number,number]>([0,0]);const playerActive=useRef(false);
  return <Canvas key={scene} shadows={quality==="high"} dpr={quality==="high"?[1,1.65]:[1,1]} gl={{antialias:quality==="high",alpha:false,powerPreference:"high-performance"}} camera={{position:city?[31,35,43]:[11.4,10.7,13.8],fov:42,near:.1,far:180}}>
   <color attach="background" args={["#f8eddf"]}/><fog attach="fog" args={["#f8eddf",city?80:36,city?150:70]}/>
   <hemisphereLight args={["#fff7e8","#b8aa97",1.55]}/>
   <ambientLight intensity={.45}/>
   <directionalLight position={[25,37,16]} intensity={2.1} color="#ffeed9" castShadow={quality==="high"} shadow-mapSize-width={2048} shadow-mapSize-height={2048} shadow-camera-left={-52} shadow-camera-right={52} shadow-camera-top={52} shadow-camera-bottom={-52} shadow-bias={-.00014}/>
   <directionalLight position={[-12,9,-17]} intensity={.65} color="#aeced3"/>
-  {city?<City districts={memoDistricts} selected={selected} onSelect={onSelect} c={character}/>:scene==="room"?<Room r={room} c={character} onComputerInteract={onComputerInteract} onRoomInteract={onRoomInteract} preview={preview} avatarYaw={avatarYaw}/>:<Office c={character} staff={staff} board={scene==="boardroom"}/>}
+  {city?<City districts={memoDistricts} selected={selected} onSelect={onSelect} c={character} touch={moveInput} position={playerPosition} active={playerActive}/>:scene==="room"?<Room r={room} c={character} onComputerInteract={onComputerInteract} onRoomInteract={onRoomInteract} preview={preview} avatarYaw={avatarYaw}/>:<Office c={character} staff={staff} board={scene==="boardroom"}/>}
   {quality==="high"&&!city&&scene==="room"&&<ContactShadows scale={14} opacity={.2} blur={2.8} far={8} position={[0,-.02,0]}/>}
-  <CameraRig scene={scene} districts={memoDistricts} selected={selected} focus={focus} preview={preview} avatarZoom={avatarZoom}/>
+  <CameraRig scene={scene} districts={memoDistricts} selected={selected} focus={focus} preview={preview} avatarZoom={avatarZoom} player={playerPosition} playerActive={playerActive}/>
  </Canvas>;
 }
 export function hasWebGL(){
