@@ -29,7 +29,7 @@ export interface CEO {
 }
 
 export type SceneId = "room" | "city" | "office" | "boardroom";
-export interface Character { name: string; skin: string; outfit: string; hair: string; interest: string }
+export interface Character { name: string; skin: string; outfit: string; hair: string; interest: string; hairstyle?: "short"|"curly"|"bun"; accessory?: "none"|"headphones"|"glasses" }
 export interface RoomStyle { wall: string; rug: string; plant: boolean; lamp: boolean; shelf: boolean }
 
 export interface WorldProgress {visited:string[];contacts:string[]}
@@ -50,7 +50,7 @@ export const newCampaign = (i: number): Campaign => ({
 
 export const defaults = (): GameState => ({
   version: 2, created: false,
-  character: { name: "Alex", skin: "#d6a681", outfit: "#4c9589", hair: "#352824", interest: "Strategy" },
+  character: { name: "Alex", skin: "#d6a681", outfit: "#4c9589", hair: "#352824", interest: "Strategy", hairstyle:"short", accessory:"none" },
   room: { wall: "#efe4d3", rug: "#bd694a", plant: true, lamp: true, shelf: false },
   scene: "room", reputation: 0, expertise: 0, personalCash: 2500000, agencyCash: 0, agencyUnlocked: false, agencyName: "",
   staff: [], upgrades: [], cityUnlocked: false, campaign: newCampaign(0), world:{visited:[],contacts:[]}, history: [], log: [], graphics: "high", ceo: null,
