@@ -68,3 +68,45 @@ test("reproducible binary generation passes byte-for-byte verification",async()=
  assert.match(output,/ART FACTORY/);
  assert.match(output,/"verified":true/);
 });
+
+
+test("Brickhouse modernist slice has nontrivial asymmetric massing in both LODs and three independent media slots",()=>{
+ const entry=manifest.assets.find((a:{id:string})=>a.id==="office-brick");
+ assert.ok(entry);
+ assert.equal(entry.gameplayId,"office-brick");
+ assert.equal(entry.archetype,"brickhouse-modernist-v1");
+ const expected=["ANCHOR_Entrance","ANCHOR_Sign","ANCHOR_Roof","ANCHOR_DOOH_Facade","ANCHOR_OOH_Parapet","ANCHOR_Activation","COLLIDER_Footprint"];
+ for(const lod of [0,1]){
+  const info=entry.lod["lod"+lod];
+  const glb=inspect(fs.readFileSync(path.join(generated,path.basename(info.uri))));
+  assert.equal(glb.extras.archetype,"brickhouse-modernist-v1");
+  const names=new Set(glb.nodes.map((n:{name:string})=>n.name));
+  expected.forEach(x=>assert.ok(names.has(x),"Missing "+x+" in LOD "+lod));
+  const root=glb.nodes[0];
+  assert.deepEqual(root.extras.persistentGameEntity,"office-brick");
+  assert.equal(root.children.length,8);
+  assert.equal(glb.extras.advertisingSlots.length,3);
+  for(const slot of glb.extras.advertisingSlots){
+   assert.ok(names.has(slot.anchor),"Missing anchored media "+slot.id);
+   assert.ok(slot.content==="dynamic"||slot.content==="interactive");
+  }
+  const entrance=glb.nodes.find((x:{name:string})=>x.name==="ANCHOR_Entrance");
+  const dooh=glb.nodes.find((x:{name:string})=>x.name==="ANCHOR_DOOH_Facade");
+  assert.ok(entrance.translation[2]>4&&entrance.translation[2]<5);
+  assert.ok(dooh.translation[1]>7&&dooh.translation[1]<10);
+  assert.ok(info.triangles<=(lod===0?1800:360));
+ }
+ const spec=specs.masters.find((x:{id:string})=>x.id==="office-brick");
+ assert.equal(spec.massing,"three_offset_volumes");
+ assert.equal(spec.advertisingSlots.length,3);
+ assert.ok(entry.lod.lod0.triangles>entry.lod.lod1.triangles);
+});
+test("Brickhouse media is composed at runtime rather than permanently baked into GLB",()=>{
+ const source=fs.readFileSync("src/components/game/BrickhouseCampaignMedia.tsx","utf8");
+ const integration=fs.readFileSync("src/components/game/AssetDistrict.tsx","utf8");
+ assert.match(source,/useGame\(s=>s\.ceo\?\.weekly/);
+ assert.match(source,/getObjectByName/);
+ assert.match(source,/BRICKHOUSE_AD_SLOT_IDS/);
+ assert.match(integration,/b\.id==="office-brick"\?<BrickhouseCampaignMedia/);
+ assert.match(integration,/OutdoorCampaignDisplay b=\{b\}/);
+});
