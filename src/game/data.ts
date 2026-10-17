@@ -121,7 +121,7 @@ export const upgrades: Record<UpgradeId, { name: string; cost: number; desc: str
 };
 export const COWORK_COST = 300000;
 
-export interface Employee { id: string; name: string; role: string; salary: number; skill: string }
+export interface Employee { id: string; name: string; role: string; salary: number; skill: string; specialty?:string; startingSkill?:number }
 export const employees: Employee[] = [
   { id: "researcher", name: "An Phạm", role: "Researcher", salary: 1600000, skill: "Insight / Survey" },
   { id: "planner", name: "Huy Nguyễn", role: "Strategic Planner", salary: 2200000, skill: "Strategy / Positioning" },
@@ -132,6 +132,15 @@ export const employees: Employee[] = [
   { id: "analyst", name: "Nhi Võ", role: "Data Analyst", salary: 3500000, skill: "Metrics / Reporting" },
   { id: "producer", name: "Bảo Trần", role: "Production Producer", salary: 2800000, skill: "Assets / Activations" },
   { id: "ops", name: "Hà Phạm", role: "Operations Lead", salary: 2600000, skill: "Project Delivery / Resource Planning" },
+  // A second recruiting tier supports multiple concurrent client campaigns.
+  { id:"researcher2",name:"Quân Nguyễn",role:"Research Associate",salary:1450000,skill:"Interviews / Desk Research",specialty:"research",startingSkill:59 },
+  { id:"planner2",name:"Linh Hoàng",role:"Integrated Planner",salary:2450000,skill:"IMC / Brand Strategy",specialty:"strategy",startingSkill:70 },
+  { id:"creator2",name:"Yến Lưu",role:"Visual Designer",salary:2350000,skill:"Key Visual / Brand Assets",specialty:"creative",startingSkill:73 },
+  { id:"buyer2",name:"Đạt Bùi",role:"Growth Specialist",salary:2200000,skill:"Ad Buying / Testing",specialty:"media",startingSkill:68 },
+  { id:"account2",name:"Lan Cao",role:"Account Executive",salary:2050000,skill:"Client Service / Timelines",specialty:"account",startingSkill:60 },
+  { id:"producer2",name:"Phương Lê",role:"Content Producer",salary:2400000,skill:"Shoots / Events",specialty:"production",startingSkill:67 },
+  { id:"analyst2",name:"Kiên Ngô",role:"Performance Analyst",salary:2300000,skill:"Dashboards / Attribution",specialty:"analytics",startingSkill:67 },
+  { id:"ops2",name:"Hải Vũ",role:"Project Coordinator",salary:1900000,skill:"QA / Resource Allocation",specialty:"operations",startingSkill:61 },
 ];
 export const employeeById = (id: string) => employees.find((e) => e.id === id);
 

@@ -43,8 +43,10 @@ export interface Campaign {
 }
 export interface ScoreResult { pct: number; outcome: number; adReach: number; quality: number; fit: Record<string, number>; performance: "target" | "near" | "under" }
 
-export interface Task { key: string; label: string; role: string; effort: number; pre: string[]; cost: number; status: "backlog" | "assigned" | "in_progress" | "review" | "completed"; progress: number; quality: number; employee: string | null; outsourced: boolean; revised?: boolean; reviewDay?: number; assignedDay?: number; startedDay?: number; doneDay?: number }
-export interface Project { id: string; leadId: string; brand: string; adBudget: number; fee: number; bonus: number; scope: number; duration: number; industry: string; days: number; status: "active" | "completed"; scenarioIndex: number; startedDay: number; target: number; pitchQuality: number; mediaSpent: number; mediaReserved: number; direct: number; campaign: Campaign; tasks: Task[]; paymentCount: number; payrollAllocated?: number; overheadAllocated?: number; deadlineIssue?: boolean; midpoint?: boolean; kolQuality?: number; reportQuality?: number; kpi?: number; quality?: number; margin?: number; clientTrust?: number; completedDay?: number; legacy?: boolean }
+export type WorkStyle="balanced"|"speed"|"quality";
+export interface PersonnelProfile {skill:number;morale:number;fatigue:number;xp:number;focus:WorkStyle;trainingUntil?:number;pendingSkill?:number;lastFocusWeek?:number;}
+export interface Task {preferredEmployee?:string|null; key: string; label: string; role: string; effort: number; pre: string[]; cost: number; status: "backlog" | "assigned" | "in_progress" | "review" | "completed"; progress: number; quality: number; employee: string | null; outsourced: boolean; revised?: boolean; reviewDay?: number; assignedDay?: number; startedDay?: number; doneDay?: number }
+export interface Project { priority?:"normal"|"high"; id: string; leadId: string; brand: string; adBudget: number; fee: number; bonus: number; scope: number; duration: number; industry: string; days: number; status: "active" | "completed"; scenarioIndex: number; startedDay: number; target: number; pitchQuality: number; mediaSpent: number; mediaReserved: number; direct: number; campaign: Campaign; tasks: Task[]; paymentCount: number; payrollAllocated?: number; overheadAllocated?: number; deadlineIssue?: boolean; midpoint?: boolean; kolQuality?: number; reportQuality?: number; kpi?: number; quality?: number; margin?: number; clientTrust?: number; completedDay?: number; legacy?: boolean }
 export interface Lead extends LeadDef { status: "new" | "qualified" | "pitch" | "pitch_won" | "negotiating" | "signed" | "lost" | "declined" | "renewal"; relationship: number; insightKnown?: boolean; lostTo?: string }
 export interface Issue { id: string; type: string; project: string; message: string; choices: string[]; status: "open" | "resolved"; day: number; resolution?: string }
 export interface LedgerEntry { day: number; what: string; value: number; lead: string; status: "paid" | "due"; due?: number; project?: string }
@@ -84,7 +86,7 @@ export interface WorldProgress {visited:string[];contacts:string[];leasedOffices
 export interface GameState {
   version: 2; created: boolean; character: Character; room: RoomStyle; scene: SceneId;
   reputation: number; expertise: number; personalCash: number; agencyCash: number; agencyUnlocked: boolean; agencyName: string;
-  staff: string[]; upgrades: string[]; cityUnlocked: boolean; campaign: Campaign; clock: GameClock; officeId:string;
+  staff: string[]; personnel:Record<string,PersonnelProfile>; teamLeads:Record<string,string>; upgrades: string[]; cityUnlocked: boolean; campaign: Campaign; clock: GameClock; officeId:string;
   world: WorldProgress;
   history: { brand: string; outcome: number; score: number; spent: number; rep: number; xp: number; scenarioIndex: number; agency: boolean; caseStudy?: {highlight:string;reason:string;next:string;score:number;diagnosis:string|null;insight:string|null;approach:string|null;creative:string|null;message:string;mediaPlan:string|null;liveWeeks:number} }[];
   log: { t: number; msg: string }[]; graphics: "high" | "low"; ceo: CEO | null;
@@ -103,7 +105,7 @@ export const defaults = (): GameState => ({
   character: { name: "Alex", skin: "#d6a681", outfit: "#4c9589", hair: "#352824", interest: "Strategy", hairstyle:"short", accessory:"none" },
   room: { wall: "#efe4d3", rug: "#bd694a", plant: true, lamp: true, shelf: false },
   scene: "room", reputation: 0, expertise: 0, personalCash: 2500000, agencyCash: 0, agencyUnlocked: false, agencyName: "",
-  staff: [], upgrades: [], cityUnlocked: false, campaign: newCampaign(0), clock:{day:1,week:1,pending:[],editions:[],lastAdvanceDay:1}, officeId:"agency", world:{visited:[],contacts:[],leasedOffices:[]}, history: [], log: [], graphics: "high", ceo: null,
+  staff: [], personnel:{}, teamLeads:{}, upgrades: [], cityUnlocked: false, campaign: newCampaign(0), clock:{day:1,week:1,pending:[],editions:[],lastAdvanceDay:1}, officeId:"agency", world:{visited:[],contacts:[],leasedOffices:[]}, history: [], log: [], graphics: "high", ceo: null,
 });
 
 export const newCEO = (reputation: number): CEO => ({
@@ -131,12 +133,28 @@ export function migrate(raw: unknown): GameState {
     room: { ...d.room, ...(s.room ?? {}) },
     campaign: { ...newCampaign(0), ...s.campaign },
     officeId:typeof s.officeId==="string"?s.officeId:"agency",
-    staff: Array.isArray(s.staff) ? s.staff : [], upgrades: Array.isArray(s.upgrades) ? s.upgrades : [],
+    staff: Array.isArray(s.staff) ? s.staff : [],
+    personnel:s.personnel&&typeof s.personnel==="object"?{...s.personnel}:{},
+    teamLeads:s.teamLeads&&typeof s.teamLeads==="object"?{...s.teamLeads}:{},
+    upgrades: Array.isArray(s.upgrades) ? s.upgrades : [],
     history: Array.isArray(s.history) ? s.history : [],
     world:{visited:Array.isArray(s.world?.visited)?s.world.visited.filter((x):x is string=>typeof x==="string"):[],contacts:Array.isArray(s.world?.contacts)?s.world.contacts.filter((x):x is string=>typeof x==="string"):[],leasedOffices:Array.isArray(s.world?.leasedOffices)?s.world.leasedOffices.filter((x):x is string=>typeof x==="string"):[]},
     log: Array.isArray(s.log) ? (s.log as unknown[]).map((l) => (typeof l === "string" ? { t: 0, msg: l } : (l as { t: number; msg: string }))) : [],
     ceo: s.ceo ?? null,
   };
+  // Preserve historical hired IDs; initialize deterministic attributes for old saves.
+  for(const id of out.staff){
+    const rawProfile=out.personnel[id];
+    const base={skill:64,morale:78,fatigue:0,xp:0,focus:"balanced" as WorkStyle};
+    out.personnel[id]={...base,...rawProfile,
+      skill:Math.min(100,Math.max(25,Number(rawProfile?.skill??base.skill))),
+      morale:Math.min(100,Math.max(0,Number(rawProfile?.morale??base.morale))),
+      fatigue:Math.min(100,Math.max(0,Number(rawProfile?.fatigue??base.fatigue))),
+      xp:Math.max(0,Number(rawProfile?.xp??0)),
+      focus:["balanced","speed","quality"].includes(rawProfile?.focus??"")?rawProfile!.focus:"balanced"
+    };
+  }
+  for(const [role,id] of Object.entries(out.teamLeads))if(!out.staff.includes(id))delete out.teamLeads[role];
   // One global week from the bedroom onwards. CEO legacy saves retain their accumulated date.
   const savedDay = s.agencyUnlocked ? Math.max(s.clock?.day??1,s.ceo?.day??1) : (s.clock?.day ?? s.campaign?.day ?? 1);
   const day = Math.max(1,Math.floor(Number(savedDay)||1));

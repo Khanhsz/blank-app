@@ -11,6 +11,7 @@ import { ceoPartners, ceoRoles, creatives, employees, insights, mediaChannels, m
 import { PHASES, PHASE_LABEL } from "@/game/state";
 import {findCityLot,findOffice,currentOffice,cityRival,cityClient,leaseOffice} from "@/game/city";
 import {departmentMetrics} from "@/game/functions";
+import * as P from "@/game/personnel";
 import {CampaignJourney} from "./CampaignJourney";
 
 const Choice = ({ on, onClick, title, sub }: { on?: boolean; onClick: () => void; title: string; sub?: string }) => (
@@ -117,19 +118,51 @@ export function CEOCommandCenter({onReadEdition}:{onReadEdition?:(id:string)=>vo
         {!c.pitch && !c.negotiation && c.leads.map((l) => <div key={l.id} className="mt-deal"><div className="flex justify-between"><b>{l.brand}</b><span className="text-xs capitalize text-primary">{l.status.replace("_", " ")}</span></div><p className="text-xs text-muted-foreground">{l.desc}</p><Row k="Service fee" v={money(l.fee)} /><Row k="Rivals" v={l.rivalIds.join(", ")} />{l.insightKnown && <Row k="Client priority" v={l.pref} />}{tenderFor(c,l.id)?.status==="open"&&<Row k="Tender deadline" v={"Day "+tenderFor(c,l.id)!.deadline}/>}
           <div className="mt-2 flex gap-2">{["new", "renewal"].includes(l.status) && <Button size="sm" onClick={() => act((d, f) => K.qualify(d, f, l.id))}>Qualify · 180k</Button>}{l.status === "qualified" && <Button size="sm" onClick={() => act((d, f) => K.startPitch(d, f, l.id))}>Prepare pitch · 500k</Button>}{["new", "qualified", "renewal"].includes(l.status) && <Button size="sm" variant="ghost" onClick={() => act((d) => K.decline(d, l.id))}>Decline</Button>}</div></div>)}
       </>}
-      {tab === "projects" && (c.projects.length ? c.projects.map((p) => <div key={p.id} className="mt-project"><div className="flex justify-between"><b>{p.brand}</b><span className="text-xs">{p.status === "active" ? `Day ${p.days}/${p.duration}` : `Done · KPI ${p.kpi}%`}</span></div>
-        <AnimatedGauge label="Workstreams completed" percent={p.tasks.filter(t=>t.status==="completed").length/Math.max(1,p.tasks.length)*100} tone="sage"/>{p.tasks.map((t) => <div key={t.key} className="mt-1.5"><div className="flex justify-between text-xs"><span>{t.label}</span><span className="text-muted-foreground">{t.status.replace("_", " ")}{t.employee ? ` · ${employees.find((e) => e.id === t.employee)?.name ?? t.employee}` : ""}</span></div><div className="h-1.5 rounded-full bg-muted"><div className="h-full rounded-full bg-accent-foreground transition-all" style={{ width: `${(t.progress / t.effort) * 100}%` }} /></div></div>)}</div>) : <p className="text-sm text-muted-foreground">No active projects. Win a pitch in the pipeline.</p>)}
+      {tab === "projects" && (c.projects.length ? c.projects.map(p=><div key={p.id} className="mt-project">
+        <div className="flex justify-between gap-2"><b>{p.brand}</b><span className="text-xs">{p.status==="active"?"Day "+p.days+"/"+p.duration:"Done · KPI "+p.kpi+"%"}</span></div>
+        {p.status==="active"&&<div className="mt-2 flex gap-2 items-center justify-between"><span className="text-xs text-muted-foreground">Resource scheduling priority</span>
+          <Button size="sm" variant={p.priority==="high"?"default":"outline"} onClick={()=>act((d,fx)=>P.prioritizeProject(d,fx,p.id,p.priority==="high"?"normal":"high"))}>{p.priority==="high"?"High priority":"Normal priority"}</Button></div>}
+        <AnimatedGauge label="Workstreams completed" percent={p.tasks.filter(t=>t.status==="completed").length/Math.max(1,p.tasks.length)*100} tone="sage"/>
+        {p.tasks.map(t=><div key={t.key} className="mt-journey-personnel-task">
+          <div className="flex justify-between gap-2 text-xs"><b>{t.label}</b><span className="text-muted-foreground">{t.status.replace("_"," ")}</span></div>
+          <div className="h-1.5 rounded-full bg-muted"><div className="h-full rounded-full bg-accent-foreground transition-all" style={{width:(t.progress/Math.max(1,t.effort)*100)+"%"}}/></div>
+          <div className="flex justify-between gap-2 items-center">
+            <span className="text-xs text-muted-foreground">{t.employee?"Assigned: "+(employees.find(e=>e.id===t.employee)?.name??t.employee):t.preferredEmployee?"Requested: "+(employees.find(e=>e.id===t.preferredEmployee)?.name??t.preferredEmployee):"Auto assignment"}</span>
+            {p.status==="active"&&(t.status==="backlog"||t.status==="assigned")&&<select className="mt-journey-staff-select" aria-label={p.brand+" "+t.label+" staff assignment"} value={t.preferredEmployee??""} onChange={ev=>act((d,fx)=>P.assignSpecialist(d,fx,p.id,t.key,ev.target.value||null))}><option value="">Auto assign</option>
+              {P.candidatesForRole(t.role).filter(id=>s.staff.includes(id)).map(id=><option key={id} value={id}>{employees.find(e=>e.id===id)?.name}</option>)}</select>}
+          </div>
+        </div>)}
+      </div>) : <p className="text-sm text-muted-foreground">No active projects. Win a pitch in the pipeline.</p>)}
       {tab==="functions"&&<div className="mt-functions-grid">
         <GameSection eyebrow="INTEGRATED AGENCY" title="8 Cross-Functional Teams" sub="Each function supports Planning, Executing or Live. Staff capacity and task dependencies determine delivery speed." icon={<Users size={19}/>}/>
         {departmentMetrics(s).map(fn=><div key={fn.id} className="mt-function-card">
           <div className="flex justify-between gap-2"><div><b>{fn.name}</b><p className="text-xs text-muted-foreground">{fn.mission}</p></div><span className={fn.bottleneck?"text-destructive text-xs":"text-primary text-xs"}>{fn.bottleneck?"CAPACITY RISK":"ON TRACK"}</span></div>
           <div className="mt-2 flex flex-wrap justify-between gap-2 text-xs"><span>{fn.phases}</span><span>{fn.staff.length?"Team: "+fn.staff.join(", "):"No assigned specialist"}</span></div>
-          <div className="mt-2 flex justify-between text-xs"><span>Workload {fn.workload} / {fn.capacity} available slots</span><span>{fn.delivered}/{fn.total} complete{fn.quality!==null?" · quality "+fn.quality:""}</span></div>
+          <div className="mt-2 flex justify-between text-xs"><span>Workload {fn.workload} / {fn.capacity} slots · Queue {fn.queued}</span><span>{fn.delivered}/{fn.total} complete · Skill {fn.avgSkill} · Morale {fn.avgMorale}</span></div>
           <div className="h-1.5 rounded-full bg-muted mt-2"><div className={"h-full rounded-full "+(fn.bottleneck?"bg-destructive":"bg-accent-foreground")} style={{width:(fn.capacity?Math.min(100,fn.workload/fn.capacity*100):fn.workload?100:0)+"%"}}/></div>
-          {fn.bottleneck&&<p className="text-xs text-destructive mt-2">Hire a specialist, cross-train available staff or outsource through the relevant project escalation.</p>}
+          <p className="text-xs text-muted-foreground mt-1">{fn.lead?"Team lead: "+(employees.find(e=>e.id===fn.lead)?.name??fn.lead):"No appointed team lead"} · {fn.readyCount} available staff</p>
+          {fn.bottleneck&&<p className="text-xs text-destructive mt-2">Bottleneck risk: hire, train or reallocate tasks, or outsource this workstream.</p>}
         </div>)}
       </div>}
-      {tab === "people" && employees.map((e) => { const h = s.staff.includes(e.id); return <div key={e.id} className="mt-employee"><div><b className="text-sm">{e.name}</b><div className="text-xs text-muted-foreground">{e.role} · {money(e.salary)}/mo{h ? ` · workload ${busy[e.id] || 0}/2` : ""}</div></div>{h ? <span className="text-xs text-primary">On team</span> : <Button size="sm" disabled={s.agencyCash < e.salary||(c.talentMarket?.[e.id]?.untilDay??0)>c.day} onClick={() => act((d, f) => K.hire(d, f, e.id))}>{(c.talentMarket?.[e.id]?.untilDay??0)>c.day?"Under rival offer":"Hire"}</Button>}</div>; })}
+      {tab==="people"&&<div className="mt-personnel-grid">
+        <GameSection eyebrow="PEOPLE & CULTURE" title="Agency Personnel V2" sub="Hire specialists, build team leads, choose delivery styles and invest in upskilling. Skill, morale and fatigue affect real task delivery." icon={<Users size={19}/>}/>
+        <div className="mt-journey-team-summary"><span>Headcount <b>{s.staff.length}/{currentOffice(s).capacity}</b></span><span>Payroll/day <b>{money(K.dailyPayroll(s))}</b></span><span>Team leads <b>{Object.keys(s.teamLeads).length}/8</b></span></div>
+        {employees.map(e=>{const hired=s.staff.includes(e.id),p=P.profile(s,e.id),role=P.primaryRole(e.id),lead=role&&s.teamLeads[P.FUNCTION_FOR_ROLE[role]]===e.id;const training=!!p.trainingUntil&&p.trainingUntil>c.day;
+        return <div key={e.id} className={"mt-personnel-card "+(hired?"hired":"")}>
+          <div className="flex justify-between gap-2 items-start"><div><b>{e.name}</b><p className="text-xs text-muted-foreground">{e.role} · {money(e.salary)}/mo</p></div>
+            {hired?<span className="mt-personnel-status">{lead?"TEAM LEAD":training?"TRAINING":"EMPLOYED"}</span>:<Button size="sm" disabled={s.agencyCash<e.salary||s.staff.length>=currentOffice(s).capacity||(c.talentMarket?.[e.id]?.untilDay??0)>c.day} onClick={()=>act((d,fx)=>K.hire(d,fx,e.id))}>Hire</Button>}
+          </div>
+          {hired?<><div className="mt-personnel-values"><span>Expertise <b>{Math.round(p.skill)}</b></span><span>Morale <b>{Math.round(p.morale)}</b></span><span>Fatigue <b>{Math.round(p.fatigue)}</b></span><span>Load <b>{busy[e.id]??0}/{P.effectiveCapacity(s,e.id)}</b></span></div>
+            <div className="mt-personnel-meter"><span style={{width:Math.max(0,Math.min(100,p.skill))+"%"}}/></div>
+            <div className="mt-personnel-controls">
+              <select aria-label={"Delivery style for "+e.name} value={p.focus} onChange={v=>act((d,fx)=>P.setWorkStyle(d,fx,e.id,v.target.value as import("@/game/state").WorkStyle))}>
+                <option value="balanced">Balanced · 2 slots</option><option value="speed">Speed · fast / lower QA</option><option value="quality">Quality · 1 slot / higher QA</option>
+              </select>
+              <Button size="sm" variant="outline" disabled={training||busy[e.id]>0||s.agencyCash<e.salary*.35} onClick={()=>act((d,fx)=>P.train(d,fx,e.id))}>{training?"Training until Day "+p.trainingUntil:"Train · "+money(e.salary*.35)}</Button>
+              <Button size="sm" variant={lead?"default":"outline"} disabled={p.skill<65} onClick={()=>act((d,fx)=>P.promoteLead(d,fx,e.id))}>{lead?"Lead ✓":"Make Lead"}</Button>
+            </div></>:<p className="text-xs text-muted-foreground mt-1">{e.skill} · starting skill {e.startingSkill??64}</p>}
+        </div>})}
+      </div>}
       {tab === "finance" && <><GameSection eyebrow="AGENCY FINANCE" title="Understand your cash runway" icon={<Coins size={20}/>} sub="Receivables differ from paid cash. Payroll and direct project costs reduce reserves."/><BarComparison rows={[{label:"Cash reserves",value:Math.max(0,s.agencyCash),display:money(s.agencyCash)},{label:"Receivables",value:Math.max(0,c.totalBilled-c.totalPaid),display:money(c.totalBilled-c.totalPaid)},{label:"Expenses to date",value:Math.max(0,c.totalDirect+c.totalPayroll),display:money(c.totalDirect+c.totalPayroll)}]}/><Row k="Agency cash" v={money(s.agencyCash)} /><Row k="Daily payroll" v={money(K.dailyPayroll(s))} /><Row k="Billed / paid" v={`${money(c.totalBilled)} / ${money(c.totalPaid)}`} /><Row k="Direct costs" v={money(c.totalDirect)} />
         <div className="max-h-64 overflow-auto">{c.ledger.slice(0, 40).map((x, i) => <div key={i} className="flex justify-between text-xs py-0.5"><span>D{x.day} · {x.what}{x.status === "due" ? " (due)" : ""}</span><span className={x.value < 0 ? "text-destructive" : "text-primary"}>{money(x.value)}</span></div>)}</div></>}
       {tab === "news" && <div className="mt-week-archive">

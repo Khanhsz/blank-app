@@ -684,3 +684,23 @@ input::placeholder,textarea::placeholder{color:#516a7a;opacity:1}
 .mt-journey-memory-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.mt-journey-memory-grid>div{padding:10px;background:var(--card,#fff);border:1px solid var(--border,#d5dfe4);border-radius:7px;min-width:0;display:flex;flex-direction:column;gap:4px}
 .mt-journey-memory-grid small{font-size:9px;letter-spacing:.07em;color:var(--muted-foreground,#5a7181);font-weight:800}.mt-journey-memory-grid b{font-size:12px;line-height:1.45}.mt-journey-memory-grid span{font-size:10px;line-height:1.5;color:var(--muted-foreground,#5a7181);overflow-wrap:anywhere}
 @media(max-width:720px){.mt-journey-topline h2{font-size:20px}.mt-journey-route{gap:3px}.mt-journey-node>span{height:27px}.mt-journey-node small{font-size:9px}.mt-journey-evidence,.mt-journey-media-plans{grid-template-columns:1fr}.mt-journey-stats{gap:4px}.mt-journey-options.compact{grid-template-columns:1fr}.mt-journey-inline{grid-template-columns:1fr}.mt-journey-review-summary strong{font-size:18px}.mt-journey-status{grid-template-columns:1fr}}
+
+/* Agency Staff V2: staffing decisions live alongside existing 8 functions. */
+.mt-personnel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mt-personnel-grid>.mt-game-section,.mt-personnel-grid>.mt-journey-team-summary{grid-column:1/-1}
+.mt-journey-team-summary{display:flex;flex-wrap:wrap;gap:10px;padding:11px;border:1px solid var(--border,#becdd5);border-radius:8px;background:rgba(111,148,164,.09)}
+.mt-journey-team-summary>span{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--muted-foreground,#5b7181)}
+.mt-journey-team-summary b{color:var(--foreground,#203745);font-size:13px}
+.mt-personnel-card{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:9px;border:1px solid var(--border,#c2d0d8);background:var(--card,#fff);min-width:0}
+.mt-personnel-card.hired{border-color:#83b5b8}
+.mt-personnel-card b{font-size:13px}.mt-personnel-status{font-size:10px;font-weight:750;color:#2c6370;background:#e4f1f1;border-radius:6px;padding:4px 7px;white-space:nowrap}
+.mt-personnel-values{display:flex;gap:8px;flex-wrap:wrap;font-size:11px}.mt-personnel-values>span{display:flex;gap:4px;color:var(--muted-foreground,#5b7181)}
+.mt-personnel-values b{font-size:11px;color:var(--foreground,#203745)}
+.mt-personnel-meter{height:6px;background:rgba(96,134,150,.17);border-radius:4px;overflow:hidden}
+.mt-personnel-meter span{display:block;height:100%;background:#317b93;border-radius:4px}
+.mt-personnel-controls{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.mt-personnel-controls select,.mt-journey-staff-select{min-width:0;border-radius:7px;padding:7px 8px;font-size:11px;border:1px solid var(--border,#c2d0d8);background:var(--card,#fff);color:var(--foreground,#203745)}
+.mt-personnel-controls select{flex:1;min-width:130px}
+.mt-journey-personnel-task{display:flex;flex-direction:column;gap:6px;margin-top:10px;padding:8px 0;border-top:1px solid var(--border,#ccd9e0)}
+.mt-journey-personnel-task .h-1\.5{margin:0}.mt-journey-staff-select{max-width:170px}
+@media(max-width:760px){.mt-personnel-grid{grid-template-columns:1fr}.mt-personnel-controls select{min-width:100%}.mt-journey-staff-select{max-width:130px}}

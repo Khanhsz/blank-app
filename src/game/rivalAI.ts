@@ -138,8 +138,12 @@ export function resolveTalentOffer(s:GameState,fx:Fx,id:string,choice:string,exp
   logEvent(c,c.day,r,"loss",r.name+" lost a recruitment contest for "+emp.name+".");
  }else{
   s.staff=s.staff.filter(x=>x!==emp.id);
+  for(const [fn,leadId] of Object.entries(s.teamLeads))if(leadId===emp.id)delete s.teamLeads[fn];
   // In-flight tasks become available for reassignment; work already completed is preserved.
-  for(const p of c.projects)if(p.status==="active")for(const t of p.tasks)if(t.employee===emp.id&&t.status==="in_progress"){t.status="assigned";t.employee=null;t.startedDay=undefined}
+  for(const p of c.projects)if(p.status==="active")for(const t of p.tasks){
+   if(t.preferredEmployee===emp.id)t.preferredEmployee=null;
+   if(t.employee===emp.id&&t.status==="in_progress"){t.status="assigned";t.employee=null;t.startedDay=undefined}
+  }
   if(c.salaryPremiums)delete c.salaryPremiums[emp.id];
   offer.status="left";r.people++;r.cash=Math.max(0,r.cash-Math.round(emp.salary*1.5));
   fx.toast(emp.name+" joined "+r.name+".");
