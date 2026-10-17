@@ -35,6 +35,7 @@ export default function App(){
  const [selected,setSelected]=useState<string|null>(null);
  const [webgl,setWebgl]=useState(true);
  const [map2d,setMap2d]=useState(false);
+ const [computerHint,setComputerHint]=useState(false);
  const clock=useRef(0);
  useEffect(()=>{initStore();setWebgl(hasWebGL())},[]);
  useEffect(()=>{const handle=window.setInterval(()=>{const v=getState();if(!v.agencyUnlocked||!v.ceo?.speed)return;clock.current+=v.ceo.speed*.25; if(clock.current>=2.2){const n=Math.min(4,Math.floor(clock.current/2.2));clock.current%=2.2;act((d,fx)=>K.ceoTick(d,fx,n));}},250);return()=>clearInterval(handle)},[]);
@@ -42,21 +43,34 @@ export default function App(){
  const districts:District[]=buildings.map(b=>({...b,locked:!s.cityUnlocked||(b.id==="brand"&&!s.agencyUnlocked&&s.reputation<BRAND_HQ_REP)}));
  const change=(to:SceneId)=>{if(to==="city"&&!s.cityUnlocked)return;if((to==="office"||to==="boardroom")&&!s.agencyUnlocked)return;act(d=>{d.scene=to});setSelected(null);setPanel(to==="office"||to==="boardroom"?"ceo":"none")};
  const locate=(id:string)=>{setSelected(id);setPanel("location")};
+ // Only the bedroom computer opens freelance briefs; menu actions guide you home.
+ const approachComputer=()=>{
+   if(getState().agencyUnlocked){setPanel("ceo");return;}
+   if(getState().scene!=="room")act(d=>{d.scene="room"});
+   setSelected(null);setPanel("none");setComputerHint(true);
+ };
+ const interactComputer=()=>{
+   const state=getState();
+   if(!state.created||state.scene!=="room")return;
+   setSelected(null);setComputerHint(false);setPanel(state.agencyUnlocked?"ceo":"campaign");
+ };
+ const fromLocation=(next:"campaign"|"ceo")=>next==="campaign"?approachComputer():setPanel("ceo");
  const title=panel==="campaign"?"Campaign Workstation":panel==="ceo"?"CEO Command Center":panel==="avatar"?"Your Creative Identity":panel==="map"?"World Directory":panel==="location"?(buildings.find(b=>b.id===selected)?.name||"Location"):"Welcome to Marketing Tycoon";
  const projects=s.ceo?.projects.filter(p=>p.status==="active").length||0;
  return <div className="game">
-   <div className="world">{webgl&&!map2d?<WorldScene scene={s.scene} districts={districts} selected={selected} onSelect={locate} character={s.character} room={s.room} staff={s.staff.length} quality={s.graphics}/>:<div className="fallback"><h2>WORLD DIRECTORY</h2><h1>{sceneName[s.scene]}</h1>{s.scene==="city"&&<div className="gridmap">{buildings.map(b=><button onClick={()=>locate(b.id)} key={b.id}>{b.name}</button>)}</div>}</div>}</div>
+   <div className="world">{webgl&&!map2d?<WorldScene scene={s.scene} districts={districts} selected={selected} onSelect={locate} onComputerInteract={interactComputer} character={s.character} room={s.room} staff={s.staff.length} quality={s.graphics}/>:<div className="fallback"><h2>WORLD DIRECTORY</h2><h1>{sceneName[s.scene]}</h1>{s.scene==="city"&&<div className="gridmap">{buildings.map(b=><button onClick={()=>locate(b.id)} key={b.id}>{b.name}</button>)}</div>}{s.scene==="room"&&s.created&&<button id="bedroom-computer-fallback" className="fallback-computer" onClick={interactComputer}>Use bedroom computer → Open client inbox</button>}</div>}</div>
    <header className="header"><div className="brand"><span className="mark">m.</span><div><strong>MARKETING TYCOON</strong><small>FROM BEDROOM TO BOARDROOM</small></div></div><div className="worldlabel"><span className="live"/>{sceneName[s.scene]}<small>{s.agencyUnlocked?"04 / CEO":s.cityUnlocked?"02 / CITY":"01 / FREELANCE"}</small></div><div className="topactions"><button onClick={()=>setPanel("map")} aria-label="Map"><Map size={20}/></button><button onClick={()=>setPanel("avatar")} aria-label="Settings"><Settings2 size={20}/></button></div></header>
-   {s.created&&<aside className="quest"><span className="eyebrow">YOUR OBJECTIVE</span><h2>{s.agencyUnlocked?"Lead your team. Win the next account.":s.cityUnlocked?"Make your mark in the city.":"Your first campaign awaits."}</h2><p>{s.agencyUnlocked?String(projects)+" active projects. Operations are handled by your staff.":s.cityUnlocked?"Explore the districts to unlock business capabilities.":"Research, strategise and run a campaign from your bedroom."}</p><button onClick={()=>setPanel(s.agencyUnlocked?"ceo":"campaign")}>Open {s.agencyUnlocked?"CEO dashboard":"campaign"} →</button></aside>}
+   {s.created&&<aside className="quest"><span className="eyebrow">YOUR OBJECTIVE</span><h2>{s.agencyUnlocked?"Lead your team. Win the next account.":s.cityUnlocked?"Make your mark in the city.":"Your first campaign awaits."}</h2><p>{s.agencyUnlocked?String(projects)+" active projects. Operations are handled by your staff.":s.cityUnlocked?"Explore the districts; return home and use your computer to view freelance briefs.":"Enter the bedroom and click the computer to check your client inbox."}</p><button id="quest-workstation-guide" onClick={()=>s.agencyUnlocked?setPanel("ceo"):approachComputer()}>{s.agencyUnlocked?"Open CEO dashboard":"Go to bedroom computer"} →</button></aside>}
    {s.created&&<div className="stats"><div>REPUTATION<strong>{s.reputation}</strong></div><div>EXPERTISE<strong>{s.expertise}</strong></div><div className="darkstat">CASH<strong>{money(s.agencyUnlocked?s.agencyCash:s.personalCash)}</strong></div></div>}
    {s.agencyUnlocked&&s.ceo&&<div className="clock"><Clock3 size={16}/><strong>DAY {s.ceo.day}</strong>{([0,1,3] as const).map(v=><button key={v} className={s.ceo?.speed===v?"active":""} onClick={()=>act(d=>K.setSpeed(d,v))}>{v===0?<Pause size={14}/>:<><Play size={14}/>{v===3?"×3":""}</>}</button>)}</div>}
-   {s.created&&<nav className="dock"><button onClick={()=>change("room")} className={s.scene==="room"?"active":""}><Home size={19}/>Home</button><button disabled={!s.cityUnlocked} onClick={()=>change("city")} className={s.scene==="city"?"active":""}>{s.cityUnlocked?<Compass size={19}/>:<LockKeyhole size={19}/>}City</button><button onClick={()=>setPanel(s.agencyUnlocked?"ceo":"campaign")}><Map size={19}/>{s.agencyUnlocked?"Projects":"Campaign"}</button><button disabled={!s.agencyUnlocked&&!s.cityUnlocked} onClick={()=>s.agencyUnlocked?change("office"):(change("city"),locate("agency"))}><BriefcaseBusiness size={19}/>Agency</button><button onClick={()=>setPanel("avatar")}><Users size={19}/>Avatar</button></nav>}
+   {s.created&&<nav className="dock"><button onClick={()=>change("room")} className={s.scene==="room"?"active":""}><Home size={19}/>Home</button><button disabled={!s.cityUnlocked} onClick={()=>change("city")} className={s.scene==="city"?"active":""}>{s.cityUnlocked?<Compass size={19}/>:<LockKeyhole size={19}/>}City</button><button id="navigate-workstation" onClick={()=>s.agencyUnlocked?setPanel("ceo"):approachComputer()}><Map size={19}/>{s.agencyUnlocked?"Projects":"Computer"}</button><button disabled={!s.agencyUnlocked&&!s.cityUnlocked} onClick={()=>s.agencyUnlocked?change("office"):(change("city"),locate("agency"))}><BriefcaseBusiness size={19}/>Agency</button><button onClick={()=>setPanel("avatar")}><Users size={19}/>Avatar</button></nav>}
+   {s.created&&!s.agencyUnlocked&&s.scene==="room"&&panel==="none"&&<div className="computer-instruction" role="status"><strong>{computerHint?"You are back in your bedroom.":"Your first client is waiting."}</strong><span>Click the glowing computer screen to open your inbox.</span></div>}
    {s.created&&s.scene==="city"&&<div className="maptip">Drag to orbit · Scroll to zoom · Click buildings <button onClick={()=>setMap2d(!map2d)}>{map2d?"3D mode":"2D mode"}</button></div>}
    {panel!=="none"&&<section className={"panel "+(panel==="onboard"?"onboardpanel":"")}><header><div><span className="eyebrow">MT® / WORLD EDITION</span><h2>{title}</h2></div>{panel!=="onboard"&&<button className="close" onClick={()=>setPanel("none")} aria-label="Close"><X size={20}/></button>}</header><div className="panelbody">
-   {panel==="onboard"&&<Intro done={()=>setPanel("campaign")}/>}
+   {panel==="onboard"&&<Intro done={()=>{setPanel("none");setComputerHint(true)}}/>}
    {panel==="campaign"&&!s.agencyUnlocked&&<CampaignWorkspace/>}
    {panel==="ceo"&&s.agencyUnlocked&&<CEOCommandCenter/>}
-   {panel==="location"&&selected&&<LocationPanel id={selected} onOpen={p=>setPanel(p)}/>}
+   {panel==="location"&&selected&&<LocationPanel id={selected} onOpen={fromLocation}/>}
    {panel==="avatar"&&<Customize/>}
    {panel==="map"&&<div className="directory">{buildings.map(b=><button key={b.id} disabled={!s.cityUnlocked} onClick={()=>{if(s.cityUnlocked){change("city");locate(b.id)}}}><span>{b.name}</span>{s.cityUnlocked?"→":"Locked"}</button>)}</div>}
    </div></section>}
