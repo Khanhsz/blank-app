@@ -10,8 +10,8 @@ const fx:Fx={toast:()=>{},log:()=>{}};
 test("expanded city has 27 unique functional buildings; original game destinations remain",()=>{
  assert.equal(cityLots.length,27);
  assert.deepEqual(cityCounts,{core:8,rivals:5,offices:8,clients:6});
- assert.equal(new Set(cityLots.map(l=>l.id)).size,21);
- assert.equal(new Set(cityLots.map(l=>l.x+","+l.z)).size,21);
+ assert.equal(new Set(cityLots.map(l=>l.id)).size,27);
+ assert.equal(new Set(cityLots.map(l=>l.x+","+l.z)).size,27);
  for(const place of cityLots){assert.ok(Math.abs(place.x)<=49);assert.ok(Math.abs(place.z)<=41);assert.ok(place.w>0&&place.d>0&&place.h>0)}
  for(const id of ["research","creative","media","influencer","network","brand","cowork","agency"])assert.ok(cityLots.some(l=>l.id===id&&l.kind==="core"));
 });
