@@ -1,4 +1,5 @@
 import { ceoLeadDefs, ceoRivalDefs, type Channel, type LeadDef, type Rival, type Scenario } from "./data";
+import {reconcileProjectMedia} from "./projectMedia";
 
 export type Phase = "brief" | "planning" | "executing" | "live" | "results" | "research" | "survey" | "validation" | "strategy" | "creative" | "media";
 export const PHASES: Phase[] = ["planning", "executing", "live", "results"];
@@ -192,6 +193,15 @@ export function migrate(raw: unknown): GameState {
     const priorLeads=Array.isArray(out.ceo.leads)?out.ceo.leads:[];
     const knownIds=new Set(priorLeads.map(l=>l.id));
     out.ceo.leads=[...priorLeads,...base.leads.filter(l=>!knownIds.has(l.id))];
+    // Older saves used scenario-sized media mixes even for signed agency budgets.
+    // Reconcile only projects that already delivered booked media.
+    for(const p of out.ceo.projects){
+      const mediaDelivered=p.tasks?.some(t=>t.key==="media"&&t.status==="completed");
+      if(p.mediaSpent>0&&(p.campaign?.mediaBooked||mediaDelivered)){
+        p.campaign.mediaBooked=true;
+        reconcileProjectMedia(p);
+      }
+    }
   }
   return out;
 }
