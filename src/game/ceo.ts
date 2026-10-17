@@ -143,7 +143,7 @@ export function ceoMigrateLegacy(s: GameState, fx: Fx) {
   const phase=old.phase;
   const planningDone=["executing","live","results"].includes(phase);
   const liveDone=["live","results"].includes(phase);
-  const done:Record<string,boolean>={account:phase!=="brief",research:planningDone,strategy:planningDone,creative:liveDone,production:liveDone,media:liveDone,kol:liveDone,operations:phase!=="brief",analytics:phase==="results"};
+  const done:Record<string,boolean>={account:phase!=="brief",research:planningDone,strategy:planningDone,creative:liveDone,production:liveDone,media:liveDone,kol:liveDone,operations:phase!=="brief",analytics:false};
   const tasks: Task[] = ceoTaskDefs.map((t) => ({ ...t, status: done[t.key] ? "completed" : "backlog", progress: done[t.key] ? t.effort : 0, quality: done[t.key] ? 76 : 0, employee: done[t.key] ? "legacy" : null, outsourced: false }));
   const p: Project = { id: "legacy-" + ++c.seq, leadId: "legacy", brand: sc.brand, adBudget: sc.budget, fee: sc.fee, bonus: 0, scope: 2, duration: Math.max(14, sc.days), industry: sc.industry, days: Math.max(0, c.day-(old.startedDay??old.day)), status: "active", scenarioIndex: old.scenarioIndex, startedDay: c.day, target: sc.target, pitchQuality: 70, mediaSpent: Math.min(sc.budget, old.spent), mediaReserved: Math.max(0, sc.budget - old.spent), direct: 0, campaign: structuredClone(old), tasks, paymentCount: 0, legacy: true, clientTrust: 60 };
   c.projects.push(p); schedulePayment(c, p, sc.fee * 0.3, 0, "Migrated client advance");
