@@ -59,7 +59,7 @@ assert.equal(reorderByIds([a,b],['A','A']),null,'Reject duplicate IDs');
 assert.equal(reorderByIds([a,b],['A','X']),null,'Reject unknown IDs');
 const withFood=[a,{...b,category:'food'},c,d];
 const locked=optimizeDay(withFood,false);
-assert.equal(locked.available,false,'Pinned meal may not move without consent');
+assert.equal(locked.orderedIds[1],'B','Pinned meal must stay in its original schedule slot');
 const unlocked=optimizeDay(withFood,true);
 assert.equal(unlocked.available,true,'Explicit meal opt-in can unlock the shortened route');
 assert.equal(measuredDistance([a,{...b,lat:undefined,lng:undefined},c]).legs,0,
