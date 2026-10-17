@@ -4,7 +4,7 @@ import { newCampaign, type Campaign, type GameState, type ScoreResult } from "./
 import type { Fx } from "./store";
 import { ceoInit, ceoMigrateLegacy } from "./ceo";
 
-export const scenarioOf = (c: Campaign) => scenarios[c.scenarioIndex % scenarios.length];
+export const scenarioOf = (c: Campaign) => c.aiScenario ?? scenarios[c.scenarioIndex % scenarios.length];
 export const playerMoney = (s: GameState) => (s.agencyUnlocked ? s.agencyCash : s.personalCash);
 const canPay = (s: GameState, v: number) => s.campaign.spent + v <= scenarioOf(s.campaign).budget;
 
@@ -21,8 +21,8 @@ export function surveyQuality(s: GameState, c: Campaign = s.campaign) {
 
 export function surveyResults(s: GameState) {
   const c = s.campaign, sc = scenarioOf(c), q = surveyQuality(s);
-  const base = Math.round(30 + q * 42 + hash(c.scenarioIndex * 9 + (c.survey?.sample ?? 0)) * 9);
-  return { primary: clamp(base, 22, 82), other: clamp(Math.round((100 - base) * 0.58), 8, 58), quality: Math.round(q * 100), reason: insights.find((x) => x.id === sc.trueInsight)?.title ?? "" };
+  const base = Math.round(30 + q * 42 + hash(c.scenarioIndex * 9 + (c.survey?.sample ?? 0) + (c.aiScenario?.aiMeta?.seed ?? 0)) * 9);
+  return { primary: clamp(base, 22, 82), other: clamp(Math.round((100 - base) * 0.58), 8, 58), quality: Math.round(q * 100), reason: c.aiScenario ? "Survey signals require interpretation. Compare your research evidence." : insights.find((x) => x.id === sc.trueInsight)?.title ?? "" };
 }
 
 export function scoreModel(s: GameState, c: Campaign, mode: "final" | "interim" = "final"): ScoreResult {
@@ -36,7 +36,7 @@ export function scoreModel(s: GameState, c: Campaign, mode: "final" | "interim" 
   if (s.upgrades.includes("media")) eff += c.media.paid * 0.045;
   if (mode === "interim") eff *= 0.49;
   const optBonus = mode === "final" ? ({ refresh: fit.creative ? 3 : 5, retarget: c.media.paid > 0 ? 6 : 0, promo: c.media.promo > 0 ? 3 : 1, hold: 0 } as Record<string, number>)[c.optimization ?? ""] ?? 0 : 0;
-  const seed = hash(c.scenarioIndex * 13 + (c.survey?.sample ?? 0) + c.research.length * 7) * 5 - 2.5;
+  const seed = hash(c.scenarioIndex * 13 + (c.survey?.sample ?? 0) + c.research.length * 7 + (c.aiScenario?.aiMeta?.seed ?? 0)) * 5 - 2.5;
   const pct = Math.round(clamp((eff / 1e6) * 5.6 * qual - (mode === "final" ? 9 : 6) + optBonus + seed, -12, 85));
   const total = Object.values(c.media).reduce((a, b) => a + b, 0);
   return { pct, outcome: Math.round(sc.baseline * (1 + pct / 100)), adReach: Math.round((total / 1000) * 11.2 * qual * (mode === "interim" ? 0.51 : 1)), quality: Math.round(qual * 100), fit, performance: pct >= sc.target ? "target" : pct >= sc.target * 0.7 ? "near" : "under" };
@@ -115,4 +115,16 @@ export function createAgency(s: GameState, fx: Fx, name: string) {
   s.agencyName = name.trim() || "Northstar Studio"; s.personalCash -= 8000000; s.agencyCash = 5000000; s.agencyUnlocked = true; s.scene = "office";
   ceoInit(s); ceoMigrateLegacy(s, fx);
   fx.log(`FOUNDED ${s.agencyName}. Startup capital 5,000,000đ.`); fx.toast("You are now Agency CEO");
+}
+
+/** AI only supplies a bounded fictional scenario; deterministic game rules keep the outcome. */
+export function activateAIBrief(s:GameState,fx:Fx,sc:import("./data").Scenario){
+ if(s.agencyUnlocked||s.campaign.phase!=="brief")return false;
+ if(!sc?.id?.startsWith("ai-")||!sc.aiMeta||!["awareness","value","location","trust","style"].includes(sc.trueInsight))return false;
+ if(!Number.isFinite(sc.budget)||sc.budget<8000000||sc.budget>16000000)return false;
+ if(!Array.isArray(sc.insightOptions)||sc.insightOptions.length!==5)return false;
+ s.campaign.aiScenario=structuredClone(sc);
+ fx.log("AI Dynamic Brief: "+sc.brand+" · "+sc.aiMeta.category);
+ fx.toast("New fictional AI client brief ready: "+sc.brand);
+ return true;
 }
