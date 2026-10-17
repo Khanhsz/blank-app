@@ -80,4 +80,16 @@ for(const id of ids){
  result.assets.push({id,archetype:asset.archetype,materialPalette:asset.palette,views:renders});
 }
 fs.writeFileSync(path.join(output,"projection-report.json"),JSON.stringify(result,null,2)+"\n");
+const gallery=['<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
+'<title>Marketing Tycoon · PBR Architectural QA</title>',
+'<style>body{margin:0;background:#e7edf0;color:#1c3746;font-family:Arial,sans-serif;padding:24px;max-width:1440px;margin:auto}h1{font-size:26px}p{color:#435965}section{background:#fff;border:1px solid #b7cad1;border-radius:8px;padding:15px;margin:20px 0}h2{font-size:18px;margin:0 0 14px}.views{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}figure{margin:0}img{display:block;width:100%;border-radius:6px;border:1px solid #d4dce1}figcaption{font-size:12px;font-weight:700;margin:5px 0 0}@media(max-width:850px){.views{grid-template-columns:1fr}}.warning{padding:12px;border:1px solid #d4b782;border-radius:6px;background:#fff7e6}</style></head><body>',
+'<h1>Marketing Tycoon V5.3 — PBR Material Visual QA</h1>',
+'<p class="warning">These are exact-geometry SVG QA projections generated from procedural cuboids, NOT screenshots from Blender or the Three.js browser. Final approval requires inspecting the live game.</p>'];
+for(const entry of result.assets){
+ gallery.push('<section><h2>'+entry.id.replace(/[^a-z0-9-]/gi,"")+' — '+entry.archetype+'</h2><div class="views">');
+ for(const view of entry.views)gallery.push('<figure><img loading="lazy" src="'+path.basename(view.file)+'" alt="'+entry.id+' '+path.basename(view.file)+'"><figcaption>'+path.basename(view.file).split("-").at(-1).replace(".svg","").toUpperCase()+'</figcaption></figure>');
+ gallery.push('</div></section>');
+}
+gallery.push('</body></html>');
+fs.writeFileSync(path.join(output,"index.html"),gallery.join("\n"));
 console.log("MATERIAL QA PROJECTIONS",JSON.stringify({assets:result.assets.length,views:18,output,source:result.source}));
