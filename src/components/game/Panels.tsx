@@ -1,4 +1,6 @@
 import { useState } from "react";
+import {BriefcaseBusiness,Coins,FlaskConical,Target,Clapperboard,ChartNoAxesCombined,Handshake,Users,FileText,Activity,ShieldCheck,Check} from "lucide-react";
+import {AnimatedGauge,BarComparison,CampaignTimeline,DecisionCard,FeedbackStrip,GameSection,GameStat,PhaseScene,CEOOverview,RivalLandscape} from "./GameVisuals";
 import { Button } from "@/components/ui/button";
 import { act, useGame } from "@/game/store";
 import * as C from "@/game/campaign";
@@ -7,9 +9,7 @@ import { ceoPartners, ceoRoles, creatives, employees, insights, mediaChannels, m
 import { PHASES, PHASE_LABEL } from "@/game/state";
 
 const Choice = ({ on, onClick, title, sub }: { on?: boolean; onClick: () => void; title: string; sub?: string }) => (
-  <button onClick={onClick} className={`w-full rounded-xl border p-3 text-left transition ${on ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50"}`}>
-    <div className="text-sm font-semibold">{title}</div>{sub && <div className="mt-0.5 text-xs text-muted-foreground">{sub}</div>}
-  </button>
+  <DecisionCard active={on} onClick={onClick} title={title} description={sub}/>
 );
 const Row = ({ k, v }: { k: string; v: React.ReactNode }) => <div className="flex justify-between border-b border-border py-1.5 text-sm"><span className="text-muted-foreground">{k}</span><b>{v}</b></div>;
 
@@ -25,30 +25,32 @@ export function CampaignWorkspace() {
   const left = sc.budget - c.spent;
   const idx = PHASES.indexOf(c.phase);
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-1">{PHASES.map((p, i) => <span key={p} className={`rounded-full px-2 py-0.5 text-[11px] ${i <= idx ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{PHASE_LABEL[p]}</span>)}</div>
-      <div><div className="text-xs uppercase tracking-widest text-primary">{sc.industry} · Day {c.day}/{sc.days}</div><h3 className="font-display text-2xl">{sc.brand}</h3>
-        <Row k="Client budget left" v={money(left)} /><Row k="Target" v={`+${sc.target}% ${sc.metric}`} /></div>
-      {c.phase === "brief" && <><p className="rounded-xl bg-muted p-3 text-sm italic">“{sc.client}” — {sc.contact}</p><Button id="accept-first-brief" data-testid="accept-first-brief" className="w-full" onClick={() => act(C.acceptBrief)}>Accept brief</Button></>}
-      {c.phase === "research" && <>{researchOptions.map((r) => <Choice key={r.id} on={c.research.includes(r.id)} onClick={() => act((d, f) => C.addResearch(d, f, r.id))} title={`${r.title} · ${money(r.cost)} · ${r.days}d`} sub={c.research.includes(r.id) ? sc.reports[r.id] : r.description} />)}
+    <div className="mt-campaign-stage">
+      <CampaignTimeline phase={c.phase}/>
+      <div className="mt-campaign-hero"><div className="mt-eyebrow">{sc.industry} / Day {c.day} of {sc.days}</div><h2>{sc.brand}</h2><p>Real decisions shape your results. Plan, execute and deliver your first marketing campaign.</p></div>
+      <div className="mt-campaign-stats"><GameStat label="BUDGET REMAINING" value={money(left)} icon={<Coins size={17}/>}/><GameStat label="PERFORMANCE TARGET" value={"+"+sc.target+"%"} icon={<Target size={17}/>} sub={sc.metric}/></div>
+      <PhaseScene phase={c.phase}>
+      {c.phase === "brief" && <><GameSection eyebrow="NEW CLIENT OPPORTUNITY" title="Your first assignment" sub="Review the challenge before accepting the brief." icon={<FileText size={19}/> }><p className="mt-client-quote">“{sc.client}” — {sc.contact}</p></GameSection><Button id="accept-first-brief" data-testid="accept-first-brief" className="w-full" onClick={() => act(C.acceptBrief)}>Accept brief</Button></>}
+      {c.phase === "research" && <><GameSection eyebrow="DISCOVERY" title="Evidence before instinct" icon={<FlaskConical size={19}/>} sub="Research improves reliability but spends time and money."/><div className="mt-research-choices">{researchOptions.map((r) => <Choice key={r.id} on={c.research.includes(r.id)} onClick={() => act((d, f) => C.addResearch(d, f, r.id))} title={`${r.title} · ${money(r.cost)} · ${r.days}d`} sub={c.research.includes(r.id) ? sc.reports[r.id] : r.description} />)}</div><AnimatedGauge label="Evidence collected" percent={c.research.length*100/Math.max(1,researchOptions.length)}/>
         <Button className="w-full" disabled={!c.research.length} onClick={() => act(C.toSurvey)}>Continue to survey</Button></>}
-      {c.phase === "survey" && (!c.survey ? <>
+      {c.phase === "survey" && (!c.survey ? <><GameSection eyebrow="CONSUMER INTELLIGENCE" title="Design the survey" icon={<Users size={19}/>} sub="Sample size and question selection affect survey quality."/>
         <div className="text-xs font-semibold">Audience</div><div className="grid grid-cols-2 gap-2">{segments.map((g) => <Choice key={g.id} on={sv.audience === g.id} onClick={() => setSv({ ...sv, audience: g.id })} title={g.title} />)}</div>
         <div className="text-xs font-semibold">Sample size</div><div className="grid grid-cols-3 gap-2">{[20, 60, 120].map((n) => <Choice key={n} on={sv.sample === n} onClick={() => setSv({ ...sv, sample: n })} title={`${n}`} sub={money(surveyCosts[n])} />)}</div>
         <div className="text-xs font-semibold">Question</div><div className="grid grid-cols-2 gap-2"><Choice on={sv.question === "barrier"} onClick={() => setSv({ ...sv, question: "barrier" })} title="Why not visit/buy?" /><Choice on={sv.question === "like"} onClick={() => setSv({ ...sv, question: "like" })} title="Do you like us?" /></div>
         <Button className="w-full" onClick={() => act((d, f) => C.runSurvey(d, f, sv))}>Run survey</Button></> : (() => { const r = C.surveyResults(s); return <><div className="rounded-xl bg-muted p-3 text-sm"><b>{r.primary}%</b> cite “{r.reason}” · data quality {r.quality}%</div><Button className="w-full" onClick={() => act(C.toValidation)}>Validate insight</Button></>; })())}
-      {c.phase === "validation" && <>{insights.map((i) => <Choice key={i.id} on={ins === i.id} onClick={() => setIns(i.id)} title={i.title} sub={i.desc} />)}<Button className="w-full" disabled={!ins} onClick={() => act((d, f) => C.confirmInsight(d, f, ins!))}>Confirm insight</Button></>}
-      {c.phase === "strategy" && <>{([["Segment", segments, "segment"], ["Objective", objectives, "objective"], ["Positioning", positions, "position"]] as const).map(([lbl, list, key]) => <div key={key}><div className="mb-1 text-xs font-semibold">{lbl}</div><div className="grid grid-cols-2 gap-2">{list.map((o) => <Choice key={o.id} on={st[key] === o.id} onClick={() => setSt({ ...st, [key]: o.id })} title={o.title} />)}</div></div>)}
+      {c.phase === "validation" && <><GameSection eyebrow="VALIDATION" title="Find the insight" icon={<ShieldCheck size={19}/>} sub="The strongest insight must be supported by the evidence you collected." />{insights.map((i) => <Choice key={i.id} on={ins === i.id} onClick={() => setIns(i.id)} title={i.title} sub={i.desc} />)}<Button className="w-full" disabled={!ins} onClick={() => act((d, f) => C.confirmInsight(d, f, ins!))}>Confirm insight</Button></>}
+      {c.phase === "strategy" && <><GameSection eyebrow="PLANNING" title="Choose your strategic direction" icon={<Target size={19}/>} sub="Segment, objectives and positioning determine the campaign fit." />{([["Segment", segments, "segment"], ["Objective", objectives, "objective"], ["Positioning", positions, "position"]] as const).map(([lbl, list, key]) => <div key={key}><div className="mb-1 text-xs font-semibold">{lbl}</div><div className="grid grid-cols-2 gap-2">{list.map((o) => <Choice key={o.id} on={st[key] === o.id} onClick={() => setSt({ ...st, [key]: o.id })} title={o.title} />)}</div></div>)}
         <Button className="w-full" onClick={() => act((d, f) => C.confirmStrategy(d, f, st))}>Lock strategy</Button></>}
-      {c.phase === "creative" && <>{creatives.map((k) => <Choice key={k.id} on={cr === k.id} onClick={() => setCr(k.id)} title={`${k.title} · ${money(k.cost)}`} sub={`${k.subtitle} — ${k.desc}`} />)}<Button className="w-full" disabled={!cr} onClick={() => act((d, f) => C.confirmCreative(d, f, cr!))}>Produce concept</Button></>}
-      {c.phase === "media" && (() => { const tot = Object.values(media).reduce((a, b) => a + b, 0); return <>
+      {c.phase === "creative" && <><GameSection eyebrow="PRODUCTION" title="Build the big idea" icon={<Clapperboard size={19}/>} sub="Choose a creative concept that works for both budget and strategy." />{creatives.map((k) => <Choice key={k.id} on={cr === k.id} onClick={() => setCr(k.id)} title={`${k.title} · ${money(k.cost)}`} sub={`${k.subtitle} — ${k.desc}`} />)}<Button className="w-full" disabled={!cr} onClick={() => act((d, f) => C.confirmCreative(d, f, cr!))}>Produce concept</Button></>}
+      {c.phase === "media" && (() => { const tot = Object.values(media).reduce((a, b) => a + b, 0); return <><GameSection eyebrow="MEDIA PLANNING" title="Spend where it matters" icon={<ChartNoAxesCombined size={19}/>} sub="Compare how each channel shares your campaign budget."/><BarComparison rows={mediaChannels.map(m=>({label:m.title,value:media[m.id],display:money(media[m.id])}))} max={Math.max(1,left)}/>
         {mediaChannels.map((m) => <div key={m.id}><div className="flex justify-between text-sm"><span>{m.title}</span><b>{money(media[m.id])}</b></div><input type="range" className="w-full accent-primary" min={0} max={left} step={100000} value={media[m.id]} onChange={(e) => setMedia({ ...media, [m.id]: +e.target.value })} /></div>)}
         <Row k="Allocated" v={`${money(tot)} / ${money(left)}`} />
         <Button className="w-full" disabled={tot < 500000 || tot > left} onClick={() => act((d, f) => C.launch(d, f, media))}>Launch campaign</Button></>; })()}
-      {c.phase === "live" && c.liveMetrics && <><Row k="Interim reach" v={c.liveMetrics.adReach.toLocaleString()} /><Row k="Interim KPI" v={`${c.liveMetrics.pct}%`} />
+      {c.phase === "live" && c.liveMetrics && <><GameSection eyebrow="LIVE CAMPAIGN" title="Monitor and optimize" icon={<Activity size={19}/>} sub="Adjustments cost money but may change outcomes."/><div className="mt-campaign-stats"><GameStat label="INTERIM REACH" value={c.liveMetrics.adReach.toLocaleString()}/><GameStat label="INTERIM UPLIFT" value={c.liveMetrics.pct+"%"}/></div><AnimatedGauge label="Progress toward target" percent={c.liveMetrics.pct/Math.max(1,sc.target)*100} tone="teal"/>
         {optimizations.map((o) => <Choice key={o.id} onClick={() => act((d, f) => C.optimize(d, f, o.id))} title={`${o.title} · ${money(o.cost)}`} sub={o.desc} />)}</>}
-      {c.phase === "results" && c.final && <><Row k="Final KPI" v={`${c.final.outcome} ${sc.unit}`} /><Row k="Uplift" v={`${c.final.pct}% (target +${sc.target}%)`} /><Row k="Fee earned" v={money(sc.fee)} /><Row k="Reward" v={`+${c.final.rep} REP · +${c.final.xp} XP`} />
-        <p className="text-sm text-muted-foreground">Visit the Networking Café or Brand HQ in the city for your next brief.</p></>}
+      {c.phase === "results" && c.final && <><GameSection eyebrow="CAMPAIGN COMPLETE" title="The verdict" icon={<Check size={20}/>} sub="Results are recorded in your career history."/><AnimatedGauge label="Target achievement" percent={c.final.pct/Math.max(1,sc.target)*100} tone="sage"/><Row k="Final KPI" v={`${c.final.outcome} ${sc.unit}`} /><Row k="Uplift" v={`${c.final.pct}% (target +${sc.target}%)`} /><Row k="Fee earned" v={money(sc.fee)} /><Row k="Reward" v={`+${c.final.rep} REP · +${c.final.xp} XP`} />
+        <FeedbackStrip tone="positive">Campaign delivered. Reputation, fee and expertise have been recorded.</FeedbackStrip><p className="text-sm text-muted-foreground">Visit the Networking Café or Brand HQ in the city for your next brief.</p></>}
+      </PhaseScene>
     </div>
   );
 }
