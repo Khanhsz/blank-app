@@ -5,12 +5,25 @@ export const PHASES: Phase[] = ["brief", "research", "survey", "validation", "st
 export const PHASE_LABEL: Record<Phase, string> = { brief: "Brief", research: "Research", survey: "Survey", validation: "Validate", strategy: "Strategy", creative: "Creative", media: "Media", live: "Live", results: "Review" };
 
 export type AIBriefStatus = "pending" | "generating" | "ready" | "fallback";
+/** Phase 1: persisted runtime inside the existing freelance Campaign save. */
+export interface CampaignDayMetric {
+  day: number; calendarDay: number; spend: number; impressions: number; clicks: number;
+  incremental: number; reach: number; awareness: number; upliftPct: number;
+  event: string | null; channelSpent: Record<Channel, number>;
+}
+export interface CampaignRuntime {
+  seed: number; duration: number; elapsed: number; committedMedia: number;
+  actualMediaSpent: number; awareness: number; adstock: number;
+  days: CampaignDayMetric[];
+}
 export interface Campaign {
   briefId: string; aiStatus: AIBriefStatus; aiError?: string | null;
   scenarioIndex: number; aiScenario?: Scenario | null; phase: Phase; day: number; spent: number; research: string[];
   survey: { audience: string; sample: number; question: string } | null; insight: string | null;
   strategy: { segment: string; objective: string; position: string }; creative: string | null;
   media: Record<Channel, number>; optimization: string | null;
+  /** Optional for backward compatibility; older saves use legacy scoring. */
+  simulation?: CampaignRuntime | null;
   liveMetrics: ScoreResult | null; final: (ScoreResult & { qualityScore: number; rep: number; xp: number }) | null;
 }
 export interface ScoreResult { pct: number; outcome: number; adReach: number; quality: number; fit: Record<string, number>; performance: "target" | "near" | "under" }
