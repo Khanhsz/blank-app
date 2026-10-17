@@ -165,8 +165,8 @@ function CityPlayer({character,districts,touch,position,active}:{character:Chara
   if(!length)return;
   dx/=length;dz/=length;
   const [px,pz]=position.current;
-  let nx=Math.max(-38,Math.min(38,px+dx*dt*5));
-  let nz=Math.max(-28,Math.min(28,pz+dz*dt*5));
+  let nx=Math.max(-61,Math.min(61,px+dx*dt*5));
+  let nz=Math.max(-52,Math.min(52,pz+dz*dt*5));
   if(districts.some(b=>Math.abs(nx-b.x)<b.w/2+.9&&Math.abs(nz-b.z)<b.d/2+.9)){nx=px;nz=pz}
   position.current=[nx,nz];
   group.current.position.set(nx,.05,nz);
@@ -179,9 +179,10 @@ function Building({b,onSelect,selected}:{b:District;onSelect:(id:string)=>void;s
  const [hover,setHover]=useState(false);
  const liftGroup=useRef<THREE.Group>(null);
  const transparent=b.locked;
- const isHQ=b.id==="brand"||b.id==="agency";
+ const isHQ=b.id==="brand"||b.id==="agency"||b.kind==="rival"||b.occupied;
+ const isRival=b.kind==="rival",isOffice=b.kind==="office";
  const isCafe=b.id==="network";
- const windows=useMemo(()=>Array.from({length:Math.max(2,Math.floor(b.h/1.7))},(_,i)=>i),[b.h]);
+
  useFrame((_,dt)=>{if(liftGroup.current){const goal=selected ? .22 : hover ? .09 : 0;liftGroup.current.position.y+=(goal-liftGroup.current.position.y)*Math.min(1,dt*9)}});
  const click=(e:any)=>{e.stopPropagation();onSelect(b.id)};
  const wall=transparent?"#c1bdb5":b.color;
@@ -192,13 +193,11 @@ function Building({b,onSelect,selected}:{b:District;onSelect:(id:string)=>void;s
    <Box p={[0,b.h+.65,0]} size={[b.w+.45,.35,b.d+.45]} color={isCafe?"#5b766d":isHQ?"#413f47":"#f4eadf"}/>
    {(b.id==="creative"||b.id==="influencer")&&<mesh castShadow position={[0,b.h+1.3,0]} rotation-y={Math.PI/4}><coneGeometry args={[Math.min(b.w,b.d)*.62,1.7,4]}/><meshStandardMaterial color="#6b625a" {...flat}/></mesh>}
    {isHQ&&<Box p={[0,b.h+1.45,0]} size={[b.w*.42,1.6,b.d*.54]} color="#e9d6c5"/>}
+   {isRival&&<><Box p={[0,b.h*.71,b.d/2+.16]} size={[b.w*.76,1.23,.29]} color="#333b45"/><Box p={[0,b.h+2.7,0]} size={[.17,2.6,.17]} color="#545963"/></>}
+   {isOffice&&!b.occupied&&<><Box p={[0,b.h*.60,b.d/2+.16]} size={[b.w*.69,1.28,.21]} color="#aa7954"/><Box p={[b.w*.3,b.h+1.2,0]} size={[.19,1.5,.19]} color="#a48f7b"/></>}
+   {b.occupied&&<><Box p={[0,b.h*.68,b.d/2+.2]} size={[b.w*.75,1.48,.22]} color="#8db5a5"/><mesh position={[0,b.h+2.8,0]}><octahedronGeometry args={[.8,0]}/><meshStandardMaterial color="#f0c18e" emissive="#d68d51" emissiveIntensity={.35}/></mesh></>}
    {isCafe&&<><Box p={[0,.54,b.d*.56]} size={[b.w+.9,.24,1.4]} color="#dcaf83"/>{[-1,1].map(x=><Box key={x} p={[x*b.w*.42,2.1,b.d*.7]} size={[.25,3.2,.28]} color="#f3d7b0"/>)}</>}
-   {windows.map(i=><group key={i}>
-    {[-1,0,1].map(k=><group key={k}>
-     <Box p={[k*b.w*.27,1.45+i*1.6,b.d/2+.05]} size={[b.w*.16,.76,.11]} color={transparent?"#d1cfc9":"#c6e2df"}/>
-     <Box p={[k*b.w*.27,1.45+i*1.6,-b.d/2-.05]} size={[b.w*.16,.76,.11]} color={transparent?"#d1cfc9":"#d2e4e0"}/>
-    </group>)}
-   </group>)}
+   <BuildingWindows b={b} muted={transparent}/>
    <BuildingDoor b={b} open={selected&&!b.locked}/>
    <Box p={[0,.16,b.d/2+1.1]} size={[b.w*.72,.18,1.9]} color="#d6c4b1"/>
    {b.id==="research"&&<group position={[b.w*.25,b.h+1.1,0]}><mesh castShadow><icosahedronGeometry args={[.65,0]}/><meshStandardMaterial color="#eff9f8" {...flat}/></mesh></group>}
@@ -207,15 +206,15 @@ function Building({b,onSelect,selected}:{b:District;onSelect:(id:string)=>void;s
    {selected&&<mesh position={[0,b.h+1.94,0]}><sphereGeometry args={[.23,9,7]}/><meshBasicMaterial color="#ffdcaa"/></mesh>}
   </group>
   <Html position={[0,b.h+2.8,0]} center distanceFactor={36} style={{pointerEvents:"auto"}}>
-   <button type="button" className={"world-building-label "+(selected?"selected":"")+(transparent?" locked":"")} onClick={()=>onSelect(b.id)}>
-    <span className="map-pin"/><span>{b.name}</span>{transparent&&<small>LOCKED</small>}
+   <button type="button" className={"world-building-label "+(selected?"selected":"")+(transparent?" locked":"")+(b.kind==="rival"?" rival":"")+(b.kind==="office"?" office":"")+(b.occupied?" occupied":"")} onClick={()=>onSelect(b.id)}>
+    <span className="map-pin"/><span>{b.name}</span>{b.occupied?<small>YOUR HQ</small>:b.kind==="rival"?<small>RIVAL</small>:b.kind==="office"?<small>{transparent?"LOCKED":"TO LET"}</small>:transparent?<small>LOCKED</small>:null}
    </button>
   </Html>
  </group>;
 }
 function City({districts,onSelect,selected,c,touch,position,active}:{districts:District[];onSelect:(id:string)=>void;selected:string|null;c:Character;touch:string;position:React.MutableRefObject<[number,number]>;active:React.MutableRefObject<boolean>}){
- return <><Land/><RoadNetwork/>{districts.map(b=><Building key={b.id} b={b} selected={selected===b.id} onSelect={onSelect}/>)}
- {[0,1,2,3,4,5,6].map(i=><CityWalker key={i} seed={i+1} c={c}/>)}
+ return <><Land/><RoadNetwork/><AmbientBuildings districts={districts}/>{districts.map(b=><Building key={b.id} b={b} selected={selected===b.id} onSelect={onSelect}/>)}
+ {Array.from({length:13},(_,i)=><CityWalker key={i} seed={i+1} c={c}/>)}
  <CityPlayer character={c} districts={districts} touch={touch} position={position} active={active}/>
  </>;
 }
