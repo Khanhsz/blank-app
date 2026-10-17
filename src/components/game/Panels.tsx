@@ -2,7 +2,7 @@ import { useState } from "react";
 import {BriefcaseBusiness,Coins,FlaskConical,Target,Clapperboard,ChartNoAxesCombined,Handshake,Users,FileText,Activity,ShieldCheck,Check} from "lucide-react";
 import {AnimatedGauge,BarComparison,CampaignTimeline,DecisionCard,FeedbackStrip,GameSection,GameStat,PhaseScene,CEOOverview,RivalLandscape} from "./GameVisuals";
 import { Button } from "@/components/ui/button";
-import {AIBriefLauncher} from "./AIBriefLauncher";
+import {AutomaticBriefNotice,AutomaticBriefWaiting} from "./AIBriefLauncher";
 import { act, useGame } from "@/game/store";
 import * as C from "@/game/campaign";
 import * as K from "@/game/ceo";
@@ -23,6 +23,7 @@ export function CampaignWorkspace() {
   const [cr, setCr] = useState<string | null>(null);
   const [media, setMedia] = useState<Record<Channel, number>>({ paid: 0, creator: 0, promo: 0, flyer: 0 });
   if (s.agencyUnlocked) return <p className="text-sm text-muted-foreground">Your team now runs all campaigns. Open the CEO Command Center.</p>;
+  if(c.phase==="brief"&&(c.aiStatus==="pending"||c.aiStatus==="generating"))return <AutomaticBriefWaiting/>;
   const left = sc.budget - c.spent;
   const idx = PHASES.indexOf(c.phase);
   return (
@@ -31,7 +32,7 @@ export function CampaignWorkspace() {
       <div className="mt-campaign-hero"><div className="mt-eyebrow">{sc.industry} / Day {c.day} of {sc.days}</div><h2>{sc.brand}</h2><p>Real decisions shape your results. Plan, execute and deliver your first marketing campaign.</p></div>
       <div className="mt-campaign-stats"><GameStat label="BUDGET REMAINING" value={money(left)} icon={<Coins size={17}/>}/><GameStat label="PERFORMANCE TARGET" value={"+"+sc.target+"%"} icon={<Target size={17}/>} sub={sc.metric}/></div>
       <PhaseScene phase={c.phase}>
-      {c.phase === "brief" && <><GameSection eyebrow="NEW CLIENT OPPORTUNITY" title="Your first assignment" sub="Review the challenge before accepting the brief." icon={<FileText size={19}/> }><p className="mt-client-quote">“{sc.client}” — {sc.contact}</p></GameSection><AIBriefLauncher/><Button id="accept-first-brief" data-testid="accept-first-brief" className="w-full" onClick={() => act(C.acceptBrief)}>Accept brief</Button></>}
+      {c.phase === "brief" && <><GameSection eyebrow="NEW CLIENT OPPORTUNITY" title="Your first assignment" sub="Review the challenge before accepting the brief." icon={<FileText size={19}/> }><p className="mt-client-quote">“{sc.client}” — {sc.contact}</p></GameSection><AutomaticBriefNotice campaign={c}/><Button id="accept-first-brief" data-testid="accept-first-brief" className="w-full" onClick={() => act(C.acceptBrief)}>Accept brief</Button></>}
       {c.phase === "research" && <><GameSection eyebrow="DISCOVERY" title="Evidence before instinct" icon={<FlaskConical size={19}/>} sub="Research improves reliability but spends time and money."/><div className="mt-research-choices">{researchOptions.map((r) => <Choice key={r.id} on={c.research.includes(r.id)} onClick={() => act((d, f) => C.addResearch(d, f, r.id))} title={`${r.title} · ${money(r.cost)} · ${r.days}d`} sub={c.research.includes(r.id) ? sc.reports[r.id] : r.description} />)}</div><AnimatedGauge label="Evidence collected" percent={c.research.length*100/Math.max(1,researchOptions.length)}/>
         <Button className="w-full" disabled={!c.research.length} onClick={() => act(C.toSurvey)}>Continue to survey</Button></>}
       {c.phase === "survey" && (!c.survey ? <><GameSection eyebrow="CONSUMER INTELLIGENCE" title="Design the survey" icon={<Users size={19}/>} sub="Sample size and question selection affect survey quality."/>
