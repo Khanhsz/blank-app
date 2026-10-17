@@ -66,7 +66,6 @@ function Car({seed=0}:{seed:number}){
 }
 
 const cityXs=[-48,-32,-16,0,16,32,48];
-const cityZs=[-40,-24,-8,8,24,40];
 const roadsX=[-40,-24,-8,8,24,40];
 const roadsZ=[-32,-16,0,16,32];
 function RoadNetwork(){
@@ -97,21 +96,6 @@ function RoadNetwork(){
   {[-56,-24,8,40,56].flatMap((x,i)=>[-32,32].map((z,j)=><Tree key={i+"_"+j} x={x} z={z+4} h={.6+(i%3)*.16} seed={i+j}/>))}
   {Array.from({length:7},(_,i)=><Car key={i} seed={i}/>)}
  </group>;
-}
-function AmbientBuildings({districts}:{districts:District[]}){
- const lots=useMemo(()=>{
-  const used=new Set([...districts.map(b=>b.x+","+b.z),...AssetRegistry.decorativePlacements.map(p=>p.x+","+p.z)]);
-  return cityXs.flatMap((x,i)=>cityZs.map((z,j)=>({x,z,i,j})))
-   .filter(v=>!used.has(v.x+","+v.z)&&!(v.x===0&&(v.z===-8||v.z===8)))
-   .map(({x,z,i,j})=>({x,z,height:4+((i*5+j*3)%7)*1.6,color:["#c8b3a2","#b6c3b3","#b4aebc","#c1b6a1","#a7b9bd"][((i*3+j)%5)]}));
- },[districts]);
- return <group>{lots.map((b,i)=><group key={b.x+"-"+b.z} position={[b.x,0,b.z]}>
-   <Box p={[0,b.height/2+.35,0]} size={[8.2,b.height,8.4]} color={b.color}/>
-   <Box p={[0,b.height+.6,0]} size={[8.8,.38,9]} color="#e6dfd4"/>
-   {[-2.3,0,2.3].map((x,j)=><Box key={j} p={[x,2.4,4.26]} size={[1.15,1.52,.09]} color="#c7d8d4"/>)}
-   <Box p={[0,.9,4.35]} size={[2,1.6,.15]} color="#605e61"/>
-   {i%3===0&&<Tree x={4.3} z={4.1} h={.52} seed={i}/>}
-  </group>)}</group>;
 }
 function BuildingWindows({b,muted}:{b:District;muted:boolean}){
  const mesh=useRef<THREE.InstancedMesh>(null);
@@ -169,7 +153,8 @@ function CityPlayer({character,districts,touch,position,active}:{character:Chara
   const [px,pz]=position.current;
   let nx=Math.max(-61,Math.min(61,px+dx*dt*5));
   let nz=Math.max(-52,Math.min(52,pz+dz*dt*5));
-  if(districts.some(b=>Math.abs(nx-b.x)<b.w/2+.9&&Math.abs(nz-b.z)<b.d/2+.9)){nx=px;nz=pz}
+  if(districts.some(b=>Math.abs(nx-b.x)<b.w/2+.9&&Math.abs(nz-b.z)<b.d/2+.9)||
+    AssetRegistry.decorativePlacements.some(p=>{const item=AssetRegistry.get(p.id);return !!item&&Math.abs(nx-p.x)<item.width/2+.55&&Math.abs(nz-p.z)<item.depth/2+.55;})){nx=px;nz=pz}
   position.current=[nx,nz];
   group.current.position.set(nx,.05,nz);
   group.current.rotation.y=Math.atan2(dx,dz);
@@ -229,7 +214,7 @@ function LegacyBuilding({b,onSelect,selected}:{b:District;onSelect:(id:string)=>
  </group>;
 }
 function City({districts,onSelect,selected,c,touch,position,active,quality}:{districts:District[];onSelect:(id:string)=>void;selected:string|null;c:Character;touch:string;position:React.MutableRefObject<[number,number]>;active:React.MutableRefObject<boolean>;quality:"high"|"low"}){
- return <><Land/><RoadNetwork/><AmbientBuildings districts={districts}/>
+ return <><Land/><RoadNetwork/>
  <DistrictManager districts={districts} selected={selected} onSelect={onSelect} quality={quality}
   fallback={b=><LegacyBuilding b={b} selected={selected===b.id} onSelect={onSelect}/>}/>
  <ChunkManager quality={quality}/>
