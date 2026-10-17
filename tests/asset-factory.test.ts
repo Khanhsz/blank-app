@@ -162,7 +162,7 @@ test("old ambient cuboid buildings are completely removed and replaced with GLB 
  const source=fs.readFileSync("src/components/game/WorldScene.tsx","utf8");
  assert.doesNotMatch(source,/function AmbientBuildings/);
  assert.doesNotMatch(source,/<AmbientBuildings/);
- assert.match(source,/<ChunkManager quality=\{quality\}/);
+ assert.match(source,/<DenseMediaCity districts=\{districts\}/);
  const renderer=fs.readFileSync("src/components/game/AssetDistrict.tsx","utf8");
  assert.doesNotMatch(renderer,/OutdoorCampaignDisplay/);
  assert.match(renderer,/<CityCampaignMedia /);
@@ -208,7 +208,7 @@ test("single-authority city renderer contains zero legacy building models and no
   assert.doesNotMatch(world,new RegExp(retired),"Legacy city renderer must not exist: "+retired);
  }
  assert.doesNotMatch(world,/fallback=\{b=>/);
- assert.match(world,/<DistrictManager districts=\{districts\}/);
+ assert.match(world,/<DenseMediaCity districts=\{districts\}/);
  // The complete mesh visual path is a single GLB subtree; Suspense and error
  // states cannot show a second building, only absence of geometry.
  assert.match(district,/<Suspense fallback=\{null\}>/);
@@ -222,4 +222,16 @@ test("single-authority city renderer contains zero legacy building models and no
  // Old GLB-error fallback no longer doubles the architecture, but gameplay
  // access still exists when a file is missing.
  assert.match(district,/MISSING_ASSET_/);
+});
+
+test("Dense Media City is the only active city map, without legacy roads or building chunks",()=>{
+ const world=fs.readFileSync("src/components/game/WorldScene.tsx","utf8");
+ const newMap=fs.readFileSync("src/components/game/DenseMediaCity.tsx","utf8");
+ assert.doesNotMatch(world,/<RoadNetwork\/>|<ChunkManager |<DistrictManager /);
+ assert.match(world,/<DenseMediaCity districts=\{districts\}/);
+ assert.match(newMap,/DENSE_CITY_GLB/);
+ assert.match(newMap,/GAMEPLAY_ANCHOR_/);
+ assert.match(newMap,/DOOH_WEST_CURVED_HERO/);
+ assert.match(newMap,/useGame\(s=>s\.campaign/);
+ assert.match(newMap,/GLTFLoader/);
 });
