@@ -39,7 +39,7 @@ export interface Campaign {
   survey: { audience: string; sample: number; question: string } | null; insight: string | null;
   strategy: { segment: string; objective: string; position: string }; creative: string | null;
   media: Record<Channel, number>; optimization: string | null;
-  liveMetrics: ScoreResult | null; final: (ScoreResult & { qualityScore: number; rep: number; xp: number }) | null;
+  liveMetrics: ScoreResult | null; final: (ScoreResult & { qualityScore: number; rep: number; xp: number; feePaid?: number; deliveryRatio?: number }) | null; mediaBudget?: number;
 }
 export interface ScoreResult { pct: number; outcome: number; adReach: number; quality: number; fit: Record<string, number>; performance: "target" | "near" | "under" }
 
@@ -86,7 +86,7 @@ export interface GameState {
   reputation: number; expertise: number; personalCash: number; agencyCash: number; agencyUnlocked: boolean; agencyName: string;
   staff: string[]; upgrades: string[]; cityUnlocked: boolean; campaign: Campaign; clock: GameClock; officeId:string;
   world: WorldProgress;
-  history: { brand: string; outcome: number; score: number; spent: number; rep: number; xp: number; scenarioIndex: number; agency: boolean; caseStudy?: {highlight:string;reason:string;next:string;score:number;diagnosis:string|null;insight:string|null;approach:string|null;creative:string|null;message:string;mediaPlan:string|null;liveWeeks:number} }[];
+  history: { brand: string; outcome: number; score: number; spent: number; rep: number; xp: number; scenarioIndex: number; agency: boolean; feePaid?:number; deliveryRatio?:number; caseStudy?: {highlight:string;reason:string;next:string;score:number;diagnosis:string|null;insight:string|null;approach:string|null;creative:string|null;message:string;mediaPlan:string|null;liveWeeks:number} }[];
   log: { t: number; msg: string }[]; graphics: "high" | "low"; ceo: CEO | null;
 }
 
