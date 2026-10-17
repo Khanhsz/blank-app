@@ -92,7 +92,7 @@ export default function App(){
  const districts:District[]=buildings.map(b=>({...b,
    name:b.id===s.officeId?(b.id==="agency"?"Your Agency · Starter HQ":"★ YOUR HQ · "+b.name):b.name,
    occupied:b.id===s.officeId&&s.agencyUnlocked,
-   h:b.kind==="rival"?b.h+Math.max(0,(s.ceo?.rivals.find(r=>r.id===b.rivalId)?.officeTier??1)-1)*3:b.h,
+   h:b.h, // Rival expansion selects purpose-built tier GLB; do not vertically stretch geometry and windows.
    tier:b.kind==="rival"?(s.ceo?.rivals.find(r=>r.id===b.rivalId)?.officeTier??1):1,
    locked:!s.cityUnlocked||(b.id==="brand"&&!s.agencyUnlocked&&s.reputation<BRAND_HQ_REP)||(b.kind==="office"&&(!s.agencyUnlocked||s.reputation<findOffice(b.id).minRep))
  }));
