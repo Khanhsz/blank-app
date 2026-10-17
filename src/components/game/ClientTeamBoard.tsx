@@ -177,9 +177,6 @@ function EmployeeDetail({id,onBack,onTeam}:{id:string;onBack:()=>void;onTeam:(te
    </div>}
   </section>
   {hired&&<section className="mt-work-section"><div className="mt-work-section-head"><h4>Development</h4><span>Optional controls</span></div>
-    <label className="mt-work-field">Delivery focus <select value={p.focus} aria-label={"Delivery focus for "+e.name} onChange={evt=>act((d,fx)=>P.setWorkStyle(d,fx,id,evt.target.value as import("@/game/state").WorkStyle))}>
-      <option value="balanced">Balanced · normal pace</option><option value="speed">Speed · faster, lower QA</option><option value="quality">Quality · careful, lower capacity</option>
-    </select></label>
     <Button size="sm" variant="outline" disabled={training||busy||s.agencyCash<e.salary*.35} onClick={()=>act((d,fx)=>P.train(d,fx,id))}>{training?"Training in progress":"Train for 7 days · "+money(Math.round(e.salary*.35))}</Button>
     {busy&&<p className="mt-work-muted">Complete the employee's active task before training or moving them to another client.</p>}
    </section>}
