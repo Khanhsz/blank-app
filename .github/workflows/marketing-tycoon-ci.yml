@@ -1,0 +1,31 @@
+name: Marketing Tycoon CI
+
+on:
+  push:
+    branches:
+      - deploy/marketing-tycoon-lovable-world
+  pull_request:
+    branches:
+      - deploy/marketing-tycoon-lovable-world
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Typecheck, game regressions, generated assets and Vite build
+        run: npm run build
+      - name: Verify generated GLBs are deterministic
+        run: npm run assets:verify
+      - name: Test AI scenario validator
+        run: node --test marketing-tycoon-ai-api/scenario.test.mjs

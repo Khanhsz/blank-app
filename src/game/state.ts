@@ -1,4 +1,5 @@
 import { ceoLeadDefs, ceoRivalDefs, type Channel, type LeadDef, type Rival, type Scenario } from "./data";
+import {reconcileProjectMedia} from "./projectMedia";
 
 export type Phase = "brief" | "planning" | "executing" | "live" | "results" | "research" | "survey" | "validation" | "strategy" | "creative" | "media";
 export const PHASES: Phase[] = ["planning", "executing", "live", "results"];
@@ -39,7 +40,7 @@ export interface Campaign {
   survey: { audience: string; sample: number; question: string } | null; insight: string | null;
   strategy: { segment: string; objective: string; position: string }; creative: string | null;
   media: Record<Channel, number>; optimization: string | null;
-  liveMetrics: ScoreResult | null; final: (ScoreResult & { qualityScore: number; rep: number; xp: number }) | null;
+  liveMetrics: ScoreResult | null; final: (ScoreResult & { qualityScore: number; rep: number; xp: number; feePaid?: number; deliveryRatio?: number }) | null; mediaBudget?: number;
 }
 export interface ScoreResult { pct: number; outcome: number; adReach: number; quality: number; fit: Record<string, number>; performance: "target" | "near" | "under" }
 
@@ -86,7 +87,7 @@ export interface GameState {
   reputation: number; expertise: number; personalCash: number; agencyCash: number; agencyUnlocked: boolean; agencyName: string;
   staff: string[]; upgrades: string[]; cityUnlocked: boolean; campaign: Campaign; clock: GameClock; officeId:string;
   world: WorldProgress;
-  history: { brand: string; outcome: number; score: number; spent: number; rep: number; xp: number; scenarioIndex: number; agency: boolean; caseStudy?: {highlight:string;reason:string;next:string;score:number;diagnosis:string|null;insight:string|null;approach:string|null;creative:string|null;message:string;mediaPlan:string|null;liveWeeks:number} }[];
+  history: { brand: string; outcome: number; score: number; spent: number; rep: number; xp: number; scenarioIndex: number; agency: boolean; feePaid?:number; deliveryRatio?:number; caseStudy?: {highlight:string;reason:string;next:string;score:number;diagnosis:string|null;insight:string|null;approach:string|null;creative:string|null;message:string;mediaPlan:string|null;liveWeeks:number} }[];
   log: { t: number; msg: string }[]; graphics: "high" | "low"; ceo: CEO | null;
 }
 
@@ -192,6 +193,15 @@ export function migrate(raw: unknown): GameState {
     const priorLeads=Array.isArray(out.ceo.leads)?out.ceo.leads:[];
     const knownIds=new Set(priorLeads.map(l=>l.id));
     out.ceo.leads=[...priorLeads,...base.leads.filter(l=>!knownIds.has(l.id))];
+    // Older saves used scenario-sized media mixes even for signed agency budgets.
+    // Reconcile only projects that already delivered booked media.
+    for(const p of out.ceo.projects){
+      const mediaDelivered=p.tasks?.some(t=>t.key==="media"&&t.status==="completed");
+      if(p.mediaSpent>0&&(p.campaign?.mediaBooked||mediaDelivered)){
+        p.campaign.mediaBooked=true;
+        reconcileProjectMedia(p);
+      }
+    }
   }
   return out;
 }

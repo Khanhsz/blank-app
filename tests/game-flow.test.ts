@@ -16,13 +16,14 @@ function runCampaign(s:ReturnType<typeof defaults>){
   assert.equal(s.campaign.phase,"planning");
   C.addResearch(s,fx,"audit");C.addResearch(s,fx,"reviews");C.addResearch(s,fx,"interview");
   assert.ok(s.campaign.research.length>=2);
-  C.runSurvey(s,fx,{audience:"students",sample:60,question:"barrier"});
+  C.runSurvey(s,fx,{audience:C.scenarioOf(s.campaign).trueSegment,sample:60,question:"barrier"});
   assert.ok(s.campaign.survey);
-  C.confirmInsight(s,fx,"awareness");
-  C.confirmStrategy(s,fx,{segment:"students",objective:"visits",position:"study"});
+  C.confirmInsight(s,fx,C.scenarioOf(s.campaign).trueInsight);
+  C.confirmStrategy(s,fx,{segment:C.scenarioOf(s.campaign).trueSegment,objective:C.scenarioOf(s.campaign).trueObjective,position:C.scenarioOf(s.campaign).truePosition});
   assert.equal(s.campaign.phase,"executing");
-  C.confirmCreative(s,fx,"study");
-  C.bookMedia(s,fx,{paid:1800000,creator:1500000,promo:500000,flyer:250000});
+  C.confirmCreative(s,fx,C.scenarioOf(s.campaign).trueCreative);
+  const available=C.scenarioOf(s.campaign).budget-s.campaign.spent;
+  C.bookMedia(s,fx,{paid:Math.floor(available*.44),creator:Math.floor(available*.40),promo:Math.floor(available*.12),flyer:available-Math.floor(available*.44)-Math.floor(available*.40)-Math.floor(available*.12)});
   assert.equal(s.campaign.phase,"executing");
   // Production is not instantly live; a shared weekly turn must complete.
   assert.ok(!s.campaign.actualLaunchDay);

@@ -7,6 +7,7 @@ import { ceoRand } from "./data";
 import {currentOffice} from "./city";
 import {runRivalAgents,ensureTender,rivalBidScore,registerRivalWin,resolveTalentOffer} from "./rivalAI";
 import {candidatesForRole} from "./functions";
+import {reconcileProjectMedia} from "./projectMedia";
 
 const OVERHEAD = 160000;
 
@@ -108,9 +109,9 @@ function applyTask(p: Project, t: Task) {
   if (t.key === "research") { co.research = ["audit", "reviews", "interview"]; co.survey = { audience: sc.trueSegment, sample: 120, question: "barrier" }; co.insight = t.quality >= 64 ? sc.trueInsight : "value"; co.phase = "planning"; }
   if (t.key === "strategy") { co.strategy = { segment: t.quality >= 65 ? sc.trueSegment : "everyone", objective: sc.trueObjective, position: t.quality >= 65 ? sc.truePosition : "budget" }; co.phase = "executing"; }
   if (t.key === "creative") { co.creative = t.quality >= 68 ? sc.trueCreative : "discount"; co.phase = "executing"; }
-  if (t.key === "media") { const b = sc.budget; co.media = { paid: Math.round(b * 0.46), creator: Math.round(b * 0.34), promo: Math.round(b * 0.13), flyer: Math.round(b * 0.07) }; co.spent = b;co.mediaBooked=true; p.mediaSpent = Math.round(p.adBudget * 0.88); p.mediaReserved = p.adBudget - p.mediaSpent; }
+  if (t.key === "media") { co.mediaBooked=true; p.mediaSpent=Math.round(p.adBudget*(p.kolQuality===undefined?.88:.94)); reconcileProjectMedia(p); }
   if (t.key === "production") { co.productionReadyDay=p.startedDay+p.days; }
-  if (t.key === "kol") { p.kolQuality = t.quality; p.mediaSpent = Math.min(p.adBudget, p.mediaSpent + Math.round(p.adBudget * 0.06)); p.mediaReserved = p.adBudget - p.mediaSpent; }
+  if (t.key === "kol") { p.kolQuality=t.quality; if(co.mediaBooked){p.mediaSpent=Math.round(p.adBudget*.94);reconcileProjectMedia(p);} }
   if (t.key === "analytics") { p.reportQuality = t.quality; co.optimization = "retarget"; co.phase = "results"; }
 }
 
