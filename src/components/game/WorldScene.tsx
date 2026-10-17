@@ -4,8 +4,7 @@ import {CameraControls,Html,ContactShadows,Float} from "@react-three/drei";
 import {useEffect,useRef,useState,useMemo} from "react";
 import * as THREE from "three";
 import type {DistrictKind} from "@/game/city";
-import {AssetRegistry} from "./AssetRegistry";
-import {DistrictManager,ChunkManager} from "./AssetDistrict";
+import {DenseMediaCity} from "./DenseMediaCity";
 import {CityPerfProbe} from "./CityPerfProbe";
 import type {SceneId,Character,RoomStyle} from "@/game/state";
 
@@ -14,7 +13,6 @@ type RoomAction="board"|"phone"|"wardrobe";
 const ink="#302b28",cream="#e9dbc8",teal="#70a39b",copper="#bd694a";
 const flat={flatShading:true,roughness:0.86,metalness:0.02};
 const seeded=(i:number)=>{const v=Math.sin(i*124.521)*43758.5453;return v-Math.floor(v)};
-function Land(){return <mesh rotation-x={-Math.PI/2} position={[0,-.05,0]} receiveShadow><planeGeometry args={[155,140]}/><meshStandardMaterial color="#cbd0ca" {...flat}/></mesh>}
 function Box({p=[0,0,0],size=[1,1,1],color,children,rotation}: {p?:[number,number,number];size?:[number,number,number];color:string;children?:React.ReactNode;rotation?:[number,number,number]}){
  return <mesh position={p} rotation={rotation} castShadow receiveShadow><boxGeometry args={size}/><meshStandardMaterial color={color} {...flat}/>{children}</mesh>
 }
@@ -51,53 +49,6 @@ function LowPolyPerson({c,pos,walk=false,seed=0,yaw=0}:{c:Character;pos:[number,
   <mesh position={[.12,.3,0]} castShadow><cylinderGeometry args={[.095,.105,.54,6]}/><meshStandardMaterial color="#4b4d58" {...flat}/></mesh>
  </group>;
 }
-function CityWalker({seed,c}:{seed:number;c:Character}){
- const ref=useRef<THREE.Group>(null),z=[-16.6,16.6,32.5,-32.5][seed%4];
- useFrame(({clock})=>{if(!ref.current)return;const x=((clock.elapsedTime*(seed%2?-.56:.68)+seed*9)%117+117)%117-58.5;ref.current.position.x=x;ref.current.rotation.y=seed%2?Math.PI/2:-Math.PI/2;});
- return <group ref={ref} position={[0,.01,z]}><LowPolyPerson c={{...c,outfit:["#bd694a","#7f9687","#9c8cba","#c4a36d"][seed%4],skin:"#b88765"}} pos={[0,0,0]} walk seed={seed}/></group>;
-}
-function Car({seed=0}:{seed:number}){
- const ref=useRef<THREE.Group>(null),z=[-16,16,32,-32][seed%4];
- useFrame(({clock})=>{if(!ref.current)return;ref.current.position.x=((((clock.elapsedTime*(seed%2?3.4:-2.9))+seed*17)%126)+126)%126-63;});
- return <group ref={ref} position={[0,.48,z]}>
-  <Box color={seed%3===0?"#b86b59":seed%3===1?"#66959a":"#e8b56e"} size={[2.1,.62,1.1]} p={[0,.05,0]}/>
-  <Box color="#dce8e5" size={[1.03,.46,.95]} p={[-.08,.53,0]}/>
-  {[-.7,.7].map(x=>[-.53,.53].map(z0=><mesh key={String(x)+String(z0)} position={[x,-.22,z0]} rotation-x={Math.PI/2}><cylinderGeometry args={[.28,.28,.15,9]}/><meshStandardMaterial color="#37383c"/></mesh>))}
- </group>;
-}
-
-const cityXs=[-48,-32,-16,0,16,32,48];
-const roadsX=[-40,-24,-8,8,24,40];
-const roadsZ=[-32,-16,0,16,32];
-function RoadNetwork(){
- return <group>
-  {roadsZ.map(z=><group key={"street-"+z}>
-   <Box p={[0,.026,z]} size={[128,.075,4.3]} color="#65615e"/>
-   {Array.from({length:24},(_,i)=><Box key={i} p={[-61+i*5.3,.068,z]} size={[2.2,.012,.07]} color="#eee2cd"/>)}
-   <Box p={[0,.09,z+2.52]} size={[128,.14,.42]} color="#efe6da"/>
-   <Box p={[0,.09,z-2.52]} size={[128,.14,.42]} color="#efe6da"/>
-  </group>)}
-  {roadsX.map(x=><group key={"avenue-"+x}>
-   <Box p={[x,.032,0]} size={[4.3,.075,107]} color="#65615e"/>
-   {Array.from({length:20},(_,i)=><Box key={i} p={[x,.07,-49+i*5.15]} size={[.08,.016,1.9]} color="#f1e6d4"/>)}
-   <Box p={[x+2.52,.095,0]} size={[.42,.15,107]} color="#eee2d4"/>
-   <Box p={[x-2.52,.095,0]} size={[.42,.15,107]} color="#eee2d4"/>
-  </group>)}
-  {roadsX.flatMap(x=>roadsZ.map(z=><group key={x+"-"+z}>
-   {[-1.15,-.52,.12,.76].map((a,i)=><Box key={i} p={[x+a,.115,z+3.15]} size={[.25,.016,.75]} color="#f1eadd"/>)}
-  </group>))}
-  <Box p={[0,.11,0]} size={[12,.19,11]} color="#d3c3ad"/>
-  <Box p={[0,.28,0]} size={[10,.17,8.5]} color="#9eb49b"/>
-  <mesh position={[0,.53,0]} castShadow><cylinderGeometry args={[2.2,2.35,.35,12]}/><meshStandardMaterial color="#ead6c0" {...flat}/></mesh>
-  <mesh position={[0,.78,0]}><cylinderGeometry args={[1.58,1.65,.27,12]}/><meshStandardMaterial color="#78b1b5" roughness={.36}/></mesh>
-  <mesh position={[0,1.18,0]} castShadow><icosahedronGeometry args={[.57,0]}/><meshStandardMaterial color="#faf4e5" {...flat}/></mesh>
-  {[-6,6].flatMap(x=>[-5,5].map(z=><Tree key={x+"-"+z} x={x} z={z} h={.65} seed={x+z+20}/>))}
-  {cityXs.flatMap((x,i)=>[-49,49].map((z,j)=><Tree key={x+"-"+z} x={x} z={z} h={.9+((i+j)%3)*.15} seed={i+j+4}/>))}
-  {roadsX.flatMap(x=>[-46,46].map(z=><Lamp key={x+"_"+z} x={x+3} z={z}/>))}
-  {[-56,-24,8,40,56].flatMap((x,i)=>[-32,32].map((z,j)=><Tree key={i+"_"+j} x={x} z={z+4} h={.6+(i%3)*.16} seed={i+j}/>))}
-  {Array.from({length:7},(_,i)=><Car key={i} seed={i}/>)}
- </group>;
-}
 function CityPlayer({character,districts,touch,position,active}:{character:Character;districts:District[];touch:string;position:React.MutableRefObject<[number,number]>;active:React.MutableRefObject<boolean>}){
  const group=useRef<THREE.Group>(null),pressed=useRef<Set<string>>(new Set());
  useEffect(()=>{
@@ -123,8 +74,7 @@ function CityPlayer({character,districts,touch,position,active}:{character:Chara
   const [px,pz]=position.current;
   let nx=Math.max(-61,Math.min(61,px+dx*dt*5));
   let nz=Math.max(-52,Math.min(52,pz+dz*dt*5));
-  if(districts.some(b=>Math.abs(nx-b.x)<b.w/2+.9&&Math.abs(nz-b.z)<b.d/2+.9)||
-    AssetRegistry.decorativePlacements.some(p=>{const item=AssetRegistry.get(p.id);return !!item&&Math.abs(nx-p.x)<item.width/2+.55&&Math.abs(nz-p.z)<item.depth/2+.55;})){nx=px;nz=pz}
+  if(districts.some(b=>Math.abs(nx-b.x)<b.w/2+.9&&Math.abs(nz-b.z)<b.d/2+.9)){nx=px;nz=pz}
   position.current=[nx,nz];
   group.current.position.set(nx,.05,nz);
   group.current.rotation.y=Math.atan2(dx,dz);
@@ -133,13 +83,14 @@ function CityPlayer({character,districts,touch,position,active}:{character:Chara
 }
 
 function City({districts,onSelect,selected,c,touch,position,active,quality}:{districts:District[];onSelect:(id:string)=>void;selected:string|null;c:Character;touch:string;position:React.MutableRefObject<[number,number]>;active:React.MutableRefObject<boolean>;quality:"high"|"low"}){
- return <><Land/><RoadNetwork/>
- <DistrictManager districts={districts} selected={selected} onSelect={onSelect} quality={quality}/>
- <ChunkManager quality={quality}/>
- {Array.from({length:13},(_,i)=><CityWalker key={i} seed={i+1} c={c}/>)}
- <CityPlayer character={c} districts={districts} touch={touch} position={position} active={active}/>
+ return <>
+  {/* Single city visual authority: Dense Media City replaces old road network,
+      legacy GLB building layer, decorative chunks, and former town plaza. */}
+  <DenseMediaCity districts={districts} selected={selected} onSelect={onSelect} quality={quality}/>
+  <CityPlayer character={c} districts={districts} touch={touch} position={position} active={active}/>
  </>;
 }
+
 function RoomComputer({onInteract}:{onInteract:()=>void}){
  const [hot,setHot]=useState(false);
  return <group position={[-2.5,0,-3.75]}>
