@@ -22,6 +22,24 @@ def build_brickhouse(add,a,lod):
   nonlocal i
   i+=1
   add("%03d_%s"%(i,name),(x,y,z),(sx,sy,sz),mat)
+ if lod!=0:
+  b(0,.14,0,w,.28,d,5,"plinth")
+  b(-w*.298,h*.305,-d*.065,w*.39,h*.61,d*.77,0,"studio_wing")
+  b(w*.05,h*.50,-d*.10,w*.55,h,d*.71,1,"office_tower")
+  b(w*.338,h*.382,d*.015,w*.29,h*.765,d*.62,0,"right_wing")
+  b(w*.05,h+.24,-d*.10,w*.575,.48,d*.737,2,"office_cap")
+  b(-w*.298,h*.61+.20,-d*.065,w*.414,.40,d*.792,4,"studio_cap")
+  b(w*.338,h*.765+.19,d*.015,w*.312,.38,d*.654,2,"right_cap")
+  b(w*.057,.95,d*.402,w*.40,1.7,.15,6,"entrance")
+  b(w*.057,3.14,d*.445,w*.49,.22,.76,2,"cantilever")
+  b(-w*.295,1.84,d*.329,w*.32,3.24,.11,3,"glass_studio")
+  for level in range(3):b(w*.05,4.64+level*2.29,d*.267,w*.50,.45,.10,3,"glazing_strip")
+  b(w*.052,h*.706,d*.270,w*.47,h*.17,.14,6,"facade_dooh")
+  b(w*.052,h*.706,d*.290,w*.425,h*.132,.025,3,"facade_screen")
+  b(w*.05,h+.42,d*.256,w*.44,.97,.20,6,"roof_ooh_frame")
+  b(w*.05,h+.42,d*.271,w*.414,.82,.08,4,"roof_surface")
+  b(w*.05,3.72,d*.454,w*.45,.53,.10,2,"studio_sign")
+  return
  b(0,.14,0,w,.28,d,5,"plinth")
  b(-w*.298,h*.305,-d*.065,w*.39,h*.61,d*.77,0,"production_wing")
  b(w*.05,h*.5,-d*.10,w*.55,h,d*.71,1,"central_tower")
