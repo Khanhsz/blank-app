@@ -60,7 +60,7 @@ test("old saves receive new optional character attributes and world progress saf
  delete old.character.hairstyle;
  delete old.character.accessory;
  const out=migrate(old);
- assert.deepEqual(out.world,{visited:[],contacts:[]});
+ assert.deepEqual(out.world,{visited:[],contacts:[],leasedOffices:[]});
  assert.equal(out.character.name,"Alex");
  assert.equal(out.campaign.phase,"brief");
 });
