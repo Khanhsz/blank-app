@@ -56,7 +56,7 @@ test("late launch prorates compensation by completed live flight, not booked bud
   assert.equal(s.personalCash-before,c.final?.feePaid);
 });
 
-function agencyWithMedia(adBudget:number){
+function agencyWithMedia(adBudget:number,kolFirst=false){
   const s=playable();
   s.agencyUnlocked=true;s.cityUnlocked=true;s.ceo=newCEO(55);
   s.agencyCash=5000000000;
@@ -74,6 +74,10 @@ function agencyWithMedia(adBudget:number){
       progress:t.effort,quality:80,employee:"legacy",outsourced:false,reviewDay:0
     })),paymentCount:0
   };
+  if(kolFirst){
+    const kol=p.tasks.find(t=>t.key==="kol")!;
+    p.tasks=[kol,...p.tasks.filter(t=>t.key!=="kol")];
+  }
   s.ceo.projects.push(p);
   ceoDay(s,s.ceo,fx);
   return {s,p};
@@ -94,6 +98,15 @@ test("agency media uses negotiated client budget for actual spend and proportion
   assert.equal(a.pct,b.pct,"percentage KPI must compare to the client media budget, not auto-cap on high raw spend");
   assert.ok(a.pct<85,"national budget alone cannot force the maximum score");
   assert.ok(b.adReach>a.adReach*20,"larger contracted campaign can reach a bigger audience");
+});
+
+test("creator/media task ordering never double-spends the same signed ad budget",()=>{
+  const normal=agencyWithMedia(260000000);
+  const kolFirst=agencyWithMedia(260000000,true);
+  assert.equal(normal.p.mediaSpent,kolFirst.p.mediaSpent);
+  assert.deepEqual(normal.p.campaign.media,kolFirst.p.campaign.media);
+  assert.equal(kolFirst.p.campaign.spent,Math.round(260000000*.94));
+  assert.equal(kolFirst.p.mediaReserved,Math.round(260000000*.06));
 });
 
 test("restoring an older signed agency project reconciles its old scenario-sized media budget",()=>{
