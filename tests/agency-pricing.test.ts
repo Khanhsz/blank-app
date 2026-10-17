@@ -154,12 +154,16 @@ test("Gemini picks diligence depth while the game calculates the exact charge an
  l.pricingAdvice=validatedAdvice({...fromGemini,qualificationDepth:"lean"},x);
  assert.equal(l.qualifyFeePaid,quote.fee);
 });
-test("the CEO pipeline and the client headquarters show the same calculated qualifying cost",()=>{
+test("Client HQ preserves calibrated paid qualification while Growth Desk offers free discovery and optional priced research",()=>{
  const panels=readFileSync("src/components/game/Panels.tsx","utf8");
+ const desk=readFileSync("src/components/game/GrowthDesk.tsx","utf8");
+ const acquisition=readFileSync("src/game/acquisition.ts","utf8");
  assert.ok(panels.includes("qualificationQuote(s,live)"));
- assert.ok(panels.includes("qualificationQuote(s,l)"));
- assert.ok(panels.includes("Qualify · {money(quote.fee)}"));
  assert.ok(panels.includes("Qualify opportunity · {money(quote?.fee??0)}"));
+ assert.ok(desk.includes("qualificationQuote(s,l).fee"));
+ assert.ok(desk.includes("Optional deeper research"));
+ assert.ok(acquisition.includes("qualificationQuote(s,l)"));
+ assert.ok(acquisition.includes('l.status="qualified"'));
  assert.ok(!panels.includes("Qualify · 180k"));
  assert.ok(!panels.includes("Qualify opportunity · 180,000đ"));
 });
