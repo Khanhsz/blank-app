@@ -2,12 +2,13 @@ import { ceoLeadDefs, ceoRivalDefs, type Channel, type Employee, type LeadDef, t
 import {reconcileClientTeams} from "./clientTeams";
 import {ensureRecruitment} from "./recruitment";
 import {ensureCompanyMarket} from "./companyMarket";
+import type {FinanceCalibration} from "./financeCalibration";
 
 export type Phase = "brief" | "planning" | "executing" | "live" | "results" | "research" | "survey" | "validation" | "strategy" | "creative" | "media";
 export const PHASES: Phase[] = ["planning", "executing", "live", "results"];
 export const PHASE_LABEL: Record<Phase, string> = { brief: "Brief", planning: "Planning", executing: "Executing", live: "Live", results: "Results", research: "Planning", survey: "Planning", validation: "Planning", strategy: "Planning", creative: "Executing", media: "Executing" };
 
-export type AIBriefStatus = "pending" | "generating" | "ready" | "error" | "fallback";
+export type AIBriefStatus = "pending" | "generating" | "ready" | "fallback" | "error";
 export type JourneyStep = "brief" | "research" | "strategy" | "creative" | "production" | "live" | "report";
 export interface CampaignJourney {
   step: JourneyStep;
@@ -35,8 +36,8 @@ export function inferJourney(c:Campaign):CampaignJourney {
   pitchedCreative:c.creative??null,mediaPlan:c.mediaBooked?"legacy":null};
 }
 export interface Campaign {
-  briefId: string; aiStatus: AIBriefStatus; aiError?: string | null; journey?:CampaignJourney;
-  scenarioIndex: number; catalogClientId?:string|null; aiScenario?: Scenario | null; legacyBrief?:boolean; phase: Phase; day: number; spent: number; research: string[];
+  briefId: string; aiStatus: AIBriefStatus; aiError?: string | null; legacyBrief?:boolean; journey?:CampaignJourney;
+  scenarioIndex: number; catalogClientId?:string|null; aiScenario?: Scenario | null; phase: Phase; day: number; spent: number; research: string[];
   startedDay?: number; productionReadyDay?: number; mediaBooked?: boolean; actualLaunchDay?: number;
   liveWeeks?: number; lastOptimizationWeek?: number; weeklyResults?: {week:number;reach:number;uplift:number;decision:string}[];
   survey: { audience: string; sample: number; question: string } | null; insight: string | null;
@@ -143,7 +144,7 @@ export interface GameState {
   version: 2; created: boolean; character: Character; room: RoomStyle; scene: SceneId;
   reputation: number; expertise: number; personalCash: number; agencyCash: number; agencyUnlocked: boolean; agencyName: string;
   staff: string[]; personnel:Record<string,PersonnelProfile>; recruitment?:RecruitmentMarket; teamLeads:Record<string,string>; upgrades: string[]; cityUnlocked: boolean; campaign: Campaign; clock: GameClock; officeId:string;
-  world: WorldProgress;companyMarket?:CompanyMarket;
+  world: WorldProgress;companyMarket?:CompanyMarket;financeCalibration?:FinanceCalibration;
   history: { brand: string; outcome: number; score: number; spent: number; rep: number; xp: number; scenarioIndex: number; agency: boolean; caseStudy?: {highlight:string;reason:string;next:string;score:number;diagnosis:string|null;insight:string|null;approach:string|null;creative:string|null;message:string;mediaPlan:string|null;liveWeeks:number} }[];
   log: { t: number; msg: string }[]; graphics: "high" | "low"; ceo: CEO | null;
 }
@@ -151,7 +152,7 @@ export interface GameState {
 export const newCampaign = (i: number, day = 1): Campaign => ({
   briefId: "brief-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,9),
   aiStatus:"pending", aiError:null,
-  scenarioIndex: i, catalogClientId:null, aiScenario:null, legacyBrief:false, phase: "brief", journey:newJourney(), day, startedDay:day, spent: 0, research: [], mediaBooked:false, productionReadyDay:undefined, liveWeeks:0, weeklyResults:[], survey: null, insight: null,
+  scenarioIndex: i, catalogClientId:null, aiScenario:null, phase: "brief", journey:newJourney(), day, startedDay:day, spent: 0, research: [], mediaBooked:false, productionReadyDay:undefined, liveWeeks:0, weeklyResults:[], survey: null, insight: null,
   strategy: { segment: "students", objective: "visits", position: "study" }, creative: null,
   media: { paid: 0, creator: 0, promo: 0, flyer: 0 }, optimization: null, liveMetrics: null, final: null,
 });
@@ -263,7 +264,6 @@ export function migrate(raw: unknown): GameState {
   if(out.campaign.productionReadyDay===undefined && out.campaign.creative)out.campaign.productionReadyDay=day;
   if(out.campaign.mediaBooked===undefined)out.campaign.mediaBooked=Object.values(out.campaign.media).some(v=>v>0);
   if(!Array.isArray(out.campaign.weeklyResults))out.campaign.weeklyResults=[];
-  // Old accepted catalog briefs can finish; new approaches always require Gemini.
   if(out.campaign.phase==="brief"&&out.campaign.aiScenario&&!out.campaign.aiScenario.aiPlanning)out.campaign.legacyBrief=true;
   // Keep old saves playable; only unaccepted briefs become automatic-AI candidates.
   if (!out.campaign.briefId || typeof out.campaign.briefId!=="string") out.campaign.briefId=newCampaign(out.campaign.scenarioIndex).briefId;
@@ -298,9 +298,7 @@ export function migrate(raw: unknown): GameState {
     out.ceo.weekly = out.clock;
     // New corporate clients appear in existing CEO saves without resetting
     // relationships, negotiation outcomes, ongoing projects or cash history.
-    const priorLeads=Array.isArray(out.ceo.leads)?out.ceo.leads:[];
-    const knownIds=new Set(priorLeads.map(l=>l.id));
-    out.ceo.leads=[...priorLeads,...base.leads.filter(l=>!knownIds.has(l.id))];
+    out.ceo.leads=Array.isArray(out.ceo.leads)?out.ceo.leads:[]; // Preserve signed/active legacy deals without injecting unsolicited prospects.
     removeUncontractedLegacyAgencyClients(out);
     ensureRecruitment(out); // register generated staff before client-team reconciliation
     reconcileClientTeams(out);

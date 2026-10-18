@@ -7,6 +7,7 @@ import {CLIENT_DATABASE,CLIENT_BY_ID,SECTORS,SIMULATED_USD_TO_VND,simulatedFortu
 import {clamp,ceoRand} from "./data";
 import type {GameState,CompanyMarket,CompanyPerformance,MarketCampaignEvent,QuarterlyRanking} from "./state";
 import type {Fx} from "./store";
+import {calibratedClient} from "./financeCalibration";
 
 export const RANKING_CYCLE_WEEKS=13;
 export const FORTUNE_CANDIDATES=CLIENT_DATABASE.filter(c=>c.segment==="bigcorp");
@@ -20,14 +21,15 @@ export const officialRank=(id:string)=>CLIENT_BY_ID[id]?.fortuneRank??null;
  * by the starting company tier and cannot be invented by a model.
  */
 export function currentMarketingBudgetVnd(s:GameState,client:ClientMaster):number{
+ const calibrated=calibratedClient(s,CLIENT_BY_ID[client.id]??client);
  const live=marketCompany(s,client.id);
- if(!live)return client.marketingBudgetVnd;
+ if(!live)return calibrated.marketingBudgetVnd;
  const growth=clamp(live.simulatedAnnualRevenue/Math.max(1,live.baselineAnnualRevenue),.65,1.8);
- return Math.round(client.marketingBudgetVnd*growth/100000)*100000;
+ return Math.round(calibrated.marketingBudgetVnd*growth/100000)*100000;
 }
 
-function startingRevenue(id:string){
- const c=CLIENT_BY_ID[id];
+function startingRevenue(s:GameState,id:string){
+ const c=calibratedClient(s,CLIENT_BY_ID[id]);
  if(c.segment!=="bigcorp")return c.annualRevenueVnd??1_000_000_000;
  // All Big Corp market values are USD. Fictional group revenues match the
  // master database VND model using a disclosed GAME conversion assumption.
@@ -35,8 +37,8 @@ function startingRevenue(id:string){
  if(c.verifiedRevenueUsd!==null)return c.verifiedRevenueUsd;
  return simulatedFortuneRevenueUsd(c.fortuneRank??50);
 }
-function seedCompany(id:string):CompanyPerformance{
- const c=CLIENT_BY_ID[id],revenue=startingRevenue(id);
+function seedCompany(s:GameState,id:string):CompanyPerformance{
+ const c=CLIENT_BY_ID[id],revenue=startingRevenue(s,id);
  return {id,simulatedAnnualRevenue:revenue,baselineAnnualRevenue:revenue,currency:c.segment==="bigcorp"?"USD":"VND",
   awareness:c.brandAwareness,brandStrength:c.scaleScore,weeklyGrowthPct:0,totalGrowthPct:0,
   momentum:0,rivalPressure:0,playerMarketingImpact:0,rivalMarketingImpact:0,
@@ -62,11 +64,27 @@ export function ensureCompanyMarket(s:GameState):CompanyMarket{
   macro:{coffee:0,beauty:0,fashion:0,education:0,tech:0,fitness:0,food:0},
   intelligence:{lastWeek:0,status:"rules",headline:"Business simulation ready",summary:"Market outcomes will be calculated each week.",signals:[]}};
  const m=s.companyMarket;
- for(const c of CLIENT_DATABASE)if(!m.companies[c.id])m.companies[c.id]=seedCompany(c.id);
+ for(const c of CLIENT_DATABASE)if(!m.companies[c.id])m.companies[c.id]=seedCompany(s,c.id);
  if(!Array.isArray(m.quarters))m.quarters=[];
  if(!m.quarters.length)m.quarters.push(rankFor(m,0));
  m.lastWeek=Math.max(0,m.lastWeek||0);m.pending??=[];m.activity??=[];
  return m;
+}
+/** Rebase only untouched profiles when the one-time Gemini estimate arrives.
+ * Signed bids, played weeks, published figures and existing player cash stay frozen.
+ */
+export function applyInitialFinancialCalibration(s:GameState){
+ const market=ensureCompanyMarket(s);
+ if(market.lastWeek!==0||market.pending.length||market.activity.length)return false;
+ for(const c of CLIENT_DATABASE){
+  const performance=market.companies[c.id];
+  if(!performance||performance.campaigns>0)continue;
+  const adjusted=startingRevenue(s,c.id);
+  performance.baselineAnnualRevenue=adjusted;
+  performance.simulatedAnnualRevenue=adjusted;
+ }
+ market.quarters=[rankFor(market,0)];
+ return true;
 }
 export function enqueueCompanyCampaign(s:GameState,info:Omit<MarketCampaignEvent,"id"|"week">){
  if(!CLIENT_BY_ID[info.clientId])return false;
@@ -87,9 +105,8 @@ export function recordRivalDelivery(s:GameState,info:{clientId:string;projectId:
   spendVnd:Math.max(0,Math.round(info.spendVnd)),quality:clamp(info.quality,0,100),kpi:info.quality>65?16:4});
 }
 const companySector=(c:CompanyPerformance)=>CLIENT_BY_ID[c.id]?.sector??"tech";
-function campaignLift(e:MarketCampaignEvent,c:CompanyPerformance){
- const master=CLIENT_BY_ID[e.clientId];
- const annual=Math.round(master.marketingBudgetVnd*clamp(c.simulatedAnnualRevenue/Math.max(1,c.baselineAnnualRevenue),.65,1.8));
+function campaignLift(s:GameState,e:MarketCampaignEvent,c:CompanyPerformance){
+ const annual=currentMarketingBudgetVnd(s,CLIENT_BY_ID[e.clientId]);
  const spendFraction=Math.sqrt(Math.min(9,e.spendVnd/Math.max(1,annual/52)));
  const performance=clamp((e.quality-50)*.023+e.kpi*.014,-.65,2.1);
  return clamp(round((.085+performance*.26)*spendFraction),-.6,1.65);
@@ -128,7 +145,7 @@ export function advanceCompanyMarket(s:GameState,completedWeek:number,fx?:Fx){
   const impacts:Record<string,{player:number;rival:number;totalSpend:number}>={};
   for(const e of events){
    const company=m.companies[e.clientId];if(!company)continue;
-   const effect=campaignLift(e,company);
+   const effect=campaignLift(s,e,company);
    const v=impacts[e.clientId]??={player:0,rival:0,totalSpend:0};
    v[e.actor]+=effect;v.totalSpend+=e.spendVnd;
    company.campaigns++;
