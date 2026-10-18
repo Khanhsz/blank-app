@@ -90,7 +90,7 @@ export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaig
   if(id==="brand")return <FortuneHeadquarters onOpenDeal={()=>onOpen("ceo")}/>;
   if (id === "network") {
     if (s.agencyUnlocked) return <Button className="w-full" onClick={() => onOpen("ceo")}>Open sales pipeline</Button>;
-    const locked = id === "brand" && s.reputation < BRAND_HQ_REP;
+    const locked = false;
     return <div className="space-y-3"><Row k="Campaigns completed" v={s.history.length} /><Row k="Reputation" v={s.reputation} />{locked && <p className="text-sm text-muted-foreground">Requires {BRAND_HQ_REP} reputation.</p>}
       <Button className="w-full" disabled={locked || !s.campaign.journey?.review || s.campaign.phase !== "results"} onClick={() => act(C.nextClient)}>Request a new client brief</Button>
       {s.campaign.phase !== "results" && <Button variant="outline" className="w-full" onClick={() => onOpen("campaign")}>Continue current campaign</Button>}</div>;
