@@ -142,7 +142,7 @@ export function queryClients(opts:{sector?:ClientSector|"all";segment?:ClientSeg
 export function scenarioForClient(c:ClientMaster):Scenario{
  const sec=SECTORS.find(s=>s.id===c.sector)!;
  const freelance=c.segment!=="bigcorp",small=c.segment==="startup";
- const budget=freelance?clamp(vnd(c.marketingBudgetVnd*(small?.09:.025)),small?2_500_000:5_000_000,small?12_000_000:26_000_000):
+ const budget=freelance?clamp(vnd(c.marketingBudgetVnd*(small?.09:.025)),8_000_000,16_000_000):
   clamp(vnd(c.marketingBudgetVnd*.0004),150_000_000,650_000_000);
  const days=small?14:c.segment==="sme"?21:35;
  const defaultFee=vnd(budget*(small?.42:.34));
