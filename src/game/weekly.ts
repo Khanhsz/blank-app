@@ -97,9 +97,10 @@ export function endWeek(s:GameState,fx:Fx):WeeklyEdition|null{
    if(weekly.day>job.deadlineDay&&job.stage==="work")simulationFx.log("Freelance deadline passed; quality penalty applies at client review.");
   }else progressFreelanceWeek(s,simulationFx);
   settleFreelanceWeek(s,simulationFx);
-  ensureFreelanceBoard(s);
-  advanceFreelanceBoard(s,completed,simulationFx);
  }
+ // Refresh the shared market for both bedroom freelancers and staffed agencies.
+ ensureFreelanceBoard(s);
+ advanceFreelanceBoard(s,completed,simulationFx);
  const to=weekly.day;
  if(c)c.weekly=weekly;
  // Project completions are queued by CEO, freelancer deliveries are queued

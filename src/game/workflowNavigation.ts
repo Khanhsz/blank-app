@@ -1,6 +1,6 @@
 import type {GameState} from "./state";
 
-export type CEOSection="inbox"|"pipeline"|"workforce"|"finance"|"rivals"|"news"|"partners";
+export type CEOSection="inbox"|"pipeline"|"workforce"|"side-gigs"|"finance"|"rivals"|"news"|"partners";
 export interface WorkforceView {
  section:"planning"|"teams"|"pool";
  teamId:string|null;

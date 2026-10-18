@@ -112,6 +112,9 @@ export function updatePersonnelDay(s:GameState){
  for(const p of s.ceo.projects.filter(p=>p.status==="active"))for(const t of p.tasks){
   if(t.status==="in_progress"&&t.employee&&s.staff.includes(t.employee))busy[t.employee]=(busy[t.employee]??0)+1;
  }
+ // Side gigs occupy the same staffing capacity as CEO production tasks.
+ for(const gig of s.ceo.agencyGigs??[])if((gig.status==="working"||gig.status==="revision")&&s.staff.includes(gig.staffId))
+  busy[gig.staffId]=(busy[gig.staffId]??0)+1;
  for(const id of s.staff){
   const p=s.personnel[id]??(s.personnel[id]=defaultProfile(id));
   if(p.trainingUntil!==undefined&&day>=p.trainingUntil){
@@ -146,6 +149,8 @@ export function train(s:GameState,fx:Fx,id:string,focus?:TalentFunction){
  const p=s.personnel[id]??(s.personnel[id]=defaultProfile(id));
  if(p.trainingUntil&&p.trainingUntil>c.day)return fx.toast("Training is already underway.");
  if(c.projects.some(pr=>pr.status==="active"&&pr.tasks.some(t=>t.employee===id&&t.status==="in_progress")))return fx.toast("Finish the active assignment before training.");
+ if((c.agencyGigs??[]).some(g=>g.staffId===id&&(g.status==="working"||g.status==="revision")))
+  return fx.toast("Finish or reassign the side gig before training this specialist.");
  const cost=Math.round(e.salary*.35);if(s.agencyCash<cost)return fx.toast("Insufficient training budget: "+money(cost));
  s.agencyCash-=cost;c.ledger.unshift({day:c.day,what:"Staff training · "+e.name,value:-cost,lead:"agency",status:"paid"});
  p.trainingUntil=c.day+7;p.pendingSkill=9;p.trainingFunction=focus??specialtyFunction(id);

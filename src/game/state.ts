@@ -71,6 +71,15 @@ export type FreelanceBidPrice="competitive"|"standard"|"premium";
 export interface FreelanceListing {id:string;clientId:string;templateId:string;postedWeek:number;closeWeek:number;fee:number;mediaBudget:number;applicantIds:string[];status:"open"|"closed";}
 export interface FreelanceApplication {id:string;listingId:string;clientId:string;templateId:string;week:number;approach:FreelanceBidApproach;price:FreelanceBidPrice;proposedFee:number;score:number;winChance:number;status:"pending"|"selected"|"rejected"|"accepted"|"declined";feedback:string;}
 export interface FreelanceBoard {lastWeek:number;listings:FreelanceListing[];applications:FreelanceApplication[];}
+/** Agency-managed side gigs share the same public listing and job-specific deliverables
+ * as the bedroom career, but their work/cash never touches the personal wallet. */
+export interface AgencyGig {
+ id:string;applicationId:string;listingId:string;clientId:string;templateId:string;staffId:string;
+ fee:number;expenses:number;startedDay:number;deadlineDay:number;
+ workHours:number;requiredHours:number;laborCost:number;
+ status:"working"|"ready"|"revision"|"paid";reviewRound:number;quality:number;
+ artifacts:FreelanceV4Artifact[];feedback:string;completedDay?:number;
+}
 export interface FreelancePortfolioItem {id:string;jobType:string;client:string;earned:number;quality:number;completedDay:number;feedback:string;artifacts:FreelanceV4Artifact[]}
 export interface FreelanceCareer {transactionIds?:string[];portfolio?:FreelancePortfolioItem[];completedGigs:number;completedProjects:number;completedMiniCampaigns:number;positiveReviews:number;repeatClients:number;weeklyHours:number;weeklyWeek:number;clientWins:Record<string,number>;invoices:FreelanceInvoice[];completedIds:string[];}
 export const newFreelanceCareer=():FreelanceCareer=>({completedGigs:0,completedProjects:0,completedMiniCampaigns:0,positiveReviews:0,repeatClients:0,weeklyHours:0,weeklyWeek:1,clientWins:{},invoices:[],completedIds:[],transactionIds:[],portfolio:[]});
@@ -155,6 +164,7 @@ export interface WeeklyEdition {
 export interface WeeklyProgress {week:number; pending:WeeklyDecision[]; editions:WeeklyEdition[]; lastAdvanceDay:number}
 export interface GameClock extends WeeklyProgress {day:number}
 export interface CEO {
+  agencyGigs?:AgencyGig[];
   fortuneAccounts?:Record<string,FortuneAccount>;
   dealSessions?:Record<string,DealSession>;activeDealId?:string|null;
   clientRelationships?:Record<string,ClientRelationship>;
@@ -229,7 +239,7 @@ export const newCEO = (reputation: number): CEO => ({
   rivals: ceoRivalDefs.map((v) => ({ ...v })), projects: [], inbox: [], partners: [], ledger: [], history: [],
   reputation: { overall: reputation, creative: 50, performance: 50, strategy: 50, reliability: 60, industries: {} },
   seq: 0, pitch: null, negotiation: null, totalPayroll: 0, totalDirect: 0, totalBilled: 0, totalPaid: 0,
-  clientTeams:[], fortuneAccounts:{}, dealSessions:{}, activeDealId:null, clientRelationships:{}, tenders:[], rivalNews:[], talentOffers:[], salaryPremiums:{}, talentMarket:{}, rivalLastTick:0,
+  agencyGigs:[], clientTeams:[], fortuneAccounts:{}, dealSessions:{}, activeDealId:null, clientRelationships:{}, tenders:[], rivalNews:[], talentOffers:[], salaryPremiums:{}, talentMarket:{}, rivalLastTick:0,
   weekly:{week:1,pending:[],editions:[],lastAdvanceDay:1},
 });
 
@@ -344,6 +354,7 @@ export function migrate(raw: unknown): GameState {
     out.ceo = { ...base, ...out.ceo, reputation: { ...base.reputation, ...out.ceo.reputation, industries: out.ceo.reputation?.industries ?? {} },
       rivals:(Array.isArray(out.ceo.rivals)?out.ceo.rivals:base.rivals).map(r=>({officeTier:1,wins:0,lastMove:"Managing agency operations",...r})),
       clientTeams:Array.isArray(out.ceo.clientTeams)?out.ceo.clientTeams:[],
+      agencyGigs:Array.isArray(out.ceo.agencyGigs)?out.ceo.agencyGigs:[],
       fortuneAccounts:out.ceo.fortuneAccounts&&typeof out.ceo.fortuneAccounts==="object"?out.ceo.fortuneAccounts:{},
       dealSessions:out.ceo.dealSessions&&typeof out.ceo.dealSessions==="object"?out.ceo.dealSessions:{},
       activeDealId:typeof out.ceo.activeDealId==="string"?out.ceo.activeDealId:(out.ceo.pitch?.id??out.ceo.negotiation?.id??null),
