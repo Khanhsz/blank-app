@@ -29,6 +29,16 @@ export const BEDROOM_JOBS={
     "deliverables": "Two-week content calendar",
     "successMetric": "Client-approved calendar"
   },
+  "landing-page": {
+    "tier": "gig",
+    "fee": 1100000,
+    "mediaBudget": 0,
+    "days": 5,
+    "hours": 12,
+    "revisions": 2,
+    "deliverables": "One complete landing page: hero, benefits, proof, offer and CTA",
+    "successMetric": "Clear offer, trust and accessible action"
+  },
   "short-video": {
     "tier": "gig",
     "fee": 1500000,

@@ -72,7 +72,18 @@ test("Bedroom V2 scope is server-authoritative, never invented or a full agency 
  const mini=validateApproachClient({...approached,jobTemplateId:"mini-launch"});
  const cmp=validateCandidate({...aiAnswer,budget:3200000},mini.sector,mini);
  assert.equal(cmp.fee,4500000);assert.equal(cmp.budget,3200000);assert.equal(cmp.days,21);
- assert.equal(Object.keys(BEDROOM_JOBS).length,8);
+ assert.equal(Object.keys(BEDROOM_JOBS).length,9); // 8 active jobs plus legacy short-video.
+ assert.ok(BEDROOM_JOBS["short-video"],"Existing video contracts remain valid");
+});
+
+test("V6 landing-page client brief is accepted with locked pricing and scope",()=>{
+ const selected=validateApproachClient({...approached,jobTemplateId:"landing-page"});
+ const sc=validateCandidate({...aiAnswer,budget:0},selected.sector,selected);
+ assert.equal(sc.jobMeta.templateId,"landing-page");
+ assert.equal(sc.fee,1100000);assert.equal(sc.budget,0);assert.equal(sc.days,5);
+ assert.equal(sc.jobMeta.hours,12);assert.equal(sc.jobMeta.revisions,2);
+ assert.match(sc.jobMeta.deliverables,/hero.*CTA/i);
+ assert.match(clientPrompt(selected.sector,selected),/landing-page/);
 });
 
 import "./freelance-review.test.mjs";
