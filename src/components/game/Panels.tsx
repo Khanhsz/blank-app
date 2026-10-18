@@ -20,6 +20,7 @@ import * as A from "@/game/acquisition";
 import {bigCorpAccess} from "@/game/clientMarket";
 import * as T from "@/game/clientTeams";
 import {CampaignJourney} from "./CampaignJourney";
+import {FortuneHeadquarters} from "./FortuneHeadquarters";
 
 const Choice = ({ on, onClick, title, sub }: { on?: boolean; onClick: () => void; title: string; sub?: string }) => (
   <DecisionCard active={on} onClick={onClick} title={title} description={sub}/>
@@ -86,7 +87,8 @@ export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaig
   }
   if (id in upgrades) { const u = upgrades[id as UpgradeId], own = s.upgrades.includes(id); return <div className="space-y-3"><h4 className="font-semibold">{u.name}</h4><p className="text-sm text-muted-foreground">{u.desc}</p><Button className="w-full" disabled={own || C.playerMoney(s) < u.cost} onClick={() => act((d, f) => C.buyUpgrade(d, f, id as UpgradeId))}>{own ? "Owned" : `Buy · ${money(u.cost)}`}</Button></div>; }
   if (id === "cowork") return <Button className="w-full" disabled={s.upgrades.includes("cowork") || C.playerMoney(s) < 300000} onClick={() => act((d, f) => C.buyUpgrade(d, f, "cowork"))}>{s.upgrades.includes("cowork") ? "Member" : `Join coworking · ${money(300000)} (+1 XP)`}</Button>;
-  if (id === "network" || id === "brand") {
+  if(id==="brand")return <FortuneHeadquarters onOpenDeal={()=>onOpen("ceo")}/>;
+  if (id === "network") {
     if (s.agencyUnlocked) return <Button className="w-full" onClick={() => onOpen("ceo")}>Open sales pipeline</Button>;
     const locked = id === "brand" && s.reputation < BRAND_HQ_REP;
     return <div className="space-y-3"><Row k="Campaigns completed" v={s.history.length} /><Row k="Reputation" v={s.reputation} />{locked && <p className="text-sm text-muted-foreground">Requires {BRAND_HQ_REP} reputation.</p>}
