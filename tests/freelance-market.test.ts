@@ -112,12 +112,16 @@ test("Big Corp never appears in Bedroom and legacy saves without the board remai
  assert.equal(chooseFreelanceClient(migrated,fx,"startup-coffee-0"),true,"legacy direct scenarios are preserved for pre-migration saves");
 });
 
-// UI regression: mobile Bedroom search and access remain, redundant company
-// filters belong to the Agency directory and must not appear in Job Board.
-test("Bedroom Job Board has only job search and access controls",()=>{
+// One Bedroom Job Board: no Industry, Client size, Access, or Find job toolbar.
+// Locked and available listings are always presented together.
+test("Bedroom Job Board displays all weekly jobs directly with no filters",()=>{
  const view=readFileSync("src/components/game/FreelanceMarketplace.tsx","utf8");
- assert.ok(view.includes('aria-label="Search freelance jobs"'));
- assert.ok(view.includes('aria-label="Filter job access"'));
+ assert.ok(view.includes("visibleListings.map"));
+ assert.ok(view.includes("Market.jobGate(game,t)"));
+ assert.ok(view.includes('mt-job-market-grid'));
+ assert.ok(!view.includes('mt-job-market-filters'));
+ assert.ok(!view.includes('aria-label="Search freelance jobs"'));
+ assert.ok(!view.includes('aria-label="Filter job access"'));
  assert.ok(!view.includes('aria-label="Filter freelance industry"'));
  assert.ok(!view.includes('aria-label="Filter freelance client size"'));
 });

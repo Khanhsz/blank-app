@@ -1,5 +1,5 @@
 import {useEffect,useState} from "react";
-import {ArrowRight,BriefcaseBusiness,CheckCircle2,LockKeyhole,Search,Users} from "lucide-react";
+import {ArrowRight,BriefcaseBusiness,CheckCircle2,LockKeyhole,Users} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {act,useGame} from "@/game/store";
 import {money} from "@/game/data";
@@ -14,20 +14,12 @@ import type {FreelanceBidApproach,FreelanceBidPrice} from "@/game/state";
  * deterministic saved application records, not Gemini-generated winners. */
 export function FreelanceMarketplace({onSelected}:{onSelected?:()=>void}){
  const game=useGame(s=>s),board=game.freelanceBoard;
- const [search,setSearch]=useState("");
- const [filter,setFilter]=useState<"all"|"available"|"locked">("all");
  const [active,setActive]=useState<string|null>(null);
  const [approach,setApproach]=useState<FreelanceBidApproach>("creative");
  const [price,setPrice]=useState<FreelanceBidPrice>("standard");
  useEffect(()=>{if(!board)act(d=>{Market.ensureFreelanceBoard(d);});},[!!board]);
  const activeListings=board?.listings.filter(l=>l.postedWeek===game.clock.week&&l.status==="open")??[];
- const filtered=activeListings.filter(l=>{
-  const c=CLIENT_BY_ID[l.clientId],t=getFreelanceJob(l.templateId);
-  if(!c||!t)return false;
-  if(search&&!((c.brand+" "+t.title).toLowerCase().includes(search.toLowerCase())))return false;
-  const locked=!!Market.jobGate(game,t);
-  return filter==="all"||(filter==="locked"?locked:!locked);
- });
+ const visibleListings=activeListings.filter(l=>!!CLIENT_BY_ID[l.clientId]&&!!getFreelanceJob(l.templateId));
  const selected=activeListings.find(l=>l.id===active);
  const selectedTemplate=getFreelanceJob(selected?.templateId);
  const estimate=selected&&selectedTemplate?Market.winEstimate(game,selected,approach,price):null;
@@ -49,13 +41,8 @@ export function FreelanceMarketplace({onSelected}:{onSelected?:()=>void}){
    {game.reputation>30?<><CheckCircle2 size={16}/><span>High-budget applications unlocked. Skill and portfolio requirements still apply.</span></>:
     <><LockKeyhole size={16}/><span>High-budget jobs are visible but locked at Rep ≤30. Finish smaller jobs to reach <b>Rep 31</b>.</span></>}
   </div>
-  <div className="mt-job-market-filters">
-   <label><span>Find job</span><div className="mt-job-market-search"><Search size={14}/><input aria-label="Search freelance jobs" placeholder="Client or job type" value={search} onChange={e=>setSearch(e.target.value)}/></div></label>
-   <label><span>Access</span><select aria-label="Filter job access" value={filter} onChange={e=>setFilter(e.target.value as typeof filter)}>
-    <option value="all">All jobs</option><option value="available">Available</option><option value="locked">Locked</option></select></label>
-  </div>
   <div className="mt-job-market-grid">
-   {filtered.map(l=>{
+   {visibleListings.map(l=>{
     const c=CLIENT_BY_ID[l.clientId],t=getFreelanceJob(l.templateId)!;
     const locked=Market.jobGate(game,t);
     const application=applications.find(a=>a.listingId===l.id);
@@ -78,7 +65,7 @@ export function FreelanceMarketplace({onSelected}:{onSelected?:()=>void}){
     </article>;
    })}
   </div>
-  {!filtered.length&&<p className="mt-job-market-empty">No jobs match these filters. Try All Jobs or wait for next week's board refresh.</p>}
+  {!visibleListings.length&&<p className="mt-job-market-empty">No job listings this week. New opportunities appear after End Week.</p>}
   {selected&&selectedTemplate&&<section className="mt-job-market-apply">
    <div className="mt-job-market-applyhead"><div><small>APPLICATION PREVIEW · NO CONTRACT YET</small><h3>{CLIENT_BY_ID[selected.clientId].brand} · {selectedTemplate.title}</h3></div>
     <Button size="sm" variant="outline" onClick={()=>setActive(null)}>Close</Button></div>
