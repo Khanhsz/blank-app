@@ -1,3 +1,4 @@
+import "@/freelance-overhaul.css";
 import {useEffect,useState} from "react";
 import {ArrowLeft,ArrowRight,CheckCircle2,ClipboardCheck,FileCheck2,PenTool,RefreshCcw,Send,Wallet,BookOpen,ChevronUp,ChevronDown} from "lucide-react";
 import {Button} from "@/components/ui/button";
@@ -143,7 +144,7 @@ export function FreelanceV4Desk(){
    <p className="mt-v4-main-copy">{sc?.client??sc?.summary??"Review the approved assignment."}</p>
    {sc?.aiPlanning?.context&&<div className="mt-v4-client"><b>Gemini · Simulated client context</b><p>{sc.aiPlanning.context}</p></div>}
    {sc?.aiPlanning?.insight&&<div className="mt-v4-client"><b>Insight hypothesis</b><p>{sc.aiPlanning.insight}</p></div>}
-   <div className="mt-v6-brief-grid"><p><b>Marketing objective</b><span>{job.objective}</span></p><p><b>Target audience</b><span>{sc?.audience??"Audience in the client scenario"}</span></p>
+   <div className="mt-v6-brief-grid"><p><b>Marketing objective</b><span>{job.objective}</span></p><p><b>Target audience</b><span>{sc?.clientAnswers?.audience??"Audience in the client scenario"}</span></p>
     <p><b>Scope & deliverables</b><span>{job.deliverables}</span></p><p><b>Acceptance criteria</b><span>{job.successMetric}</span></p></div>
    <p><b>Fee:</b> {money(fee)} · <b>Deadline:</b> {job.days} days · <b>Included revision rounds:</b> {job.revisions}</p>
    <p className="mt-v4-muted">No deposit. Client media budgets never become your income. Your brief is frozen when you accept.</p>
