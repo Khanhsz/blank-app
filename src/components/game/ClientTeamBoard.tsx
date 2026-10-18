@@ -11,7 +11,7 @@ import * as K from "@/game/ceo";
 import * as P from "@/game/personnel";
 import * as T from "@/game/clientTeams";
 import {currentOffice} from "@/game/city";
-import type {ClientTeam,GameState} from "@/game/state";
+import type {ClientTeam,GameState,TalentFunction,TalentAttributes} from "@/game/state";
 
 const labels:Record<string,string>={forming:"Needs staffing",active:"Active",closing:"Ready to release",released:"Released","needs-staff":"Needs staffing",critical:"Deadline risk",attention:"Action needed","on-track":"On track",completed:"Completed"};
 const nice=(status:string)=>labels[status]??status;
@@ -27,6 +27,13 @@ function staffBusy(s:GameState,id:string){
  return !!s.ceo?.projects.some(p=>p.status==="active"&&p.tasks.some(t=>t.employee===id&&t.status==="in_progress"));
 }
 function RoleName({role}:{role:string}){return <>{ceoRoles[role]??role}</>;}
+function FunctionalSkills({scores,compact=false}:{scores:TalentAttributes;compact?:boolean}){
+ return <div className={"mt-functional-skills "+(compact?"is-compact":"")}>
+  {P.TALENT_FUNCTIONS.map(fn=><div key={fn.id} className="mt-functional-stat" title={fn.label}>
+   <span>{fn.short}</span><div className="mt-work-meter"><span style={{width:scores[fn.id]+"%"}}/></div><b>{Math.round(scores[fn.id])}</b>
+  </div>)}
+ </div>;
+}
 function TeamHealth({team}:{team:ClientTeam}){
  const s=useGame(x=>x),health=T.teamNeeds(s,team);
  return <span className={"mt-work-status mt-work-"+health.status}>{nice(health.status)}</span>;
@@ -49,7 +56,8 @@ function TeamOverview({teams,onTeam,onPool}:{teams:ClientTeam[];onTeam:(id:strin
       <div><h4>{t.brand}</h4><span>{t.memberIds.length} members · {campaigns} active campaign{campaigns===1?"":"s"}</span></div>
       <div className="mt-work-card-state"><TeamHealth team={t}/><ChevronRight size={18}/></div>
      </div>
-     <div className="mt-work-readiness"><span>Readiness</span><strong>{coverage.readiness}%</strong></div>
+     <div className="mt-work-readiness"><span>Team readiness</span><strong>{coverage.readiness}%</strong></div>
+    <div className="mt-team-capabilities">{coverage.functions.map(fn=><span key={fn.id} className={fn.weak?"is-weak":""}><b>{fn.id.toUpperCase()}</b> {fn.score||"—"}</span>)}</div>
      <div className="mt-work-meter"><span style={{width:coverage.readiness+"%"}}/></div>
      <p className={h.status==="on-track"?"mt-work-positive":"mt-work-problem"}>{issue}</p>
     </button>;
@@ -69,6 +77,7 @@ function TeamDetail({team,onBack,onEmployee,onDelivery,onRecruit}:{team:ClientTe
  return <div className="mt-work-flow">
   <button className="mt-work-back" onClick={onBack}><ArrowLeft size={16}/> All client teams</button>
   <div className="mt-work-detail-title"><div><small>CLIENT WORKFORCE</small><h3>{team.brand}</h3><p>Dedicated team · {team.memberIds.length} assigned · {stats.readiness}% readiness</p></div><TeamHealth team={team}/></div>
+  <div className="mt-team-capabilities">{stats.functions.map(fn=><span key={fn.id} className={fn.weak?"is-weak":""}><b>{fn.id.toUpperCase()}</b> {fn.score||"—"} <small>{fn.staffed?"covered":"uncovered"}</small></span>)}</div>
   {health.warnings.length>0&&<div className="mt-work-alert"><AlertTriangle size={18}/><div><b>Staffing attention</b><p>{health.warnings.join(" · ")}</p></div></div>}
   {canStaff&&<section className="mt-work-section">
    <div className="mt-work-section-head"><h4>Smart staffing</h4><span>Suggested next step</span></div>
@@ -94,12 +103,12 @@ function TeamDetail({team,onBack,onEmployee,onDelivery,onRecruit}:{team:ClientTe
     const e=employeeById(id),p=P.profile(s,id),lead=id===team.leadId;
     return <button key={id} type="button" className="mt-work-person-row" onClick={()=>onEmployee(id)}>
      <span className="mt-work-avatar"><UserRound size={17}/></span>
-     <span className="mt-work-person-text"><b>{e?.name??id}{lead?" · Lead":""}</b><small>{e?.role??P.primaryRole(id)} · Skill {Math.round(p.skill)}</small></span>
+     <div className="mt-work-person-text"><b>{e?.name??id}{lead?" · Lead":""}</b><small>{e?.role??P.primaryRole(id)} · {P.specialtyFunction(id).toUpperCase()} {P.talentStats(s,id)[P.specialtyFunction(id)]}</small><FunctionalSkills scores={P.talentStats(s,id)} compact/></div>
      <span className="mt-work-person-meta">{p.trainingUntil&&p.trainingUntil>s.ceo!.day?"Training":staffBusy(s,id)?"Working":"Ready"}</span><ChevronRight size={17}/>
     </button>;
    }):<p className="mt-work-muted">No members yet. Use Auto-staff or recruit a specialist to get started.</p>}
    {canStaff&&<div className="mt-work-add-row"><select aria-label={"Assign talent to "+team.brand} value={newMember} onChange={e=>setNewMember(e.target.value)}>
-    <option value="">Select available employee</option>{pool.filter(id=>P.effectiveCapacity(s,id)>0).map(id=><option key={id} value={id}>{employeeById(id)?.name} · {employeeById(id)?.role}</option>)}
+    <option value="">Select available employee</option>{pool.filter(id=>P.effectiveCapacity(s,id)>0).map(id=><option key={id} value={id}>{employeeById(id)?.name} · {employeeById(id)?.role} · {P.specialtyFunction(id).toUpperCase()} {P.talentStats(s,id)[P.specialtyFunction(id)]}</option>)}
    </select><Button size="sm" disabled={!newMember} onClick={()=>{act((d,fx)=>T.joinClientTeam(d,fx,team.id,newMember));setNewMember("");}}>Add member</Button></div>}
   </section>
   <section className="mt-work-section">
@@ -108,7 +117,7 @@ function TeamDetail({team,onBack,onEmployee,onDelivery,onRecruit}:{team:ClientTe
     const p=s.ceo?.projects.find(p=>p.id===id);
     if(!p)return null;
     const done=p.tasks.filter(t=>t.status==="completed").length;
-    return <div key={id} className="mt-work-project-row"><div><b>{p.brand}</b><small>{p.status==="completed"?"Completed":p.days+" / "+p.duration+" days"} · {done}/{p.tasks.length} tasks</small></div>
+    return <div key={id} className="mt-work-project-row"><div><b>{p.brand}</b><small>{p.status==="completed"?"Completed":p.days+" / "+p.duration+" days"} · {done}/{p.tasks.length} tasks · {T.projectProgress(p)}% delivery</small><div className="mt-work-meter"><span style={{width:T.projectProgress(p)+"%"}}/></div></div>
       <Button size="sm" variant="outline" onClick={()=>onDelivery(id)}>Campaign delivery <ArrowRight size={14}/></Button></div>;
    })}
   </section>
@@ -137,18 +146,31 @@ function CampaignDelivery({team,projectId,onBack}:{team:ClientTeam;projectId:str
  return <div className="mt-work-flow">
   <button className="mt-work-back" onClick={onBack}><ArrowLeft size={16}/> {team.brand} team</button>
   <div className="mt-work-detail-title"><div><small>PROJECT DELIVERY / CAMPAIGN OPERATIONS</small><h3>{p.brand} Campaign</h3><p>{p.days}/{p.duration} days elapsed · {p.tasks.filter(t=>t.status==="completed").length}/{p.tasks.length} completed</p></div><ClipboardList size={23}/></div>
-  <p className="mt-work-muted">Task assignment and outsourcing live here, separately from the team roster. Automatic task allocation stays inside this client squad.</p>
+  <section className="mt-work-section"><div className="mt-work-section-head"><h4>Delivery progress</h4><span>{T.projectProgress(p)}% complete</span></div>
+   <div className="mt-work-meter"><span style={{width:T.projectProgress(p)+"%"}}/></div>
+   <p className="mt-work-muted">Day {p.days} of {p.duration} · {p.tasks.filter(t=>t.status==="completed").length} of {p.tasks.length} deliverables approved. Progress is based on real completed effort, not calendar time.</p>
+  </section>
+  <p className="mt-work-muted">Assign specialists by function fit. Estimated dates change with workload, morale and fatigue; task prerequisites still apply.</p>
   {p.tasks.map(task=>{
    const assignable=p.status==="active"&&["backlog","assigned"].includes(task.status);
    const ready=task.pre.every(k=>p.tasks.some(t=>t.key===k&&t.status==="completed"));
-   const candidates=team.memberIds.filter(id=>P.eligibleForRole(id,task.role));
+   const candidates=team.memberIds.filter(id=>P.eligibleForRole(id,task.role)).sort((a,b)=>P.taskFit(s,b,task.role,task.key)-P.taskFit(s,a,task.role,task.key));
+   const forecast=P.deliveryForecast(s,task);
+   const suggested=candidates.find(id=>P.effectiveCapacity(s,id)>0);
+   const progress=Math.min(100,Math.round((task.status==="completed"?1:task.status==="review"?.95:task.progress/Math.max(1,task.effort))*100));
    return <section key={task.key} className="mt-work-task">
     <div className="mt-work-section-head"><b>{task.label}</b><span>{task.status.replaceAll("_"," ")}</span></div>
-    <div className="mt-work-meter"><span style={{width:Math.min(100,Math.round(task.progress/Math.max(1,task.effort)*100))+"%"}}/></div>
+    <div className="mt-work-meter"><span style={{width:progress+"%"}}/></div>
+    <div className="mt-delivery-forecast">
+     <span>Effort {progress}%</span>
+     <span>Function fit {forecast.fit??(suggested?P.taskFit(s,suggested,task.role,task.key):"—")}/100</span>
+     <span>{task.status==="completed"?"Delivered Day "+task.doneDay:forecast.daysLeft===null?"ETA pending":"~"+forecast.daysLeft+" working days remaining"}</span>
+    </div>
+    {forecast.warning&&task.status!=="completed"&&<p className="mt-work-problem">{forecast.warning}</p>}
     <p className="mt-work-muted">{task.employee?task.employee==="external"?"External partner":employeeById(task.employee)?.name:
      task.preferredEmployee?"Preferred: "+(employeeById(task.preferredEmployee)?.name??task.preferredEmployee):"Assigned automatically when dependencies are ready"}</p>
     {assignable&&<div className="mt-work-cta"><select aria-label={"Assign "+task.label} value={task.preferredEmployee??""} onChange={e=>act((d,fx)=>P.assignSpecialist(d,fx,p.id,task.key,e.target.value||null))}>
-     <option value="">Auto inside team</option>{candidates.map(id=><option key={id} value={id}>{employeeById(id)?.name}</option>)}
+     <option value="">Auto · highest functional fit</option>{candidates.map(id=><option key={id} value={id}>{employeeById(id)?.name} · fit {P.taskFit(s,id,task.role,task.key)}/100</option>)}
     </select>{ready&&!task.outsourced&&<Button size="sm" variant="outline" onClick={()=>act((d,fx)=>K.outsourceTeamTask(d,fx,p.id,task.key))}>Outsource · {money(Math.round(task.cost*2.1*p.scope/8))}</Button>}</div>}
    </section>;
   })}
@@ -158,13 +180,15 @@ function EmployeeDetail({id,onBack,onTeam}:{id:string;onBack:()=>void;onTeam:(te
  const s=useGame(x=>x),e=employeeById(id),hired=s.staff.includes(id),p=P.profile(s,id),owner=T.ownerTeam(s,id),busy=staffBusy(s,id);
  const applicant=s.recruitment?.candidates.find(e=>e.id===id);
  const [selectedTeam,setSelectedTeam]=useState("");
+ const [trainingFunction,setTrainingFunction]=useState<TalentFunction>(P.specialtyFunction(id));
  const teams=(s.ceo?.clientTeams??[]).filter(t=>t.status!=="released"&&t.status!=="closing");
  if(!e)return null;
  const training=!!p.trainingUntil&&p.trainingUntil>(s.ceo?.day??0);
  return <div className="mt-work-flow">
   <button className="mt-work-back" onClick={onBack}><ArrowLeft size={16}/> Workforce</button>
   <div className="mt-work-detail-title"><div><small>EMPLOYEE PROFILE</small><h3>{e.name}</h3><p>{e.role}</p></div><span className="mt-work-avatar"><UserRound size={21}/></span></div>
-  <div className="mt-work-employee-stats"><span><small>Skill</small><b>{Math.round(applicant?.startingSkill??p.skill)}/100</b></span><span><small>Morale</small><b>{Math.round(applicant?.startingMorale??p.morale)}%</b></span><span><small>Fatigue</small><b>{Math.round(applicant?.startingFatigue??p.fatigue)}%</b></span><span><small>Salary / mo</small><b>{money(e.salary)}</b></span></div>
+  <FunctionalSkills scores={P.talentStats(s,id)}/>
+  <div className="mt-work-employee-stats"><span><small>Expertise</small><b>{P.talentScore(s,id)}/100</b></span><span><small>Morale</small><b>{Math.round(applicant?.startingMorale??p.morale)}%</b></span><span><small>Fatigue</small><b>{Math.round(applicant?.startingFatigue??p.fatigue)}%</b></span><span><small>Salary / mo</small><b>{money(e.salary)}</b></span></div>
   <section className="mt-work-section"><div className="mt-work-section-head"><h4>Current assignment</h4></div>
    <p>{owner?"Dedicated to "+owner.brand:hired?"Available to join any client squad":"Not hired"}</p>
    {training&&<p className="mt-work-hint">Training through Day {p.trainingUntil}; unavailable for staffing until complete.</p>}
@@ -176,8 +200,10 @@ function EmployeeDetail({id,onBack,onTeam}:{id:string;onBack:()=>void;onTeam:(te
     </select><Button size="sm" disabled={!selectedTeam||training} onClick={()=>{act((d,fx)=>T.joinClientTeam(d,fx,selectedTeam,id));setSelectedTeam("");}}>Assign</Button>
    </div>}
   </section>
-  {hired&&<section className="mt-work-section"><div className="mt-work-section-head"><h4>Development</h4><span>Optional controls</span></div>
-    <Button size="sm" variant="outline" disabled={training||busy||s.agencyCash<e.salary*.35} onClick={()=>act((d,fx)=>P.train(d,fx,id))}>{training?"Training in progress":"Train for 7 days · "+money(Math.round(e.salary*.35))}</Button>
+  {hired&&<section className="mt-work-section"><div className="mt-work-section-head"><h4>Development</h4><span>Choose a functional skill</span></div>
+    <div className="mt-work-cta"><select aria-label="Training function" value={trainingFunction} onChange={e=>setTrainingFunction(e.target.value as TalentFunction)}>
+     {P.TALENT_FUNCTIONS.map(fn=><option key={fn.id} value={fn.id}>{fn.label} · {P.talentStats(s,id)[fn.id]}</option>)}
+    </select><Button size="sm" variant="outline" disabled={training||busy||s.agencyCash<e.salary*.35} onClick={()=>act((d,fx)=>P.train(d,fx,id,trainingFunction))}>{training?"Training in progress":"Train for 7 days · "+money(Math.round(e.salary*.35))}</Button></div>
     {busy&&<p className="mt-work-muted">Complete the employee's active task before training or moving them to another client.</p>}
    </section>}
  </div>;
@@ -231,7 +257,7 @@ function TalentPool({onEmployee}:{onEmployee:(id:string)=>void}){
    const channelName=applicant?.source&&applicant.source!=="organic"?RECRUITMENT_CHANNELS.find(c=>c.id===applicant.source)?.label:"Weekly applicant";
    return <div className="mt-work-person-row" key={e.id}>
     <span className="mt-work-avatar"><UserRound size={17}/></span>
-    <button type="button" className="mt-work-person-text" onClick={()=>onEmployee(e.id)}><b>{e.name}</b><small>{e.role} · Skill {Math.round(p.skill)}{applicant?" · Rating "+recruitmentScore(applicant):""}</small>
+    <button type="button" className="mt-work-person-text" onClick={()=>onEmployee(e.id)}><b>{e.name}</b><small>{e.role} · {P.specialtyFunction(e.id).toUpperCase()} {P.talentStats(s,e.id)[P.specialtyFunction(e.id)]}{applicant?" · Rating "+recruitmentScore(applicant):""}</small><FunctionalSkills scores={P.talentStats(s,e.id)} compact/>
      {applicant&&<small>{channelName} · Salary {money(e.salary)}/mo</small>}</button>
     <span className="mt-work-person-meta">{owner?owner.brand:training?"Training":hired?"Available":money(recruitmentFee(e))+" hire fee"}</span>
     {hired?<button aria-label={"View "+e.name} onClick={()=>onEmployee(e.id)} className="mt-work-row-next"><ChevronRight size={17}/></button>:

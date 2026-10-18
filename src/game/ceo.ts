@@ -6,7 +6,7 @@ import { scoreModel } from "./campaign";
 import { ceoRand } from "./data";
 import {currentOffice} from "./city";
 import {runRivalAgents,ensureTender,rivalBidScore,registerRivalWin,resolveTalentOffer} from "./rivalAI";
-import {candidatesForRole,primaryRole,eligibleForRole,profile,effectiveCapacity,employeeReadiness,staffRate,defaultProfile,updatePersonnelDay,recordDelivery} from "./personnel";
+import {candidatesForRole,primaryRole,eligibleForRole,profile,effectiveCapacity,employeeReadiness,staffRate,taskFit,defaultProfile,updatePersonnelDay,recordDelivery} from "./personnel";
 import {teamForProject,ownerTeam,startClientTeam,reconcileClientTeams,teamCoverage} from "./clientTeams";
 import {contractBrief} from "./clientMarket";
 import {ensureFortuneAccounts,canContractFortune,signFortuneAccount,advanceFortuneAccounts,isGameFortuneTop10,FORTUNE_YEAR_DAYS} from "./fortuneAccounts";
@@ -48,14 +48,14 @@ export function capacity(c: CEO) {
 const wage = (id: string) => (employeeById(id)?.salary ?? 3000000) / 30;
 const isLead=(s:GameState,id:string)=>!!s.ceo?.clientTeams?.some(t=>t.status!=="released"&&t.leadId===id);
 export const dailyPayroll = (s:GameState)=>s.staff.reduce((a,id)=>a+wage(id)*(isLead(s,id)?1.08:1)+(s.ceo?.salaryPremiums?.[id]??0)/30,0);
-function available(s:GameState,c:CEO,p:Project,role:string,preferred?:string|null){
+function available(s:GameState,c:CEO,p:Project,role:string,preferred?:string|null,key=role){
  const team=teamForProject(s,p);
  if(!team||team.status!=="active")return null;
  const busy=capacity(c);
  if(preferred)return team.memberIds.includes(preferred)&&s.staff.includes(preferred)&&eligibleForRole(preferred,role)&&(busy[preferred]??0)<effectiveCapacity(s,preferred)?preferred:null;
  const staff=candidatesForRole(role).filter(id=>team.memberIds.includes(id)&&s.staff.includes(id)&&(busy[id]??0)<effectiveCapacity(s,id));
  staff.sort((a,b)=>{
-  const score=(id:string)=>Number(primaryRole(id)===role)*23+employeeReadiness(s,id)*.2-(busy[id]??0)*18;
+  const score=(id:string)=>Number(primaryRole(id)===role)*18+taskFit(s,id,role,key)*.75+employeeReadiness(s,id)*.15-(busy[id]??0)*18;
   return score(b)-score(a);
  });
  return staff[0]??null;
@@ -111,14 +111,14 @@ function progressProject(s: GameState, c: CEO, p: Project, fx: Fx) {
   for (const t of p.tasks) {
     if (t.status === "backlog" && t.pre.every((k) => p.tasks.find((q) => q.key === k)?.status === "completed")) { t.status = "assigned"; t.assignedDay = c.day; }
     if (t.status === "assigned") {
-      const m = available(s,c,p,t.role,t.preferredEmployee);
+      const m = available(s,c,p,t.role,t.preferredEmployee,t.key);
       if (m) { t.employee = m; t.status = "in_progress"; t.startedDay = c.day; }
       else if (!t.outsourced) { issue(c, fx, "capacity", p.id, `Dedicated team for ${p.brand} needs ${ceoRoles[t.role]}. Add a member to its client squad or outsource.`, ["outsource", "wait"]); continue; }
     }
     if (t.status === "in_progress") {
       const primary=primaryRole(t.employee??"")===t.role,crossTrained=eligibleForRole(t.employee??"",t.role);
       const fit=primary||crossTrained||t.outsourced,load=capacity(c)[t.employee??""]||0;
-      const impact=t.outsourced?{speed:1.08,quality:0}:staffRate(s,t.employee??"",t.role,load);
+      const impact=t.outsourced?{speed:1.08,quality:0}:staffRate(s,t.employee??"",t.role,load,t.key);
       const skill=impact.speed;
       const pid = partnerFor(t.key), boost = pid && c.partners.includes(pid) ? 1.08 : 1;
       t.progress = Number(Math.min(t.effort, t.progress + skill*boost).toFixed(2));

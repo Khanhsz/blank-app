@@ -4,6 +4,7 @@
 import {registerDynamicEmployees,type Employee,money} from "./data";
 import type {GameState,RecruitmentCandidate,RecruitmentChannel,RecruitmentPosting} from "./state";
 import type {Fx} from "./store";
+import {talentStats,TALENT_FOR_ROLE} from "./personnel";
 
 export const RECRUITMENT_CHANNELS=[
  {id:"newspaper",label:"Newspaper",detail:"Broad, local applicant reach.",fee:800000,min:3,max:4,minSkill:44,maxSkill:72},
@@ -28,13 +29,17 @@ function rng(seed:number){let x=seed>>>0;return ()=>{x=(x+0x6d2b79f5)>>>0;let v=
 const rand=(f:()=>number,a:number,b:number)=>a+Math.floor(f()*(b-a+1));
 const channelCode=(source:RecruitmentChannel)=>source==="organic"?19:source==="newspaper"?31:source==="website"?43:source==="journal"?59:71;
 
-export function recruitmentScore(e:Pick<RecruitmentCandidate,"startingSkill"|"startingMorale"|"startingFatigue">):number{
+export function recruitmentScore(e:Pick<RecruitmentCandidate,"startingSkill"|"startingMorale"|"startingFatigue"> & Partial<Pick<RecruitmentCandidate,"startingAttributes">>):number{
+ if(e.startingAttributes){
+  const levels=Object.values(e.startingAttributes).sort((a,b)=>b-a);
+  return Math.round(levels[0]*.9+levels[1]*.1);
+ }
  return Math.round(e.startingSkill*.7+e.startingMorale*.2+(100-e.startingFatigue)*.1);
 }
 export function quotedSalary(score:number):number{return Math.round((650000+Math.max(0,Math.min(100,score))*31000)/10000)*10000;}
 export function recruitmentFee(e:Employee):number{return Math.round(e.salary*.3/10000)*10000;}
 export function qualifiedReferrer(s:GameState):string|null{
- const member=s.staff.find(id=>(s.personnel[id]?.skill??0)>=80);
+ const member=s.staff.find(id=>Math.max(...Object.values(talentStats(s,id)),s.personnel[id]?.skill??0)>=80);
  return member??null;
 }
 export function canStartRecruitment(s:GameState,channel:Exclude<RecruitmentChannel,"organic">):{ok:boolean;reason:string}{
@@ -77,9 +82,17 @@ function generate(seed:number,week:number,source:RecruitmentChannel):Recruitment
   const startingSkill=rand(random,minSkill,maxSkill);
   const startingMorale=rand(random,source==="referral"?75:58,96);
   const startingFatigue=rand(random,0,source==="referral"?12:20);
-  const salary=quotedSalary(recruitmentScore({startingSkill,startingMorale,startingFatigue}));
+  const main=TALENT_FOR_ROLE[specialty],base=rand(random,28,Math.max(32,Math.min(68,startingSkill-7)));
+  const startingAttributes={acc:base,str:base,cre:base,med:base};
+  const archetype=random();
+  const secondary=(["acc","str","cre","med"] as const).filter(k=>k!==main)[rand(random,0,2)];
+  for(const key of ["acc","str","cre","med"] as const)if(key!==main)startingAttributes[key]=Math.min(100,Math.max(20,base+rand(random,-8,8)));
+  if(archetype<.25)startingAttributes[secondary]=Math.min(100,Math.max(base,startingSkill-rand(random,5,16))); // T-shaped
+  if(archetype>=.90)for(const key of ["acc","str","cre","med"] as const)if(key!==main)startingAttributes[key]=Math.min(100,Math.max(20,startingSkill-rand(random,9,22))); // versatile generalist
+  startingAttributes[main]=startingSkill;
+  const salary=quotedSalary(recruitmentScore({startingSkill,startingMorale,startingFatigue,startingAttributes}));
   const name=surnames[rand(random,0,surnames.length-1)]+" "+names[rand(random,0,names.length-1)];
-  return {id:"recruit-"+seed.toString(36)+"-w"+week+"-"+source+"-"+i,name,role,specialty,skill,salary,startingSkill,startingMorale,startingFatigue,source};
+  return {id:"recruit-"+seed.toString(36)+"-w"+week+"-"+source+"-"+i,name,role,specialty,skill,salary,startingSkill,startingMorale,startingFatigue,startingAttributes,source};
  });
 }
 export function syncRecruitmentDirectory(s:GameState):void{

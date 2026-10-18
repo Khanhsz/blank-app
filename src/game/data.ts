@@ -125,7 +125,7 @@ export const upgrades: Record<UpgradeId, { name: string; cost: number; desc: str
 };
 export const COWORK_COST = 300000;
 
-export interface Employee { id: string; name: string; role: string; salary: number; skill: string; specialty?:string; startingSkill?:number; startingMorale?:number; startingFatigue?:number }
+export interface Employee { id: string; name: string; role: string; salary: number; skill: string; specialty?:string; startingSkill?:number; startingMorale?:number; startingFatigue?:number; startingAttributes?:{acc:number;str:number;cre:number;med:number} }
 export const employees: Employee[] = [
   { id: "researcher", name: "An Phạm", role: "Researcher", salary: 1600000, skill: "Insight / Survey" },
   { id: "planner", name: "Huy Nguyễn", role: "Strategic Planner", salary: 2200000, skill: "Strategy / Positioning" },

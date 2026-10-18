@@ -969,3 +969,23 @@ button.mt-work-person-row{cursor:pointer}.mt-work-person-row:hover{border-color:
 .mt-freelance-selected{display:flex;flex-direction:column;gap:5px;border-radius:7px;background:rgba(57,142,154,.09);padding:10px}
 .mt-freelance-selected b{font-size:12px}.mt-freelance-selected span{font-size:11px;line-height:1.5;color:var(--muted-foreground,#627788)}
 @media(max-width:620px){.mt-freelance-job-grid{grid-template-columns:1fr}}
+
+/* Workforce functional skills / capability-aware delivery. */
+.mt-functional-skills{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;width:100%}
+.mt-functional-skills.is-compact{gap:5px;margin-top:4px}
+.mt-functional-stat{display:flex;align-items:center;gap:6px;min-width:0}
+.mt-functional-stat>span{font-size:10px;font-weight:800;color:var(--muted-foreground,#5a7180);width:28px;flex:none}
+.mt-functional-stat>b{font-size:11px;min-width:20px;text-align:right}
+.mt-functional-stat>.mt-work-meter{flex:1;min-width:9px;height:6px}
+.mt-functional-skills.is-compact .mt-functional-stat{gap:3px}
+.mt-functional-skills.is-compact .mt-functional-stat>span{width:auto;font-size:9px}
+.mt-functional-skills.is-compact .mt-functional-stat>b{min-width:17px;font-size:10px}
+.mt-team-capabilities{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.mt-team-capabilities>span{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap;padding:7px 9px;border:1px solid var(--border,#ccd9df);border-radius:7px;font-size:12px;background:var(--card,#fff);min-width:0}
+.mt-team-capabilities>span>b{font-size:11px}
+.mt-team-capabilities>span>small{font-size:10px;color:var(--muted-foreground,#647986)}
+.mt-team-capabilities>span.is-weak{border-color:#d3bd9f;color:#91622d}
+.mt-delivery-forecast{display:flex;gap:8px 14px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--muted-foreground,#58717d)}
+.mt-delivery-forecast span{padding:4px 6px;background:var(--muted,#f1f5f6);border-radius:5px}
+.mt-work-person-text .mt-functional-skills{max-width:380px}
+@media(max-width:640px){.mt-functional-skills{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:6px}.mt-team-capabilities{grid-template-columns:repeat(2,minmax(0,1fr))}}

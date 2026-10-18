@@ -4,8 +4,8 @@
  * Project tasks retain the existing CEO economics, prerequisites and weekly clock.
  */
 import {ceoTaskDefs,employeeById,clamp} from "./data";
-import {eligibleForRole,employeeReadiness,effectiveCapacity,primaryRole} from "./personnel";
-import type {ClientTeam,GameState,Project,Task} from "./state";
+import {eligibleForRole,employeeReadiness,effectiveCapacity,primaryRole,taskFit,talentStats,TALENT_FUNCTIONS,TALENT_FOR_ROLE} from "./personnel";
+import type {ClientTeam,GameState,Project,Task,TalentFunction} from "./state";
 import type {Fx} from "./store";
 
 export const TEAM_SIZE_TARGET=6;
@@ -146,6 +146,22 @@ export const WORKFORCE_GROUPS=[
  {id:"studio",label:"Creative & Production",roles:["creative","production"]},
  {id:"growth",label:"Media & Analytics",roles:["media","kol","analytics"]},
 ] as const;
+/** Visible function coverage based on real staffed talent; one specialist still
+ * cannot serve two separate clients simultaneously.
+ */
+export function functionCoverage(s:GameState,team:ClientTeam){
+ return TALENT_FUNCTIONS.map(fn=>{
+  const ids=team.memberIds.filter(id=>effectiveCapacity(s,id)>0&&TALENT_FOR_ROLE[primaryRole(id)??""]===fn.id);
+  const strong=ids.length?Math.max(...ids.map(id=>talentStats(s,id)[fn.id])):0;
+  return {id:fn.id as TalentFunction,label:fn.label,score:strong,staffed:ids.length,weak:!ids.length||strong<55};
+ });
+}
+export function projectProgress(p:Project):number{
+ const max=p.tasks.reduce((v,t)=>v+t.effort,0);
+ if(!max)return 100;
+ const progress=p.tasks.reduce((v,t)=>v+(t.status==="completed"?t.effort:t.status==="review"?t.effort*.95:Math.min(t.effort,t.progress)),0);
+ return Math.round(100*progress/max);
+}
 export function teamNeeds(s:GameState,team:ClientTeam){
  const projects=(s.ceo?.projects??[]).filter(p=>p.teamId===team.id&&p.status==="active");
  const pending=projects.flatMap(p=>p.tasks.filter(t=>t.status!=="completed"&&!t.outsourced));
@@ -162,15 +178,19 @@ export function teamNeeds(s:GameState,team:ClientTeam){
  });
  const unavailable=team.memberIds.filter(id=>effectiveCapacity(s,id)===0);
  const remaining=projects.length?Math.min(...projects.map(p=>Math.max(0,p.duration-p.days))):null;
+ const capabilities=functionCoverage(s,team);
+ const requiredFunctions=new Set(required.map(role=>TALENT_FOR_ROLE[role]));
+ const weakFunctions=capabilities.filter(g=>requiredFunctions.has(g.id)&&g.weak);
  const warnings:string[]=[];
  if(missing.length)warnings.push(missing.length+" uncovered workstream"+(missing.length>1?"s":""));
+ if(weakFunctions.length)warnings.push("Weak "+weakFunctions.map(g=>g.id.toUpperCase()).join(" / ")+" coverage");
  if(overloaded.length)warnings.push(overloaded.length+" overworked specialist"+(overloaded.length>1?"s":""));
  if(unavailable.length)warnings.push(unavailable.length+" unavailable specialist"+(unavailable.length>1?"s":""));
  if(remaining!==null&&remaining<=7&&pending.length)warnings.push("Deadline in "+remaining+" days");
  const status=team.status==="closing"?"completed":
   missing.length&&remaining!==null&&remaining<=7?"critical":team.status==="forming"?"needs-staff":
-  missing.length||overloaded.length||unavailable.length?"attention":"on-track";
- return {projects,pending,required,missing,busy,overloaded,unavailable,remaining,warnings,status};
+  missing.length||weakFunctions.length||overloaded.length||unavailable.length?"attention":"on-track";
+ return {projects,pending,required,missing,busy,overloaded,unavailable,remaining,warnings,status,capabilities,weakFunctions};
 }
 export function staffingPlan(s:GameState,team:ClientTeam){
  const needs=teamNeeds(s,team);
@@ -179,16 +199,22 @@ export function staffingPlan(s:GameState,team:ClientTeam){
  const ranked=talentPool(s).filter(id=>effectiveCapacity(s,id)>0).map(id=>{
   const relevant=needs.missing.filter(role=>eligibleForRole(id,role));
   const groups=absentGroups.filter(g=>g.roles.some(role=>eligibleForRole(id,role)));
+  const fits=needs.pending.filter(t=>eligibleForRole(id,t.role)).map(t=>taskFit(s,id,t.role,t.key));
+  const improvement=needs.weakFunctions.reduce((sum,f)=>{
+   const v=talentStats(s,id)[f.id];return sum+(TALENT_FOR_ROLE[primaryRole(id)??""]===f.id?Math.max(0,v-f.score)*.9:0);
+  },0);
   const leadBonus=team.leadId===null&&primaryRole(id)==="account"?30:0;
   const readiness=employeeReadiness(s,id),fatigue=s.personnel[id]?.fatigue??0;
-  return {id,roles:relevant,groups:groups.map(g=>g.label),
-   score:relevant.length*110+groups.length*40+leadBonus+readiness*.24-fatigue*.3};
- }).filter(x=>x.roles.length||x.groups.length).sort((a,b)=>b.score-a.score||a.id.localeCompare(b.id));
+  return {id,roles:relevant,groups:groups.map(g=>g.label),fit:fits.length?Math.round(Math.max(...fits)):0,
+   score:relevant.length*110+groups.length*40+improvement+leadBonus+readiness*.24-fatigue*.3+(fits.length?Math.max(...fits)*.4:0)};
+ }).filter(x=>x.roles.length||x.groups.length||x.fit>0&&needs.weakFunctions.some(f=>TALENT_FOR_ROLE[primaryRole(x.id)??""]===f.id))
+  .sort((a,b)=>b.score-a.score||a.id.localeCompare(b.id));
  const unavailablePool=talentPool(s).filter(id=>effectiveCapacity(s,id)===0);
  const recruitment=[...wanted].flatMap(role=>ceoTaskDefs.filter(t=>t.role===role)).map(t=>t.role);
  return {needs,ranked,unavailablePool,recruitment:[...new Set(recruitment)],next:ranked[0]??null,
-  hint:ranked[0]?"Assign "+(employeeById(ranked[0].id)?.name??"available specialist")+" to cover "+(ranked[0].roles[0]??ranked[0].groups[0])+
-    ".":needs.missing.length?"Recruit, upskill, or outsource "+needs.missing[0]+" work.":"Your dedicated team covers its current work."};
+  hint:ranked[0]?"Assign "+(employeeById(ranked[0].id)?.name??"available specialist")+" (best task fit "+ranked[0].fit+"/100) to strengthen "+
+    (ranked[0].roles[0]??ranked[0].groups[0]??"team delivery")+".":needs.missing.length?"Recruit, upskill or outsource "+needs.missing[0]+" work.":
+    needs.weakFunctions.length?"Upskill or recruit stronger "+needs.weakFunctions.map(f=>f.id.toUpperCase()).join(" / ")+" coverage.":"Your dedicated team covers current project work."};
 }
 export function autoAssembleTeam(s:GameState,fx:Fx,teamId:string){
  const team=s.ceo?.clientTeams?.find(t=>t.id===teamId);
@@ -208,8 +234,9 @@ export function teamCoverage(s:GameState,team:ClientTeam){
  const missing=taskRoles.filter(r=>!staffed.includes(r));
  const ready=team.memberIds.filter(id=>effectiveCapacity(s,id)>0).length;
  const sum=team.memberIds.reduce((v,id)=>v+employeeReadiness(s,id),0);
+ const functions=functionCoverage(s,team);
  return {staffed,missing,ready,readiness:team.memberIds.length?Math.round(sum/team.memberIds.length):0,
-  coverage:Math.round(100*staffed.length/taskRoles.length)};
+  coverage:Math.round(100*staffed.length/taskRoles.length),functions};
 }
 export function canRunTask(s:GameState,p:Project,t:Task,employeeId:string){
  const team=teamForProject(s,p);

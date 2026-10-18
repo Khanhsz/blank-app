@@ -1,6 +1,7 @@
 import { ceoLeadDefs, ceoRivalDefs, type Channel, type Employee, type LeadDef, type Rival, type Scenario } from "./data";
 import {reconcileClientTeams} from "./clientTeams";
-import {ensureRecruitment} from "./recruitment";
+import {ensureRecruitment,syncRecruitmentDirectory} from "./recruitment";
+import {legacyTalentAttributes} from "./personnel";
 import {ensureCompanyMarket} from "./companyMarket";
 import {ensureFortuneAccounts} from "./fortuneAccounts";
 import type {FinanceCalibration} from "./financeCalibration";
@@ -52,7 +53,9 @@ export interface Campaign {freelanceJob?:FreelanceJobProgress;
 }
 export interface ScoreResult { pct: number; outcome: number; adReach: number; quality: number; fit: Record<string, number>; performance: "target" | "near" | "under" }
 
-export interface PersonnelProfile {skill:number;morale:number;fatigue:number;xp:number;trainingUntil?:number;pendingSkill?:number;}
+export type TalentFunction="acc"|"str"|"cre"|"med";
+export interface TalentAttributes {acc:number;str:number;cre:number;med:number;}
+export interface PersonnelProfile {skill:number;morale:number;fatigue:number;xp:number;attributes?:TalentAttributes;trainingFunction?:TalentFunction;trainingUntil?:number;pendingSkill?:number;}
 export type RecruitmentChannel="organic"|"newspaper"|"website"|"journal"|"referral";
 export interface RecruitmentCandidate extends Employee {startingSkill:number;startingMorale:number;startingFatigue:number;source?:RecruitmentChannel;}
 export interface RecruitmentPosting {id:string;channel:Exclude<RecruitmentChannel,"organic">;startedWeek:number;arrivalWeek:number;fee:number;}
@@ -249,17 +252,28 @@ export function migrate(raw: unknown): GameState {
     log: Array.isArray(s.log) ? (s.log as unknown[]).map((l) => (typeof l === "string" ? { t: 0, msg: l } : (l as { t: number; msg: string }))) : [],
     ceo: s.ceo ?? null,
   };
+  // Register recruited hires before deriving their function-based legacy skill attributes.
+  syncRecruitmentDirectory(out);
   // Preserve historical hired IDs; initialize deterministic attributes for old saves.
   for(const id of out.staff){
     const rawProfile=out.personnel[id];
     const base={skill:64,morale:78,fatigue:0,xp:0};
+    const skill=Math.min(100,Math.max(25,Number(rawProfile?.skill??base.skill)));
+    const migrated=legacyTalentAttributes(id,skill);
+    const a=rawProfile?.attributes;
+    const attributes:TalentAttributes={acc:migrated.acc,str:migrated.str,cre:migrated.cre,med:migrated.med};
+    if(a)for(const k of ["acc","str","cre","med"] as TalentFunction[]){
+      const score=Number(a[k]);if(Number.isFinite(score))attributes[k]=Math.min(100,Math.max(20,score));
+    }
     out.personnel[id]={
-      skill:Math.min(100,Math.max(25,Number(rawProfile?.skill??base.skill))),
+      skill,
+      attributes,
       morale:Math.min(100,Math.max(0,Number(rawProfile?.morale??base.morale))),
       fatigue:Math.min(100,Math.max(0,Number(rawProfile?.fatigue??base.fatigue))),
       xp:Math.max(0,Number(rawProfile?.xp??0)),
       ...(rawProfile?.trainingUntil===undefined?{}:{trainingUntil:rawProfile.trainingUntil}),
-      ...(rawProfile?.pendingSkill===undefined?{}:{pendingSkill:rawProfile.pendingSkill})
+      ...(rawProfile?.pendingSkill===undefined?{}:{pendingSkill:rawProfile.pendingSkill}),
+      ...(rawProfile?.trainingFunction?{trainingFunction:rawProfile.trainingFunction}:{})
     };
   }
   for(const [role,id] of Object.entries(out.teamLeads))if(!out.staff.includes(id))delete out.teamLeads[role];
