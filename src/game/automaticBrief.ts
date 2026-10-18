@@ -13,18 +13,26 @@ function match(id:string,clientId:string){
  return s.created&&!s.agencyUnlocked&&s.campaign.phase==="brief"&&
   s.campaign.briefId===id&&s.campaign.catalogClientId===clientId&&!s.campaign.aiScenario;
 }
-function friendlyError(message:string){
- if(/quota|limit|429/i.test(message))return "Gemini quota has been reached. Retry the selected client later; no substitute brief will be used.";
+function friendlyError(message:string,code?:string,retryAfterSeconds?:number){
+ const delay=typeof retryAfterSeconds==="number"&&Number.isFinite(retryAfterSeconds)&&retryAfterSeconds>0
+  ?" Try again in about "+Math.max(1,Math.ceil(retryAfterSeconds/60))+" minute(s).":"";
+ if(code==="local_hourly_limit")return "Marketing Tycoon reached its own hourly brief-request limit (not necessarily Google's quota)."+delay;
+ if(code==="local_daily_limit")return "Marketing Tycoon reached its shared daily Gemini-call budget (not necessarily Google's quota)."+delay;
+ if(code==="gemini_provider_rate_limit")return "Google Gemini returned a rate-limit or quota response. Check the API project's quota and try again later."+delay;
+ if(code==="gemini_model_unavailable")return "The selected Gemini model is unavailable. The game owner needs to update GEMINI_MODEL in Render.";
+ if(code==="gemini_credentials_rejected"||code==="gemini_not_configured")return "Google Gemini credentials are missing, invalid or lack permission. Check the API configuration in Render.";
+ if(code==="invalid_client_brief")return "The selected client's job template was rejected by the game API. Refresh the page; this should not consume a Gemini call.";
+ if(/quota|limit|429/i.test(message))return "An API quota or request limit was reported. Retry later; no substitute brief will be used.";
  if(/key|configur|503/i.test(message))return "Gemini API is not configured. This client approach requires a working API connection.";
  if(/abort|timeout/i.test(message))return "Gemini did not respond in time. Retry this client approach.";
  return "Gemini could not develop this client's context and strategy. Retry the approach.";
 }
-function fail(id:string,clientId:string,message:string){
+function fail(id:string,clientId:string,message:string,code?:string,retryAfterSeconds?:number){
  if(!match(id,clientId))return;
  act((s,fx)=>{
   if(s.campaign.briefId!==id||s.campaign.catalogClientId!==clientId||s.campaign.aiScenario)return;
   s.campaign.aiStatus="error";
-  s.campaign.aiError=friendlyError(message);
+  s.campaign.aiError=friendlyError(message,code,retryAfterSeconds);
   fx.log("Gemini approach failed for "+clientId+" · player can retry without losing progress");
  });
 }
@@ -53,8 +61,8 @@ export function prepareNextBrief(){
      description:client.description,industry:client.industry,marketingBudgetVnd:client.marketingBudgetVnd,jobTemplateId:c.freelanceJob?.templateId??"social-pack"
     }}),signal:controller.signal
    });
-   const body=await res.json().catch(()=>null) as {scenario?:Scenario;mode?:string;error?:string}|null;
-   if(!res.ok)throw Error(body?.error||"Gemini HTTP "+res.status);
+   const body=await res.json().catch(()=>null) as {scenario?:Scenario;mode?:string;error?:string;code?:string;retryAfterSeconds?:number}|null;
+   if(!res.ok)throw Object.assign(new Error(body?.error||"Gemini HTTP "+res.status),{code:body?.code,retryAfterSeconds:body?.retryAfterSeconds});
    const scenario=body?.scenario;
    if(body?.mode!=="ai"||!scenario?.aiMeta||scenario.aiMeta.clientId!==clientId||
      scenario.brand!==client.brand||
@@ -70,7 +78,11 @@ export function prepareNextBrief(){
     });
     if(!accepted)fail(id,clientId,"Gemini generated an invalid campaign");
    }
-  }catch(error){fail(id,clientId,error instanceof Error?error.message:"Gemini unavailable")}
+  }catch(error){
+   const code=error&&typeof error==="object"&&"code" in error&&typeof error.code==="string"?error.code:undefined;
+   const retryAfterSeconds=error&&typeof error==="object"&&"retryAfterSeconds" in error&&typeof error.retryAfterSeconds==="number"?error.retryAfterSeconds:undefined;
+   fail(id,clientId,error instanceof Error?error.message:"Gemini unavailable",code,retryAfterSeconds);
+  }
   finally{clearTimeout(timer);active.delete(id);}
  })();
 }
