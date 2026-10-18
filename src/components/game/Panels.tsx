@@ -29,7 +29,7 @@ const Row = ({ k, v }: { k: string; v: React.ReactNode }) => <div className="fle
 
 export function CampaignWorkspace(){ return <CampaignJourney/>; }
 
-export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaign" | "ceo") => void }) {
+export function LocationPanel({ id, onOpen, onVisitCompany }: { id: string; onOpen: (p: "campaign" | "ceo") => void; onVisitCompany?:(clientId:string)=>void }) {
   const s = useGame((x) => x);
   const [name, setName] = useState("");
   const lot=findCityLot(id);
@@ -87,8 +87,8 @@ export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaig
   }
   if (id in upgrades) { const u = upgrades[id as UpgradeId], own = s.upgrades.includes(id); return <div className="space-y-3"><h4 className="font-semibold">{u.name}</h4><p className="text-sm text-muted-foreground">{u.desc}</p><Button className="w-full" disabled={own || C.playerMoney(s) < u.cost} onClick={() => act((d, f) => C.buyUpgrade(d, f, id as UpgradeId))}>{own ? "Owned" : `Buy · ${money(u.cost)}`}</Button></div>; }
   if (id === "cowork") return <Button className="w-full" disabled={s.upgrades.includes("cowork") || C.playerMoney(s) < 300000} onClick={() => act((d, f) => C.buyUpgrade(d, f, "cowork"))}>{s.upgrades.includes("cowork") ? "Member" : `Join coworking · ${money(300000)} (+1 XP)`}</Button>;
-  if(id.startsWith("fortune-hq-"))return <FortuneHeadquarters forcedClientId={id.slice("fortune-hq-".length)} onOpenDeal={()=>onOpen("ceo")}/>;
-  if(id==="brand")return <FortuneHeadquarters onOpenDeal={()=>onOpen("ceo")}/>;
+  if(id.startsWith("fortune-hq-"))return <FortuneHeadquarters forcedClientId={id.slice("fortune-hq-".length)} onOpenDeal={()=>onOpen("ceo")} onVisitCompany={onVisitCompany}/>;
+  if(id==="brand")return <FortuneHeadquarters onOpenDeal={()=>onOpen("ceo")} onVisitCompany={onVisitCompany}/>;
   if (id === "network") {
     if (s.agencyUnlocked) return <Button className="w-full" onClick={() => onOpen("ceo")}>Open sales pipeline</Button>;
     const locked = false;
