@@ -134,3 +134,22 @@ test("V6 exposes accessible card choices and a responsive, reduced-motion financ
  assert.ok(css.includes("prefers-reduced-motion"));
  assert.ok(css.includes("@media(max-width:540px)"));
 });
+
+
+test("Seven job-specific workbenches share persisted decision choices and no fake Done progress",()=>{
+ const ui=readFileSync("src/components/game/FreelanceV4Desk.tsx","utf8");
+ const checks=[
+  "Social creative canvas","Account inspection","14-day publishing calendar",
+  "Ads Manager · campaign draft","Evidence sorting desk","Channel adaptation studio","Local launch timeline"
+ ];
+ for(const label of checks)assert.ok(ui.includes(label),"missing workspace "+label);
+ assert.ok(ui.includes('<JobSpecificWorkbench jobId={jobId}'));
+ assert.ok(ui.includes('onClick={()=>choose("budget",a.id)}'));
+ assert.ok(ui.includes('onClick={()=>choose("signal",o.id)}'));
+ assert.ok(ui.includes('onClick={()=>choose("evidence",id)}'));
+ assert.ok(ui.includes('onClick={()=>choose("channel",id)}'));
+ assert.ok(!ui.includes('Done +10%'));
+ const calendar=Work.designFor("content-calendar")!;
+ assert.equal(calendar.units.length,7,"entry job starts with seven scheduled posts");
+ assert.ok(calendar.units.every(a=>a.id.startsWith("day-")));
+});
