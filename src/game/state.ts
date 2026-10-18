@@ -2,6 +2,7 @@ import { ceoLeadDefs, ceoRivalDefs, type Channel, type Employee, type LeadDef, t
 import {reconcileClientTeams} from "./clientTeams";
 import {ensureRecruitment} from "./recruitment";
 import {ensureCompanyMarket} from "./companyMarket";
+import {ensureFortuneAccounts} from "./fortuneAccounts";
 import type {FinanceCalibration} from "./financeCalibration";
 
 export type Phase = "brief" | "planning" | "executing" | "live" | "results" | "research" | "survey" | "validation" | "strategy" | "creative" | "media";
@@ -328,6 +329,7 @@ export function migrate(raw: unknown): GameState {
   out.freelanceCareer={...newFreelanceCareer(),...career,invoices:Array.isArray(career.invoices)?career.invoices:[],completedIds:Array.isArray(career.completedIds)?career.completedIds:[],clientWins:career.clientWins??{},weeklyWeek:Number.isInteger(career.weeklyWeek)?career.weeklyWeek:out.clock.week};
   if(!out.agencyUnlocked||!out.ceo)ensureRecruitment(out);
   ensureCompanyMarket(out);
+  if(out.agencyUnlocked&&out.ceo)ensureFortuneAccounts(out);
   return out;
 }
 
