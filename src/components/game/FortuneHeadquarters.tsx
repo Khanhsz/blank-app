@@ -46,7 +46,7 @@ export function FortuneHeadquarters({onOpenDeal}:{onOpenDeal:()=>void}){
    {selected.fortuneRank!==null&&selected.fortuneRank<=10&&<p><ShieldCheck size={14}/> Top 10 sector exclusivity: one agency may not simultaneously serve another top-10 client in the same industry.</p>}
    {signed&&<p><b>Active 12-month agreement</b> · Paid annual service fee {money(signed.contractTerms!.annualServiceFeeVnd)} · Ends day {signed.contractTerms!.endDay}.</p>}
    <p>{gate?.reason}</p>
-   <Button block disabled={!gate?.ok||already} onClick={()=>{
+   <Button className="w-full" disabled={!gate?.ok||already} onClick={()=>{
     let success=false;
     act((d,fx)=>{success=approachFortuneAtHQ(d,fx,selected.id);});
     if(success)onOpenDeal();
