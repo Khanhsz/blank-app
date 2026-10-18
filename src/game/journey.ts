@@ -43,6 +43,8 @@ export type MediaPlanId=(typeof MEDIA_PLANS)[number]["id"];
 export function journeyOf(c:Campaign):CampaignJourney{return c.journey??newJourney();}
 export function briefAnswer(s:GameState,id:string):string {
  const sc=C.scenarioOf(s.campaign);
+ const aiAnswer=sc.clientAnswers?.[id as keyof NonNullable<typeof sc.clientAnswers>];
+ if(aiAnswer)return aiAnswer;
  switch(id){
   case "audience":return "The client needs growth around "+sc.metric+". You must decide which audience is most actionable.";
   case "barrier":return sc.reports.reviews;
@@ -59,6 +61,7 @@ export function askClient(s:GameState,fx:Fx,id:string){
 export function approveBrief(s:GameState,fx:Fx,diagnosis:string){
  const c=s.campaign,j=journeyOf(c);
  if(j.step!=="brief"||j.questions.length<2)return fx.toast("Ask at least two client questions before diagnosing the brief.");
+ if(!c.catalogClientId||!c.aiScenario?.aiPlanning)return fx.toast("Approach a client and wait for Gemini to prepare the brief first.");
  if(!DIAGNOSES.some(x=>x.id===diagnosis))return;
  j.diagnosis=diagnosis;C.acceptBrief(s,fx);
  if(c.phase==="planning"){j.step="research";fx.log("Brief diagnosed: "+diagnosis);}
