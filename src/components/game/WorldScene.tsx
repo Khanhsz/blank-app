@@ -8,6 +8,8 @@ import {AssetRegistry} from "./AssetRegistry";
 import {DistrictManager,ChunkManager} from "./AssetDistrict";
 import {CityPerfProbe} from "./CityPerfProbe";
 import type {SceneId,Character,RoomStyle} from "@/game/state";
+import {CLIENT_BY_ID} from "@/game/clientDatabase";
+import {FORTUNE_OFFICES,fortuneLocation,fortuneOfficePanelId} from "@/game/fortuneLocations";
 
 export interface District {id:string;name:string;kind:DistrictKind;district?:string;occupied?:boolean;tier?:number;x:number;z:number;w:number;d:number;h:number;color:string;locked:boolean}
 type RoomAction="board"|"phone"|"wardrobe";
@@ -132,10 +134,30 @@ function CityPlayer({character,districts,touch,position,active}:{character:Chara
  return <group ref={group} position={[0,.05,0]}><LowPolyPerson c={character} pos={[0,0,0]} walk seed={7}/><mesh position={[0,.03,0]} rotation-x={-Math.PI/2}><ringGeometry args={[.55,.7,24]}/><meshBasicMaterial color="#cf8759" transparent opacity={.58} depthWrite={false}/></mesh></group>;
 }
 
+/** Markers promote existing architectural GLBs to visitable simulated HQs.
+ * No new city geometry, asset IDs or GLB files are generated.
+ */
+function FortuneOfficeMarkers({onSelect,selected}:{onSelect:(id:string)=>void;selected:string|null}){
+ return <group name="MT_FORTUNE_OFFICE_MARKERS">{FORTUNE_OFFICES.map(loc=>{
+  const client=CLIENT_BY_ID[loc.clientId],id=fortuneOfficePanelId(loc.clientId);
+  return <group key={id} position={[loc.x,0,loc.z]}>
+   <mesh name={"FORTUNE_HQ_HITBOX_"+client.id} position={[0,loc.h*.5,0]} onClick={e=>{e.stopPropagation();onSelect(id)}}>
+    <boxGeometry args={[7.2,loc.h,7.2]}/>
+    <meshBasicMaterial visible={false}/>
+   </mesh>
+   <Html center position={[0,loc.h+1.7,0]} distanceFactor={16}>
+    <button type="button" className={"world-building-label client "+(selected===id?"selected":"")} onClick={()=>onSelect(id)} aria-label={"Visit "+client.brand+" corporate office"}>
+     <span className="map-pin"/><span>{client.brand} HQ</span><small>FORTUNE #{client.fortuneRank}</small>
+    </button>
+   </Html>
+  </group>;
+ })}</group>;
+}
 function City({districts,onSelect,selected,c,touch,position,active,quality}:{districts:District[];onSelect:(id:string)=>void;selected:string|null;c:Character;touch:string;position:React.MutableRefObject<[number,number]>;active:React.MutableRefObject<boolean>;quality:"high"|"low"}){
  return <><Land/><RoadNetwork/>
  <DistrictManager districts={districts} selected={selected} onSelect={onSelect}/>
  <ChunkManager/>
+ <FortuneOfficeMarkers onSelect={onSelect} selected={selected}/>
  {Array.from({length:13},(_,i)=><CityWalker key={i} seed={i+1} c={c}/>)}
  <CityPlayer character={c} districts={districts} touch={touch} position={position} active={active}/>
  </>;
@@ -232,7 +254,9 @@ function CameraRig({scene,districts,selected,focus,preview,avatarZoom,player,pla
   const c=controls.current;if(!c)return;
   if(scene==="city"){
    const building=districts.find(b=>b.id===selected);
+   const fortune=selected?.startsWith("fortune-hq-")?fortuneLocation(selected.slice("fortune-hq-".length)):null;
    if(building)c.setLookAt(building.x+14,Math.max(18,building.h+14),building.z+18,building.x,building.h*.45,building.z,true);
+   else if(fortune)c.setLookAt(fortune.x+13,Math.max(16,fortune.h+12),fortune.z+14,fortune.x,fortune.h*.45,fortune.z,true);
    else c.setLookAt(78,73,86,0,0,0,true);
   }else if(scene==="room"){
    if(preview)c.setLookAt(2.5*(avatarZoom||1),3.5*(avatarZoom||1),6.3*(avatarZoom||1),0,1.2,1.35,true);
