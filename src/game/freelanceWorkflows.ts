@@ -123,7 +123,7 @@ export function startV4(s:GameState,fx:Fx){
  p.v4.step="workspace";p.stage="work";p.deadlineDay=s.clock.day+getFreelanceJob(def.id)!.days;
  c.startedDay=s.clock.day;c.phase="planning";p.actualWorkHours=0;p.hoursWorked=0;
  const t=getFreelanceJob(def.id)!,sc=c.aiScenario;
- p.v4.briefSnapshot??={briefId:c.briefId,context:sc.client??sc.summary??"",
+ p.v4.briefSnapshot??={briefId:c.briefId,context:sc.aiPlanning?.context??sc.client??sc.summary??"",
  objective:sc.aiPlanning?.strategy??t.objective,audience:sc.clientAnswers?.audience??"Audience from client brief",
  insight:sc.aiPlanning?.insight??"",fee:p.acceptedFee??t.fee,deadlineDay:p.deadlineDay,
  scope:t.deliverables,acceptance:t.successMetric,revisions:t.revisions};
