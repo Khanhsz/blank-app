@@ -48,10 +48,10 @@ export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelec
  });
  const canSelect=mode==="agency"?game.agencyUnlocked:game.campaign.phase==="brief";
  const clients=liveAll.slice(0,shown);
- const next=(mode==="freelancer"?"Select":"Approach");
+ const next="Approach";
  return <div className="mt-client-catalog">
   <header className="mt-client-catalog-head"><div><small>CLIENT INTELLIGENCE / MASTER DATABASE V1</small><h2>Client Marketplace</h2>
-   <p>{mode==="freelancer"?"Choose your next Startup or SME brief. No prescribed order or compulsory client progression.":"Research businesses by scale, sector and simulated market signals; approach any client for a fictional RFP."}</p></div><Database size={25}/></header>
+   <p>{mode==="freelancer"?"Approach a Startup or SME from your bedroom. Gemini generates that company’s fictional business context, discovery dialogue, insight and strategy. No prewritten brief is used.":"Research businesses by scale, sector and simulated market signals; approach any client for a fictional RFP."}</p></div><Database size={25}/></header>
   <div className="mt-client-catalog-summary">
    <div><small>CANONICAL CLIENTS</small><b>{CLIENT_COUNTS.total}</b></div>
    <div><small>STARTUPS</small><b>{CLIENT_COUNTS.startup}</b></div>
@@ -87,9 +87,9 @@ export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelec
        else act((s,fx)=>M.approachCatalogClient(s,fx,c.id));
        setSelected(c.id);
        onSelected?.();
-      }}>{mode==="agency"&&M.isOpenCatalogLead(game,c.id)?"In pipeline":selected===c.id?"Selected":next+" client"}</Button>
+      }}>{mode==="agency"&&M.isOpenCatalogLead(game,c.id)?"In pipeline":selected===c.id?"Approached":next+" client"}</Button>
     </div>
-    {selected===c.id&&<div className="mt-client-confirmation"><CheckCircle2 size={15}/> {mode==="freelancer"?"Brief loaded. Return to the campaign workspace to continue.":"Lead added to Pipeline. Qualify it, pitch and negotiate before forming a dedicated client team."}</div>}
+    {selected===c.id&&<div className="mt-client-confirmation"><CheckCircle2 size={15}/> {mode==="freelancer"?"Gemini is preparing this client’s context and strategy. Open the selected client to follow progress or retry.":"Lead added to Pipeline. Qualify it, pitch and negotiate before forming a dedicated client team."}</div>}
     {selected===c.id&&mode==="agency"&&c.basis==="fortune-2026"&&<a href={c.rankingSource??"https://fortune.com/ranking/fortune500/"} target="_blank" rel="noreferrer" className="mt-client-source">View Fortune 2026 ranking ↗</a>}
    </article>)}
   </div>

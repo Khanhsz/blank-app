@@ -1,5 +1,5 @@
 import http from "node:http";
-import {inputCategory,prompt,validateCandidate,GEMINI_SCHEMA} from "./scenario.mjs";
+import {inputCategory,prompt,clientPrompt,validateApproachClient,validateCandidate,GEMINI_SCHEMA,CLIENT_SCENARIO_SCHEMA} from "./scenario.mjs";
 import {validatePricingInput,pricePrompt,buildPriceAdvice,PRICING_SCHEMA} from "./pricing.mjs";
 import {validateMarketRequest,validateMarketIntelligence,fallbackMarketReport,marketPrompt,MARKET_SCHEMA} from "./company-intelligence.mjs";
 const PORT=Number(process.env.PORT||4187);
@@ -23,15 +23,15 @@ async function readJson(req,max=4096){
 }
 
 /** Gemini produces fictional evidence; the existing game engine alone decides outcomes. */
-async function generateScenario(category){
+async function generateScenario(category,client=null){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),32000);
  try{
   const upstream=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(MODEL)+":generateContent",{
    method:"POST",
    headers:{"Content-Type":"application/json","x-goog-api-key":apiKey()},
    body:JSON.stringify({
-    contents:[{role:"user",parts:[{text:prompt(category)}]}],
-    generationConfig:{responseMimeType:"application/json",responseSchema:GEMINI_SCHEMA,temperature:.72,maxOutputTokens:3800}
+    contents:[{role:"user",parts:[{text:client?clientPrompt(category,client):prompt(category)}]}],
+    generationConfig:{responseMimeType:"application/json",responseSchema:client?CLIENT_SCENARIO_SCHEMA:GEMINI_SCHEMA,temperature:.72,maxOutputTokens:4600}
    }),
    signal:controller.signal
   });
@@ -39,7 +39,7 @@ async function generateScenario(category){
   const result=await upstream.json();
   const text=result?.candidates?.[0]?.content?.parts?.filter(x=>typeof x.text==="string").map(x=>x.text).join("");
   if(!text)throw Error("Empty Gemini output; finishReason="+String(result?.candidates?.[0]?.finishReason||"unknown"));
-  return validateCandidate(JSON.parse(text),category);
+  return validateCandidate(JSON.parse(text),category,client);
  }finally{clearTimeout(timer)}
 }
 
@@ -96,7 +96,7 @@ const server=http.createServer(async(req,res)=>{
   if(!allowed)return response(res,403,{error:"Origin not allowed"});
   res.writeHead(204,{"Access-Control-Allow-Origin":req.headers.origin,"Access-Control-Allow-Methods":"POST,GET,OPTIONS","Access-Control-Allow-Headers":"Content-Type","Access-Control-Max-Age":"600"});res.end();return;
  }
- if(req.url==="/api/status"&&req.method==="GET")return response(res,200,{available:!!apiKey(),model:MODEL,version:"v4.6",features:["ai-scenario-generator","agency-pricing-advisor","company-market-intelligence"]},allowed?req.headers.origin:null);
+ if(req.url==="/api/status"&&req.method==="GET")return response(res,200,{available:!!apiKey(),model:MODEL,version:"v4.7",features:["ai-scenario-generator","bedroom-client-approach","agency-pricing-advisor","company-market-intelligence"]},allowed?req.headers.origin:null);
  if(req.url==="/api/company-market-intelligence"&&req.method==="POST"){
   if(!allowed)return response(res,403,{error:"Game origin required"});
   if(!counted("market:"+remoteIP(req),3,3600000))return response(res,429,{error:"Hourly market insight limit reached."},req.headers.origin);
@@ -127,18 +127,20 @@ const server=http.createServer(async(req,res)=>{
  }
  if(req.url!=="/api/generate-brief"||req.method!=="POST")return response(res,404,{error:"Not found"},allowed?req.headers.origin:null);
  if(!allowed)return response(res,403,{error:"Game origin required"});
- if(!apiKey())return response(res,503,{error:"AI mode isn't configured yet. Built-in briefs remain playable. Add GEMINI_API_KEY to the AI API Render service."},req.headers.origin);
- if(!counted(remoteIP(req),4,3600000))return response(res,429,{error:"Hourly AI limit reached. Try later or use built-in briefs."},req.headers.origin);
+ if(!apiKey())return response(res,503,{error:"Gemini API is not configured. The client approach cannot proceed until GEMINI_API_KEY is available."},req.headers.origin);
+ if(!counted(remoteIP(req),8,3600000))return response(res,429,{error:"Gemini hourly budget reached. Retry your selected client after the quota resets."},req.headers.origin);
  const day=new Date().toISOString().slice(0,10);
  if(globalCounter.day!==day){globalCounter.day=day;globalCounter.calls=0}
- if(globalCounter.calls>=50)return response(res,429,{error:"Daily AI budget reached. Built-in briefs remain playable."},req.headers.origin);
+ if(globalCounter.calls>=50)return response(res,429,{error:"Daily Gemini usage budget reached. Retry your selected client later."},req.headers.origin);
  globalCounter.calls++;
  try{
   const body=await readJson(req);
   const category=inputCategory(body.category);
-  const scenario=await generateScenario(category);
+  const client=validateApproachClient(body.client);
+  if(client.sector!==category)throw Error("Client sector mismatch");
+  const scenario=await generateScenario(category,client);
   return response(res,200,{scenario,mode:"ai",model:MODEL},req.headers.origin);
- }catch(error){console.warn("AI scenario failed:",error?.message?.slice(0,160));return response(res,502,{error:"Couldn't validate the AI brief. Retry or use a built-in campaign."},req.headers.origin)}
+ }catch(error){console.warn("AI scenario failed:",error?.message?.slice(0,160));return response(res,502,{error:"Gemini could not create a valid context, insight and strategy for this client. Retry the approach."},req.headers.origin)}
 });
 server.listen(PORT,"0.0.0.0",()=>console.log("Marketing Tycoon AI API listening on",PORT));
 

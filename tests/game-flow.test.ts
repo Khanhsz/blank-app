@@ -8,10 +8,13 @@ import {endWeek,acknowledgeEdition} from "../src/game/weekly";
 import {departmentMetrics} from "../src/game/functions";
 import * as J from "../src/game/journey";
 import type {Fx} from "../src/game/store";
+import {seedApproachedClient} from "./helpers/approachedClient";
+import {getClient} from "../src/game/clientDatabase";
 
 const fx:Fx={toast:()=>{},log:()=>{}};
 function runCampaign(s:ReturnType<typeof defaults>){
   assert.equal(s.campaign.phase,"brief");
+  seedApproachedClient(s);
   C.acceptBrief(s,fx);
   assert.equal(s.campaign.phase,"planning");
   C.addResearch(s,fx,"audit");C.addResearch(s,fx,"reviews");C.addResearch(s,fx,"interview");
@@ -81,9 +84,15 @@ test("old saves receive new optional character attributes and world progress saf
 
 test("AI-generated evidence, insight options and correct outcome survive local save",()=>{
  const s=defaults();s.created=true;
- const sample={...scenarios[0],id:"ai-example123",brand:"AI Example Bakery",industry:"F&B",trueInsight:"trust",trueSegment:"students",trueCreative:"story",budget:12000000,fee:4800000,insightOptions:["awareness","value","location","trust","style"].map(id=>({id,title:"Test "+id,desc:"Distinct hypothesis "+id})),aiMeta:{category:"food",seed:78234,label:"Fictional AI-generated training scenario"},reports:{audit:"Competitor comparison data indicates uncertainty about value.",reviews:"Customers report poor trust before the first purchase.",industry:"Category demand remains broadly stable.",interview:"Prospects repeatedly mention insufficient trust and ask for testimonials."}};
+ C.chooseFreelanceClient(s,fx,"startup-food-0");
+ const sample={...scenarios[0],id:"ai-example123",brand:getClient("startup-food-0")!.brand,industry:"Food",trueInsight:"trust",trueSegment:"students",trueCreative:"story",budget:12000000,fee:4800000,
+ insightOptions:["awareness","value","location","trust","style"].map(id=>({id,title:"Test "+id,desc:"Distinct hypothesis "+id})),
+ aiMeta:{category:"food",seed:78234,label:"Fictional AI-generated test scenario",clientId:"startup-food-0"},
+ aiPlanning:{context:"A test company has poor trust.",insight:"Some consumers require credible proof.",strategy:"Test creator evidence before scaling spend."},
+ clientAnswers:{audience:"Nearby shoppers",barrier:"Trust",success:"Growth",constraint:"Limited time"},
+ reports:{audit:"Competitor comparison data indicates uncertainty about value.",reviews:"Customers report poor trust before the first purchase.",industry:"Category demand remains broadly stable.",interview:"Prospects repeatedly mention insufficient trust and ask for testimonials."}};
  assert.equal(C.activateAIBrief(s,fx,sample),true);
- assert.equal(C.scenarioOf(s.campaign).brand,"AI Example Bakery");
+ assert.equal(C.scenarioOf(s.campaign).brand,getClient("startup-food-0")!.brand);
  C.acceptBrief(s,fx);C.addResearch(s,fx,"reviews");C.toSurvey(s);
  C.runSurvey(s,fx,{audience:"students",sample:60,question:"barrier"});
  assert.equal(C.surveyResults(s).reason.includes("trust"),false);
@@ -96,15 +105,18 @@ test("AI-generated evidence, insight options and correct outcome survive local s
 });
 test("AI brief cannot overwrite campaign already in progress",()=>{
  const s=defaults();s.created=true;
+ seedApproachedClient(s);
  C.acceptBrief(s,fx);
  const sample={...scenarios[0],id:"ai-something",aiMeta:{category:"coffee",seed:1,label:"Fictional"},insightOptions:["awareness","value","location","trust","style"].map(id=>({id,title:id,desc:id+" detail"}))};
+ const original=s.campaign.aiScenario;
  assert.equal(C.activateAIBrief(s,fx,sample),false);
- assert.equal(s.campaign.aiScenario,null);
+ assert.deepEqual(s.campaign.aiScenario,original,"late AI result may not replace an in-progress client");
 });
 
 test("brief deadlines, optimization and agency functions share one calendar",()=>{
  const s=defaults();s.created=true;
  const startDay=s.clock.day;
+ seedApproachedClient(s);
  C.acceptBrief(s,fx);C.confirmInsight(s,fx,"awareness");
  C.confirmStrategy(s,fx,{segment:"students",objective:"visits",position:"study"});
  C.confirmCreative(s,fx,"study");C.bookMedia(s,fx,{paid:1500000,creator:1000000,promo:0,flyer:0});

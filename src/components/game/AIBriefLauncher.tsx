@@ -1,23 +1,31 @@
-import {Sparkles,LoaderCircle,ShieldCheck,WifiOff} from "lucide-react";
+import {Sparkles,LoaderCircle,ShieldCheck,WifiOff,RotateCcw} from "lucide-react";
+import {Button} from "@/components/ui/button";
+import {act} from "@/game/store";
+import {retryFreelanceApproach} from "@/game/campaign";
+import {getClient} from "@/game/clientDatabase";
 import type {Campaign} from "@/game/state";
 export function AutomaticBriefNotice({campaign}:{campaign:Campaign}){
  const ready=campaign.aiStatus==="ready"&&!!campaign.aiScenario;
- const offline=campaign.aiStatus==="fallback";
- return <section className={"mt-ai-notice "+(ready?"ready":offline?"fallback":"generating")} role="status" aria-live="polite">
-  {ready?<ShieldCheck size={18}/>:offline?<WifiOff size={18}/>:<LoaderCircle size={18} className="mt-ai-spinner"/>}
+ const error=campaign.aiStatus==="error";
+ return <section className={"mt-ai-notice "+(ready?"ready":error?"fallback":"generating")} role="status" aria-live="polite">
+  {ready?<ShieldCheck size={18}/>:error?<WifiOff size={18}/>:<LoaderCircle size={18} className="mt-ai-spinner"/>}
   <div>
-   <strong>{ready?"Brief created by Gemini":offline?"Ready with a built-in client brief":"Preparing your new client brief…"}</strong>
-   <small>{ready?"This case is fictional. Research evidence is revealed as you investigate.":offline?(campaign.aiError||"You can continue playing normally."):"Gemini is developing your client, evidence and insight choices automatically."}</small>
+   <strong>{ready?"Gemini client discovery ready":error?"Gemini approach unsuccessful":"Approaching client with Gemini…"}</strong>
+   <small>{ready?"Fictional context, insight hypotheses and strategy guidance are generated for the selected client.":error?(campaign.aiError||"Retry this client approach."):"Generating scenario context, client responses, insight and strategy."}</small>
   </div>
  </section>;
 }
-export function AutomaticBriefWaiting(){
+export function AutomaticBriefWaiting({campaign}:{campaign:Campaign}){
+ const client=campaign.catalogClientId?getClient(campaign.catalogClientId):null;
+ const failed=campaign.aiStatus==="error";
  return <div className="mt-ai-waiting" role="status" aria-live="polite">
-  <div className="mt-ai-waiting-icon"><Sparkles size={28}/></div>
-  <span className="mt-story-label">INCOMING CLIENT / AI GAME MASTER</span>
-  <h2>A new opportunity is on its way.</h2>
-  <p>Gemini is creating a fictional business challenge, customer research and insight hypotheses for your next marketing campaign.</p>
-  <div className="mt-ai-waiting-progress"><span/></div>
-  <small>Your progress is saved. If Gemini is unavailable, the game will automatically load a built-in client brief.</small>
+  <div className="mt-ai-waiting-icon">{failed?<WifiOff size={28}/>:<Sparkles size={28}/>}</div>
+  <span className="mt-story-label">BEDROOM WORKSTATION / CLIENT APPROACH</span>
+  <h2>{failed?"Client approach needs Gemini":client?"Approaching "+client.brand:"Choose a client to approach"}</h2>
+  <p>{failed?(campaign.aiError||"Gemini is not available right now."):
+   "Gemini is building "+(client?.brand??"your selected client's")+" market context, fictional discovery conversation, research hypotheses and strategy direction."}</p>
+  {!failed&&<div className="mt-ai-waiting-progress"><span/></div>}
+  {failed?<Button className="w-full" onClick={()=>act(retryFreelanceApproach)}><RotateCcw size={16}/> Retry Gemini approach</Button>:
+  <small>This client stays selected. A valid Gemini result is required; no built-in brief or invented insight will replace it.</small>}
  </div>;
 }

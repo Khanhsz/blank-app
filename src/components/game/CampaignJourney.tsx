@@ -56,7 +56,7 @@ function Main({c}:{c:Campaign}){
  const ready=c.creative&&c.mediaBooked&&s.clock.day>=(c.productionReadyDay??Infinity)&&s.clock.day<schedule.endDay;
  const report=c.final;
  if(s.agencyUnlocked)return <p className="text-sm text-muted-foreground">Your agency delivery is now managed through CEO Command Center → Projects and Functions.</p>;
- if(c.phase==="brief"&&(c.aiStatus==="pending"||c.aiStatus==="generating"))return <AutomaticBriefWaiting/>;
+ if(c.phase==="brief"&&(!c.aiScenario||c.aiStatus!=="ready"))return <AutomaticBriefWaiting campaign={c}/>;
  return <div className="mt-journey">
   <div className="mt-journey-topline"><div><small>CAMPAIGN JOURNEY · WEEK {s.clock.week}</small><h2>{sc.brand}</h2><p>{sc.summary}</p></div><span className="mt-journey-act">{stage}</span></div>
   <div className="mt-journey-stats"><GameStat label="BUDGET LEFT" value={money(remaining)} icon={<Coins size={16}/>}/><GameStat label="CLIENT KPI" value={"+"+sc.target+"%"} icon={<Target size={16}/>}/><GameStat label="DAYS LEFT" value={String(daysLeft)} icon={<Clock3 size={16}/>}/></div>
@@ -68,7 +68,8 @@ function Main({c}:{c:Campaign}){
   <div className="mt-journey-weekbar"><span>Day {s.clock.day} · Campaign deadline Day {schedule.endDay}</span><span>{currentStep.output}</span></div>
   <div className="mt-journey-mission" key={step}>
   {step==="brief"&&<>
-   <MissionHeader step="01 · Brief Room" sub="Don't accept the problem at face value. Ask the client questions, then identify the business challenge."/>
+   <MissionHeader step="01 · Client Discovery" sub="You approached this client from your bedroom. Gemini created its fictional context and discovery dialogue. Diagnose the business problem before accepting the campaign."/>
+   {sc.aiPlanning?.context&&<div className="mt-journey-blueprint"><span><BookOpen size={16}/> GEMINI · SIMULATED BUSINESS CONTEXT</span><b>{sc.aiPlanning.context}</b><small>Scenario assumptions generated for training · not real-world verified research</small></div>}
    <ClientMemo text={sc.client||sc.summary}/>
    <div className="mt-journey-section-head"><b>Ask your client</b><small>{j.questions.length}/4 clarified · minimum 2</small></div>
    <div className="mt-journey-options">{J.BRIEF_QUESTIONS.map(q=><div key={q.id}>
@@ -80,7 +81,8 @@ function Main({c}:{c:Campaign}){
    <Button className="w-full" disabled={j.questions.length<2} onClick={()=>act((d,fx)=>J.approveBrief(d,fx,diagnosis))}>Diagnose Brief → Insight Lab <ArrowRight size={16}/></Button>
   </>}
   {step==="research"&&<>
-   <MissionHeader step="02 · Insight Lab" sub="Collect evidence, question its reliability and form a hypothesis. Evidence costs real campaign budget."/>
+   <MissionHeader step="02 · Insight Lab" sub="Gemini provides a hypothesis, but you must validate it with simulated research and make your own call."/>
+   {sc.aiPlanning?.insight&&<div className="mt-journey-blueprint"><span><Lightbulb size={16}/> GEMINI · INSIGHT HYPOTHESIS</span><b>{sc.aiPlanning.insight}</b><small>Unverified hypothesis. Commission evidence and select the insight you can defend.</small></div>}
    <div className="mt-journey-section-head"><b>Evidence Board</b><small>{c.research.length} commissioned</small></div>
    <div className="mt-journey-evidence">{researchOptions.map(r=><div className={"mt-journey-evidence-card "+(c.research.includes(r.id)?"found":"")} key={r.id}>
     <div className="mt-journey-evidence-head"><b>{r.title}</b><small>{money(r.cost)}</small></div>
@@ -102,7 +104,8 @@ function Main({c}:{c:Campaign}){
    <Button className="w-full" disabled={!insight||(!c.research.length&&!c.survey)} onClick={()=>act((d,fx)=>J.approveInsight(d,fx,insight))}>Validate Insight → Strategy Workshop <ArrowRight size={16}/></Button>
   </>}
   {step==="strategy"&&<>
-   <MissionHeader step="03 · Strategy Workshop" sub="Build a coherent strategic blueprint from your evidence. The choices determine how creative and media will be evaluated."/>
+   <MissionHeader step="03 · Strategy Workshop" sub="Translate your research into a strategic decision. Gemini gives a direction, not a guaranteed winning answer."/>
+   {sc.aiPlanning?.strategy&&<div className="mt-journey-blueprint"><span><Target size={16}/> GEMINI · STRATEGY DIRECTION</span><b>{sc.aiPlanning.strategy}</b><small>Use this fictional recommendation to challenge your own audience, objective, positioning and campaign approach.</small></div>}
    <div className="mt-journey-blueprint"><span><Lightbulb size={17}/> DISCOVERED INSIGHT</span><b>{(sc.insightOptions??insights).find(x=>x.id===c.insight)?.title??c.insight}</b><small>Evidence confidence · {j.confidence}%</small></div>
    <div className="mt-journey-canvas">
     {([{key:"segment",label:"WHO · Priority audience",options:segments},{key:"objective",label:"WHAT · Business response",options:objectives},{key:"position",label:"WHY · Value proposition",options:positions}] as const).map(row=><div className="mt-journey-canvas-row" key={row.key}><b>{row.label}</b><div className="mt-journey-options compact">{row.options.map(x=><Option key={x.id} selected={strategy[row.key]===x.id} title={x.title} onClick={()=>setStrategy({...strategy,[row.key]:x.id})}/>)}</div></div>)}
@@ -173,9 +176,9 @@ export function CampaignJourney(){
  useEffect(()=>{if(c.phase==="brief"&&!c.catalogClientId)setBrowse(true);},[c.briefId]);
  return <div className="mt-client-journey-wrap">
   {c.phase==="brief"&&<div className="mt-client-journey-switch">
-    <Button size="sm" variant={browse?"default":"outline"} onClick={()=>setBrowse(true)}>Browse Startup & SME Clients</Button>
-    <Button size="sm" variant={!browse?"default":"outline"} onClick={()=>setBrowse(false)}>Current Client Brief</Button>
+    <Button size="sm" variant={browse?"default":"outline"} onClick={()=>setBrowse(true)}>Approach Startup & SME Clients</Button>
+    <Button size="sm" variant={!browse?"default":"outline"} onClick={()=>setBrowse(false)} disabled={!c.catalogClientId}>Selected Client · Gemini</Button>
   </div>}
-  {c.phase==="brief"&&browse?<ClientCatalog mode="freelancer" onSelected={()=>setBrowse(false)}/>:<Main key={c.briefId} c={c}/>}
+  {c.phase==="brief"&&(browse||!c.catalogClientId)?<ClientCatalog mode="freelancer" onSelected={()=>setBrowse(false)}/>:<Main key={c.briefId} c={c}/>}
  </div>;
 }
