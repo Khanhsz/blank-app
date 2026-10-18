@@ -936,3 +936,20 @@ button.mt-work-person-row{cursor:pointer}.mt-work-person-row:hover{border-color:
 .mt-gig-ledger{border:1px solid var(--border,#c6d8d9);border-radius:7px;padding:11px}.mt-gig-ledger summary{cursor:pointer;font-size:12px;font-weight:750}
 .mt-gig-ledger .mt-gig-metrics{margin-top:10px}.mt-gig-invoice{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:8px;font-size:11px;border-bottom:1px solid var(--border,#d7e0e4)}
 @media(max-width:680px){.mt-gig-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.mt-gig-choices{grid-template-columns:1fr}}
+
+/* Hiring channels V2 — a compact four-option sourcing desk inside Workforce. */
+.mt-hiring-channels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mt-hiring-channel{display:flex;flex-direction:column;gap:9px;min-width:0;padding:13px;border:1px solid var(--border,#cbd9df);border-radius:9px;background:var(--card,#fff)}
+.mt-hiring-channel-title{display:flex;align-items:flex-start;gap:10px;min-width:0}
+.mt-hiring-channel-title>div{min-width:0;display:flex;flex-direction:column;gap:2px}
+.mt-hiring-channel-title b{font-size:13px;font-weight:800;line-height:1.4}
+.mt-hiring-channel-title small{font-size:10px;font-weight:700;line-height:1.4;letter-spacing:.025em;color:var(--muted-foreground,#546c77)}
+.mt-hiring-channel-icon{width:32px;height:32px;flex:none;display:grid;place-items:center;border-radius:8px;background:rgba(58,126,143,.1);color:#37798a}
+.mt-hiring-channel>p{font-size:12px;line-height:1.5;color:var(--muted-foreground,#536b76);margin:0;flex:1}
+.mt-hiring-channel-cta{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:auto}
+.mt-hiring-channel-cta strong{font-size:13px;white-space:nowrap}
+.mt-hiring-referral{border-style:solid;border-color:#c6b68f;background:linear-gradient(140deg,rgba(207,165,75,.07),var(--card,#fff))}
+.mt-hiring-referral .mt-hiring-channel-icon{color:#906d27;background:rgba(194,159,77,.15)}
+.mt-hiring-referral-note,.mt-hiring-warning{font-size:11px;line-height:1.5;color:var(--muted-foreground,#526b77)}
+.mt-hiring-warning{color:#986532}
+@media(max-width:640px){.mt-hiring-channels{grid-template-columns:1fr}.mt-hiring-channel-cta{gap:10px}}

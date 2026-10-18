@@ -2,11 +2,11 @@
  * Project simulation, payroll, staffing exclusivity and saves remain in game state.
  */
 import {useState} from "react";
-import {ArrowLeft,ArrowRight,AlertTriangle,BriefcaseBusiness,CheckCircle2,ChevronRight,ClipboardList,Search,UserPlus,Users,UserRound,Wallet} from "lucide-react";
+import {ArrowLeft,ArrowRight,AlertTriangle,BriefcaseBusiness,CheckCircle2,ChevronRight,ClipboardList,Search,UserPlus,Users,UserRound,Wallet,Newspaper,Globe2,BookOpen,UserRoundCheck} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {useGame,act} from "@/game/store";
 import {ceoRoles,employeeById,money} from "@/game/data";
-import {recruitmentFee} from "@/game/recruitment";
+import {RECRUITMENT_CHANNELS,canStartRecruitment,startRecruitmentCampaign,recruitmentFee,recruitmentScore} from "@/game/recruitment";
 import * as K from "@/game/ceo";
 import * as P from "@/game/personnel";
 import * as T from "@/game/clientTeams";
@@ -184,10 +184,11 @@ function EmployeeDetail({id,onBack,onTeam}:{id:string;onBack:()=>void;onTeam:(te
 }
 function TalentPool({onEmployee}:{onEmployee:(id:string)=>void}){
  const s=useGame(x=>x);
- const [filter,setFilter]=useState<"available"|"assigned"|"recruit">("available");
+ const [filter,setFilter]=useState<"available"|"assigned"|"recruit">("recruit");
  const [query,setQuery]=useState("");
  const staff=s.staff.map(id=>employeeById(id)).filter((e):e is NonNullable<typeof e>=>!!e);
  const offers=s.recruitment?.week===s.clock.week?(s.recruitment?.candidates??[]):[];
+ const recruitmentPosted=s.recruitment?.lastCampaignWeek===s.clock.week;
  const items=(filter==="recruit"?offers:staff).filter(e=>{
   const hired=s.staff.includes(e.id),owner=T.ownerTeam(s,e.id);
   const match=filter==="recruit"?!hired:filter==="assigned"?hired&&!!owner:hired&&!owner;
@@ -195,21 +196,48 @@ function TalentPool({onEmployee}:{onEmployee:(id:string)=>void}){
  });
  return <div className="mt-work-flow">
   <div className="mt-work-section-head"><h3>Talent pool</h3><span>{s.staff.length}/{currentOffice(s).capacity} employed · {money(K.dailyPayroll(s))}/day</span></div>
-  <p className="mt-work-muted">Recruitment shortlist · Week {s.clock.week}. New applicants arrive when you End Week; hires keep their salary and development progress.</p>
+  <p className="mt-work-muted">Only 1–2 passive candidates arrive each week. For multiple hires, invest in a sourcing campaign; applications appear after End Week, and all unsigned offers expire on the following refresh.</p>
   <div className="mt-work-filter" role="tablist" aria-label="Filter workforce">
-   {(["available","assigned","recruit"] as const).map(f=><button key={f} type="button" role="tab" aria-selected={filter===f} className={filter===f?"active":""} onClick={()=>setFilter(f)}>{f==="available"?"Available ("+T.talentPool(s).length+")":f==="assigned"?"Assigned":"Recruit"}</button>)}
+   {(["available","assigned","recruit"] as const).map(f=><button key={f} type="button" role="tab" aria-selected={filter===f} className={filter===f?"active":""} onClick={()=>setFilter(f)}>{f==="available"?"Available ("+T.talentPool(s).length+")":f==="assigned"?"Assigned":"Recruit ("+offers.length+")"}</button>)}
   </div>
+  {filter==="recruit"&&<section className="mt-work-section">
+   <div className="mt-work-section-head"><h4>Run a hiring campaign</h4><span>Applications next week</span></div>
+   <p className="mt-work-muted">Choose one recruiting channel per game week. Its posting fee is charged immediately; successful hires also add monthly salary and a separate onboarding fee.</p>
+   <div className="mt-hiring-channels">
+    {RECRUITMENT_CHANNELS.map(ch=>{
+      const available=canStartRecruitment(s,ch.id);
+      return <article key={ch.id} className={"mt-hiring-channel "+(ch.id==="referral"?"mt-hiring-referral":"")}>
+       <div className="mt-hiring-channel-title">
+        <span className="mt-hiring-channel-icon">{ch.id==="newspaper"?<Newspaper size={18}/>:ch.id==="website"?<Globe2 size={18}/>:ch.id==="journal"?<BookOpen size={18}/>:<UserRoundCheck size={18}/>}</span>
+        <div><b>{ch.label}</b><small>{ch.id==="referral"?"HIGH-POTENTIAL · STAFF NETWORK":ch.min+"–"+ch.max+" applicants · Skill "+ch.minSkill+"–"+ch.maxSkill}</small></div>
+       </div>
+       <p>{ch.detail}</p>
+       {ch.id==="referral"&&<small className="mt-hiring-referral-note">Requires at least one current employee with skill 80+. Yields {ch.min}–{ch.max} applicants with skill {ch.minSkill}–{ch.maxSkill}.</small>}
+       <div className="mt-hiring-channel-cta">
+        <strong>{money(ch.fee)}</strong>
+        <Button size="sm" disabled={!available.ok} title={available.reason||undefined} onClick={()=>act((d,fx)=>startRecruitmentCampaign(d,fx,ch.id))}>{recruitmentPosted?"Posted this week":"Post jobs"}</Button>
+       </div>
+       {!available.ok&&!recruitmentPosted&&<small className="mt-hiring-warning">{available.reason}</small>}
+      </article>;
+    })}
+   </div>
+   {(s.recruitment?.postings??[]).filter(p=>p.arrivalWeek>s.clock.week).map(p=><div key={p.id} className="mt-work-next-step"><b>Campaign submitted: {RECRUITMENT_CHANNELS.find(ch=>ch.id===p.channel)?.label}</b><small>Applications expected in Week {p.arrivalWeek} · Posting paid {money(p.fee)}. No instant candidate rerolls.</small></div>)}
+  </section>}
+  {filter==="recruit"&&<div className="mt-work-section-head"><h4>Open applicants · Week {s.clock.week}</h4><span>{offers.filter(e=>(e.source??"organic")==="organic").length} passive · {offers.filter(e=>e.source&&e.source!=="organic").length} sourced</span></div>}
   <label className="mt-work-search"><Search size={17}/><input aria-label="Search employees" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search employee or role"/></label>
   {items.length?items.map(e=>{
    const hired=s.staff.includes(e.id),owner=T.ownerTeam(s,e.id),p=P.profile(s,e.id),training=!!p.trainingUntil&&p.trainingUntil>(s.ceo?.day??0);
+   const applicant=offers.find(a=>a.id===e.id);
+   const channelName=applicant?.source&&applicant.source!=="organic"?RECRUITMENT_CHANNELS.find(c=>c.id===applicant.source)?.label:"Weekly applicant";
    return <div className="mt-work-person-row" key={e.id}>
     <span className="mt-work-avatar"><UserRound size={17}/></span>
-    <button type="button" className="mt-work-person-text" onClick={()=>onEmployee(e.id)}><b>{e.name}</b><small>{e.role} · Skill {Math.round(p.skill)}</small></button>
+    <button type="button" className="mt-work-person-text" onClick={()=>onEmployee(e.id)}><b>{e.name}</b><small>{e.role} · Skill {Math.round(p.skill)}{applicant?" · Rating "+recruitmentScore(applicant):""}</small>
+     {applicant&&<small>{channelName} · Salary {money(e.salary)}/mo</small>}</button>
     <span className="mt-work-person-meta">{owner?owner.brand:training?"Training":hired?"Available":money(recruitmentFee(e))+" hire fee"}</span>
     {hired?<button aria-label={"View "+e.name} onClick={()=>onEmployee(e.id)} className="mt-work-row-next"><ChevronRight size={17}/></button>:
      <Button size="sm" disabled={!canHire(s,e.id)} onClick={()=>act((d,fx)=>K.hire(d,fx,e.id))}>Hire</Button>}
    </div>;
-  }):<div className="mt-work-empty"><Search size={24}/><b>No employees found</b><p>{filter==="available"?"Use Recruit to review this week’s applicants or release an idle employee from a client.":"Change your filter or wait for the next in-game week."}</p></div>}
+  }):<div className="mt-work-empty"><Search size={24}/><b>No employees found</b><p>{filter==="recruit"?"No matching offers. End Week for 1–2 passive applicants or launch a recruiting campaign.":filter==="available"?"Recruit staff or release an idle employee from a client.":"Change the filter to find other employees."}</p></div>}
  </div>;
 }
 export function ClientTeamBoard(){

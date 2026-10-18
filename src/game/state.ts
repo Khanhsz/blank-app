@@ -52,8 +52,13 @@ export interface Campaign {freelanceJob?:FreelanceJobProgress;
 export interface ScoreResult { pct: number; outcome: number; adReach: number; quality: number; fit: Record<string, number>; performance: "target" | "near" | "under" }
 
 export interface PersonnelProfile {skill:number;morale:number;fatigue:number;xp:number;trainingUntil?:number;pendingSkill?:number;}
-export interface RecruitmentCandidate extends Employee {startingSkill:number;startingMorale:number;startingFatigue:number;}
-export interface RecruitmentMarket {week:number;seed:number;candidates:RecruitmentCandidate[];hired:RecruitmentCandidate[];}
+export type RecruitmentChannel="organic"|"newspaper"|"website"|"journal"|"referral";
+export interface RecruitmentCandidate extends Employee {startingSkill:number;startingMorale:number;startingFatigue:number;source?:RecruitmentChannel;}
+export interface RecruitmentPosting {id:string;channel:Exclude<RecruitmentChannel,"organic">;startedWeek:number;arrivalWeek:number;fee:number;}
+export interface RecruitmentMarket {
+ week:number;seed:number;candidates:RecruitmentCandidate[];hired:RecruitmentCandidate[];
+ version?:2;postings?:RecruitmentPosting[];lastCampaignWeek?:number;
+}
 export interface Task {preferredEmployee?:string|null; key: string; label: string; role: string; effort: number; pre: string[]; cost: number; status: "backlog" | "assigned" | "in_progress" | "review" | "completed"; progress: number; quality: number; employee: string | null; outsourced: boolean; revised?: boolean; reviewDay?: number; assignedDay?: number; startedDay?: number; doneDay?: number }
 export interface ClientTeam {id:string;clientId:string;brand:string;memberIds:string[];projectIds:string[];leadId:string|null;status:"forming"|"active"|"closing"|"released";createdDay:number}
 export interface AnnualContractTerms {

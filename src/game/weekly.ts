@@ -40,6 +40,11 @@ export function captureDecision(before:GameState,after:GameState){
  }
  const ac=before.ceo,bc=after.ceo;
  if(!before.agencyUnlocked||!ac||!bc)return;
+ const placed=after.recruitment?.postings?.filter(p=>!(before.recruitment?.postings??[]).some(previous=>previous.id===p.id))??[];
+ for(const posting of placed){
+  addDecision(after,"talent","Recruitment campaign launched",
+   posting.channel+" · posting fee "+money(posting.fee)+" · applications expected Week "+posting.arrivalWeek);
+ }
  for(const id of after.staff.filter(x=>!before.staff.includes(x))){
   const e=employees.find(x=>x.id===id);
   addDecision(after,"talent","Hired "+(e?.name||id),"Team capacity increased in "+(e?.role||"a function")+". Payroll will rise.");
