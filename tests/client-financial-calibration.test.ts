@@ -49,9 +49,9 @@ test("Big Corp unlock requires three completed agency campaigns AND reputation 5
  assert.equal(approachCatalogClient(s,fx,"f50-4"),false);
 });
 test("bounded Gemini correction affects fictional starting revenue and marketing budget without falsifying Fortune data",()=>{
- const s=defaults(),before=CLIENT_BY_ID["sme-tech-1"],published=CLIENT_BY_ID["f50-4"];
+ const s=defaults(),before=CLIENT_BY_ID["sme-coffee-1"],published=CLIENT_BY_ID["f50-4"];
  const suggestion=ruleCalibration();suggestion.source="gemini";
- suggestion.adjustments=suggestion.adjustments.map(x=>x.sector==="tech"?{...x,sme:1.12,marketing:1.08,bigcorp:1.14}:x);
+ suggestion.adjustments=suggestion.adjustments.map(x=>x.sector==="coffee"?{...x,sme:1.12,marketing:1.08,bigcorp:1.14}:x);
  s.financeCalibration=validatedCalibration(suggestion);
  const calibrated=calibratedClient(s,before);
  assert.ok(calibrated.annualRevenueVnd!>before.annualRevenueVnd!);
