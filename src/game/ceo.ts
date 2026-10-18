@@ -9,6 +9,7 @@ import {runRivalAgents,ensureTender,rivalBidScore,registerRivalWin,resolveTalent
 import {candidatesForRole,primaryRole,eligibleForRole,profile,effectiveCapacity,employeeReadiness,staffRate,defaultProfile,updatePersonnelDay,recordDelivery} from "./personnel";
 import {teamForProject,ownerTeam,startClientTeam,reconcileClientTeams,teamCoverage} from "./clientTeams";
 import {contractBrief} from "./clientMarket";
+import {ensureFortuneAccounts,canContractFortune,signFortuneAccount,advanceFortuneAccounts,FORTUNE_YEAR_DAYS} from "./fortuneAccounts";
 import {recordClientDelivery} from "./companyMarket";
 import {catalogForBrand} from "./clientDatabase";
 import {ensureLocalPricing,qualificationQuote} from "./pricingAdvisor";
@@ -22,6 +23,7 @@ export function ceoInit(s: GameState): CEO | null {
   if (!s.ceo) {s.ceo = newCEO(s.reputation);s.ceo.leads=[];s.ceo.day=s.clock.day;s.ceo.weekly=s.clock;}
   if(!s.ceo.clientTeams)reconcileClientTeams(s);
   ensureRecruitment(s);
+  ensureFortuneAccounts(s);
   return s.ceo;
 }
 const lead = (c: CEO, id: string) => c.leads.find((l) => l.id === id);
@@ -100,6 +102,7 @@ export function ceoDay(s: GameState, c: CEO, fx: Fx) {
   for (const x of c.ledger) if (x.status === "due" && (x.due ?? 0) <= c.day) { x.status = "paid"; s.agencyCash += x.value; c.totalPaid += x.value; issue(c, fx, "payment", x.lead + x.day, `Received ${money(x.value)} from ${x.lead}`, ["acknowledge"]); }
   acquisitionDay(s,fx);
   runRivalAgents(s,c,fx);
+  advanceFortuneAccounts(s);
   if (s.agencyCash < 0) issue(c, fx, "cash", "agency", "Agency cash flow is negative — improve liquidity.", ["finance"]);
 }
 
@@ -133,8 +136,16 @@ function progressProject(s: GameState, c: CEO, p: Project, fx: Fx) {
     fx.log(p.brand+" launched after production, media and creator delivery");
   }
   if (p.days > p.duration - 6 && !p.deadlineIssue && p.tasks.some((t) => t.status !== "completed")) { p.deadlineIssue = true; issue(c, fx, "deadline", p.id, `Deadline risk on ${p.brand}. Extend or add resources.`, ["extend", "outsource"]); }
-  if (p.days >= p.duration * 0.55 && !p.midpoint) { p.midpoint = true; schedulePayment(c, p, p.fee * 0.3, 2, "Mid-project milestone"); }
-  if (p.tasks.every((t) => t.status === "completed") && p.days >= Math.max(10, Math.floor(p.duration * 0.6))) finishProject(s, c, p, fx);
+  if(p.contractTerms&&p.days%30===0&&p.days<=360&&p.tasks.some(t=>t.key==="media"&&t.status==="completed")){
+    const spent=Math.round(p.adBudget*30/FORTUNE_YEAR_DAYS);
+    p.mediaSpent=Math.min(p.adBudget,Math.round(p.adBudget*p.days/FORTUNE_YEAR_DAYS));
+    p.mediaReserved=p.adBudget-p.mediaSpent;
+    recordClientDelivery(s,{clientId:p.clientMasterId,projectId:p.id+"-month-"+Math.ceil(p.days/30),
+      spendVnd:spent,quality:p.reportQuality??p.pitchQuality,kpi:Math.min(30,p.target)});
+    fx.log("Monthly account report · "+p.brand+" · month "+Math.ceil(p.days/30));
+  }
+  if (!p.contractTerms&&p.days >= p.duration * 0.55 && !p.midpoint) { p.midpoint = true; schedulePayment(c, p, p.fee * 0.3, 2, "Mid-project milestone"); }
+  if (p.tasks.every((t) => t.status === "completed") && (p.contractTerms?p.days>=FORTUNE_YEAR_DAYS:p.days>=Math.max(10,Math.floor(p.duration*.6)))) finishProject(s, c, p, fx);
 }
 
 function applyTask(p: Project, t: Task) {
@@ -142,9 +153,9 @@ function applyTask(p: Project, t: Task) {
   if (t.key === "research") { co.research = ["audit", "reviews", "interview"]; co.survey = { audience: sc.trueSegment, sample: 120, question: "barrier" }; co.insight = t.quality >= 64 ? sc.trueInsight : "value"; co.phase = "planning"; }
   if (t.key === "strategy") { co.strategy = { segment: t.quality >= 65 ? sc.trueSegment : "everyone", objective: sc.trueObjective, position: t.quality >= 65 ? sc.truePosition : "budget" }; co.phase = "executing"; }
   if (t.key === "creative") { co.creative = t.quality >= 68 ? sc.trueCreative : "discount"; co.phase = "executing"; }
-  if (t.key === "media") { const b = sc.budget; co.media = { paid: Math.round(b * 0.46), creator: Math.round(b * 0.34), promo: Math.round(b * 0.13), flyer: Math.round(b * 0.07) }; co.spent = b;co.mediaBooked=true; p.mediaSpent = Math.round(p.adBudget * 0.88); p.mediaReserved = p.adBudget - p.mediaSpent; }
+  if (t.key === "media") { const b = sc.budget; co.media = { paid: Math.round(b * 0.46), creator: Math.round(b * 0.34), promo: Math.round(b * 0.13), flyer: Math.round(b * 0.07) }; co.spent = p.contractTerms?0:b;co.mediaBooked=true; p.mediaSpent = p.contractTerms?0:Math.round(p.adBudget * 0.88); p.mediaReserved = p.adBudget - p.mediaSpent; }
   if (t.key === "production") { co.productionReadyDay=p.startedDay+p.days; }
-  if (t.key === "kol") { p.kolQuality = t.quality; p.mediaSpent = Math.min(p.adBudget, p.mediaSpent + Math.round(p.adBudget * 0.06)); p.mediaReserved = p.adBudget - p.mediaSpent; }
+  if (t.key === "kol") { p.kolQuality = t.quality; if(!p.contractTerms){p.mediaSpent = Math.min(p.adBudget, p.mediaSpent + Math.round(p.adBudget * 0.06)); p.mediaReserved = p.adBudget - p.mediaSpent;} }
   if (t.key === "analytics") { p.reportQuality = t.quality; co.optimization = "retarget"; co.phase = "results"; }
 }
 
@@ -163,10 +174,10 @@ function finishProject(s: GameState, c: CEO, p: Project, fx: Fx) {
   c.reputation.reliability = clamp(c.reputation.reliability + (p.days <= p.duration ? 3 : -5), 0, 100);
   c.reputation.performance = clamp(c.reputation.performance + (p.kpi >= p.target ? 4 : -4), 0, 100);
   c.reputation.creative = clamp(c.reputation.creative + (p.quality >= 70 ? 3 : -2), 0, 100);
-  schedulePayment(c, p, p.fee * 0.4, 7, "Final milestone — payment due");
+  if(!p.contractTerms)schedulePayment(c, p, p.fee * 0.4, 7, "Final milestone — payment due");
   issue(c, fx, "renewal", p.id, `${p.brand} wrapped (${p.kpi >= 0 ? "+" : ""}${p.kpi}% KPI, margin ${money(p.margin)}). Renew?`, ["renew", "close"]);
   recordClientDelivery(s,{clientId:p.clientMasterId??catalogForBrand(p.brand)?.id,
-    projectId:p.id,spendVnd:p.mediaSpent,quality:p.quality??55,kpi:p.kpi??0});
+    projectId:p.id,spendVnd:p.contractTerms?Math.max(0,p.adBudget-Math.round(p.adBudget*360/FORTUNE_YEAR_DAYS)):p.mediaSpent,quality:p.quality??55,kpi:p.kpi??0});
   onProjectCompleted(s,fx,p);
   fx.log(`CEO: completed ${p.brand}; ${p.kpi}% KPI`);
 }
@@ -324,7 +335,7 @@ export function submitPitchRevision(s:GameState,fx:Fx,decision:"improve"|"withdr
 export function closePitch(s: GameState) { const c = ceoInit(s)!; if (c.pitch?.step === "result" && c.pitch.result?.winner !== "player") c.pitch = null; }
 export function beginNegotiation(s: GameState) {
   const c = ceoInit(s)!, l = c.pitch && lead(c, c.pitch.id); if (!l || l.status !== "pitch_won") return;
-  l.status = "negotiating"; c.negotiation = { id: l.id, round: 1, fee: pitchFee(l,c.pitch!), scope: l.scope, advance: 30, deadline: l.duration, bonus: 0, trust: l.relationship, notes: ["Pitch won. Contract negotiation begins at your proposed fee."], status: "open", counter: null };
+  l.status = "negotiating"; c.negotiation = { id: l.id, round: 1, fee: pitchFee(l,c.pitch!), scope: l.scope, advance: l.contractType==="annual-retainer"?100:30, deadline: l.contractType==="annual-retainer"?FORTUNE_YEAR_DAYS:l.duration, bonus: 0, trust: l.relationship, notes: [l.contractType==="annual-retainer"?"Annual 365-day marketing retainer. Service fee invoiced and settled in full at signing; media budget held separately.":"Pitch won. Contract negotiation begins at your proposed fee."], status: "open", counter: null };
 }
 export function forecast(s: GameState, n: Pick<Negotiation, "fee" | "scope" | "deadline">) {
   const existing=s.ceo?.negotiation?.id;const custom=existing?s.ceo?.leads.find(l=>l.id===existing):undefined;
@@ -348,29 +359,47 @@ export function counter(s: GameState, fx: Fx, action: string) {
   if (action === "scope") { n.scope = Math.max(4, n.scope - 2); n.trust += 1; n.notes.push("Cut 2 deliverables, kept price."); }
   if (action === "bonus") { n.fee = Math.round(n.fee * 0.94); n.bonus += Math.round(l.fee * 0.1); n.trust += 3; n.notes.push("Fixed fee −6%, added KPI-risk bonus."); }
   if (action === "advance") { n.advance = Math.max(10, n.advance - 10); n.trust += 4; n.notes.push("Lowered advance payment; cash-flow risk rises."); }
-  if (action === "deadline") { n.deadline += 5; n.trust -= 2; n.notes.push("Proposed +5 days delivery time."); }
+  if (action === "deadline"&&l.contractType!=="annual-retainer") { n.deadline += 5; n.trust -= 2; n.notes.push("Proposed +5 days delivery time."); }
   n.round++;
   const ch = terms(s, n, l), roll = ceoRand(l.id + "neg" + n.round + action + Math.round(n.fee / 1e6));
   if (roll < ch.prob / 100 && n.round >= 3) return sign(s, fx);
   if (n.round >= 5 || n.trust < 20) { n.status = "lost"; l.status = "lost"; n.notes.push("No agreement; client went another way.");registerRivalWin(s,c,l.id,l.rivalIds[0],"negotiation failure"); return; }
-  n.counter = { fee: Math.round(n.fee * 0.94), scope: n.scope, advance: Math.min(n.advance, 25), deadline: n.deadline };
+  n.counter = { fee: Math.round(n.fee * 0.94), scope: n.scope, advance: l.contractType==="annual-retainer"?100:Math.min(n.advance, 25), deadline: n.deadline };
   n.notes.push(`Round ${n.round}: ${l.stakeholder} asks for −6% fee and max 25% advance.`);
 }
 export function sign(s: GameState, fx: Fx) {
   const c = ceoInit(s)!, n = c.negotiation; if (!n || n.status !== "open") return; const l = lead(c, n.id)!;
-  if (forecast(s, n).margin < 0 && n.round < 3) { issue(c, fx, "bad-margin", l.id, `Proposal risks a loss: ${l.brand}.`, ["review"]); return; }
+  const annual=l.contractType==="annual-retainer";
+  if(annual){
+    const check=canContractFortune(s,l.clientMasterId??"",l.id);
+    if(!check.ok){fx.toast(check.reason);return;}
+    n.deadline=FORTUNE_YEAR_DAYS;n.advance=100;
+  }
+  if (forecast(s, n).margin < 0 && (annual||n.round < 3)) { issue(c, fx, "bad-margin", l.id, `Proposal risks a loss: ${l.brand}.`, ["review"]); return; }
   n.status = "signed"; l.status = "signed";const tender=ensureTender(c,l);if(tender)tender.status="player";
   const projectCampaign=newCampaign(l.scenario,c.day);
   if(l.clientMasterId){
     const sc=contractBrief(l.clientMasterId,{value:l.value,fee:n.fee,days:n.deadline,target:l.target});
     if(sc){projectCampaign.catalogClientId=l.clientMasterId;projectCampaign.aiScenario=sc;projectCampaign.aiStatus="ready";}
   }
-  const p: Project = { id: "project-" + ++c.seq, leadId: l.id, clientMasterId:l.clientMasterId, brand: l.brand, adBudget: l.value, fee: n.fee, bonus: n.bonus, scope: n.scope, duration: n.deadline, industry: l.industry, days: 0, status: "active", scenarioIndex: l.scenario, startedDay: c.day, target: l.target, pitchQuality: c.pitch?.quality || 65, mediaSpent: 0, mediaReserved: l.value, direct: 0, campaign:projectCampaign, tasks: ceoTaskDefs.map((t) => ({ ...t, status: "backlog", progress: 0, quality: 0, employee: null, outsourced: false })), paymentCount: 0 };
+  const p: Project = { id: "project-" + ++c.seq, leadId: l.id, clientMasterId:l.clientMasterId, brand: l.brand, adBudget: l.value, fee: n.fee, bonus: n.bonus, scope: n.scope, duration: n.deadline, industry: l.industry, days: 0, status: "active", scenarioIndex: l.scenario, startedDay: c.day, target: l.target, pitchQuality: c.pitch?.quality || 65, mediaSpent: 0, mediaReserved: l.value, direct: 0, campaign:projectCampaign, tasks: ceoTaskDefs.map((t) => ({ ...t, status: "backlog", progress: 0, quality: 0, employee: null, outsourced: false })), paymentCount: 0,
+    ...(annual?{contractTerms:{kind:"annual-retainer" as const,startDay:c.day,endDay:c.day+FORTUNE_YEAR_DAYS,termDays:365 as const,
+      annualServiceFeeVnd:n.fee,annualMediaBudgetVnd:l.value,payment:"annual-upfront" as const,paymentStatus:"paid" as const,currency:"VND" as const,
+      monthlyReports:true,reportingIntervalDays:30,scopeOfWork:l.objective,
+      deliverables:["Consumer research","Annual strategy and creative","Quarterly campaigns","Media and creator management","Monthly KPI dashboard","Year-end performance report"],
+      kpiTarget:l.target,terminationNoticeDays:30,confidentiality:true as const,intellectualProperty:"client-owns-approved-paid-work" as const,
+      mediaSpendSeparate:true as const,top10SectorExclusivity:true}}:{}) };
   c.projects.push(p);
   startClientTeam(s,p);
-  schedulePayment(c, p, (n.fee * n.advance) / 100, 0, "Contract advance");
-  const e = c.ledger[0]; e.status = "paid"; c.totalPaid += e.value; s.agencyCash += e.value;
-  fx.log(`Signed ${l.brand} · service fee ${money(n.fee)}`); issue(c, fx, "signed", p.id, `Signed ${l.brand}. Assemble a dedicated client team in Teams before work begins.`, ["acknowledge"]);
+  if(annual){
+    signFortuneAccount(s,l.clientMasterId!,fx);
+    c.totalBilled+=n.fee;c.totalPaid+=n.fee;s.agencyCash+=n.fee;p.paymentCount++;
+    ledger(c,"Annual marketing retainer invoice · fully settled",n.fee,p.brand);
+  }else{
+    schedulePayment(c, p, (n.fee * n.advance) / 100, 0, "Contract advance");
+    const e = c.ledger[0]; e.status = "paid"; c.totalPaid += e.value; s.agencyCash += e.value;
+  }
+  fx.log(`Signed ${l.brand} · ${annual?"12-month service retainer":"service fee"} ${money(n.fee)}`); issue(c, fx, "signed", p.id, `Signed ${l.brand}. Assemble a dedicated client team in Teams before work begins.`, ["acknowledge"]);
   c.pitch = null;
 }
 export function closeNegotiation(s: GameState) { const c = ceoInit(s)!; if (c.negotiation && c.negotiation.status !== "open") { c.negotiation = null; c.pitch = null; } }
