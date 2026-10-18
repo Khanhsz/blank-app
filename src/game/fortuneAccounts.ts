@@ -24,12 +24,11 @@ export function ensureFortuneAccounts(s:GameState):Record<string,FortuneAccount>
   if(result[firm.id])continue;
   const incumbent=INITIAL_RIVAL_OWNERS[firm.id];
   result[firm.id]={clientId:firm.id,ownerAgencyId:incumbent?.agencyId??null,
-    startedDay:incumbent?Math.max(1,(s.ceo.day??1)-F0(incumbent.endDay)):null,
+    startedDay:incumbent?incumbent.endDay-FORTUNE_YEAR_DAYS:null,
     endsDay:incumbent?Math.max(s.ceo.day+1,incumbent.endDay):null};
  }
  return result;
 }
-const F0=(n:number)=>Math.max(0,FORTUNE_YEAR_DAYS-n);
 export function fortuneOwnerName(s:GameState,account:FortuneAccount):string{
  if(account.ownerAgencyId==="player")return s.agencyName||"Your Agency";
  return s.ceo?.rivals.find(r=>r.id===account.ownerAgencyId)?.name??"Available";
