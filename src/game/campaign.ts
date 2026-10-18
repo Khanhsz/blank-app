@@ -5,6 +5,7 @@ import type { Fx } from "./store";
 import { ceoInit } from "./ceo";
 import {getClient} from "./clientDatabase";
 import {getFreelanceJob} from "./freelanceJobTemplates";
+import {newFreelanceV4} from "./freelanceWorkflows";
 import {canOfferJob,recordMiniCampaign,completedGigCount,workload} from "./freelanceJobs";
 import {hasAcceptedOffer,jobGate} from "./freelanceMarket";
 
@@ -178,7 +179,8 @@ export function chooseFreelanceClient(s:GameState,fx:Fx,clientId:string,jobId="s
  c.freelanceJob={templateId:job.id,stage:"brief",hoursWorked:0,revisionHours:0,focus:null,clientFeedback:null,quality:50,revisions:0,deadlineDay:0,weekHours:0,actualWorkHours:0,
  // In old campaign saves/tests there is no awarded Job Board offer:
  // the original campaign's contracted fee must never become a starter gig fee.
- acceptedFee:s.freelanceBoard?.applications.find(a=>a.clientId===clientId&&a.templateId===jobId&&a.status==="accepted")?.proposedFee};
+ acceptedFee:s.freelanceBoard?.applications.find(a=>a.clientId===clientId&&a.templateId===jobId&&a.status==="accepted")?.proposedFee,
+ v4:newFreelanceV4(job.id)};
  c.aiScenario=null;c.aiStatus="pending";c.aiError=null;c.legacyBrief=false;
  c.journey={step:"brief",questions:[],diagnosis:null,confidence:0,approach:null,message:"",pitchedCreative:null,pitchFeedback:null,pitchCount:0,mediaPlan:null,review:null};
  fx.log("Selected "+client.segment+" client "+client.brand+" from the client master database");

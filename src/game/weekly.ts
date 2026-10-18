@@ -86,7 +86,12 @@ export function endWeek(s:GameState,fx:Fx):WeeklyEdition|null{
  }else weekly.day+=7;
  weekly.week++;weekly.lastAdvanceDay=weekly.day;
  if(!wasAgency){
-  if(s.campaign.freelanceJob&&s.campaign.freelanceJob.stage!=="done"&&s.campaign.freelanceJob.stage!=="brief"&&s.campaign.freelanceJob.templateId!=="mini-launch"){
+  if(s.campaign.freelanceJob?.v4&&s.campaign.freelanceJob.v4.step!=="paid"&&s.campaign.freelanceJob.v4.step!=="brief"){
+   // V4 all eight scopes—including Mini Launch—use the title-specific
+   // Deliverable Board and client review, never the legacy campaign auto-tick.
+   const job=s.campaign.freelanceJob;
+   if(s.clock.day>job.deadlineDay&&job.stage==="work")simulationFx.log("V4 freelancer deadline passed; client review will reflect late delivery.");
+  }else if(s.campaign.freelanceJob&&s.campaign.freelanceJob.stage!=="done"&&s.campaign.freelanceJob.stage!=="brief"&&s.campaign.freelanceJob.templateId!=="mini-launch"){
    // Small jobs are driven by focused work sessions, not 7-stage media ticks.
    const job=s.campaign.freelanceJob;
    if(weekly.day>job.deadlineDay&&job.stage==="work")simulationFx.log("Freelance deadline passed; quality penalty applies at client review.");

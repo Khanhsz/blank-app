@@ -37,7 +37,19 @@ export function inferJourney(c:Campaign):CampaignJourney {
  return {...newJourney(),step,questions:step==="brief"?[]:["audience","barrier"],diagnosis:c.insight??null,confidence:c.research.length?55:0,
   pitchedCreative:c.creative??null,mediaPlan:c.mediaBooked?"legacy":null};
 }
-export interface FreelanceJobProgress {templateId:string;stage:"brief"|"work"|"feedback"|"delivery"|"done";hoursWorked:number;revisionHours:number;focus:"research"|"quality"|"speed"|null;clientFeedback:string|null;quality:number;revisions:number;deadlineDay:number;weekHours:number;actualWorkHours?:number;deliveredDay?:number;acceptedFee?:number;}
+export type FreelanceV4Step="brief"|"workspace"|"board"|"client_review"|"revision"|"ready"|"paid";
+export interface FreelanceV4Artifact {
+ id:string;title:string;description:string;
+ decisions:Record<string,string>;copy:string;version:number;
+ status:"draft"|"ready"|"approved"|"revise";
+ score:number;feedback:string;versions:{version:number;copy:string;decisions:Record<string,string>}[];
+}
+export interface FreelanceV4Work {
+ step:FreelanceV4Step;artifacts:FreelanceV4Artifact[];activeId:string;
+ reviewRound:number;reviewVersion:number;score:number;deduction:number;
+ reviewMode?:"rules"|"gemini";paidAmount?:number;expenseCharged?:boolean;
+}
+export interface FreelanceJobProgress {templateId:string;stage:"brief"|"work"|"feedback"|"delivery"|"done";hoursWorked:number;revisionHours:number;focus:"research"|"quality"|"speed"|null;clientFeedback:string|null;quality:number;revisions:number;deadlineDay:number;weekHours:number;actualWorkHours?:number;deliveredDay?:number;acceptedFee?:number;v4?:FreelanceV4Work;}
 export interface FreelanceInvoice {id:string;clientId:string;amount:number;dueDay:number;status:"pending"|"late"|"paid";reminded:boolean}
 export type FreelanceBidApproach="creative"|"performance"|"research"|"value";
 export type FreelanceBidPrice="competitive"|"standard"|"premium";

@@ -1054,3 +1054,60 @@ button.mt-work-person-row{cursor:pointer}.mt-work-person-row:hover{border-color:
 .mt-job-market-applications{border:1px solid var(--border,#cbd9dd);border-radius:8px;padding:13px;display:flex;flex-direction:column;gap:11px;background:var(--card,#fff)}
 .mt-job-market-applications h3{font-size:14px;font-weight:800}
 .mt-job-market-applications>p{font-size:11px;line-height:1.55;color:var(--muted-foreground,#637b86)}
+
+/* Bedroom V4 — job-specific structured workspaces, reviewable actual outputs. */
+.mt-v4{display:flex;flex-direction:column;gap:12px;min-width:0;padding-bottom:18px}
+.mt-v4-header{display:flex;justify-content:space-between;align-items:flex-start;padding:15px;gap:12px;background:rgba(46,136,150,.08);border-radius:9px}
+.mt-v4-header small,.mt-v4-title small{font-size:10px;font-weight:800;letter-spacing:.065em;color:var(--muted-foreground,#687d88)}
+.mt-v4-header h2{font-size:22px;line-height:1.3;font-weight:850;margin:4px 0}
+.mt-v4-header p,.mt-v4-title p{font-size:11px;color:var(--muted-foreground,#687d88);line-height:1.5}
+.mt-v4-header>svg{flex:none;color:#327e8d}
+.mt-v4-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.mt-v4-metrics>div{display:flex;flex-direction:column;gap:5px;padding:10px;border:1px solid var(--border,#d4dfe3);border-radius:8px;background:var(--card,#fff);min-width:0}
+.mt-v4-metrics small{font-size:9px;font-weight:750;color:var(--muted-foreground,#637887)}
+.mt-v4-metrics b{font-size:15px;font-weight:800;overflow-wrap:anywhere}
+.mt-v4-route{display:flex;gap:5px;flex-wrap:wrap}
+.mt-v4-route span{font-size:10px;font-weight:720;padding:6px 8px;border:1px solid var(--border,#d7dfe3);border-radius:7px;color:var(--muted-foreground,#667a83)}
+.mt-v4-route span.active{border-color:#297f91;background:rgba(35,133,150,.11);color:var(--foreground,#263f4a)}
+.mt-v4-route span.complete{background:rgba(43,138,112,.08);color:#307367}
+.mt-v4-panel{border:1px solid var(--border,#d0dfe4);background:var(--card,#fff);border-radius:9px;display:flex;flex-direction:column;gap:12px;padding:15px;min-width:0}
+.mt-v4-panel>p{font-size:12px;line-height:1.6}
+.mt-v4-panel>details summary{font-size:12px;font-weight:750;cursor:pointer}
+.mt-v4-title{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.mt-v4-title h3{font-size:16px;font-weight:820;margin:4px 0}.mt-v4-title>svg{flex:none;color:#477888}
+.mt-v4-title>span{font-size:11px;font-weight:700;color:var(--muted-foreground,#647b84)}
+.mt-v4-main-copy{background:rgba(46,136,150,.07);border-radius:7px;padding:11px}
+.mt-v4-client{padding:11px;border:1px solid var(--border,#dae2e6);background:rgba(62,129,147,.065);border-radius:8px;font-size:12px;line-height:1.6}
+.mt-v4-client>b{font-size:11px}.mt-v4-client p{font-size:11px;line-height:1.55;white-space:pre-wrap}.mt-v4-client details{font-size:11px;margin-top:7px}
+.mt-v4-muted{color:var(--muted-foreground,#697b88);font-size:11px!important;line-height:1.5}
+.mt-v4-work{display:flex;flex-direction:column;gap:12px}
+.mt-v4-selector{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.mt-v4-selector button{background:var(--card,#fff);display:flex;flex-direction:column;gap:6px;align-items:flex-start;text-align:left;padding:10px;border:1px solid var(--border,#d4dfe2);border-radius:8px;min-width:0}
+.mt-v4-selector button>span{font-size:11px;line-height:1.4;font-weight:740}
+.mt-v4-selector button>small{font-size:10px;color:var(--muted-foreground,#677983)}
+.mt-v4-selector button.active{border-color:#2c8496;background:rgba(44,132,150,.095)}
+.mt-v4-selector button:disabled{opacity:.6;cursor:not-allowed}
+.mt-v4-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.mt-v4-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.mt-v4-field>span,.mt-v4-copy>span{font-size:11px;font-weight:740}
+.mt-v4-field select,.mt-v4-copy textarea{min-width:0;width:100%;padding:9px;border:1px solid var(--border,#c9d8dc);border-radius:7px;background:var(--card,#fff);color:var(--foreground,#243745);font-size:12px}
+.mt-v4-copy{display:flex;flex-direction:column;gap:6px}.mt-v4-copy textarea{line-height:1.55;resize:vertical}
+.mt-v4-preview{border-radius:8px;background:rgba(61,130,145,.07);padding:11px;display:flex;flex-direction:column;gap:8px}
+.mt-v4-preview>div:first-child,.mt-v4-artifact>div:first-child{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mt-v4-preview>div:first-child b,.mt-v4-artifact>div:first-child b{font-size:12px}
+.mt-v4-preview>div:first-child span,.mt-v4-artifact>div:first-child span{font-size:10px;color:var(--muted-foreground,#687e87)}
+.mt-v4-preview p,.mt-v4-artifact p{font-size:11px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.mt-v4-tags{display:flex;gap:5px;flex-wrap:wrap}
+.mt-v4-tags span{font-size:9px;padding:4px 7px;background:var(--muted,#eef3f4);border-radius:6px;color:var(--muted-foreground,#637983)}
+.mt-v4-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mt-v4-actions>small{font-size:10px;color:var(--muted-foreground,#697b84)}
+.mt-v4-boards{display:flex;flex-direction:column;gap:8px}
+.mt-v4-artifact{display:flex;flex-direction:column;gap:8px;border:1px solid var(--border,#d3dee2);border-radius:8px;padding:11px;min-width:0;background:var(--card,#fff)}
+.mt-v4-artifact>button{align-self:flex-start}
+.mt-v4-bottom{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--border,#d4dfe2);border-radius:8px;padding:12px;flex-wrap:wrap}
+.mt-v4-bottom>div{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.mt-v4-bottom small{font-size:10px;color:var(--muted-foreground,#657b82)}
+.mt-v4-payment{display:flex;flex-direction:column;gap:7px;padding:12px;background:rgba(51,138,116,.09);border-radius:8px}
+.mt-v4-payment>div{display:flex;justify-content:space-between;gap:9px;align-items:center;font-size:12px}
+.mt-v4-payment strong{font-size:17px;font-weight:850}
+@media(max-width:690px){.mt-v4-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.mt-v4-choices{grid-template-columns:1fr}.mt-v4-selector{grid-template-columns:1fr}.mt-v4-panel{padding:12px}.mt-v4-header h2{font-size:19px}}

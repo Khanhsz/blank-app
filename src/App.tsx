@@ -16,6 +16,7 @@ import {prepareNextBrief} from "./game/automaticBrief";
 import {prepareAgencyPricing} from "./game/automaticPricing";
 import {prepareMarketIntelligence} from "./game/automaticMarketIntelligence";
 import {prepareFreelanceApplicationReviews} from "./game/automaticFreelanceReview";
+import {prepareFreelanceDeliverableReview} from "./game/automaticDeliverableReview";
 import {prepareClientFinancialCalibration} from "./game/automaticFinancialCalibration";
 import {money,BRAND_HQ_REP} from "./game/data";
 import {cityLots,findOffice,currentOffice,cityCounts,type DistrictKind} from "./game/city";
@@ -82,6 +83,7 @@ export default function App(){
  // that client’s context, insight and strategy. Never auto-create random briefs.
  useEffect(()=>{prepareNextBrief()},[s.created,s.agencyUnlocked,s.campaign.phase,s.campaign.briefId,s.campaign.catalogClientId,s.campaign.aiStatus]);
   useEffect(()=>{prepareFreelanceApplicationReviews()},[s.created,s.agencyUnlocked,s.freelanceBoard?.applications]);
+  useEffect(()=>{prepareFreelanceDeliverableReview()},[s.campaign.briefId,s.campaign.freelanceJob?.v4?.reviewVersion,s.campaign.freelanceJob?.v4?.reviewMode]);
  // Gemini calibrates fictional company-size ratios once; existing published revenues stay intact.
  useEffect(()=>{prepareClientFinancialCalibration()},[s.created,s.financeCalibration]);
  // Pricing now runs as a mandatory part of agency lead qualification and pitch preparation.

@@ -76,3 +76,5 @@ test("Bedroom V2 scope is server-authoritative, never invented or a full agency 
 });
 
 import "./freelance-review.test.mjs";
+
+import "./deliverables.test.mjs";

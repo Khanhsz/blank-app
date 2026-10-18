@@ -6,6 +6,7 @@ import {FREELANCE_JOBS,getFreelanceJob} from "../src/game/freelanceJobTemplates"
 import {chooseFreelanceClient} from "../src/game/campaign";
 import {startSmallJob,deliverSmallJob,doWork,askForReview} from "../src/game/freelanceJobs";
 import * as Market from "../src/game/freelanceMarket";
+import * as V4 from "../src/game/freelanceWorkflows";
 import type {Fx} from "../src/game/store";
 const fx:Fx={toast:()=>{},log:()=>{}};
 const game=()=>{const s=defaults();s.created=true;return s;};
@@ -172,4 +173,100 @@ test("One click Apply displays AI Pending and Accept Offer in selected job card"
  assert.ok(view.includes("Accept Offer"));
  assert.ok(!view.includes("Selection takes place at End Week"));
  assert.ok(app.includes("prepareFreelanceApplicationReviews()"),"review resumes after restore, outside a modal");
+});
+
+function v4Game(jobId:string){
+ const s=game(),t=getFreelanceJob(jobId)!;
+ s.campaign.briefId="v4-"+jobId;
+ s.campaign.catalogClientId="startup-coffee-0";
+ s.campaign.freelanceJob={templateId:jobId,stage:"brief",hoursWorked:0,revisionHours:0,focus:null,
+  clientFeedback:null,quality:50,revisions:0,deadlineDay:0,weekHours:0,actualWorkHours:0,
+  acceptedFee:Math.round(t.fee*1.15),v4:V4.newFreelanceV4(jobId)};
+ s.campaign.aiScenario=requireMockScenario(s,t);
+ s.campaign.aiStatus="ready";
+ return s;
+}
+function fillV4(s:ReturnType<typeof game>,badId?:string){
+ const v=s.campaign.freelanceJob!.v4!,def=V4.designFor(s.campaign.freelanceJob!.templateId)!;
+ for(const a of [...v.artifacts]){
+  const unit=def.units.find(x=>x.id===a.id)!;
+  const decisions=Object.fromEntries(unit.fields.map(f=>{
+   const best=badId===a.id?[...f.options].sort((a,b)=>a.fit-b.fit)[0]:[...f.options].sort((a,b)=>b.fit-a.fit)[0];
+   return [f.id,best.id];
+  }));
+  const copy=badId===a.id?"A short preliminary draft needing clearer detail.":a.copy;
+  let saved=V4.editV4(s,fx,a.id,decisions,copy);
+  if(!saved){s.clock.week++;saved=V4.editV4(s,fx,a.id,decisions,copy);}
+  assert.equal(saved,true,"saving "+a.id);
+ }
+}
+test("V4 all eight titles produce distinct structured outputs and pay only once after approval",()=>{
+ assert.equal(V4.allDesigns.length,8);
+ assert.equal(new Set(V4.allDesigns.map(x=>x.workstation)).size,8);
+ for(const def of V4.allDesigns){
+  const s=v4Game(def.id),c=s.campaign,p=c.freelanceJob!,v=p.v4!,t=getFreelanceJob(def.id)!;
+  const initialCash=s.personalCash;
+  assert.equal(V4.startV4(s,fx),true);
+  assert.equal(s.personalCash,initialCash,"brief and starting the job must not pay deposit");
+  assert.equal(v.step,"workspace");
+  assert.ok(v.artifacts.length>=4,"job has real separate outputs");
+  fillV4(s);
+  assert.ok(v.artifacts.every(x=>x.version===1&&x.versions.length===1));
+  assert.equal(V4.openV4Board(s,fx),true);
+  assert.equal(V4.submitV4Review(s,fx),true);
+  assert.equal(v.step,"ready","good work accepted for "+def.id);
+  assert.equal(s.personalCash,initialCash,"client review is not payment");
+  assert.equal(V4.finalizeV4(s,fx),true);
+  const fee=p.acceptedFee!;
+  assert.equal(s.personalCash,initialCash+fee-t.outOfPocket);
+  assert.equal(v.paidAmount,fee);assert.equal(v.step,"paid");
+  assert.equal(V4.finalizeV4(s,fx),false);
+  assert.equal(s.freelanceCareer!.completedIds.filter(x=>x===c.briefId).length,1);
+  const restored=migrate(JSON.parse(JSON.stringify(s)));
+  assert.equal(restored.campaign.freelanceJob?.v4?.step,"paid");
+  assert.equal(restored.campaign.freelanceJob?.v4?.artifacts[0].version,1);
+ }
+});
+test("V4 deliverable board allows targeted edits, preserves approved items and controls revision limits",()=>{
+ const s=v4Game("social-pack"),p=s.campaign.freelanceJob!,v=p.v4!;
+ V4.startV4(s,fx);
+ const problem=v.artifacts[0].id;
+ fillV4(s,problem);
+ V4.openV4Board(s,fx);
+ assert.equal(V4.submitV4Review(s,fx),true);
+ assert.equal(v.step,"revision");
+ const accepted=v.artifacts.filter(a=>a.status==="approved").map(a=>a.id);
+ assert.ok(accepted.length>0);
+ assert.equal(V4.returnV4Workspace(s,problem),undefined);
+ assert.equal(v.step,"workspace");
+ const choice=V4.unitFor(p.templateId,problem)!;
+ const valid=Object.fromEntries(choice.fields.map(f=>[f.id,[...f.options].sort((a,b)=>b.fit-a.fit)[0].id]));
+ assert.equal(V4.editV4(s,fx,problem,valid,v.artifacts[0].copy),true);
+ assert.equal(v.artifacts[0].versions.length,2);
+ assert.ok(accepted.every(id=>v.artifacts.find(a=>a.id===id)?.status==="approved"));
+ assert.equal(V4.openV4Board(s,fx),true);
+ assert.equal(V4.submitV4Review(s,fx),true);
+ assert.equal(v.step,"ready");
+ const originalStatus=v.artifacts.map(a=>a.status);
+ const nextVersion=v.reviewVersion;
+ assert.equal(V4.applyV4AIReview(s,nextVersion,[{id:problem,feedback:"Client likes this revised social message and execution."}]),true);
+ assert.deepEqual(v.artifacts.map(a=>a.status),originalStatus,"AI cannot change awards or review states");
+});
+test("V4 enforces capacity, completeness and 20% deduction when all included revisions exhausted",()=>{
+ const s=v4Game("social-audit"),p=s.campaign.freelanceJob!,v=p.v4!,t=getFreelanceJob("social-audit")!;
+ V4.startV4(s,fx);
+ assert.equal(V4.openV4Board(s,fx),false);
+ fillV4(s,v.artifacts[0].id);
+ V4.openV4Board(s,fx);V4.submitV4Review(s,fx);
+ assert.equal(v.step,"revision");
+ V4.returnV4Workspace(s,v.artifacts[0].id);
+ const a=v.artifacts[0],unit=V4.unitFor(p.templateId,a.id)!;
+ const low=Object.fromEntries(unit.fields.map(f=>[f.id,[...f.options].sort((a,b)=>a.fit-b.fit)[0].id]));
+ assert.equal(V4.editV4(s,fx,a.id,low,a.copy+" Revision notes."),true);
+ V4.openV4Board(s,fx);V4.submitV4Review(s,fx);
+ assert.equal(v.step,"ready");assert.equal(v.deduction,20);
+ const before=s.personalCash;assert.equal(V4.finalizeV4(s,fx),true);
+ const fee=Math.round((p.acceptedFee??t.fee)*.8/10000)*10000;
+ assert.equal(v.paidAmount,fee);
+ assert.equal(s.personalCash,before+fee-t.outOfPocket);
 });

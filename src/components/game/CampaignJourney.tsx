@@ -8,6 +8,7 @@ import {creatives,insights,mediaChannels,money,objectives,optimizations,position
 import {AnimatedGauge,GameSection,GameStat,FeedbackStrip} from "./GameVisuals";
 import {AutomaticBriefWaiting} from "./AIBriefLauncher";
 import {FreelanceJobDesk} from "./FreelanceJobDesk";
+import {FreelanceV4Desk} from "./FreelanceV4Desk";
 import {getFreelanceJob} from "@/game/freelanceJobTemplates";
 import {ClientCatalog} from "./ClientCatalog";
 import type {Campaign,CampaignJourney,JourneyStep} from "@/game/state";
@@ -182,6 +183,7 @@ export function CampaignJourney(){
     <Button size="sm" variant={!browse?"default":"outline"} onClick={()=>setBrowse(false)} disabled={!c.catalogClientId}>Awarded Job · Gemini Brief</Button>
   </div>}
   {c.phase==="brief"&&(browse||!c.catalogClientId)?<ClientCatalog mode="freelancer" onSelected={()=>setBrowse(false)}/>:
+   c.freelanceJob?.v4&&c.aiScenario?<FreelanceV4Desk/>:
    c.freelanceJob&&getFreelanceJob(c.freelanceJob.templateId)?.tier!=="campaign"&&c.aiScenario?<FreelanceJobDesk/>:
    <Main key={c.briefId} c={c}/>}
  </div>;
