@@ -10,6 +10,10 @@ const fx:Fx={toast:()=>{},log:()=>{}};
 export function seedApproachedClient(s:GameState,clientId="startup-coffee-0"){
  const client=getClient(clientId);
  if(!client)throw Error("Unknown test client");
+ // Regression tests below exercise the pre-Job-Board legacy campaign journey.
+ // Explicitly model an old save without V3 applications; production code
+ // never imports this fixture, and live applications still require an award.
+ s.freelanceBoard=undefined;
  if(!chooseFreelanceClient(s,fx,clientId))throw Error("Could not approach test client");
  const sc={...scenarios[0],
   id:"ai-fixture-"+client.id,brand:client.brand,industry:client.industry,

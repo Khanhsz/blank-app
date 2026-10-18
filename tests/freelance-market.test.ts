@@ -21,7 +21,7 @@ test("Reputation 30 is locked out of expensive SME and Startup jobs but keeps en
  const s=game(),t=getFreelanceJob("audience-research")!;
  s.freelanceCareer!.completedGigs=5;s.reputation=30;
  assert.equal(Market.isHighBudgetJob(t),true);
- assert.match(Market.jobGate(s,t)??"","31");
+ assert.match(Market.jobGate(s,t)??"",/31/);
  const listing=Market.ensureFreelanceBoard(s).listings.find(x=>x.templateId===t.id)!;
  assert.equal(Market.applyFreelanceJob(s,fx,listing.id,"research","standard"),false);
  assert.equal(s.freelanceBoard?.applications.length,0);
