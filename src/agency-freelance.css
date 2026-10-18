@@ -1,0 +1,26 @@
+/* Side gigs live inside the existing CEO panel; never require a new modal. */
+.mt-agency-gigs{display:flex;flex-direction:column;gap:13px;min-width:0;--ag-line:#cfdfdf}
+.mt-agency-gigs .mt-job-market-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}
+.mt-agency-gigs .mt-job-market-applications{min-width:0}
+.mt-agency-gigs .mt-job-market-card{min-width:0;overflow-wrap:anywhere}
+.mt-agency-gig{background:#f8fbfa;border:1px solid var(--ag-line);border-radius:10px;padding:13px;display:flex;flex-direction:column;gap:11px;min-width:0}
+.mt-agency-gig-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.mt-agency-gig-heading h4{font-size:15px;font-weight:800;color:#244b57;margin:3px 0}
+.mt-agency-gig-heading small{font-size:10px;letter-spacing:.07em;color:#66858c}
+.mt-agency-gig-heading>span{border:1px solid #b7dbd2;padding:5px 8px;border-radius:7px;color:#247768;background:#e5f4ef;font-size:10px;font-weight:850;white-space:nowrap}
+.mt-agency-gig>p{font-size:11px;color:#54727b;line-height:1.6;margin:0}
+.mt-agency-gig-metrics{display:flex;gap:8px;flex-wrap:wrap}
+.mt-agency-gig-metrics>span{display:inline-flex;align-items:center;gap:5px;border:1px solid #d6e6e4;background:white;border-radius:8px;padding:8px;font-size:10px;font-weight:700;min-width:0;overflow-wrap:anywhere}
+.mt-agency-gig-progress{height:8px;width:100%;overflow:hidden;background:#dbe9e6;border-radius:7px}
+.mt-agency-gig-progress>span{height:100%;display:block;background:#298d84;transition:width .2s}
+.mt-agency-gig>small,.mt-agency-gig-deliverables>summary,.mt-agency-gig-reassign>summary{font-size:11px;line-height:1.6;color:#59777d}
+.mt-agency-gig-deliverables,.mt-agency-gig-reassign{min-width:0}
+.mt-agency-gig-deliverables>summary,.mt-agency-gig-reassign>summary{font-weight:800;cursor:pointer;margin:8px 0}
+.mt-agency-gig-deliverables .mt-v4-artifact{margin:8px 0;max-height:210px;overflow:auto}
+.mt-agency-gig-reassign>div{display:flex;flex-wrap:wrap;gap:7px}
+.mt-agency-gig-assign{display:flex;gap:7px;flex-wrap:wrap;align-items:center;padding-top:8px}
+.mt-agency-gig-assign label{font-size:11px;font-weight:800;color:#385f66}
+.mt-agency-gig-assign select{flex:1;min-width:min(100%,160px);font-size:11px;border:1px solid #bdd5d4;background:white;border-radius:7px;padding:10px;color:#254956}
+.mt-agency-gigs .mt-job-market-app{overflow-wrap:anywhere;min-width:0}
+@media(max-width:700px){.mt-agency-gig-heading{flex-wrap:wrap}.mt-agency-gigs .mt-job-market-grid{grid-template-columns:minmax(0,1fr)}.mt-agency-gigs .mt-job-market-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.mt-agency-gig-progress>span{transition:none}}
