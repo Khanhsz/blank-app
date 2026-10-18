@@ -20,7 +20,7 @@ const INITIAL_RIVAL_OWNERS:Record<string,{agencyId:string;endDay:number}>={
  "f50-2":{agencyId:"pulse",endDay:220},
  "f50-4":{agencyId:"muse",endDay:180},
  "f50-5":{agencyId:"north",endDay:120},
- "f50-11":{agencyId:"atlas",endDay:310}
+ "f50-11":{agencyId:"pulse",endDay:310}
 };
 export function ensureFortuneAccounts(s:GameState):Record<string,FortuneAccount>{
  const accounts=s.ceo?.fortuneAccounts;
