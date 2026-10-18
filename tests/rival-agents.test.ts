@@ -90,8 +90,18 @@ test("rival economic model keeps scores bounded and avoids duplicate client awar
  assert.equal(r.clients,num+1);
 });
 
-test("fresh fictional corporate tenders recur and become playable through their existing HQ",()=>{
+test("startup agency seasonal leads are SME only and never include unearned corporate accounts",()=>{
  const s=game(),c=s.ceo!;
+ c.leads=[];
+ for(let i=0;i<27;i++)ceoDay(s,c,fx);
+ const current=c.leads.find(l=>l.id==="market-sora-28");
+ assert.ok(current);
+ assert.equal(current.businessSize,"medium");
+ assert.equal(c.leads.some(l=>l.id==="market-orion-28"),false);
+});
+test("fresh fictional corporate tenders recur once qualified agency reaches premium status",()=>{
+ const s=game(),c=s.ceo!;
+ s.history=Array.from({length:3},()=>({brand:"Delivered",outcome:15,score:75,spent:8_000_000,rep:3,xp:7,scenarioIndex:0,agency:true}));
  for(let i=0;i<27;i++)ceoDay(s,c,fx);
  assert.equal(c.day,28);
  const rfp=c.leads.find(l=>l.id==="market-orion-28");
