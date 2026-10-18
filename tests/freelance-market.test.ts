@@ -278,7 +278,7 @@ test("V6 keeps rejected artifacts in revision even when included rounds are exha
  const low=Object.fromEntries(unit.fields.map(f=>[f.id,[...f.options].sort((a,b)=>a.fit-b.fit)[0].id]));
  for(let round=0;round<t.revisions;round++){
   V4.returnV4Workspace(s,problem.id);
-  assert.equal(V4.editV4(s,fx,problem.id,low,"This still needs stronger evidence and supported marketing claims."+" R"+round),true);
+  assert.equal(V4.editV4(s,fx,problem.id,low,"Weak evidence for round "+round),true);
   assert.equal(V4.openV4Board(s,fx),true);
   assert.equal(V4.submitV4Review(s,fx),true);
   assert.equal(v.step,"revision");
