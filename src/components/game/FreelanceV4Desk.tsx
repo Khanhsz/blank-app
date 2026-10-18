@@ -9,6 +9,7 @@ import * as Work from "@/game/freelanceWorkflows";
 import * as Campaign from "@/game/campaign";
 import {prepareFreelanceDeliverableReview} from "@/game/automaticDeliverableReview";
 import type {FreelanceV4Artifact} from "@/game/state";
+import {VideoMiniGame,VideoDraftPreview} from "./VideoMiniGame";
 
 const phases=[{id:"brief",label:"Brief"},{id:"workspace",label:"Workspace"},{id:"board",label:"Deliverable Board"},{id:"revision",label:"Client Review"},{id:"ready",label:"Final Submit"},{id:"paid",label:"Paid"}] as const;
 function Editor({artifact,jobId}:{artifact:FreelanceV4Artifact;jobId:string}){
@@ -88,7 +89,9 @@ export function FreelanceV4Desk(){
      <span>{i+1}. {a.title}</span><small>{a.status==="approved"?"Approved":a.draft?"Draft saved · version needed":a.version?"v"+a.version+" · "+a.status:"New draft"}</small>
     </button>)}
    </div>
-   <Editor key={c.briefId+"-"+current.id} artifact={current} jobId={job.id}/>
+   {job.id==="short-video"&&(current.version===0||current.video||current.videoDraft)
+    ? <VideoMiniGame key={c.briefId+"-"+current.id} artifact={current} brand={sc?.brand??"Client"}/>
+    : <Editor key={c.briefId+"-"+current.id} artifact={current} jobId={job.id}/>}
    <div className="mt-v4-bottom">
     <div><small>Progress</small><b>{completed}/{v.artifacts.length} deliverable versions</b><small>{drafts>0?" · "+drafts+" edited draft(s) to save":""} · {p.actualWorkHours??0}h worked · deadline Day {p.deadlineDay} · est. Day {estimate?.workDay??s.clock.day}</small></div>
     <Button disabled={completed!==v.artifacts.length||drafts>0} onClick={()=>act(Work.openV4Board)}>
@@ -101,6 +104,7 @@ export function FreelanceV4Desk(){
    <div className="mt-v4-boards">{v.artifacts.map(a=><div className="mt-v4-artifact" key={a.id}>
     <div><b>{a.title}</b><span>{a.status} · v{a.version} · {a.score}/100</span></div>
     <p>{a.copy}</p>
+    {a.video&&<VideoDraftPreview video={a.video} title={a.title}/>}
     <div className="mt-v4-tags">{Object.entries(a.decisions).map(([key,value])=><span key={key}>{key}: {value}</span>)}</div>
     <Button variant="outline" size="sm" disabled={a.status==="approved"} onClick={()=>act(s=>Work.returnV4Workspace(s,a.id))}><PenTool size={14}/> Back & Edit</Button>
    </div>)}</div>
@@ -114,6 +118,7 @@ export function FreelanceV4Desk(){
    <div className="mt-v4-boards">{v.artifacts.map(a=><div className="mt-v4-artifact" key={a.id}>
     <div><b>{a.title}</b><span>{a.status==="approved"?"Approved":"Needs revision"}</span></div>
     <p>{a.feedback}</p>
+    {a.video&&<VideoDraftPreview video={a.video} title={a.title}/>}
     {a.status==="revise"&&<Button variant="outline" size="sm" onClick={()=>act(s=>Work.returnV4Workspace(s,a.id))}>Edit This Deliverable <ArrowRight size={14}/></Button>}
    </div>)}</div>
    <p className="mt-v4-muted">{reviewItems.length} output(s) need adjustments. Approved outputs remain locked. Saving a revision uses 1 work hour.</p>
@@ -122,7 +127,7 @@ export function FreelanceV4Desk(){
    <div className="mt-v4-title"><div><small>CLIENT REVIEW FINISHED</small><h3>Final Submit & Payment</h3></div><FileCheck2 size={20}/></div>
    <p>{p.clientFeedback}</p>
    <div className="mt-v4-boards">{v.artifacts.map(a=><div className="mt-v4-artifact" key={a.id}>
-    <div><b>{a.title}</b><span>{a.status==="approved"?"Approved":"Accepted as-is"}</span></div><p>{a.feedback}</p>
+    <div><b>{a.title}</b><span>{a.status==="approved"?"Approved":"Accepted as-is"}</span></div><p>{a.feedback}</p>{a.video&&<VideoDraftPreview video={a.video} title={a.title}/>}
    </div>)}</div>
    <div className="mt-v4-payment">
     <div><span>Service fee</span><b>{money(fee)}</b></div>
@@ -137,7 +142,7 @@ export function FreelanceV4Desk(){
    <div className="mt-v4-title"><div><small>PROJECT CLOSED · PAID</small><h3><CheckCircle2 size={18}/> Deliverables accepted</h3></div><Wallet size={20}/></div>
    <p>{v.artifacts.length} deliverables completed · overall quality {v.score}/100 · fee received {money(v.paidAmount??0)} · personal expenses {money(job.outOfPocket)}.</p>
    <p>Portfolio updated. Individual deliverable versions remain saved for reference.</p>
-   <details><summary>Completed portfolio artifacts</summary>{v.artifacts.map(a=><div className="mt-v4-artifact" key={a.id}><b>{a.title} · v{a.version}</b><p>{a.copy}</p></div>)}</details>
+   <details><summary>Completed portfolio artifacts</summary>{v.artifacts.map(a=><div className="mt-v4-artifact" key={a.id}><b>{a.title} · v{a.version}</b><p>{a.copy}</p>{a.video&&<VideoDraftPreview video={a.video} title={a.title}/>}</div>)}</details>
    <Button className="w-full" onClick={()=>act(Campaign.nextClient)}>Return to Job Board <ArrowRight size={16}/></Button>
   </section>}
  </div>;

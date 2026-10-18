@@ -6,6 +6,7 @@ import type {Fx} from "./store";
 import {getFreelanceJob,type FreelanceJobType} from "./freelanceJobTemplates";
 import {workload,WEEKLY_CAPACITY,effectiveWorkDay} from "./freelanceJobs";
 import {clamp,money} from "./data";
+import {videoScore} from "./videoMiniGames";
 
 export interface Choice {id:string;label:string;detail:string;fit:number}
 export interface Field {id:string;label:string;options:Choice[]}
@@ -86,6 +87,7 @@ export function newFreelanceV4(jobId:string):FreelanceV4Work{
    version:0,status:"draft",score:0,feedback:"",versions:[]}))};
 }
 export function artifactScore(jobId:string,a:FreelanceV4Artifact):number{
+ if(jobId==="short-video"&&a.video)return videoScore(a.video);
  const unit=unitFor(jobId,a.id);if(!unit)return 0;
  const scores=unit.fields.map(f=>f.options.find(x=>x.id===a.decisions[f.id])?.fit??0);
  if(scores.some(x=>!x))return 0;
@@ -117,13 +119,16 @@ export function v4EditHours(s:GameState,id:string):number{
  return !v||!t||!a?0:a.version?1:Math.max(1,Math.ceil(t.hours/v.artifacts.length));
 }
 export function v4HasDrafts(v:FreelanceV4Work):boolean{
- return v.artifacts.some(a=>!!a.draft);
+ return v.artifacts.some(a=>!!a.draft||!!a.videoDraft);
 }
 export function editV4(s:GameState,fx:Fx,id:string,decisions:Record<string,string>,copy:string){
  const p=s.campaign.freelanceJob,v=p?.v4;
  if(!p||!v||v.step!=="workspace")return false;
  const unit=unitFor(p.templateId,id),a=v.artifacts.find(x=>x.id===id);
  if(!unit||!a||a.status==="approved"||copy.trim().length<20||copy.length>2500)return false;
+ // Existing pre-V5 saves can continue their saved text versions, but new
+ // short-video deliverables must use their playable production mini-game.
+ if(p.templateId==="short-video"&&a.version===0&&!a.video)return fx.toast("Complete the video mini-game to save this deliverable."),false;
  if(unit.fields.some(f=>!f.options.some(x=>x.id===decisions[f.id])))return fx.toast("Complete every professional decision before saving."),false;
  const unchanged=a.copy===copy&&unit.fields.every(f=>a.decisions[f.id]===decisions[f.id]);
  if(unchanged&&a.version>0){delete a.draft;return true;}

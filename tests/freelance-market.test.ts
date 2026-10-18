@@ -7,6 +7,7 @@ import {chooseFreelanceClient,nextClient} from "../src/game/campaign";
 import {startSmallJob,deliverSmallJob,doWork,askForReview} from "../src/game/freelanceJobs";
 import * as Market from "../src/game/freelanceMarket";
 import * as V4 from "../src/game/freelanceWorkflows";
+import * as V5 from "../src/game/videoMiniGames";
 import type {Fx} from "../src/game/store";
 const fx:Fx={toast:()=>{},log:()=>{}};
 const game=()=>{const s=defaults();s.created=true;return s;};
@@ -188,6 +189,17 @@ function v4Game(jobId:string){
 }
 function fillV4(s:ReturnType<typeof game>,badId?:string){
  const v=s.campaign.freelanceJob!.v4!,def=V4.designFor(s.campaign.freelanceJob!.templateId)!;
+ if(def.id==="short-video"){
+  for(const a of v.artifacts){
+   const patch=idealVideo(a.id);
+   assert.equal(V5.changeVideoDraft(s,a.id,patch),true);
+   let saved=V5.commitVideoDraft(s,fx,a.id);
+   if(!saved){s.clock.week++;saved=V5.commitVideoDraft(s,fx,a.id);}
+   assert.equal(saved,true,"video mini-game deliverable "+a.id);
+  }
+  return;
+ }
+
  for(const a of [...v.artifacts]){
   const unit=def.units.find(x=>x.id===a.id)!;
   const decisions=Object.fromEntries(unit.fields.map(f=>{
@@ -274,3 +286,97 @@ test("V4 enforces capacity, completeness and 20% deduction when all included rev
  assert.equal(s.personalCash,before+fee-t.outOfPocket);
 });
 
+
+function idealVideo(id:string){
+ switch(id){
+ case "video-1":return {hookClip:"problem",headline:"benefit",tests:1};
+ case "video-2":return {frameX:55,frameY:46,zoom:1.22,captureTime:4.5,captures:1};
+ case "video-3":return {order:[...V5.MATCH_IDEAL],lengths:[...V5.MATCH_DURATIONS],edits:5};
+ case "video-4":return {captions:[...V5.CAPTION_TARGETS],captionY:78};
+ case "video-5":return {beatCuts:[...V5.BEAT_TARGETS],beatAttempt:1};
+ default:throw Error("unknown video ID "+id);
+ }
+}
+test("Reel Rush has five genuine distinct mini-game states and human-input QA scores",()=>{
+ assert.deepEqual(V5.VIDEO_LEVELS.map(x=>x.kind),["scroll-stopper","perfect-shot","match-cut","caption-rush","beat-drop"]);
+ for(const {id} of V5.VIDEO_LEVELS){
+  const draft=V5.initialVideoState(id);
+  assert.equal(V5.videoComplete(draft),false,"new "+id+" cannot be instantly completed");
+  const wrong=V5.videoScore(draft);
+  assert.equal(wrong,0);
+  const completed={...draft,...idealVideo(id)};
+  assert.equal(V5.videoComplete(completed),true,id);
+  assert.ok(V5.videoScore(completed)>=78,"successful actual moves pass "+id);
+  assert.match(V5.videoSummary(completed),/video draft/i);
+ }
+});
+test("Reel Rush video edits autosave, require gameplay and persist immutable submitted video versions",()=>{
+ const s=v4Game("short-video"),v=s.campaign.freelanceJob!.v4!;
+ assert.equal(V4.startV4(s,fx),true);
+ assert.equal(V5.commitVideoDraft(s,fx,"video-1"),false,"blank game cannot commit");
+ assert.equal(V4.editV4(s,fx,"video-1",{hook:"problem",story:"howto",pacing:"captions",cta:"visit"},
+  "This old form should not allow bypassing a new video mini-game."),false);
+ assert.equal(V5.changeVideoDraft(s,"video-1",{hookClip:"problem",headline:"benefit",tests:1}),true);
+ const draft=v.artifacts[0].videoDraft!;
+ assert.equal(draft.tests,1);
+ assert.equal(V4.openV4Board(s,fx),false,"uncommitted game draft must not enter review");
+ const cash=s.personalCash;
+ assert.equal(V5.commitVideoDraft(s,fx,"video-1"),true);
+ assert.equal(s.personalCash,cash,"saving a video does not pay freelancer");
+ assert.equal(v.artifacts[0].version,1);
+ assert.equal(v.artifacts[0].video?.tests,1);
+ assert.equal(v.artifacts[0].versions[0].video?.kind,"scroll-stopper");
+ assert.equal(V5.changeVideoDraft(s,"video-1",{hookClip:"logo",headline:"generic",tests:1}),true);
+ assert.equal(v.artifacts[0].video?.hookClip,"problem","editing must not overwrite submitted version");
+ assert.equal(v.artifacts[0].videoDraft?.hookClip,"logo");
+ const restored=migrate(JSON.parse(JSON.stringify(s)));
+ assert.equal(restored.campaign.freelanceJob?.v4?.artifacts[0].videoDraft?.hookClip,"logo");
+ assert.equal(restored.campaign.freelanceJob?.v4?.artifacts[0].video?.hookClip,"problem");
+});
+test("Five video drafts go to V4 client review, targeted revision and exactly-once payment",()=>{
+ const s=v4Game("short-video"),c=s.campaign,p=c.freelanceJob!,v=p.v4!,cash=s.personalCash;
+ V4.startV4(s,fx);
+ for(const a of v.artifacts){
+  assert.equal(V5.changeVideoDraft(s,a.id,idealVideo(a.id)),true);
+  assert.equal(V5.commitVideoDraft(s,fx,a.id),true);
+ }
+ const bad=v.artifacts[4];
+ assert.equal(V5.changeVideoDraft(s,bad.id,{beatCuts:[.3,1.2,2.0,2.6],beatAttempt:2}),true);
+ assert.equal(V5.commitVideoDraft(s,fx,bad.id),true);
+ assert.equal(V4.openV4Board(s,fx),true);
+ assert.equal(V4.submitV4Review(s,fx),true);
+ assert.equal(v.step,"revision");
+ assert.equal(bad.status,"revise");
+ assert.ok(v.artifacts.slice(0,4).every(a=>a.status==="approved"));
+ V4.returnV4Workspace(s,bad.id);
+ assert.equal(v.step,"workspace");
+ assert.equal(V5.changeVideoDraft(s,bad.id,{beatCuts:[...V5.BEAT_TARGETS],beatAttempt:3}),true);
+ assert.equal(V5.commitVideoDraft(s,fx,bad.id),true);
+ assert.equal(bad.versions.length,3);
+ assert.equal(V4.openV4Board(s,fx),true);
+ assert.equal(V4.submitV4Review(s,fx),true);
+ assert.equal(v.step,"ready");
+ assert.equal(s.personalCash,cash);
+ assert.equal(V4.finalizeV4(s,fx),true);
+ assert.equal(V4.finalizeV4(s,fx),false);
+ assert.equal(s.personalCash,cash+(p.acceptedFee??0)-getFreelanceJob("short-video")!.outOfPocket);
+});
+test("V5 quality and state cannot be forged through invalid scene or beat input",()=>{
+ const s=v4Game("short-video");
+ V4.startV4(s,fx);
+ const base=s.campaign.freelanceJob!.v4!.artifacts[2];
+ assert.equal(V5.changeVideoDraft(s,base.id,{order:["hook","hook","product","process","cta"]}),false);
+ assert.equal(base.videoDraft,undefined);
+ assert.equal(V5.changeVideoDraft(s,"video-5",{beatCuts:[-3,88]}),false);
+ assert.equal(V5.changeVideoDraft(s,"video-4",{captionY:999}),false);
+});
+test("Reel Rush actually replaces dropdown editor and its output is visible at Board / Client Review",()=>{
+ const workspace=readFileSync("src/components/game/FreelanceV4Desk.tsx","utf8");
+ const editor=readFileSync("src/components/game/VideoMiniGame.tsx","utf8");
+ assert.ok(workspace.includes("<VideoMiniGame"));
+ assert.ok(workspace.includes("<VideoDraftPreview"));
+ assert.ok(editor.includes("requestAnimationFrame"));
+ assert.ok(editor.includes("onPointerMove"));
+ assert.ok(editor.includes("onClick={cut}"));
+ assert.ok(editor.includes("input type="));
+});

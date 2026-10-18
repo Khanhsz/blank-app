@@ -38,12 +38,23 @@ export function inferJourney(c:Campaign):CampaignJourney {
   pitchedCreative:c.creative??null,mediaPlan:c.mediaBooked?"legacy":null};
 }
 export type FreelanceV4Step="brief"|"workspace"|"board"|"client_review"|"revision"|"ready"|"paid";
+/** Deterministic browser-playable video game state, never an MP4 export. */
+export type VideoMiniKind="scroll-stopper"|"perfect-shot"|"match-cut"|"caption-rush"|"beat-drop";
+export interface VideoMiniState {
+ kind:VideoMiniKind;
+ hookClip:string;headline:string;tests:number;
+ frameX:number;frameY:number;zoom:number;captureTime:number;captures:number;
+ order:string[];lengths:number[];edits:number;
+ captions:number[];captionY:number;
+ beatCuts:number[];beatAttempt:number;
+}
 export interface FreelanceV4Artifact {
  id:string;title:string;description:string;
  decisions:Record<string,string>;copy:string;version:number;
  draft?:{decisions:Record<string,string>;copy:string};
+ video?:VideoMiniState;videoDraft?:VideoMiniState;
  status:"draft"|"ready"|"approved"|"revise";
- score:number;feedback:string;versions:{version:number;copy:string;decisions:Record<string,string>}[];
+ score:number;feedback:string;versions:{version:number;copy:string;decisions:Record<string,string>;video?:VideoMiniState}[];
 }
 export interface FreelanceV4Work {
  step:FreelanceV4Step;artifacts:FreelanceV4Artifact[];activeId:string;
