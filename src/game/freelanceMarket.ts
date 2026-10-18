@@ -42,7 +42,7 @@ export function jobGate(s:GameState,t:FreelanceJobTemplate){
 function newWeekListings(week:number):FreelanceListing[]{
  const companies=CLIENT_DATABASE.filter(c=>c.segment==="startup"||c.segment==="sme");
  // Guaranteed starter/medium/premium mix every week. No Big Corp in Bedroom.
- const ids=["social-pack","social-audit","content-calendar","short-video","meta-setup",
+ const ids=["social-pack","social-audit","content-calendar","landing-page","meta-setup",
   week%2?"audience-research":"content-sprint",week%3?"mini-launch":"audience-research"] as const;
  return ids.map((templateId,i)=>{
   const t=getFreelanceJob(templateId)!;
@@ -59,6 +59,16 @@ export function ensureFreelanceBoard(s:GameState):FreelanceBoard{
  if(!s.freelanceBoard)s.freelanceBoard={lastWeek:s.clock.week,listings:newWeekListings(s.clock.week),applications:[]};
  if(!Array.isArray(s.freelanceBoard.listings))s.freelanceBoard.listings=[];
  if(!Array.isArray(s.freelanceBoard.applications))s.freelanceBoard.applications=[];
+ // Versioned, idempotent migration: only unclaimed public video listings change.
+ // Awarded and active video contracts retain their original template and reward.
+ if((s.freelanceBoard as FreelanceBoard & {catalogVersion?:number}).catalogVersion!==6){
+  for(const l of s.freelanceBoard.listings){
+   if(l.templateId!=="short-video"||s.freelanceBoard.applications.some(a=>a.listingId===l.id))continue;
+   const landing=getFreelanceJob("landing-page")!;
+   l.templateId=landing.id;l.fee=landing.fee;l.mediaBudget=landing.mediaBudget;
+  }
+  (s.freelanceBoard as FreelanceBoard & {catalogVersion?:number}).catalogVersion=6;
+ }
  if(!s.freelanceBoard.listings.some(x=>x.postedWeek===s.clock.week))
   s.freelanceBoard.listings.push(...newWeekListings(s.clock.week));
  return s.freelanceBoard;
