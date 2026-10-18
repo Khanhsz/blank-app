@@ -5,7 +5,7 @@ import {act,useGame} from "@/game/store";
 import {money} from "@/game/data";
 import {CLIENT_BY_ID} from "@/game/clientDatabase";
 import {getFreelanceJob} from "@/game/freelanceJobTemplates";
-import {workload} from "@/game/freelanceJobs";
+import {workload,WEEKLY_CAPACITY} from "@/game/freelanceJobs";
 import * as Market from "@/game/freelanceMarket";
 import {chooseFreelanceClient} from "@/game/campaign";
 
@@ -28,7 +28,7 @@ export function FreelanceMarketplace({onSelected}:{onSelected?:()=>void}){
    <div><small>YOUR REPUTATION</small><b>{game.reputation}</b></div>
    <div><small>OPEN JOBS THIS WEEK</small><b>{activeListings.length}</b></div>
    <div><small>APPLICATIONS LEFT</small><b>{Math.max(0,Market.FREELANCE_APPLICATION_LIMIT-appliedThisWeek)}</b></div>
-   <div><small>AVAILABLE WORK HOURS</small><b>{Math.max(0,28-career.weeklyHours)}</b></div>
+   <div><small>AVAILABLE WORK HOURS</small><b>{Math.max(0,WEEKLY_CAPACITY-career.weeklyHours)}</b></div>
   </div>
   <div className="mt-job-market-unlock">
    {game.reputation>30?<><CheckCircle2 size={16}/><span>High-budget applications unlocked. Skill and portfolio requirements still apply.</span></>:
@@ -52,7 +52,7 @@ export function FreelanceMarketplace({onSelected}:{onSelected?:()=>void}){
      <p className="mt-job-market-scope">{t.deliverables}. {t.revisions} included revision{t.revisions!==1?"s":""}. {t.mediaBudget>0?"Client-owned media: "+money(t.mediaBudget)+".":"No client media spend."}</p>
      {locked&&<p className="mt-job-market-locked">{locked}</p>}
      <Button className="w-full" size="sm" variant="outline"
-       disabled={!!locked||!!application||game.campaign.phase!=="brief"||appliedThisWeek>=Market.FREELANCE_APPLICATION_LIMIT||career.weeklyHours+Market.APPLICATION_HOURS>Market.WEEKLY_CAPACITY}
+       disabled={!!locked||!!application||game.campaign.phase!=="brief"||appliedThisWeek>=Market.FREELANCE_APPLICATION_LIMIT||career.weeklyHours+Market.APPLICATION_HOURS>WEEKLY_CAPACITY}
        onClick={()=>act((s,fx)=>{Market.applyDefaultFreelanceJob(s,fx,l.id);})}>
        {application?"Application "+application.status:locked?"Locked — "+(game.reputation<=30&&Market.isHighBudgetJob(t)?"Rep 31":"Portfolio"):"Apply Job"}
      </Button>
