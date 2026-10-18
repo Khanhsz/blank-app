@@ -74,3 +74,4 @@ test("Bedroom V2 scope is server-authoritative, never invented or a full agency 
  assert.equal(cmp.fee,4500000);assert.equal(cmp.budget,3200000);assert.equal(cmp.days,21);
  assert.equal(Object.keys(BEDROOM_JOBS).length,8);
 });
+\nimport "./freelance-review.test.mjs";\n
