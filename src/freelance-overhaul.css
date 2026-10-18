@@ -71,3 +71,60 @@
 @media(max-width:920px){.mt-v6-editor-grid{grid-template-columns:1fr}.mt-v6-live-preview{position:static}.mt-v6-card-options{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:540px){.mt-v6-card-options{grid-template-columns:1fr}.mt-v6-card-option{min-height:62px}.mt-v6-brief-grid{grid-template-columns:1fr}.mt-v6-celebration>strong{font-size:29px}.mt-v6-preview-sheet{padding:14px}}
 @media(prefers-reduced-motion:reduce){.mt-v6-card-option{transition:none}.mt-v6-card-option:hover{transform:none}.mt-v6-coin{animation:none;position:static;opacity:1;font-size:20px}}
+
+
+/* Job-specific workbenches. Every choice delegates to the persisted card decision. */
+.mt-v6-workbench{margin:13px 0 17px;border:1px solid #bfd6d7;background:linear-gradient(135deg,#f8fcfb,#ecf5f4);border-radius:13px;padding:15px;color:#23505a}
+.mt-v6-workbench-head{display:flex;justify-content:space-between;align-items:start;gap:9px;margin-bottom:12px}
+.mt-v6-workbench-head h4{font-size:14px;font-weight:850;margin:0;color:#254a57}
+.mt-v6-workbench-head small{font-size:10px;max-width:300px;line-height:1.5;color:#648289}
+.mt-v6-workbench button{font:inherit;cursor:pointer;border:1px solid #c3d9db;border-radius:8px;color:#244c56;background:#fff;transition:background .15s,border-color .15s;min-height:40px;padding:9px;text-align:left}
+.mt-v6-workbench button.selected,.mt-v6-workbench button[aria-pressed="true"]{background:#d7eeeb;border:2px solid #26877f;padding:8px}
+.mt-v6-workbench button:focus-visible{outline:3px solid #32938e;outline-offset:2px}
+.mt-v6-workbench button:disabled{cursor:default;opacity:.65}
+.mt-v6-workbench-choices{display:flex;flex-wrap:wrap;gap:7px}
+.mt-v6-workbench-choices button{font-size:11px;font-weight:750;padding:8px 11px}
+.mt-v6-social-canvas{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:center}
+.mt-v6-social-screen{background:#fff;border-radius:12px;border:1px solid #c4dada;padding:11px;display:flex;flex-direction:column;gap:8px}
+.mt-v6-social-screen>small{font-size:9px;color:#719099}
+.mt-v6-social-screen>strong{font-size:13px}
+.mt-v6-social-image{height:115px;background:linear-gradient(135deg,#1f7082,#bdd5cc);color:white;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:27px;flex-direction:column;gap:10px}
+.mt-v6-social-image span{font-size:9px;letter-spacing:.1em}
+.mt-v6-audit-profile{background:white;border:1px solid #d3e3e3;border-radius:12px;padding:12px}
+.mt-v6-audit-profile>div:first-child{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.mt-v6-audit-profile>div:first-child b{font-size:13px}
+.mt-v6-audit-profile>div:first-child small{font-size:10px;color:#718b92}
+.mt-v6-hotspots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.mt-v6-hotspots button{display:flex;flex-direction:column;gap:10px}
+.mt-v6-hotspots button b{font-size:12px}.mt-v6-hotspots button small{font-size:10px;color:#647f86;line-height:1.4}
+.mt-v6-hotspots button span{font-size:10px;color:#188375;font-weight:750}
+.mt-v6-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.mt-v6-calendar-grid button{min-height:91px;display:flex;flex-direction:column;gap:6px}
+.mt-v6-calendar-grid button small{font-size:9px;color:#729098;line-height:1.3}
+.mt-v6-calendar-grid button b{font-size:10px;line-height:1.3}
+.mt-v6-calendar-grid button span{font-size:9px;color:#38917f;margin-top:auto}
+.mt-v6-calendar-grid button.rest{background:#f1f4f3;border-style:dashed}
+.mt-v6-meta-builder{background:white;border:1px solid #d3e3e3;border-radius:11px;padding:12px}
+.mt-v6-meta-builder>div:first-child{display:flex;justify-content:space-between;gap:8px;margin-bottom:12px}
+.mt-v6-meta-builder>div:first-child b{font-size:13px}
+.mt-v6-meta-builder>div:first-child small{font-size:10px;color:#789097}
+.mt-v6-budget-bars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.mt-v6-budget-bars>button{display:flex;flex-direction:column;gap:10px}
+.mt-v6-budget-bars>button>b{font-size:11px}
+.mt-v6-budget-track{height:22px;display:flex;width:100%;border-radius:5px;overflow:hidden;background:#d5e0df}
+.mt-v6-budget-track i{font-style:normal;display:flex;align-items:center;justify-content:center;font-size:9px;color:white;background:#397e8b}
+.mt-v6-budget-track i:nth-child(2){background:#4d9b84}
+.mt-v6-budget-track i:nth-child(3){background:#dfb76d;color:#263d42}
+.mt-v6-research-wall{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.mt-v6-research-wall>div{display:flex;flex-direction:column;gap:8px;border-left:3px solid #4f9b91;background:white;padding:12px;border-radius:9px}
+.mt-v6-research-wall small{font-size:9px;color:#64828b}.mt-v6-research-wall b{font-size:11px;line-height:1.5}
+.mt-v6-channels{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.mt-v6-channels button{display:flex;flex-direction:column;gap:10px;min-height:90px}
+.mt-v6-channels b{font-size:12px}.mt-v6-channels small{font-size:10px;color:#69868e}.mt-v6-channels span{font-size:10px;color:#218577;font-weight:750}
+.mt-v6-launch-phases{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-bottom:12px}
+.mt-v6-launch-phases button{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.mt-v6-launch-phases button>span{width:22px;height:22px;border-radius:50%;background:#3d8791;color:white;text-align:center;line-height:22px;font-size:10px}
+.mt-v6-launch-phases button>b{font-size:11px;line-height:1.4}.mt-v6-launch-phases button>small{font-size:10px;color:#6b878e}
+@media(max-width:660px){.mt-v6-workbench-head{flex-direction:column}.mt-v6-calendar-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.mt-v6-hotspots,.mt-v6-research-wall,.mt-v6-budget-bars{grid-template-columns:1fr}.mt-v6-channels,.mt-v6-launch-phases{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){.mt-v6-calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mt-v6-social-canvas{grid-template-columns:1fr}.mt-v6-social-screen{max-width:200px}}
+@media(prefers-reduced-motion:reduce){.mt-v6-workbench button{transition:none}}
