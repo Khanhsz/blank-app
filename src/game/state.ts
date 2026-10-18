@@ -2,6 +2,7 @@ import { ceoLeadDefs, ceoRivalDefs, type Channel, type Employee, type LeadDef, t
 import {reconcileClientTeams} from "./clientTeams";
 import {ensureRecruitment} from "./recruitment";
 import {ensureCompanyMarket} from "./companyMarket";
+import type {FinanceCalibration} from "./financeCalibration";
 
 export type Phase = "brief" | "planning" | "executing" | "live" | "results" | "research" | "survey" | "validation" | "strategy" | "creative" | "media";
 export const PHASES: Phase[] = ["planning", "executing", "live", "results"];
@@ -143,7 +144,7 @@ export interface GameState {
   version: 2; created: boolean; character: Character; room: RoomStyle; scene: SceneId;
   reputation: number; expertise: number; personalCash: number; agencyCash: number; agencyUnlocked: boolean; agencyName: string;
   staff: string[]; personnel:Record<string,PersonnelProfile>; recruitment?:RecruitmentMarket; teamLeads:Record<string,string>; upgrades: string[]; cityUnlocked: boolean; campaign: Campaign; clock: GameClock; officeId:string;
-  world: WorldProgress;companyMarket?:CompanyMarket;
+  world: WorldProgress;companyMarket?:CompanyMarket;financeCalibration?:FinanceCalibration;
   history: { brand: string; outcome: number; score: number; spent: number; rep: number; xp: number; scenarioIndex: number; agency: boolean; caseStudy?: {highlight:string;reason:string;next:string;score:number;diagnosis:string|null;insight:string|null;approach:string|null;creative:string|null;message:string;mediaPlan:string|null;liveWeeks:number} }[];
   log: { t: number; msg: string }[]; graphics: "high" | "low"; ceo: CEO | null;
 }
