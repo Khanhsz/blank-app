@@ -29,6 +29,7 @@ test("Gemini-generated context and strategy are required before accepting an app
  const fabricated=scenarioForClient(client);
  assert.equal(activateAIBrief(s,fx,fabricated),false);
  const sc={...scenarios[0],id:"ai-genuine-case",brand:client.brand,
+  insightOptions:["awareness","value","location","trust","style"].map(id=>({id,title:"Possible "+id,desc:"Test hypothetical insight "+id})),
   aiMeta:{category:client.sector,seed:22,label:"Gemini fictional",clientId:client.id},
   aiPlanning:{context:"A new coffee client faces local student visibility challenges.",insight:"Students need credible reasons to try the brand.",strategy:"Test local student discovery and verifiable product quality."},
   clientAnswers:{audience:"Students in the neighborhood",barrier:"They miss our storefront",success:"Growth in qualified visits",constraint:"Budget and approval timelines"}
