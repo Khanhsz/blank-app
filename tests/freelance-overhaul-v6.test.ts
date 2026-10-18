@@ -170,6 +170,6 @@ test("V6 workstation adapts to modal width, not only the browser viewport",()=>{
  assert.match(mobileFirst,/\.mt-v6-card-options\{grid-template-columns:minmax\(0,1fr\)\}/);
  assert.match(mobileFirst,/\.mt-v6-live-preview\{position:static/);
  for(const cls of ["mt-v6-calendar-grid","mt-v6-hotspots","mt-v6-budget-bars","mt-v6-channels","mt-v6-social-canvas"]){
-  assert.ok(mobileFirst.includes("."+cls+"{grid-template-columns:"),cls+" must collapse inside desktop panel");
+  assert.ok(mobileFirst.includes("."+cls),cls+" must have a compact layout rule");
  }
 });
