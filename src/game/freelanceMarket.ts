@@ -114,9 +114,9 @@ export function applyFreelanceJob(s:GameState,fx:Fx,id:string,approach:Freelance
  const match=winEstimate(s,l,approach,price);
  b.applications.push({id:"application-"+l.id,listingId:id,clientId:l.clientId,templateId:l.templateId,
   week:s.clock.week,approach,price,proposedFee:fee,score:match.score,winChance:match.probability,
-  status:"pending",feedback:"Client will compare all applications at the end of this game week."});
+  status:"pending",feedback:"Gemini is reviewing your application against rival freelancers."});
  fx.log("Applied: "+CLIENT_BY_ID[l.clientId].brand+" · "+t.title+" · "+fee+" VND fee, reputation "+s.reputation);
- fx.toast("Application submitted. Selection takes place at End Week.");
+ fx.toast("Application submitted · AI review pending.");
  return true;
 }
 /** One-click job application with a client-industry-fit pitch and the listed
@@ -129,31 +129,53 @@ export function applyDefaultFreelanceJob(s:GameState,fx:Fx,id:string){
  const approach=SECTOR_PREF[CLIENT_BY_ID[listing.clientId].sector];
  return applyFreelanceJob(s,fx,id,approach,"standard");
 }
+/** Deterministic frozen lottery draw: no loading/retry can reroll an award.
+ * Gemini receives the winner determined here but never owns the decision.
+ */
+export function assessFreelanceApplication(s:GameState,applicationId:string){
+ const a=s.freelanceBoard?.applications.find(x=>x.id===applicationId);
+ const listing=s.freelanceBoard?.listings.find(l=>l.id===a?.listingId);
+ if(!a||!listing)return null;
+ const npc=listing.applicantIds.map(id=>rivalScore(listing,id));
+ const weights=npc.map(score=>Math.exp(clamp((score-a.score)/12,-30,30)));
+ const probability=1/(1+weights.reduce((sum,x)=>sum+x,0));
+ const win=random(listing.id+":selection")<probability;
+ return {selected:win,probability:Math.round(probability*100),
+  strongestRival:npc.length?Math.max(...npc):0,
+  npcCount:listing.applicantIds.length,score:a.score};
+}
+export function completeFreelanceApplication(s:GameState,fx:Fx,applicationId:string,comment?:string,mode:"gemini"|"rules"="rules"){
+ const a=s.freelanceBoard?.applications.find(x=>x.id===applicationId);
+ if(!a||a.status!=="pending")return false;
+ const assessment=assessFreelanceApplication(s,applicationId);
+ if(!assessment)return false;
+ a.status=assessment.selected?"selected":"rejected";
+ const detail=typeof comment==="string"?comment.trim().slice(0,280):"";
+ const fallback=assessment.selected
+  ?"Your application meets the client's budget and delivery criteria. An offer is ready to accept."
+  :assessment.score<assessment.strongestRival-8
+   ?"Another freelancer demonstrated a stronger match in skills, portfolio or delivery reliability."
+   :"Another applicant won the competitive selection. Improve your portfolio and industry fit.";
+ a.feedback=(detail.length>=12?detail:fallback)+(mode==="rules"?" (Game simulation)":"");
+ fx.log((assessment.selected?"Offer ready":"Not selected")+": "+CLIENT_BY_ID[a.clientId].brand+" · "+getFreelanceJob(a.templateId)?.title);
+ if(assessment.selected)fx.toast("Job offer received · Open Job Board to accept.");
+ else fx.toast("Application reviewed · See Job Board for feedback.");
+ return true;
+}
 export function advanceFreelanceBoard(s:GameState,closingWeek:number,fx:Fx){
  if(!s.freelanceBoard||s.agencyUnlocked)return;
  const b=s.freelanceBoard;
  if(b.lastWeek>closingWeek)return;
  for(const l of b.listings.filter(x=>x.status==="open"&&x.closeWeek<=closingWeek)){
-  const a=b.applications.find(x=>x.listingId===l.id);
+  // Weekly turnover never decides applications. A separate async Gemini
+  // evaluator handles this, with a deterministic fallback on API failure.
+  // Closed listings remain visible in the applicant's offer history.
   l.status="closed";
-  if(!a||a.status!=="pending")continue;
-  const npc=l.applicantIds.map(id=>rivalScore(l,id));
-  // Persist a single deterministic roll per listing. Reloading cannot reroll.
-  const z=random(l.id+":selection");
-  const weights=npc.map(score=>Math.exp(clamp((score-a.score)/12,-30,30)));
-  const probability=1/(1+weights.reduce((sum,x)=>sum+x,0));
-  const won=z<probability;
-  a.status=won?"selected":"rejected";
-  const best=Math.max(...npc,0);
-  a.feedback=won?"Your application was selected. Review and accept the job before any client brief or deposit is issued.":
-   a.score<best-8?"Another freelancer offered stronger skill, portfolio or delivery evidence.":
-   "A competing proposal matched the client's priorities more closely. Improve your portfolio or positioning.";
-  fx.log((won?"Selected":"Not selected")+": "+CLIENT_BY_ID[a.clientId].brand+" · "+getFreelanceJob(a.templateId)?.title);
  }
  b.lastWeek=Math.max(b.lastWeek,closingWeek);
  // Historic decisions are retained; only old public listings are culled.
  b.listings=b.listings.filter(l=>l.postedWeek>=s.clock.week-3||
-  b.applications.some(a=>a.listingId===l.id&&["selected","accepted"].includes(a.status)));
+  b.applications.some(a=>a.listingId===l.id&&["pending","selected","accepted"].includes(a.status)));
  if(!b.listings.some(l=>l.postedWeek===s.clock.week))b.listings.push(...newWeekListings(s.clock.week));
 }
 export function hasAcceptedOffer(s:GameState,clientId:string,templateId:string){

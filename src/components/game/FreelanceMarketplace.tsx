@@ -7,6 +7,7 @@ import {CLIENT_BY_ID} from "@/game/clientDatabase";
 import {getFreelanceJob} from "@/game/freelanceJobTemplates";
 import {workload,WEEKLY_CAPACITY} from "@/game/freelanceJobs";
 import * as Market from "@/game/freelanceMarket";
+import {prepareFreelanceApplicationReviews} from "@/game/automaticFreelanceReview";
 import {chooseFreelanceClient} from "@/game/campaign";
 
 /** The only client acquisition surface for Bedroom. NPC selection uses
@@ -53,10 +54,24 @@ export function FreelanceMarketplace({onSelected}:{onSelected?:()=>void}){
      {locked&&<p className="mt-job-market-locked">{locked}</p>}
      <Button className="w-full" size="sm" variant="outline"
        disabled={!!locked||!!application||game.campaign.phase!=="brief"||appliedThisWeek>=Market.FREELANCE_APPLICATION_LIMIT||career.weeklyHours+Market.APPLICATION_HOURS>WEEKLY_CAPACITY}
-       onClick={()=>act((s,fx)=>{Market.applyDefaultFreelanceJob(s,fx,l.id);})}>
+       onClick={()=>{act((s,fx)=>{Market.applyDefaultFreelanceJob(s,fx,l.id);});prepareFreelanceApplicationReviews();}}>
        {application?"Application "+application.status:locked?"Locked — "+(game.reputation<=30&&Market.isHighBudgetJob(t)?"Rep 31":"Portfolio"):"Apply Job"}
      </Button>
-     {!locked&&!application&&<p className="mt-job-market-scope">Apply with a tailored approach and the listed fee · 1 work hour. Client selection occurs at End Week.</p>}
+     {application&&<div className="mt-job-market-app" aria-live="polite">
+       <small>{application.status==="pending"?"AI REVIEW IN PROGRESS":application.status==="selected"?"OFFER READY":application.status==="rejected"?"APPLICATION CLOSED":application.status.toUpperCase()}</small>
+       <p>{application.feedback}</p>
+       {application.status==="selected"&&<div className="mt-job-market-offer">
+        <Button size="sm" disabled={game.campaign.phase!=="brief"||!!game.campaign.catalogClientId}
+         onClick={()=>{
+          let accepted=false;
+          act((d,fx)=>{accepted=Market.acceptFreelanceOffer(d,fx,application.id,chooseFreelanceClient);});
+          if(accepted)onSelected?.();
+         }}>Accept Offer</Button>
+        <Button size="sm" variant="outline"
+         onClick={()=>act(d=>{Market.declineFreelanceOffer(d,application.id);})}>Decline</Button>
+       </div>}
+     </div>}
+     {!locked&&!application&&<p className="mt-job-market-scope">Apply with a tailored approach and the listed fee · 1 work hour. AI reviews the application immediately.</p>}
     </article>;
    })}
   </div>

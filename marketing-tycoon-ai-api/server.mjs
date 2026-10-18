@@ -3,6 +3,7 @@ import {inputCategory,prompt,clientPrompt,validateApproachClient,validateCandida
 import {validatePricingInput,pricePrompt,buildPriceAdvice,PRICING_SCHEMA} from "./pricing.mjs";
 import {validateMarketRequest,validateMarketIntelligence,fallbackMarketReport,marketPrompt,MARKET_SCHEMA} from "./company-intelligence.mjs";
 import {FINANCE_SCHEMA,financePrompt,validateFinanceCalibration,fallbackFinanceCalibration} from "./finance-calibration.mjs";
+import {REVIEW_SCHEMA,validateReviewRequest,reviewPrompt,validateReviewResponse,fallbackReview} from "./freelance-review.mjs";
 const PORT=Number(process.env.PORT||4187);
 const ORIGIN=process.env.GAME_ORIGIN||"https://marketing-tycoon-bedroom-play.onrender.com";
 const MODEL=process.env.GEMINI_MODEL||"gemini-3.5-flash-lite";
@@ -114,13 +115,35 @@ async function generateFinancialCalibration(){
  }finally{clearTimeout(timer)}
 }
 
+/** Generate a grounded explanation for a game outcome that is already final.
+ * Gemini is advisory, not an authority over the selection result. */
+async function generateFreelanceReview(input){
+ if(!apiKey())return fallbackReview(input);
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),16000);
+ try{
+  const upstream=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(MODEL)+":generateContent",{
+   method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":apiKey()},
+   body:JSON.stringify({contents:[{role:"user",parts:[{text:reviewPrompt(input)}]}],
+    generationConfig:{responseMimeType:"application/json",responseSchema:REVIEW_SCHEMA,temperature:.25,maxOutputTokens:450}}),
+   signal:controller.signal});
+  if(!upstream.ok)throw Error("Gemini review HTTP "+upstream.status);
+  const result=await upstream.json();
+  const content=result?.candidates?.[0]?.content?.parts?.filter(x=>typeof x.text==="string").map(x=>x.text).join("");
+  if(!content)throw Error("Empty Gemini review");
+  return validateReviewResponse(JSON.parse(content));
+ }catch(err){
+  console.warn("Freelancer review fallback:",String(err?.message||"unavailable").slice(0,110));
+  return fallbackReview(input);
+ }finally{clearTimeout(timer)}
+}
+
 const server=http.createServer(async(req,res)=>{
  const allowed=req.headers.origin===ORIGIN||req.headers.origin==="http://localhost:5173";
  if(req.method==="OPTIONS"){
   if(!allowed)return response(res,403,{error:"Origin not allowed"});
   res.writeHead(204,{"Access-Control-Allow-Origin":req.headers.origin,"Access-Control-Allow-Methods":"POST,GET,OPTIONS","Access-Control-Allow-Headers":"Content-Type","Access-Control-Max-Age":"600"});res.end();return;
  }
- if(req.url==="/api/status"&&req.method==="GET")return response(res,200,{available:!!apiKey(),model:MODEL,version:"v4.8",features:["ai-scenario-generator","bedroom-client-approach","agency-pricing-advisor","company-market-intelligence","client-financial-calibration"]},allowed?req.headers.origin:null);
+ if(req.url==="/api/status"&&req.method==="GET")return response(res,200,{available:!!apiKey(),model:MODEL,version:"v4.8",features:["ai-scenario-generator","bedroom-client-approach","agency-pricing-advisor","company-market-intelligence","client-financial-calibration","instant-freelance-application-review"]},allowed?req.headers.origin:null);
  if(req.url==="/api/finance-calibration"&&req.method==="GET"){
   if(!allowed)return response(res,403,{error:"Game origin required"});
   const today=new Date().toISOString().slice(0,10);
@@ -145,6 +168,19 @@ const server=http.createServer(async(req,res)=>{
   if(apiKey()&&globalCounter.calls<35){globalCounter.calls++;report=await generateMarketIntelligence(input)}
   else report=fallbackMarketReport(input);
   return response(res,200,{report,mode:report.source,model:report.source==="gemini"?MODEL:null},req.headers.origin);
+ }
+ if(req.url==="/api/freelance-review"&&req.method==="POST"){
+  if(!allowed)return response(res,403,{error:"Game origin required"});
+  if(!counted("freelance-review:"+remoteIP(req),10,3600000))
+   return response(res,429,{error:"Application review limit reached. The game will use its selection model."},req.headers.origin);
+  let input;
+  try{input=validateReviewRequest(await readJson(req,3000))}
+  catch{return response(res,400,{error:"Invalid fictional applicant review data"},req.headers.origin)}
+  const today=new Date().toISOString().slice(0,10);
+  if(globalCounter.day!==today){globalCounter.day=today;globalCounter.calls=0}
+  // Keep shared quota for briefs and pricing. Rules fallback does not stall the game.
+  const review=apiKey()&&globalCounter.calls<42?(globalCounter.calls++,await generateFreelanceReview(input)):fallbackReview(input);
+  return response(res,200,{review,mode:review.source,model:review.source==="gemini"?MODEL:null},req.headers.origin);
  }
  if(req.url==="/api/pricing-advice"&&req.method==="POST"){
   if(!allowed)return response(res,403,{error:"Game origin required"});

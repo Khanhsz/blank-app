@@ -45,21 +45,34 @@ test("Application stores chosen approach and fee, consumes one hour, rejects dup
  assert.ok(a.score>=0&&a.winChance>=0&&a.winChance<=100);
  assert.equal(a.status,"pending");
 });
-test("NPC selection resolves only once at End Week and survives save restore without rerolling",()=>{
+test("AI review may resolve immediately without End Week and save cannot reroll",()=>{
  const a=game(),b=game(),listing=Market.ensureFreelanceBoard(a).listings.find(l=>l.templateId==="social-pack")!;
  Market.ensureFreelanceBoard(b);
  assert.equal(Market.applyFreelanceJob(a,fx,listing.id,"value","standard"),true);
  assert.equal(Market.applyFreelanceJob(b,fx,listing.id,"value","standard"),true);
- a.clock.week=2;b.clock.week=2;
- Market.advanceFreelanceBoard(a,1,fx);Market.advanceFreelanceBoard(b,1,fx);
+ const assessment=Market.assessFreelanceApplication(a,"application-"+listing.id)!;
+ assert.equal(typeof assessment.selected,"boolean");
+ assert.equal(a.clock.week,1);
+ assert.equal(Market.completeFreelanceApplication(a,fx,"application-"+listing.id,"Gemini analyzed your portfolio against this job.","gemini"),true);
+ assert.equal(Market.completeFreelanceApplication(b,fx,"application-"+listing.id,"Gemini analyzed your portfolio against this job.","gemini"),true);
  const x=a.freelanceBoard!.applications[0],y=b.freelanceBoard!.applications[0];
  assert.equal(x.status,y.status);
+ assert.equal(x.status,assessment.selected?"selected":"rejected");
  assert.ok(["selected","rejected"].includes(x.status));
- assert.equal(a.freelanceBoard!.listings.filter(l=>l.postedWeek===2).length,7);
- const saved=migrate(JSON.parse(JSON.stringify(a)));
- assert.equal(saved.freelanceBoard?.applications[0].status,x.status);
- Market.advanceFreelanceBoard(saved,1,fx);
- assert.equal(saved.freelanceBoard?.applications[0].status,x.status);
+ assert.equal(Market.completeFreelanceApplication(a,fx,x.id,"Attempt to reroll","rules"),false);
+ assert.equal(a.clock.week,1,"no End Week required for offer");
+ const restored=migrate(JSON.parse(JSON.stringify(a)));
+ assert.equal(restored.freelanceBoard!.applications[0].status,x.status);
+ assert.equal(restored.freelanceBoard!.applications[0].feedback,x.feedback);
+});
+test("End Week only refreshes listings; pending AI applications stay pending across weekly turns",()=>{
+ const s=game(),listing=Market.ensureFreelanceBoard(s).listings.find(l=>l.templateId==="social-pack")!;
+ assert.equal(Market.applyFreelanceJob(s,fx,listing.id,"value","standard"),true);
+ s.clock.week=2;
+ Market.advanceFreelanceBoard(s,1,fx);
+ assert.equal(s.freelanceBoard?.applications[0].status,"pending");
+ assert.equal(s.freelanceBoard?.listings.filter(l=>l.postedWeek===2).length,7);
+ assert.equal(Market.completeFreelanceApplication(s,fx,s.freelanceBoard!.applications[0].id,undefined,"rules"),true);
 });
 test("No direct Bedroom approach bypasses Job Board; only a selected offer may be accepted",()=>{
  const s=game();const b=Market.ensureFreelanceBoard(s);
@@ -149,4 +162,14 @@ test("One-click Apply uses the industry-aligned strategy and listed fee and does
  const premium=board.listings.find(l=>Market.isHighBudgetJob(getFreelanceJob(l.templateId)!))!;
  assert.equal(Market.applyDefaultFreelanceJob(s,fx,premium.id),false,"reputation and portfolio gates still apply");
  assert.equal(board.applications.length,1);
+});
+
+test("One click Apply displays AI Pending and Accept Offer in selected job card",()=>{
+ const view=readFileSync("src/components/game/FreelanceMarketplace.tsx","utf8");
+ const app=readFileSync("src/App.tsx","utf8");
+ assert.ok(view.includes("prepareFreelanceApplicationReviews()"));
+ assert.ok(view.includes("AI REVIEW IN PROGRESS"));
+ assert.ok(view.includes("Accept Offer"));
+ assert.ok(!view.includes("Selection takes place at End Week"));
+ assert.ok(app.includes("prepareFreelanceApplicationReviews()"),"review resumes after restore, outside a modal");
 });
