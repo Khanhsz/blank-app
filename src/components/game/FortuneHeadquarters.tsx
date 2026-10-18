@@ -11,10 +11,10 @@ import {FortuneSimulationBoard} from "./FortuneSimulationBoard";
 /** Accessed only by visiting the Corporate HQ building in the city.
  * These are separate simulated corporate offices, NOT marketplace listings.
  */
-export function FortuneHeadquarters({onOpenDeal}:{onOpenDeal:()=>void}){
+export function FortuneHeadquarters({onOpenDeal,forcedClientId}:{onOpenDeal:()=>void;forcedClientId?:string}){
  const s=useGame(x=>x);
  const [visited,setVisited]=useState<string|null>(null);
- const selected=FORTUNE_CLIENTS.find(c=>c.id===visited)??null;
+ const selected=FORTUNE_CLIENTS.find(c=>c.id===(forcedClientId??visited))??null;
  const status=selected?fortuneRfpStatus(s,selected.id):null;
  const gate=selected?canContractFortune(s,selected.id):null;
  const already=selected?isOpenCatalogLead(s,selected.id):false;
@@ -24,8 +24,8 @@ export function FortuneHeadquarters({onOpenDeal}:{onOpenDeal:()=>void}){
    <h3>Fortune 50 · HQ Visits</h3>
    <p>Choose a company office to visit. Fortune accounts never accept direct Marketplace pitches. All contracts, incumbents and negotiations are fictional game scenarios.</p>
   </div>
-  <div className="mt-client-catalog-count"><span>{FORTUNE_CLIENTS.length} simulated headquarters</span><span>365-day agency retainers</span></div>
-  <div className="mt-client-results">
+  {!forcedClientId&&<div className="mt-client-catalog-count"><span>{FORTUNE_CLIENTS.length} simulated headquarters</span><span>365-day agency retainers</span></div>}
+  {!forcedClientId&&<div className="mt-client-results">
    {FORTUNE_CLIENTS.map(firm=>{
     const st=fortuneRfpStatus(s,firm.id);
     return <button type="button" key={firm.id} aria-pressed={visited===firm.id} onClick={()=>setVisited(firm.id)}
@@ -34,7 +34,7 @@ export function FortuneHeadquarters({onOpenDeal}:{onOpenDeal:()=>void}){
      <span>{st.owner&&st.remaining>90?<LockKeyhole size={16}/>:<Building2 size={17}/>}</span>
     </button>;
    })}
-  </div>
+  </div>}
   {selected&&status&&<section className="mt-growth-flow" style={{marginTop:12}}>
    <h4>{selected.brand} · corporate office</h4>
    <p>Fortune US 2026 #{selected.fortuneRank} · {selected.market}. Company identity is real; brief, agency relationship and contract are gameplay simulations.</p>
@@ -53,6 +53,6 @@ export function FortuneHeadquarters({onOpenDeal}:{onOpenDeal:()=>void}){
    }}>{already?"Already in pipeline":gate?.ok?"Approach "+selected.brand+" from HQ":"HQ approach unavailable"} <ArrowRight size={15}/></Button>
    <small>Procurement: contact → discovery → RFP qualification → competitive pitch → negotiation → 365-day written agreement. Annual service fee is invoiced once and settled on signing; media funds are separate.</small>
   </section>}
-  <FortuneSimulationBoard/>
+  {!forcedClientId&&<FortuneSimulationBoard/>}
  </div>;
 }
