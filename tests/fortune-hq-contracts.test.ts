@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {defaults,newCEO,migrate} from "../src/game/state";
-import {agencyLeadForClient,getClient} from "../src/game/clientDatabase";
+import {agencyLeadForClient,getClient,CLIENT_DATABASE} from "../src/game/clientDatabase";
 import {approachCatalogClient,approachFortuneAtHQ} from "../src/game/clientMarket";
 import {canContractFortune,ensureFortuneAccounts,fortuneRfpStatus,fortuneConflict,FORTUNE_YEAR_DAYS} from "../src/game/fortuneAccounts";
 import {sign,ceoTick} from "../src/game/ceo";
@@ -41,7 +41,7 @@ test("Fortune 50 rejects Marketplace prospecting and accepts only a real HQ inte
  assert.equal(l.contractType,"annual-retainer");
  assert.equal(l.duration,FORTUNE_YEAR_DAYS);
  assert.equal(approachFortuneAtHQ(s,fx,"f50-42"),false);
- assert.equal(approachFortuneAtHQ(s,fx,"bigcorp-tech-0"),false);
+ assert.equal(approachFortuneAtHQ(s,fx,CLIENT_DATABASE.find(client=>client.segment==="startup")!.id),false);
 });
 test("incumbent top Fortune account cannot be pitched until its last 90 simulated days",()=>{
  const s=agency();
