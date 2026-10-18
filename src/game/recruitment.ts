@@ -51,31 +51,37 @@ export function canStartRecruitment(s:GameState,channel:Exclude<RecruitmentChann
  if(s.agencyCash<spec.fee)return {ok:false,reason:"Insufficient recruiting budget: "+money(spec.fee)};
  return {ok:true,reason:""};
 }
-export function startRecruitmentCampaign(s:GameState,fx:Fx,channel:Exclude<RecruitmentChannel,"organic">):boolean{
+export function startRecruitmentCampaign(s:GameState,fx:Fx,channel:Exclude<RecruitmentChannel,"organic">,focusRole?:string):boolean{
  ensureRecruitment(s);
  const eligibility=canStartRecruitment(s,channel);
  if(!eligibility.ok){fx.toast(eligibility.reason);return false;}
  const spec=RECRUITMENT_CHANNELS.find(c=>c.id===channel)!;
+ if(focusRole&&!roles.some(([role])=>role===focusRole)){fx.toast("Unknown recruiting specialty.");return false;}
  const market=s.recruitment!;
  const posting:RecruitmentPosting={
   id:"hiring-"+market.seed.toString(36)+"-w"+s.clock.week+"-"+channel,
-  channel,startedWeek:s.clock.week,arrivalWeek:s.clock.week+1,fee:spec.fee
+  channel,startedWeek:s.clock.week,arrivalWeek:s.clock.week+1,fee:spec.fee,...(focusRole?{focusRole}:{})
  };
  market.postings??=[];
  market.postings.push(posting);
  market.lastCampaignWeek=s.clock.week;
  s.agencyCash-=spec.fee;
  s.ceo!.ledger.unshift({day:s.ceo!.day,what:"Recruiting campaign · "+spec.label,value:-spec.fee,lead:"agency",status:"paid"});
- fx.log("Recruiting campaign opened · "+spec.label+" · applications expected Week "+posting.arrivalWeek);
+ fx.log("Recruiting campaign opened · "+spec.label+(focusRole?" · "+focusRole+" focus":"")+" · applications expected Week "+posting.arrivalWeek);
  fx.toast(spec.label+" posted — applicants arrive in Week "+posting.arrivalWeek);
  return true;
 }
-function generate(seed:number,week:number,source:RecruitmentChannel):RecruitmentCandidate[]{
+function generate(seed:number,week:number,source:RecruitmentChannel,focusRole?:string):RecruitmentCandidate[]{
  const spec=RECRUITMENT_CHANNELS.find(c=>c.id===source);
  const random=rng((seed^Math.imul(week,0x9e3779b1)^Math.imul(channelCode(source),0x85ebca6b))>>>0);
  const shuffled=[...roles];
  for(let i=shuffled.length-1;i>0;i--){const k=rand(random,0,i);[shuffled[i],shuffled[k]]=[shuffled[k],shuffled[i]];}
  const count=source==="organic"?rand(random,1,2):rand(random,spec!.min,spec!.max);
+ // A targeted paid placement guarantees ONE relevant application, not a qualified hire.
+ if(focusRole&&source!=="organic"){
+  const index=shuffled.findIndex(([role])=>role===focusRole);
+  if(index>=0){const selected=shuffled.splice(index,1)[0];shuffled.unshift(selected);}
+ }
  const minSkill=source==="organic"?42:spec!.minSkill,maxSkill=source==="organic"?78:spec!.maxSkill;
  return Array.from({length:count},(_,i)=>{
   const [specialty,role,skill]=shuffled[i%shuffled.length];
@@ -108,7 +114,7 @@ export function ensureRecruitment(s:GameState):void{
   s.recruitment={
    seed,week:s.clock.week,version:2,
    hired:(market?.hired??[]).filter(e=>s.staff.includes(e.id)),
-   candidates:[...generate(seed,s.clock.week,"organic"),...arrivals.flatMap(p=>generate(seed,s.clock.week,p.channel))],
+   candidates:[...generate(seed,s.clock.week,"organic"),...arrivals.flatMap(p=>generate(seed,s.clock.week,p.channel,p.focusRole))],
    postings:(market?.postings??[]).filter(p=>p.arrivalWeek>s.clock.week),
    ...(market?.lastCampaignWeek===undefined?{}:{lastCampaignWeek:market.lastCampaignWeek})
   };

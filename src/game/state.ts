@@ -63,7 +63,7 @@ export interface TalentAttributes {acc:number;str:number;cre:number;med:number;}
 export interface PersonnelProfile {skill:number;morale:number;fatigue:number;xp:number;attributes?:TalentAttributes;trainingFunction?:TalentFunction;trainingUntil?:number;pendingSkill?:number;}
 export type RecruitmentChannel="organic"|"newspaper"|"website"|"journal"|"referral";
 export interface RecruitmentCandidate extends Employee {startingSkill:number;startingMorale:number;startingFatigue:number;source?:RecruitmentChannel;}
-export interface RecruitmentPosting {id:string;channel:Exclude<RecruitmentChannel,"organic">;startedWeek:number;arrivalWeek:number;fee:number;}
+export interface RecruitmentPosting {id:string;channel:Exclude<RecruitmentChannel,"organic">;startedWeek:number;arrivalWeek:number;fee:number;focusRole?:string;}
 export interface RecruitmentMarket {
  week:number;seed:number;candidates:RecruitmentCandidate[];hired:RecruitmentCandidate[];
  version?:2;postings?:RecruitmentPosting[];lastCampaignWeek?:number;

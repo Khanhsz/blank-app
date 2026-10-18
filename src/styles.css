@@ -1022,3 +1022,31 @@ button.mt-work-person-row{cursor:pointer}.mt-work-person-row:hover{border-color:
 .mt-job-market-offer{display:flex;gap:6px;flex-wrap:wrap}.mt-job-market-footer{display:flex;align-items:flex-start;gap:7px;font-size:10px;color:var(--muted-foreground,#647b85);line-height:1.5}.mt-job-market-footer svg{flex:none}
 .mt-job-market-empty{padding:20px;text-align:center;font-size:12px;color:var(--muted-foreground,#647b85)}
 @media(max-width:680px){.mt-job-market-grid{grid-template-columns:1fr}.mt-job-market-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.mt-job-market-choices{grid-template-columns:1fr}}
+
+/* Agency Resource Planning V6 — contained, mobile-first planning inside Workforce. */
+.mt-planner-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.mt-planner-kpi{padding:12px;border:1px solid var(--border,#d9e1e7);border-radius:10px;background:var(--card,#fff);display:flex;flex-direction:column;gap:5px;min-width:0}
+.mt-planner-kpi>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mt-planner-kpi>div:first-child b{font-size:13px;letter-spacing:.06em}
+.mt-planner-kpi>div:first-child small{font-size:10px;color:var(--muted-foreground,#697b87)}
+.mt-planner-kpi>strong{font-size:22px;line-height:1.1;font-variant-numeric:tabular-nums}
+.mt-planner-kpi>span,.mt-planner-kpi>small{font-size:11px;color:var(--muted-foreground,#6e7e8a)}
+.mt-planner-kpi>.mt-work-meter{height:7px}
+.mt-planner-baseline{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;padding:12px;background:var(--muted,#f4f6f8);border-radius:9px}
+.mt-planner-baseline>div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.mt-planner-baseline small,.mt-planner-option-stats small{font-size:10px;color:var(--muted-foreground,#64748b)}
+.mt-planner-baseline strong,.mt-planner-option-stats b{font-size:13px;font-weight:750;overflow-wrap:anywhere}
+.mt-planner-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
+.mt-planner-option{display:flex;flex-direction:column;gap:12px;padding:15px;border:1px solid var(--border,#d9e1e7);background:var(--card,#fff);border-radius:12px;min-width:0}
+.mt-planner-option .mt-work-section-head{margin:0}
+.mt-planner-option .mt-work-section-head>span{font-size:11px}
+.mt-planner-option-title{display:flex;align-items:center;gap:8px;font-size:14px}
+.mt-planner-option>p{margin:0}
+.mt-planner-option-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mt-planner-option-stats>div{display:flex;flex-direction:column;gap:4px}
+.mt-planner-option>.mt-work-muted{font-size:11px}
+.mt-planner-option>button{align-self:flex-start;margin-top:auto}
+.mt-planner-option .mt-work-hint{margin:0}
+.mt-work-add-row label{font-size:12px;font-weight:650}
+@media(max-width:760px){.mt-planner-overview{grid-template-columns:repeat(2,minmax(0,1fr))}.mt-planner-options{grid-template-columns:1fr}.mt-planner-baseline{grid-template-columns:1fr 1fr}.mt-planner-baseline>div:first-child{grid-column:1/-1}}
+@media(max-width:420px){.mt-planner-overview{gap:6px}.mt-planner-kpi{padding:9px}.mt-planner-kpi>strong{font-size:19px}.mt-planner-option-stats{gap:8px}}

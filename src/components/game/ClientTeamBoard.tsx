@@ -2,7 +2,7 @@
  * Project simulation, payroll, staffing exclusivity and saves remain in game state.
  */
 import {useState} from "react";
-import {ArrowLeft,ArrowRight,AlertTriangle,BriefcaseBusiness,CheckCircle2,ChevronRight,ClipboardList,Search,UserPlus,Users,UserRound,Wallet,Newspaper,Globe2,BookOpen,UserRoundCheck} from "lucide-react";
+import {ArrowLeft,ArrowRight,AlertTriangle,BriefcaseBusiness,CheckCircle2,ChevronRight,ClipboardList,Search,UserPlus,Users,UserRound,Wallet,Newspaper,Globe2,BookOpen,UserRoundCheck,ChartNoAxesColumn,RefreshCw,GraduationCap,Handshake,CalendarClock} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {useGame,act} from "@/game/store";
 import {ceoRoles,employeeById,money} from "@/game/data";
@@ -10,6 +10,7 @@ import {RECRUITMENT_CHANNELS,canStartRecruitment,startRecruitmentCampaign,recrui
 import * as K from "@/game/ceo";
 import * as P from "@/game/personnel";
 import * as T from "@/game/clientTeams";
+import * as R from "@/game/resourcePlanning";
 import {currentOffice} from "@/game/city";
 import type {ClientTeam,GameState,TalentFunction,TalentAttributes} from "@/game/state";
 
@@ -37,6 +38,107 @@ function FunctionalSkills({scores,compact=false}:{scores:TalentAttributes;compac
 function TeamHealth({team}:{team:ClientTeam}){
  const s=useGame(x=>x),health=T.teamNeeds(s,team);
  return <span className={"mt-work-status mt-work-"+health.status}>{nice(health.status)}</span>;
+}
+function ResourcePlanner({onRecruit,onTeam}:{onRecruit:(teamId:string)=>void;onTeam:(teamId:string)=>void}){
+ const s=useGame(x=>x),overview=R.resourceOverview(s);
+ const eligibleTeams=(s.ceo?.clientTeams??[]).filter(t=>t.status!=="released"&&
+  s.ceo?.projects.some(p=>p.teamId===t.id&&p.status==="active"&&p.tasks.some(task=>task.status!=="completed"&&task.role==="creative")));
+ const [selected,setSelected]=useState<string>("");
+ const [channel,setChannel]=useState<R.PaidChannel>("journal");
+ const teamId=eligibleTeams.some(t=>t.id===selected)?selected:eligibleTeams[0]?.id;
+ const plan=teamId?R.compareCreativeOptions(s,teamId,channel):null;
+ const advice=plan?.advice;
+ const busy=(id:string)=>s.ceo?.projects.some(p=>p.status==="active"&&p.tasks.some(t=>t.employee===id&&t.status==="in_progress"))??false;
+ const task=advice?.priorityTask;
+ const ready=!!task&&s.ceo?.projects.some(p=>p.status==="active"&&p.teamId===teamId&&p.tasks.some(t=>t.key===task.key&&t.pre.every(pr=>p.tasks.some(x=>x.key===pr&&x.status==="completed"))));
+ const alternatives=plan?.alternatives??[];
+ const options=[{kind:"recruit",name:"Recruit Creative",icon:<UserPlus size={18}/>,detail:"Target a specialist; applicants arrive next week, subject to availability."},
+  {kind:"outsource",name:"Outsource task",icon:<Handshake size={18}/>,detail:"Deliver eligible Creative work externally; no permanent headcount."},
+  {kind:"reallocate",name:"Reallocate talent",icon:<RefreshCw size={18}/>,detail:"Use a free specialist or move an idle person from another client."},
+  {kind:"upskill",name:"Upskill Creative",icon:<GraduationCap size={18}/>,detail:"Seven game days of training for +9 CRE, unavailable during training."}] as const;
+ return <div className="mt-work-flow">
+  <div className="mt-work-section-head"><h3>Resource planning</h3><span>Next 4 weeks · task-effort forecast</span></div>
+  <p className="mt-work-muted">Compare decisions before spending. Planning never advances the clock or edits the game save. Supply is based on exclusive client staffing, not pooled freelancers.</p>
+  <div className="mt-planner-overview">
+   {overview.functions.map(fn=><div className="mt-planner-kpi" key={fn.id}>
+     <div><b>{fn.id.toUpperCase()}</b><small>{fn.teamsMissing?"Gap in "+fn.teamsMissing+" client team(s)":"Team assignments"}</small></div>
+     <strong>{fn.demand}</strong><span>effort needed</span>
+     <div className="mt-work-meter"><span style={{width:Math.min(100,fn.supply?fn.demand/fn.supply*100:fn.demand?100:0)+"%"}}/></div>
+     <small>Capacity ~{fn.supply} effort · {fn.gap>0?fn.gap+" shortage":"covered"}</small>
+    </div>)}
+  </div>
+  <div className="mt-work-metrics">
+   <span><b>{overview.activeProjects}</b><small>Active campaigns</small></span>
+   <span><b>{overview.availablePool}</b><small>Available employees</small></span>
+   <span><b>{overview.officeFree}</b><small>Free office desks</small></span>
+  </div>
+  {eligibleTeams.length===0?<div className="mt-work-empty"><CheckCircle2 size={27}/><h3>No active Creative work to plan</h3><p>Sign or start a client campaign to compare hiring, outsourcing and reallocating Creative specialists.</p></div>:
+   <>
+    <section className="mt-work-section">
+     <div className="mt-work-section-head"><h4>Creative decision desk</h4><span>Choose a client</span></div>
+     <select aria-label="Client team for resource planning" value={teamId??""} onChange={e=>setSelected(e.target.value)}>
+      {eligibleTeams.map(t=><option key={t.id} value={t.id}>{t.brand}</option>)}
+     </select>
+     {advice&&<div className="mt-work-next-step"><b>{advice.brand} · {advice.pendingTasks.length} Creative / Production workstreams</b>
+       <small>{advice.missing?"No available role-qualified Creative in this squad.":"Compare workload and productivity improvements."} Next applications in {R.daysToApplicants(s)} game days.</small>
+      </div>}
+     {plan&&<div className="mt-planner-baseline">
+      <div><small>BASELINE — NO ACTION</small><strong>{plan.baseline.timeline}</strong></div>
+      <div><small>APPROVED WORKSTREAMS</small><strong>{plan.baseline.completedTasks}/{plan.baseline.totalTasks}</strong></div>
+      <div><small>30-DAY INCREMENTAL COST</small><strong>{money(0)}</strong></div>
+     </div>}
+     <div className="mt-work-cta">
+      <Button variant="outline" size="sm" onClick={()=>teamId&&onTeam(teamId)}>Manage client team <ArrowRight size={14}/></Button>
+      <select aria-label="Recruitment channel scenario" value={channel} onChange={e=>setChannel(e.target.value as R.PaidChannel)}>
+       {RECRUITMENT_CHANNELS.map(ch=><option value={ch.id} key={ch.id}>{ch.label} · {money(ch.fee)}</option>)}
+      </select>
+     </div>
+    </section>
+    <div className="mt-planner-options">
+     {options.map(opt=>{
+      const f=alternatives.find(x=>x.kind===opt.kind);
+      if(!f)return null;
+      const eligible=f.viable&&(
+       opt.kind==="recruit"?!!overview.officeFree&&canStartRecruitment(s,channel).ok:
+       opt.kind==="outsource"?ready&&!!task&&s.agencyCash>=f.upfront:
+       opt.kind==="reallocate"?!!advice?.bestReallocate:
+       opt.kind==="upskill"?!!advice?.bestUpskill&&s.agencyCash>=f.upfront:false);
+      const selectedEmployee=opt.kind==="reallocate"?advice?.bestReallocate:opt.kind==="upskill"?advice?.bestUpskill:null;
+      const owner=selectedEmployee?T.ownerTeam(s,selectedEmployee):null;
+      const run=()=>{
+       if(!teamId||!eligible)return;
+       if(opt.kind==="recruit")onRecruit(teamId);
+       if(opt.kind==="outsource"&&task)act((d,fx)=>K.outsourceTeamTask(d,fx,d.ceo?.projects.find(p=>p.status==="active"&&p.teamId===teamId&&p.tasks.some(t=>t.key===task.key))?.id??"",task.key));
+       if(opt.kind==="reallocate"&&selectedEmployee)act((d,fx)=>{
+        const from=T.ownerTeam(d,selectedEmployee);
+        if(from)T.transferClientMember(d,fx,from.id,teamId,selectedEmployee);
+        else T.joinClientTeam(d,fx,teamId,selectedEmployee);
+       });
+       if(opt.kind==="upskill"&&selectedEmployee)act((d,fx)=>P.train(d,fx,selectedEmployee,"cre"));
+      };
+      return <article key={opt.kind} className="mt-planner-option">
+       <div className="mt-work-section-head"><b className="mt-planner-option-title">{opt.icon}{opt.name}</b><span>{f.viable?"Available scenario":"No candidate"}</span></div>
+       <p className="mt-work-muted">{opt.detail}</p>
+       {selectedEmployee&&<p className="mt-work-hint">{employeeById(selectedEmployee)?.name} · CRE {P.talentStats(s,selectedEmployee).cre}{owner&&opt.kind==="reallocate"?" · from "+owner.brand:""}</p>}
+       <div className="mt-planner-option-stats">
+        <div><small>Cost, first 30d</small><b>{money(f.cost30)}</b></div>
+        <div><small>Upfront</small><b>{money(f.upfront)}</b></div>
+        <div><small>Projected delivery</small><b>{f.completionDay===null?"Beyond horizon":"Day "+f.completionDay}</b></div>
+        <div><small>Impact vs baseline</small><b>{f.daysSaved===null?(f.completionDay===null?"Unknown":"Unblocks"):f.daysSaved>0?f.daysSaved+"d faster":f.daysSaved===0?"No change":Math.abs(f.daysSaved)+"d slower"}</b></div>
+       </div>
+       {opt.kind==="recruit"&&<small className="mt-work-muted">Represents a competent Creative candidate, not a guaranteed hire. Ongoing salary {money(f.monthly)}/30d.</small>}
+       {opt.kind==="outsource"&&!ready&&<small className="mt-work-problem">Complete this task's dependencies to outsource it.</small>}
+       {opt.kind==="reallocate"&&owner&&<small className="mt-work-problem">Transfer may leave {owner.brand} understaffed. No in-progress work may be interrupted.</small>}
+       {opt.kind==="upskill"&&<small className="mt-work-muted">Training pauses this person's task capacity for seven days.</small>}
+       <Button variant={opt.kind==="recruit"?"default":"outline"} size="sm" disabled={!eligible} onClick={run}>
+        {opt.kind==="recruit"?"Choose applicants":opt.kind==="outsource"?"Outsource Creative":opt.kind==="reallocate"?"Assign specialist":"Start CRE training"} <ArrowRight size={14}/>
+       </Button>
+      </article>;
+     })}
+    </div>
+    <p className="mt-work-muted">Forecast is indicative: simulated task prerequisites and task rates, not guaranteed KPI. Existing payroll and client contracts continue independently. Outsourcing only applies after task dependencies clear; annual retainers remain active until contract end.</p>
+   </>}
+ </div>;
 }
 function TeamOverview({teams,onTeam,onPool}:{teams:ClientTeam[];onTeam:(id:string)=>void;onPool:()=>void}){
  const s=useGame(x=>x);
@@ -208,10 +310,11 @@ function EmployeeDetail({id,onBack,onTeam}:{id:string;onBack:()=>void;onTeam:(te
    </section>}
  </div>;
 }
-function TalentPool({onEmployee}:{onEmployee:(id:string)=>void}){
+function TalentPool({onEmployee,focusRole,targetTeamId}:{onEmployee:(id:string)=>void;focusRole?:string;targetTeamId?:string|null}){
  const s=useGame(x=>x);
  const [filter,setFilter]=useState<"available"|"assigned"|"recruit">("recruit");
  const [query,setQuery]=useState("");
+ const [roleFocus,setRoleFocus]=useState(focusRole??"");
  const staff=s.staff.map(id=>employeeById(id)).filter((e):e is NonNullable<typeof e>=>!!e);
  const offers=s.recruitment?.week===s.clock.week?(s.recruitment?.candidates??[]):[];
  const recruitmentPosted=s.recruitment?.lastCampaignWeek===s.clock.week;
@@ -229,6 +332,10 @@ function TalentPool({onEmployee}:{onEmployee:(id:string)=>void}){
   {filter==="recruit"&&<section className="mt-work-section">
    <div className="mt-work-section-head"><h4>Run a hiring campaign</h4><span>Applications next week</span></div>
    <p className="mt-work-muted">Choose one recruiting channel per game week. Its posting fee is charged immediately; successful hires also add monthly salary and a separate onboarding fee.</p>
+   <div className="mt-work-add-row"><label htmlFor="recruit-focus">Target role</label><select id="recruit-focus" value={roleFocus} onChange={e=>setRoleFocus(e.target.value)}>
+     <option value="">General hiring</option>{Object.entries(ceoRoles).map(([id,name])=><option key={id} value={id}>{name}</option>)}
+    </select></div>
+   {roleFocus&&<p className="mt-work-hint">Focused postings ensure one relevant application, but a strong candidate and successful hire are not guaranteed.</p>}
    <div className="mt-hiring-channels">
     {RECRUITMENT_CHANNELS.map(ch=>{
       const available=canStartRecruitment(s,ch.id);
@@ -241,13 +348,13 @@ function TalentPool({onEmployee}:{onEmployee:(id:string)=>void}){
        {ch.id==="referral"&&<small className="mt-hiring-referral-note">Requires at least one current employee with skill 80+. Yields {ch.min}–{ch.max} applicants with skill {ch.minSkill}–{ch.maxSkill}.</small>}
        <div className="mt-hiring-channel-cta">
         <strong>{money(ch.fee)}</strong>
-        <Button size="sm" disabled={!available.ok} title={available.reason||undefined} onClick={()=>act((d,fx)=>startRecruitmentCampaign(d,fx,ch.id))}>{recruitmentPosted?"Posted this week":"Post jobs"}</Button>
+        <Button size="sm" disabled={!available.ok} title={available.reason||undefined} onClick={()=>act((d,fx)=>startRecruitmentCampaign(d,fx,ch.id,roleFocus||undefined))}>{recruitmentPosted?"Posted this week":"Post jobs"}</Button>
        </div>
        {!available.ok&&!recruitmentPosted&&<small className="mt-hiring-warning">{available.reason}</small>}
       </article>;
     })}
    </div>
-   {(s.recruitment?.postings??[]).filter(p=>p.arrivalWeek>s.clock.week).map(p=><div key={p.id} className="mt-work-next-step"><b>Campaign submitted: {RECRUITMENT_CHANNELS.find(ch=>ch.id===p.channel)?.label}</b><small>Applications expected in Week {p.arrivalWeek} · Posting paid {money(p.fee)}. No instant candidate rerolls.</small></div>)}
+   {(s.recruitment?.postings??[]).filter(p=>p.arrivalWeek>s.clock.week).map(p=><div key={p.id} className="mt-work-next-step"><b>Campaign submitted: {RECRUITMENT_CHANNELS.find(ch=>ch.id===p.channel)?.label}</b><small>Applications expected in Week {p.arrivalWeek} · {p.focusRole?"Target: "+(ceoRoles[p.focusRole]??p.focusRole)+" · ":""}Posting paid {money(p.fee)}. No instant candidate rerolls.</small></div>)}
   </section>}
   {filter==="recruit"&&<div className="mt-work-section-head"><h4>Open applicants · Week {s.clock.week}</h4><span>{offers.filter(e=>(e.source??"organic")==="organic").length} passive · {offers.filter(e=>e.source&&e.source!=="organic").length} sourced</span></div>}
   <label className="mt-work-search"><Search size={17}/><input aria-label="Search employees" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search employee or role"/></label>
@@ -261,19 +368,24 @@ function TalentPool({onEmployee}:{onEmployee:(id:string)=>void}){
      {applicant&&<small>{channelName} · Salary {money(e.salary)}/mo</small>}</button>
     <span className="mt-work-person-meta">{owner?owner.brand:training?"Training":hired?"Available":money(recruitmentFee(e))+" hire fee"}</span>
     {hired?<button aria-label={"View "+e.name} onClick={()=>onEmployee(e.id)} className="mt-work-row-next"><ChevronRight size={17}/></button>:
-     <Button size="sm" disabled={!canHire(s,e.id)} onClick={()=>act((d,fx)=>K.hire(d,fx,e.id))}>Hire</Button>}
+     <Button size="sm" disabled={!canHire(s,e.id)} onClick={()=>act((d,fx)=>{
+      K.hire(d,fx,e.id);
+      if(targetTeamId&&d.staff.includes(e.id)&&P.eligibleForRole(e.id,roleFocus||"creative"))T.joinClientTeam(d,fx,targetTeamId,e.id);
+     })}>{targetTeamId&&P.eligibleForRole(e.id,roleFocus||"creative")?"Hire & assign":"Hire"}</Button>}
    </div>;
   }):<div className="mt-work-empty"><Search size={24}/><b>No employees found</b><p>{filter==="recruit"?"No matching offers. End Week for 1–2 passive applicants or launch a recruiting campaign.":filter==="available"?"Recruit staff or release an idle employee from a client.":"Change the filter to find other employees."}</p></div>}
  </div>;
 }
 export function ClientTeamBoard(){
  const s=useGame(x=>x),teams=s.ceo?.clientTeams??[],active=teams.filter(t=>t.status!=="released");
- const [section,setSection]=useState<"teams"|"pool">("teams");
+ const [section,setSection]=useState<"planning"|"teams"|"pool">("planning");
+ const [recruitForTeam,setRecruitForTeam]=useState<string|null>(null);
  const [teamId,setTeamId]=useState<string|null>(null),[personId,setPersonId]=useState<string|null>(null),[deliveryId,setDeliveryId]=useState<string|null>(null);
  const team=active.find(t=>t.id===teamId);
  const assigned=new Set(active.flatMap(t=>t.memberIds));
  const alerts=active.filter(t=>["critical","attention","needs-staff"].includes(T.teamNeeds(s,t).status)).length;
- const change=(section:"teams"|"pool")=>{setSection(section);setTeamId(null);setPersonId(null);setDeliveryId(null);};
+ const change=(section:"planning"|"teams"|"pool")=>{setSection(section);setTeamId(null);setPersonId(null);setDeliveryId(null);if(section!=="pool")setRecruitForTeam(null);};
+ const openRecruitment=(id:string)=>{change("pool");setRecruitForTeam(id);};
  return <div className="mt-workforce">
   <header className="mt-work-header"><div><small>AGENCY / PEOPLE & DELIVERY</small><h2>Workforce</h2><p>One client, one dedicated team. Manage staffing decisions without micromanaging every task.</p></div><Users size={23}/></header>
   <div className="mt-work-metrics">
@@ -282,13 +394,15 @@ export function ClientTeamBoard(){
    <span><b>{alerts}</b><small>Teams to review</small></span>
   </div>
   <div className="mt-work-filter" role="tablist" aria-label="Workforce sections">
+   <button type="button" role="tab" aria-selected={section==="planning"} className={section==="planning"?"active":""} onClick={()=>change("planning")}>Resource planner</button>
    <button type="button" role="tab" aria-selected={section==="teams"} className={section==="teams"?"active":""} onClick={()=>change("teams")}>Client teams</button>
    <button type="button" role="tab" aria-selected={section==="pool"} className={section==="pool"?"active":""} onClick={()=>change("pool")}>Talent pool</button>
   </div>
   {personId?<EmployeeDetail key={personId} id={personId} onBack={()=>setPersonId(null)} onTeam={id=>{setPersonId(null);setTeamId(id);setSection("teams");}}/>:
    deliveryId&&team?<CampaignDelivery key={deliveryId} team={team} projectId={deliveryId} onBack={()=>setDeliveryId(null)}/>:
    team&&section==="teams"?<TeamDetail key={team.id} team={team} onBack={()=>setTeamId(null)} onEmployee={setPersonId} onDelivery={setDeliveryId} onRecruit={()=>change("pool")}/>:
-   section==="pool"?<TalentPool onEmployee={setPersonId}/>:
+   section==="pool"?<TalentPool key={recruitForTeam??"general"} onEmployee={setPersonId} focusRole={recruitForTeam?"creative":""} targetTeamId={recruitForTeam}/>:
+   section==="planning"?<ResourcePlanner onRecruit={openRecruitment} onTeam={id=>{setSection("teams");setTeamId(id);}}/>:
    <TeamOverview teams={teams} onTeam={setTeamId} onPool={()=>change("pool")}/>}
   <div className="mt-work-footnote"><BriefcaseBusiness size={14}/> Staff can belong to only one active client team. Payroll, training, campaign deadlines and task progress still use the existing game engine.</div>
  </div>;
