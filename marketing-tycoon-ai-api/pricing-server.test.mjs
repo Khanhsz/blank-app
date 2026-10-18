@@ -46,6 +46,13 @@ test("the real pricing API route validates the caller, prices tenders and falls 
   assert.ok(payload.advice.recommendedFee>=payload.advice.feeFloor);
   assert.ok(["lean","standard","deep"].includes(payload.advice.qualificationDepth));
   assert.ok(payload.advice.qualificationFee>=90000&&payload.advice.qualificationFee<=1400000);
+  const approach=await fetch("http://127.0.0.1:"+port+"/api/generate-brief",{
+   method:"POST",headers:{"Content-Type":"application/json",Origin:ORIGIN},
+   body:JSON.stringify({category:"coffee",client:{id:"startup-coffee-0",brand:"Mây Corner Coffee",sector:"coffee",segment:"startup",description:"Increase local visits",industry:"Coffee",marketingBudgetVnd:160000000}})
+  });
+  assert.equal(approach.status,503,"bedroom client cannot proceed without Gemini API key");
+  const unavailable=await approach.json();
+  assert.match(unavailable.error,/Gemini API/);
   const rejectOrigin=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json",Origin:"https://wrong.example"},body:JSON.stringify(req)});
   assert.equal(rejectOrigin.status,403);
   const bad=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json",Origin:ORIGIN},body:JSON.stringify({...req,mediaBudget:-1})});
