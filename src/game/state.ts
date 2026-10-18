@@ -56,7 +56,18 @@ export interface RecruitmentCandidate extends Employee {startingSkill:number;sta
 export interface RecruitmentMarket {week:number;seed:number;candidates:RecruitmentCandidate[];hired:RecruitmentCandidate[];}
 export interface Task {preferredEmployee?:string|null; key: string; label: string; role: string; effort: number; pre: string[]; cost: number; status: "backlog" | "assigned" | "in_progress" | "review" | "completed"; progress: number; quality: number; employee: string | null; outsourced: boolean; revised?: boolean; reviewDay?: number; assignedDay?: number; startedDay?: number; doneDay?: number }
 export interface ClientTeam {id:string;clientId:string;brand:string;memberIds:string[];projectIds:string[];leadId:string|null;status:"forming"|"active"|"closing"|"released";createdDay:number}
-export interface Project { clientMasterId?:string; teamId?:string; priority?:"normal"|"high"; id: string; leadId: string; brand: string; adBudget: number; fee: number; bonus: number; scope: number; duration: number; industry: string; days: number; status: "active" | "completed"; scenarioIndex: number; startedDay: number; target: number; pitchQuality: number; mediaSpent: number; mediaReserved: number; direct: number; campaign: Campaign; tasks: Task[]; paymentCount: number; payrollAllocated?: number; overheadAllocated?: number; deadlineIssue?: boolean; midpoint?: boolean; kolQuality?: number; reportQuality?: number; kpi?: number; quality?: number; margin?: number; clientTrust?: number; completedDay?: number; legacy?: boolean }
+export interface AnnualContractTerms {
+  kind:"annual-retainer";startDay:number;endDay:number;termDays:365;
+  annualServiceFeeVnd:number;annualMediaBudgetVnd:number;
+  payment:"annual-upfront";paymentStatus:"paid";currency:"VND";
+  monthlyReports:boolean;reportingIntervalDays:30;
+  scopeOfWork:string;deliverables:string[];
+  kpiTarget:number;terminationNoticeDays:30;
+  confidentiality:true;intellectualProperty:"client-owns-approved-paid-work";
+  mediaSpendSeparate:true;top10SectorExclusivity:boolean;
+}
+export interface FortuneAccount {clientId:string;ownerAgencyId:string|null;startedDay:number|null;endsDay:number|null;}
+export interface Project {contractTerms?:AnnualContractTerms; clientMasterId?:string; teamId?:string; priority?:"normal"|"high"; id: string; leadId: string; brand: string; adBudget: number; fee: number; bonus: number; scope: number; duration: number; industry: string; days: number; status: "active" | "completed"; scenarioIndex: number; startedDay: number; target: number; pitchQuality: number; mediaSpent: number; mediaReserved: number; direct: number; campaign: Campaign; tasks: Task[]; paymentCount: number; payrollAllocated?: number; overheadAllocated?: number; deadlineIssue?: boolean; midpoint?: boolean; kolQuality?: number; reportQuality?: number; kpi?: number; quality?: number; margin?: number; clientTrust?: number; completedDay?: number; legacy?: boolean }
 export type PriceTier="competitive"|"balanced"|"premium";
 export interface PricingAdvice {
  leadId:string;brand:string;mediaBudget:number;baselineFee:number;
@@ -79,7 +90,7 @@ export interface ProposalPlan {
 }
 export interface ClientRelationship {trust:number;lastContactDay:number;wins:number;losses:number;referrals:number;notes:string[];}
 export interface DealSession {pitch:Pitch|null;negotiation:Negotiation|null;}
-export interface Lead extends LeadDef {
+export interface Lead extends LeadDef {contractType?:"annual-retainer";hqApproach?:boolean;
  source?:OpportunitySource;discovery?:ClientDiscovery;outreachAttempts?:number;nurtureUntil?:number;
  proposal?:ProposalPlan;qualificationReason?:string;referralFrom?:string;
  pricingAdvice?:PricingAdvice; qualifyFeePaid?:number; qualifyDepthPaid?:"lean"|"standard"|"deep"; status: "new" | "prospecting" | "discovery" | "nurturing" | "qualified" | "pitch" | "shortlisted" | "pitch_won" | "negotiating" | "signed" | "lost" | "declined" | "renewal"; relationship: number; insightKnown?: boolean; lostTo?: string }
@@ -102,6 +113,7 @@ export interface WeeklyEdition {
 export interface WeeklyProgress {week:number; pending:WeeklyDecision[]; editions:WeeklyEdition[]; lastAdvanceDay:number}
 export interface GameClock extends WeeklyProgress {day:number}
 export interface CEO {
+  fortuneAccounts?:Record<string,FortuneAccount>;
   dealSessions?:Record<string,DealSession>;activeDealId?:string|null;
   clientRelationships?:Record<string,ClientRelationship>;
   clientTeams?:ClientTeam[];
@@ -175,7 +187,7 @@ export const newCEO = (reputation: number): CEO => ({
   rivals: ceoRivalDefs.map((v) => ({ ...v })), projects: [], inbox: [], partners: [], ledger: [], history: [],
   reputation: { overall: reputation, creative: 50, performance: 50, strategy: 50, reliability: 60, industries: {} },
   seq: 0, pitch: null, negotiation: null, totalPayroll: 0, totalDirect: 0, totalBilled: 0, totalPaid: 0,
-  clientTeams:[], dealSessions:{}, activeDealId:null, clientRelationships:{}, tenders:[], rivalNews:[], talentOffers:[], salaryPremiums:{}, talentMarket:{}, rivalLastTick:0,
+  clientTeams:[], fortuneAccounts:{}, dealSessions:{}, activeDealId:null, clientRelationships:{}, tenders:[], rivalNews:[], talentOffers:[], salaryPremiums:{}, talentMarket:{}, rivalLastTick:0,
   weekly:{week:1,pending:[],editions:[],lastAdvanceDay:1},
 });
 
@@ -279,6 +291,7 @@ export function migrate(raw: unknown): GameState {
     out.ceo = { ...base, ...out.ceo, reputation: { ...base.reputation, ...out.ceo.reputation, industries: out.ceo.reputation?.industries ?? {} },
       rivals:(Array.isArray(out.ceo.rivals)?out.ceo.rivals:base.rivals).map(r=>({officeTier:1,wins:0,lastMove:"Managing agency operations",...r})),
       clientTeams:Array.isArray(out.ceo.clientTeams)?out.ceo.clientTeams:[],
+      fortuneAccounts:out.ceo.fortuneAccounts&&typeof out.ceo.fortuneAccounts==="object"?out.ceo.fortuneAccounts:{},
       dealSessions:out.ceo.dealSessions&&typeof out.ceo.dealSessions==="object"?out.ceo.dealSessions:{},
       activeDealId:typeof out.ceo.activeDealId==="string"?out.ceo.activeDealId:(out.ceo.pitch?.id??out.ceo.negotiation?.id??null),
       clientRelationships:out.ceo.clientRelationships&&typeof out.ceo.clientRelationships==="object"?out.ceo.clientRelationships:{},
