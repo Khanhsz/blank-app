@@ -93,6 +93,9 @@ test("catalog generated briefs remain valid complete scenarios for the existing 
 });
 test("Agency can prospect any database company, but duplicate open leads are blocked",()=>{
  const s=game();s.agencyUnlocked=true;s.ceo=newCEO(75);
+ // Big Corp RFPs unlock only after agency—not freelance—deliveries.
+ assert.equal(approachCatalogClient(s,fx,"f50-4"),false);
+ for(let n=0;n<3;n++)s.history.push({brand:"Agency Case "+n,outcome:12,score:80,spent:100000,rep:5,xp:5,scenarioIndex:n,agency:true});
  assert.equal(approachCatalogClient(s,fx,"f50-4"),true);
  const a=s.ceo.leads.find(x=>x.clientMasterId==="f50-4")!;
  assert.equal(a.brand,"Apple");assert.equal(a.segment,"bigcorp");
