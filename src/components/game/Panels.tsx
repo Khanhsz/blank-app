@@ -14,6 +14,7 @@ import * as A from "@/game/acquisition";
 import {bigCorpAccess} from "@/game/clientMarket";
 import {CampaignJourney} from "./CampaignJourney";
 import {FortuneHeadquarters} from "./FortuneHeadquarters";
+import {workforceForDeal,type CEOSection,type WorkforceView} from "@/game/workflowNavigation";
 
 const Choice = ({ on, onClick, title, sub }: { on?: boolean; onClick: () => void; title: string; sub?: string }) => (
   <DecisionCard active={on} onClick={onClick} title={title} description={sub}/>
@@ -98,9 +99,12 @@ export function LocationPanel({ id, onOpen, onVisitCompany }: { id: string; onOp
 }
 
 const TABS = ["inbox", "pipeline", "workforce", "finance", "rivals", "news", "partners"] as const;
-export function CEOCommandCenter({onReadEdition}:{onReadEdition?:(id:string)=>void}) {
+export function CEOCommandCenter({onReadEdition,tab,onTabChange,workforceView,onWorkforceChange}:{
+ onReadEdition?:(id:string)=>void;tab:CEOSection;onTabChange:(tab:CEOSection)=>void;
+ workforceView:WorkforceView;onWorkforceChange:(view:WorkforceView)=>void;
+}) {
   const s = useGame((x) => x);
-  const [tab, setTab] = useState<(typeof TABS)[number]>(s.ceo?.activeDealId?"pipeline":"inbox");
+  const setTab=onTabChange;
   const c = s.ceo; if (!c) return null;
   const busy = K.capacity(c), open = K.openIssues(c);
   return (
@@ -110,8 +114,8 @@ export function CEOCommandCenter({onReadEdition}:{onReadEdition?:(id:string)=>vo
       <div className="mt-ceo-tabs" role="tablist" aria-label="CEO sections">{TABS.map(t => <button key={t} type="button" role="tab" aria-selected={tab===t} className={"mt-ceo-tab "+(tab===t?"active":"")} onClick={()=>setTab(t)}>{t}{t==="inbox"&&open.length>0?<b>{open.length}</b>:null}</button>)}</div>
       <PhaseScene phase={tab}>
       {tab === "inbox" && (open.length ? open.map((i) => <div key={i.id} className="mt-escalation"><div className="text-xs text-muted-foreground">Day {i.day} · {i.type}</div><p className="text-sm">{i.message}</p><div className="mt-2 flex flex-wrap gap-2">{i.choices.map((ch) => <Button key={ch} size="sm" variant="outline" className="capitalize" onClick={() => act((d, f) => K.resolveIssue(d, f, i.id, ch))}>{ch}</Button>)}</div></div>) : <p className="text-sm text-muted-foreground">Inbox clear. Staff are working autonomously — check the pipeline for new deals.</p>)}
-      {tab==="pipeline"&&<GrowthDesk onTeams={()=>setTab("workforce")}/>}
-      {tab==="workforce"&&<ClientTeamBoard/>}
+      {tab==="pipeline"&&<GrowthDesk onTeams={leadId=>{onWorkforceChange(workforceForDeal(s,leadId));setTab("workforce");}}/>}
+      {tab==="workforce"&&<ClientTeamBoard view={workforceView} onViewChange={onWorkforceChange}/>}
       {tab === "finance" && <><GameSection eyebrow="AGENCY FINANCE" title="Understand your cash runway" icon={<Coins size={20}/>} sub="Receivables differ from paid cash. Payroll and direct project costs reduce reserves."/><BarComparison rows={[{label:"Cash reserves",value:Math.max(0,s.agencyCash),display:money(s.agencyCash)},{label:"Receivables",value:Math.max(0,c.totalBilled-c.totalPaid),display:money(c.totalBilled-c.totalPaid)},{label:"Expenses to date",value:Math.max(0,c.totalDirect+c.totalPayroll),display:money(c.totalDirect+c.totalPayroll)}]}/><Row k="Agency cash" v={money(s.agencyCash)} /><Row k="Daily payroll" v={money(K.dailyPayroll(s))} /><Row k="Billed / paid" v={`${money(c.totalBilled)} / ${money(c.totalPaid)}`} /><Row k="Direct costs" v={money(c.totalDirect)} />
         <div className="max-h-64 overflow-auto">{c.ledger.slice(0, 40).map((x, i) => <div key={i} className="flex justify-between text-xs py-0.5"><span>D{x.day} · {x.what}{x.status === "due" ? " (due)" : ""}</span><span className={x.value < 0 ? "text-destructive" : "text-primary"}>{money(x.value)}</span></div>)}</div></>}
       {tab === "news" && <div className="mt-week-archive">

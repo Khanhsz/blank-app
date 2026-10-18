@@ -41,6 +41,7 @@ export type FreelanceV4Step="brief"|"workspace"|"board"|"client_review"|"revisio
 export interface FreelanceV4Artifact {
  id:string;title:string;description:string;
  decisions:Record<string,string>;copy:string;version:number;
+ draft?:{decisions:Record<string,string>;copy:string};
  status:"draft"|"ready"|"approved"|"revise";
  score:number;feedback:string;versions:{version:number;copy:string;decisions:Record<string,string>}[];
 }

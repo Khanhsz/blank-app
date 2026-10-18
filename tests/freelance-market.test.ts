@@ -3,7 +3,7 @@ import {readFileSync} from "node:fs";
 import assert from "node:assert/strict";
 import {defaults,migrate} from "../src/game/state";
 import {FREELANCE_JOBS,getFreelanceJob} from "../src/game/freelanceJobTemplates";
-import {chooseFreelanceClient} from "../src/game/campaign";
+import {chooseFreelanceClient,nextClient} from "../src/game/campaign";
 import {startSmallJob,deliverSmallJob,doWork,askForReview} from "../src/game/freelanceJobs";
 import * as Market from "../src/game/freelanceMarket";
 import * as V4 from "../src/game/freelanceWorkflows";
@@ -225,6 +225,9 @@ test("V4 all eight titles produce distinct structured outputs and pay only once 
   const restored=migrate(JSON.parse(JSON.stringify(s)));
   assert.equal(restored.campaign.freelanceJob?.v4?.step,"paid");
   assert.equal(restored.campaign.freelanceJob?.v4?.artifacts[0].version,1);
+  nextClient(restored,fx);
+  assert.equal(restored.campaign.catalogClientId,null,"paid job can return to the Job Board");
+  assert.equal(restored.campaign.phase,"brief");
  }
 });
 test("V4 deliverable board allows targeted edits, preserves approved items and controls revision limits",()=>{
@@ -270,3 +273,4 @@ test("V4 enforces capacity, completeness and 20% deduction when all included rev
  assert.equal(v.paidAmount,fee);
  assert.equal(s.personalCash,before+fee-t.outOfPocket);
 });
+

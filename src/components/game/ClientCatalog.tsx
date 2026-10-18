@@ -118,8 +118,10 @@ function ClientCatalogDirectory({mode="freelancer",onSelected}:{mode?:Mode;onSel
     <div className="mt-client-profile-footer"><small>{c.basis==="fortune-2026"?"Real company and published rank; proposal and marketing figures are fictional.":"Fictional company · modeled revenue, team size, awareness and budget."}</small>
      <Button size="sm" variant={selected===c.id?"outline":"default"} disabled={!canSelect||(mode==="agency"&&M.isOpenCatalogLead(game,c.id))}
       onClick={()=>{
-       if(mode==="freelancer")act((s,fx)=>C.chooseFreelanceClient(s,fx,c.id,selectedJob));
-       else act((s,fx)=>M.approachCatalogClient(s,fx,c.id));
+       let success=false;
+       if(mode==="freelancer")act((s,fx)=>{success=C.chooseFreelanceClient(s,fx,c.id,selectedJob);});
+       else act((s,fx)=>{success=M.approachCatalogClient(s,fx,c.id);});
+       if(!success)return;
        setSelected(c.id);
        onSelected?.();
       }}>{mode==="agency"&&M.isOpenCatalogLead(game,c.id)?"In pipeline":selected===c.id?"Approached":next+" client"}</Button>
@@ -140,3 +142,4 @@ export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelec
  return mode==="freelancer"?<FreelanceMarketplace onSelected={onSelected}/>:
  <ClientCatalogDirectory mode="agency" onSelected={onSelected}/>;
 }
+
