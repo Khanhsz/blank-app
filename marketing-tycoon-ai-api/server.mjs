@@ -1,6 +1,6 @@
 import http from "node:http";
 import {inputCategory,prompt,clientPrompt,validateApproachClient,validateCandidate,GEMINI_SCHEMA,CLIENT_SCENARIO_SCHEMA} from "./scenario.mjs";
-import {takeQuotaSlot,secondsUntilUtcMidnight,retryAfterSeconds,getCachedGeminiBrief,saveCachedGeminiBrief} from "./brief-quota.mjs";
+import {retryAfterSeconds,getCachedGeminiBrief,saveCachedGeminiBrief} from "./brief-quota.mjs";
 import {validatePricingInput,pricePrompt,buildPriceAdvice,PRICING_SCHEMA} from "./pricing.mjs";
 import {validateMarketRequest,validateMarketIntelligence,fallbackMarketReport,marketPrompt,MARKET_SCHEMA} from "./company-intelligence.mjs";
 import {FINANCE_SCHEMA,financePrompt,validateFinanceCalibration,fallbackFinanceCalibration} from "./finance-calibration.mjs";
@@ -10,20 +10,12 @@ const PORT=Number(process.env.PORT||4187);
 const ORIGIN=process.env.GAME_ORIGIN||"https://marketing-tycoon-bedroom-play.onrender.com";
 const MODEL=process.env.GEMINI_MODEL||"gemini-3.5-flash-lite";
 const apiKey=()=>process.env.GEMINI_API_KEY?.trim();
-const counter=new Map();
 const briefCache=new Map();
-const globalCounter={day:"",calls:0};
 let financeCache={day:"",report:null};
-function counted(key,limit,timeMs){
- const now=Date.now(),p=counter.get(key);
- if(!p||now-p.start>=timeMs){counter.set(key,{start:now,count:1});return true}
- if(p.count>=limit)return false;p.count++;return true;
-}
 function response(res,code,obj,origin){
  res.writeHead(code,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff",...(origin?{"Access-Control-Allow-Origin":origin,"Vary":"Origin"}:{})});
  res.end(JSON.stringify(obj));
 }
-function remoteIP(req){return String(req.headers["x-forwarded-for"]||req.socket.remoteAddress||"unknown").split(",")[0].trim().slice(0,80)}
 async function readJson(req,max=4096){
  let s="";for await(const part of req){s+=part;if(s.length>max)throw Error("Request body too large")}return JSON.parse(s||"{}");
 }
@@ -179,68 +171,46 @@ const server=http.createServer(async(req,res)=>{
   const today=new Date().toISOString().slice(0,10);
   if(financeCache.day===today&&financeCache.report)
    return response(res,200,{calibration:financeCache.report,mode:financeCache.report.source},req.headers.origin);
-  if(globalCounter.day!==today){globalCounter.day=today;globalCounter.calls=0}
-  // Small shared budget; never block the game if Gemini is unavailable.
-  const report=apiKey()&&globalCounter.calls<45?(globalCounter.calls++,await generateFinancialCalibration()):fallbackFinanceCalibration();
+  // Provider availability and billing are handled by Gemini, not by a game-side call allowance.
+  const report=await generateFinancialCalibration();
   financeCache={day:today,report};
   return response(res,200,{calibration:report,mode:report.source},req.headers.origin);
  }
  if(req.url==="/api/company-market-intelligence"&&req.method==="POST"){
   if(!allowed)return response(res,403,{error:"Game origin required"});
-  if(!counted("market:"+remoteIP(req),3,3600000))return response(res,429,{error:"Hourly market insight limit reached."},req.headers.origin);
   let input;
   try{input=validateMarketRequest(await readJson(req,8500))}
   catch{return response(res,400,{error:"Invalid game-market aggregate data"},req.headers.origin)}
-  const today=new Date().toISOString().slice(0,10);
-  if(globalCounter.day!==today){globalCounter.day=today;globalCounter.calls=0}
-  // Lower priority than gameplay briefs: never exhaust the shared Gemini pool.
-  let report;
-  if(apiKey()&&globalCounter.calls<35){globalCounter.calls++;report=await generateMarketIntelligence(input)}
-  else report=fallbackMarketReport(input);
+  const report=await generateMarketIntelligence(input);
   return response(res,200,{report,mode:report.source,model:report.source==="gemini"?MODEL:null},req.headers.origin);
  }
  if(req.url==="/api/freelance-deliverables-review"&&req.method==="POST"){
   if(!allowed)return response(res,403,{error:"Game origin required"});
-  if(!counted("deliverables:"+remoteIP(req),8,3600000))
-   return response(res,429,{error:"Review limit reached; the game will use deterministic client feedback."},req.headers.origin);
   let input;
   try{input=validateDeliverableRequest(await readJson(req,12000))}
   catch{return response(res,400,{error:"Invalid game deliverables"},req.headers.origin)}
-  const today=new Date().toISOString().slice(0,10);
-  if(globalCounter.day!==today){globalCounter.day=today;globalCounter.calls=0}
-  const review=apiKey()&&globalCounter.calls<40?(globalCounter.calls++,await generateDeliverableReview(input)):fallbackDeliverableReview(input);
+  const review=await generateDeliverableReview(input);
   return response(res,200,{review,mode:review.source,model:review.source==="gemini"?MODEL:null},req.headers.origin);
  }
  if(req.url==="/api/freelance-review"&&req.method==="POST"){
   if(!allowed)return response(res,403,{error:"Game origin required"});
-  if(!counted("freelance-review:"+remoteIP(req),10,3600000))
-   return response(res,429,{error:"Application review limit reached. The game will use its selection model."},req.headers.origin);
   let input;
   try{input=validateReviewRequest(await readJson(req,3000))}
   catch{return response(res,400,{error:"Invalid fictional applicant review data"},req.headers.origin)}
-  const today=new Date().toISOString().slice(0,10);
-  if(globalCounter.day!==today){globalCounter.day=today;globalCounter.calls=0}
-  // Keep shared quota for briefs and pricing. Rules fallback does not stall the game.
-  const review=apiKey()&&globalCounter.calls<42?(globalCounter.calls++,await generateFreelanceReview(input)):fallbackReview(input);
+  const review=await generateFreelanceReview(input);
   return response(res,200,{review,mode:review.source,model:review.source==="gemini"?MODEL:null},req.headers.origin);
  }
  if(req.url==="/api/pricing-advice"&&req.method==="POST"){
   if(!allowed)return response(res,403,{error:"Game origin required"});
-  if(!counted("pricing:"+remoteIP(req),6,3600000))return response(res,429,{error:"Hourly pricing advice limit reached."},req.headers.origin);
   try{
    const x=validatePricingInput(await readJson(req,4096));
-   // Only successful, configured AI calls count against the shared daily quota.
-   const today=new Date().toISOString().slice(0,10);
-   if(globalCounter.day!==today){globalCounter.day=today;globalCounter.calls=0}
-   let advice;
-   if(apiKey()&&globalCounter.calls<42){globalCounter.calls++;advice=await generatePricingAdvice(x)}
-   else advice=buildPriceAdvice(x,null,"rules");
+   const advice=await generatePricingAdvice(x);
    return response(res,200,{advice,mode:advice.source,model:advice.source==="gemini"?MODEL:null},req.headers.origin);
   }catch(error){return response(res,400,{error:"Invalid agency pricing request."},req.headers.origin)}
  }
  if(req.url!=="/api/generate-brief"||req.method!=="POST")return response(res,404,{error:"Not found"},allowed?req.headers.origin:null);
  if(!allowed)return response(res,403,{error:"Game origin required"});
- // Validate the selected client and V6 job before charging any Gemini quota.
+ // Validate the selected client and job before calling Gemini.
  let client,category;
  try{
   const body=await readJson(req);
@@ -255,18 +225,6 @@ const server=http.createServer(async(req,res)=>{
  const cacheKey=JSON.stringify(client);
  const cached=getCachedGeminiBrief(briefCache,cacheKey);
  if(cached)return response(res,200,{scenario:cached,mode:"ai",model:MODEL,cached:true},req.headers.origin);
- const day=new Date().toISOString().slice(0,10);
- if(globalCounter.day!==day){globalCounter.day=day;globalCounter.calls=0}
- if(globalCounter.calls>=50){
-  console.warn("Gemini brief paused: internal shared daily limit reached");
-  return response(res,429,{code:"local_daily_limit",error:"Marketing Tycoon's shared daily AI call limit is reached.",retryAfterSeconds:secondsUntilUtcMidnight()},req.headers.origin);
- }
- const slot=takeQuotaSlot(counter,"brief:"+remoteIP(req),8,3600000);
- if(!slot.allowed){
-  console.warn("Gemini brief paused: internal hourly limit reached");
-  return response(res,429,{code:"local_hourly_limit",error:"Marketing Tycoon's hourly brief limit is reached.",retryAfterSeconds:slot.retryAfterSeconds},req.headers.origin);
- }
- globalCounter.calls++;
  try{
   const scenario=await generateScenario(category,client);
   saveCachedGeminiBrief(briefCache,cacheKey,scenario);
