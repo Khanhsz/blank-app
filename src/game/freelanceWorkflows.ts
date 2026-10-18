@@ -75,6 +75,9 @@ const DESIGNS:Record<FreelanceJobType,JobDesign>={
 };
 export const designFor=(id:string|null|undefined)=>id&&id in DESIGNS?DESIGNS[id as FreelanceJobType]:null;
 export const allDesigns=Object.values(DESIGNS);
+export const V4_ACCEPTANCE_SCORE=78;
+/** Keep the payment preview and final settlement on the same VND calculation. */
+export const v4PaymentAmount=(fee:number,deduction:number)=>Math.max(0,Math.round(fee*(1-deduction/100)));
 export const unitFor=(jobId:string,unitId:string)=>designFor(jobId)?.units.find(u=>u.id===unitId);
 export function newFreelanceV4(jobId:string):FreelanceV4Work{
  const def=designFor(jobId);if(!def)throw Error("Unrecognized freelance workflow");
@@ -98,6 +101,24 @@ export function startV4(s:GameState,fx:Fx){
  fx.log("Accepted "+def.name+" · no deposit charged or paid. Build the agreed deliverables.");
  return true;
 }
+/** Editing a draft persists partial work without booking hours or submitting a version. */
+export function saveV4Draft(s:GameState,id:string,decisions:Record<string,string>,copy:string){
+ const p=s.campaign.freelanceJob,v=p?.v4,a=v?.artifacts.find(x=>x.id===id);
+ const unit=unitFor(p?.templateId??"",id);
+ if(!v||v.step!=="workspace"||!a||a.status==="approved"||!unit||copy.length>2500)return false;
+ const choices=Object.fromEntries(unit.fields.map(f=>[f.id,decisions[f.id]??""]));
+ if(unit.fields.some(f=>choices[f.id]&&!f.options.some(o=>o.id===choices[f.id])))return false;
+ if(copy===a.copy&&unit.fields.every(f=>(a.decisions[f.id]??"")===choices[f.id]))delete a.draft;
+ else a.draft={decisions:choices,copy};
+ return true;
+}
+export function v4EditHours(s:GameState,id:string):number{
+ const p=s.campaign.freelanceJob,v=p?.v4,t=getFreelanceJob(p?.templateId),a=v?.artifacts.find(x=>x.id===id);
+ return !v||!t||!a?0:a.version?1:Math.max(1,Math.ceil(t.hours/v.artifacts.length));
+}
+export function v4HasDrafts(v:FreelanceV4Work):boolean{
+ return v.artifacts.some(a=>!!a.draft);
+}
 export function editV4(s:GameState,fx:Fx,id:string,decisions:Record<string,string>,copy:string){
  const p=s.campaign.freelanceJob,v=p?.v4;
  if(!p||!v||v.step!=="workspace")return false;
@@ -105,15 +126,15 @@ export function editV4(s:GameState,fx:Fx,id:string,decisions:Record<string,strin
  if(!unit||!a||a.status==="approved"||copy.trim().length<20||copy.length>2500)return false;
  if(unit.fields.some(f=>!f.options.some(x=>x.id===decisions[f.id])))return fx.toast("Complete every professional decision before saving."),false;
  const unchanged=a.copy===copy&&unit.fields.every(f=>a.decisions[f.id]===decisions[f.id]);
- if(unchanged&&a.version>0)return true;
- const career=workload(s),template=getFreelanceJob(p.templateId)!;
+ if(unchanged&&a.version>0){delete a.draft;return true;}
+ const career=workload(s);
  if(career.weeklyWeek!==s.clock.week){career.weeklyWeek=s.clock.week;career.weeklyHours=0;}
- const hours=a.version?1:Math.max(1,Math.ceil(template.hours/v.artifacts.length));
+ const hours=v4EditHours(s,id);
  if(career.weeklyHours+hours>WEEKLY_CAPACITY)return fx.toast("Weekly capacity reached. End Week to continue."),false;
  career.weeklyHours+=hours;p.actualWorkHours=(p.actualWorkHours??0)+hours;p.hoursWorked=(p.hoursWorked??0)+hours;
  a.version++;a.copy=copy.trim();a.decisions={...decisions};a.score=artifactScore(p.templateId,a);
  a.versions.push({version:a.version,copy:a.copy,decisions:{...a.decisions}});
- a.versions=a.versions.slice(-8);a.status="ready";a.feedback="";
+ a.versions=a.versions.slice(-8);a.status="ready";a.feedback="";delete a.draft;
  fx.log("Saved "+a.title+" v"+a.version+" · "+hours+"h · score "+a.score+"/100");
  return true;
 }
@@ -125,6 +146,7 @@ export function setV4Active(s:GameState,id:string){
 export function openV4Board(s:GameState,fx:Fx){
  const v=s.campaign.freelanceJob?.v4;
  if(!v||v.step!=="workspace")return false;
+ if(v4HasDrafts(v))return fx.toast("Save your edited drafts as deliverable versions before opening the board."),false;
  if(v.artifacts.some(a=>a.status==="draft"||a.status==="revise"))return fx.toast("Complete or revise all deliverables before review."),false;
  v.step="board";return true;
 }
@@ -137,7 +159,7 @@ export function returnV4Workspace(s:GameState,id?:string){
 }
 export function submitV4Review(s:GameState,fx:Fx){
  const p=s.campaign.freelanceJob,v=p?.v4,t=getFreelanceJob(p?.templateId);
- if(!v||!p||!t||v.step!=="board"||v.artifacts.some(a=>a.status==="draft"||a.status==="revise"))return false;
+ if(!v||!p||!t||v.step!=="board"||v4HasDrafts(v)||v.artifacts.some(a=>a.status==="draft"||a.status==="revise"))return false;
  v.reviewVersion++;v.reviewRound++;
  const late=effectiveWorkDay(s)>p.deadlineDay;
  const scores=v.artifacts.map(a=>artifactScore(p.templateId,a));
@@ -146,7 +168,7 @@ export function submitV4Review(s:GameState,fx:Fx){
  for(const [i,a] of v.artifacts.entries()){
   if(a.status==="approved")continue;
   a.score=scores[i];
-  if(a.score>=78){a.status="approved";a.feedback="Accepted: clear scope alignment and actionable output.";}
+  if(a.score>=V4_ACCEPTANCE_SCORE){a.status="approved";a.feedback="Accepted: clear scope alignment and actionable output.";}
   else {issues++;a.status="revise";a.feedback=a.score<62?"Major revision: improve weak choices and make the evidence/output more specific.":"Minor revision: strengthen message, evidence or implementation clarity.";}
  }
  p.quality=v.score;
@@ -174,7 +196,7 @@ export function finalizeV4(s:GameState,fx:Fx){
  const career=workload(s),id=c.briefId,clientId=c.catalogClientId??"unknown";
  if(career.completedIds.includes(id))return false; // exactly-once payment
  const fee=p.acceptedFee??t.fee;
- const paid=Math.max(0,Math.round(fee*(1-v.deduction/100)));
+ const paid=v4PaymentAmount(fee,v.deduction);
  v.step="paid";v.paidAmount=paid;v.expenseCharged=true;
  career.completedIds.push(id);
  s.personalCash+=paid-t.outOfPocket;
@@ -202,3 +224,4 @@ export function finalizeV4(s:GameState,fx:Fx){
  fx.toast("Client accepted delivery · "+money(paid)+" paid. Portfolio and reputation updated.");
  return true;
 }
+

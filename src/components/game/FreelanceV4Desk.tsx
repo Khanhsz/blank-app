@@ -1,4 +1,3 @@
-import {useEffect,useState} from "react";
 import {ArrowLeft,ArrowRight,CheckCircle2,ClipboardCheck,Clock3,FileCheck2,PenTool,RefreshCcw,Send,Wallet,BookOpen} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {useGame,act} from "@/game/store";
@@ -11,38 +10,41 @@ import * as Campaign from "@/game/campaign";
 import {prepareFreelanceDeliverableReview} from "@/game/automaticDeliverableReview";
 import type {FreelanceV4Artifact} from "@/game/state";
 
-const phases=[{id:"brief",label:"Brief"},{id:"workspace",label:"Workspace"},{id:"board",label:"Deliverable Board"},{id:"revision",label:"Client Review"},{id:"ready",label:"Final Submit"}] as const;
+const phases=[{id:"brief",label:"Brief"},{id:"workspace",label:"Workspace"},{id:"board",label:"Deliverable Board"},{id:"revision",label:"Client Review"},{id:"ready",label:"Final Submit"},{id:"paid",label:"Paid"}] as const;
 function Editor({artifact,jobId}:{artifact:FreelanceV4Artifact;jobId:string}){
+ const game=useGame(s=>s);
  const unit=Work.unitFor(jobId,artifact.id)!;
- const [decisions,setDecisions]=useState<Record<string,string>>({...artifact.decisions});
- const [copy,setCopy]=useState(artifact.copy);
- useEffect(()=>{setDecisions({...artifact.decisions});setCopy(artifact.copy)},[artifact.id,artifact.version]);
+ const decisions=artifact.draft?.decisions??artifact.decisions,copy=artifact.draft?.copy??artifact.copy;
+ const update=(choices:Record<string,string>,content:string)=>act(s=>{Work.saveV4Draft(s,artifact.id,choices,content);});
  const draft:FreelanceV4Artifact={...artifact,decisions,copy};
  const score=artifactScore(jobId,draft);
  const allChosen=unit.fields.every(f=>!!decisions[f.id]);
- const dirty=copy!==artifact.copy||unit.fields.some(f=>decisions[f.id]!==artifact.decisions[f.id]);
+ const dirty=!!artifact.draft;
+ const hours=Work.v4EditHours(game,artifact.id);
+ const hoursLeft=Math.max(0,WEEKLY_CAPACITY-(game.freelanceCareer?.weeklyWeek===game.clock.week?game.freelanceCareer.weeklyHours:0));
  return <section className="mt-v4-panel" aria-label={"Editing "+unit.title}>
   <div className="mt-v4-title"><div><small>JOB-SPECIFIC WORKSPACE</small><h3>{unit.title}</h3><p>{unit.description}</p></div><span>v{artifact.version||"Draft"}</span></div>
   <div className="mt-v4-choices">{unit.fields.map(field=><label key={field.id} className="mt-v4-field">
    <span>{field.label}</span>
-   <select value={decisions[field.id]??""} onChange={e=>setDecisions(p=>({...p,[field.id]:e.target.value}))}>
+   <select value={decisions[field.id]??""} onChange={e=>update({...decisions,[field.id]:e.target.value},copy)}>
     <option value="">Choose a professional direction</option>
     {field.options.map(o=><option key={o.id} value={o.id}>{o.label} — {o.detail}</option>)}
    </select>
   </label>)}</div>
   <label className="mt-v4-copy"><span>Editable output · script / report / content</span>
-   <textarea rows={8} maxLength={2500} value={copy} onChange={e=>setCopy(e.target.value)} aria-label="Edit deliverable content"/>
+   <textarea rows={8} maxLength={2500} value={copy} onChange={e=>update(decisions,e.target.value)} aria-label="Edit deliverable content"/>
   </label>
   <div className="mt-v4-preview">
-   <div><b>Preview & QA</b><span>{allChosen?score+"/100":"Decisions incomplete"}</span></div>
+   <div><b>Preview & QA · target {Work.V4_ACCEPTANCE_SCORE}/100</b><span>{allChosen?score+"/100":"Decisions incomplete"}</span></div>
    <p>{copy}</p>
    <div className="mt-v4-tags">{unit.fields.map(f=>{const chosen=f.options.find(x=>x.id===decisions[f.id]);return <span key={f.id}>{f.label}: {chosen?.label??"Not set"}</span>})}</div>
   </div>
   <div className="mt-v4-actions">
-   <Button disabled={!allChosen||copy.trim().length<20} onClick={()=>act((s,fx)=>{Work.editV4(s,fx,artifact.id,decisions,copy);})}>
-    <CheckCircle2 size={15}/> {artifact.version?"Save Version "+(artifact.version+1):"Save Deliverable"}
+   <Button disabled={!allChosen||copy.trim().length<20||hours>hoursLeft||(!dirty&&artifact.version>0)} onClick={()=>act((s,fx)=>{Work.editV4(s,fx,artifact.id,decisions,copy);})}>
+    <CheckCircle2 size={15}/> {artifact.version?"Save Version "+(artifact.version+1):"Save Deliverable"} · {hours}h
    </Button>
-   {dirty&&<small>Changes are not saved yet. Save before switching to another deliverable.</small>}
+   <small role="status">{dirty?"Draft saved automatically. Save a deliverable version to include these changes in client review.":artifact.version?"Deliverable version saved for client review.":"Choose each direction, then save the deliverable."}</small>
+   {hours>hoursLeft&&<small className="mt-v4-capacity">Need {hours}h; {hoursLeft}h left this week. Your draft is saved. Use End Week to restore work hours.</small>}
   </div>
  </section>;
 }
@@ -54,10 +56,11 @@ export function FreelanceV4Desk(){
  const current=v.artifacts.find(a=>a.id===v.activeId)??v.artifacts[0];
  const completed=v.artifacts.filter(a=>a.status==="ready"||a.status==="approved").length;
  const approved=v.artifacts.filter(a=>a.status==="approved").length;
+ const drafts=v.artifacts.filter(a=>!!a.draft).length;
  const estimate=freelanceDeliveryEstimate(s);
  const fee=p.acceptedFee??job.fee;
- const amount=Math.max(0,Math.round(fee*(1-v.deduction/100)));
- const nav=phases.findIndex(x=>x.id===v.step);
+ const amount=Work.v4PaymentAmount(fee,v.deduction);
+ const nav=phases.findIndex(x=>x.id===(v.step==="client_review"?"revision":v.step));
  const reviewItems=v.artifacts.filter(a=>a.status==="revise");
  return <div className="mt-v4">
   <header className="mt-v4-header">
@@ -82,13 +85,13 @@ export function FreelanceV4Desk(){
    <div className="mt-v4-selector" aria-label="Choose a job deliverable">
     {v.artifacts.map((a,i)=><button key={a.id} type="button" className={a.id===current.id?"active":""}
      disabled={a.status==="approved"} onClick={()=>act(s=>Work.setV4Active(s,a.id))}>
-     <span>{i+1}. {a.title}</span><small>{a.status==="approved"?"Approved":a.version?"v"+a.version+" · "+a.status:"New draft"}</small>
+     <span>{i+1}. {a.title}</span><small>{a.status==="approved"?"Approved":a.draft?"Draft saved · version needed":a.version?"v"+a.version+" · "+a.status:"New draft"}</small>
     </button>)}
    </div>
    <Editor key={c.briefId+"-"+current.id} artifact={current} jobId={job.id}/>
    <div className="mt-v4-bottom">
-    <div><small>Progress</small><b>{completed}/{v.artifacts.length} saved</b><small> · {p.actualWorkHours??0}h worked · deadline Day {p.deadlineDay} · est. Day {estimate?.workDay??s.clock.day}</small></div>
-    <Button disabled={completed!==v.artifacts.length} onClick={()=>act(Work.openV4Board)}>
+    <div><small>Progress</small><b>{completed}/{v.artifacts.length} deliverable versions</b><small>{drafts>0?" · "+drafts+" edited draft(s) to save":""} · {p.actualWorkHours??0}h worked · deadline Day {p.deadlineDay} · est. Day {estimate?.workDay??s.clock.day}</small></div>
+    <Button disabled={completed!==v.artifacts.length||drafts>0} onClick={()=>act(Work.openV4Board)}>
       Review All Deliverables <ArrowRight size={15}/>
     </Button>
    </div>
@@ -139,3 +142,4 @@ export function FreelanceV4Desk(){
   </section>}
  </div>;
 }
+

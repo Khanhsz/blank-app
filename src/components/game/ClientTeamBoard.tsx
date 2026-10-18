@@ -13,6 +13,7 @@ import * as T from "@/game/clientTeams";
 import * as R from "@/game/resourcePlanning";
 import {currentOffice} from "@/game/city";
 import type {ClientTeam,GameState,TalentFunction,TalentAttributes} from "@/game/state";
+import {newWorkforceView,type WorkforceView} from "@/game/workflowNavigation";
 
 const labels:Record<string,string>={forming:"Needs staffing",active:"Active",closing:"Ready to release",released:"Released","needs-staff":"Needs staffing",critical:"Deadline risk",attention:"Action needed","on-track":"On track",completed:"Completed"};
 const nice=(status:string)=>labels[status]??status;
@@ -376,16 +377,18 @@ function TalentPool({onEmployee,focusRole,targetTeamId}:{onEmployee:(id:string)=
   }):<div className="mt-work-empty"><Search size={24}/><b>No employees found</b><p>{filter==="recruit"?"No matching offers. End Week for 1–2 passive applicants or launch a recruiting campaign.":filter==="available"?"Recruit staff or release an idle employee from a client.":"Change the filter to find other employees."}</p></div>}
  </div>;
 }
-export function ClientTeamBoard(){
+export function ClientTeamBoard({view,onViewChange}:{view:WorkforceView;onViewChange:(view:WorkforceView)=>void}){
  const s=useGame(x=>x),teams=s.ceo?.clientTeams??[],active=teams.filter(t=>t.status!=="released");
- const [section,setSection]=useState<"planning"|"teams"|"pool">("planning");
- const [recruitForTeam,setRecruitForTeam]=useState<string|null>(null);
- const [teamId,setTeamId]=useState<string|null>(null),[personId,setPersonId]=useState<string|null>(null),[deliveryId,setDeliveryId]=useState<string|null>(null);
+ const {section,recruitForTeam,teamId,personId,deliveryId}=view;
+ const update=(patch:Partial<WorkforceView>)=>onViewChange({...view,...patch});
+ const setTeamId=(teamId:string|null)=>update({teamId});
+ const setPersonId=(personId:string|null)=>update({personId});
+ const setDeliveryId=(deliveryId:string|null)=>update({deliveryId});
  const team=active.find(t=>t.id===teamId);
  const assigned=new Set(active.flatMap(t=>t.memberIds));
  const alerts=active.filter(t=>["critical","attention","needs-staff"].includes(T.teamNeeds(s,t).status)).length;
- const change=(section:"planning"|"teams"|"pool")=>{setSection(section);setTeamId(null);setPersonId(null);setDeliveryId(null);if(section!=="pool")setRecruitForTeam(null);};
- const openRecruitment=(id:string)=>{change("pool");setRecruitForTeam(id);};
+ const change=(section:WorkforceView["section"])=>onViewChange({...newWorkforceView(),section});
+ const openRecruitment=(id:string)=>onViewChange({...newWorkforceView(),section:"pool",recruitForTeam:id});
  return <div className="mt-workforce">
   <header className="mt-work-header"><div><small>AGENCY / PEOPLE & DELIVERY</small><h2>Workforce</h2><p>One client, one dedicated team. Manage staffing decisions without micromanaging every task.</p></div><Users size={23}/></header>
   <div className="mt-work-metrics">
@@ -398,12 +401,13 @@ export function ClientTeamBoard(){
    <button type="button" role="tab" aria-selected={section==="teams"} className={section==="teams"?"active":""} onClick={()=>change("teams")}>Client teams</button>
    <button type="button" role="tab" aria-selected={section==="pool"} className={section==="pool"?"active":""} onClick={()=>change("pool")}>Talent pool</button>
   </div>
-  {personId?<EmployeeDetail key={personId} id={personId} onBack={()=>setPersonId(null)} onTeam={id=>{setPersonId(null);setTeamId(id);setSection("teams");}}/>:
+  {personId?<EmployeeDetail key={personId} id={personId} onBack={()=>setPersonId(null)} onTeam={id=>update({personId:null,teamId:id,section:"teams",deliveryId:null})}/>:
    deliveryId&&team?<CampaignDelivery key={deliveryId} team={team} projectId={deliveryId} onBack={()=>setDeliveryId(null)}/>:
    team&&section==="teams"?<TeamDetail key={team.id} team={team} onBack={()=>setTeamId(null)} onEmployee={setPersonId} onDelivery={setDeliveryId} onRecruit={()=>change("pool")}/>:
    section==="pool"?<TalentPool key={recruitForTeam??"general"} onEmployee={setPersonId} focusRole={recruitForTeam?"creative":""} targetTeamId={recruitForTeam}/>:
-   section==="planning"?<ResourcePlanner onRecruit={openRecruitment} onTeam={id=>{setSection("teams");setTeamId(id);}}/>:
+   section==="planning"?<ResourcePlanner onRecruit={openRecruitment} onTeam={id=>update({section:"teams",teamId:id})}/>:
    <TeamOverview teams={teams} onTeam={setTeamId} onPool={()=>change("pool")}/>}
   <div className="mt-work-footnote"><BriefcaseBusiness size={14}/> Staff can belong to only one active client team. Payroll, training, campaign deadlines and task progress still use the existing game engine.</div>
  </div>;
 }
+

@@ -50,6 +50,7 @@ export function approachCatalogClient(s:GameState,fx:Fx,clientId:string,channel:
  const lead:Lead={...seed,id:"approach-"+clientId+"-"+suffix,status:"prospecting",source:"outbound",relationship:seed.trust,outreachAttempts:0,
   ...(isFortune?{contractType:"annual-retainer" as const,hqApproach:true}:{} )};
  ceo.leads.unshift(lead);
+ ceo.activeDealId=lead.id;
  fx.log("Prospected "+client.brand+" · "+client.segment+" · "+client.sector+" · "+(client.fortuneRank?"Fortune 50 demo":"fictional client"));
  fx.toast("Prospect added: "+client.brand+". Choose an outreach strategy in Deal Room.");
  return true;
@@ -67,3 +68,4 @@ export function isOpenCatalogLead(s:GameState,clientId:string):boolean{
  return !!s.ceo?.leads.some(l=>l.clientMasterId===clientId&&
   ["new","prospecting","discovery","nurturing","qualified","pitch","shortlisted","pitch_won","negotiating","signed","renewal"].includes(l.status));
 }
+

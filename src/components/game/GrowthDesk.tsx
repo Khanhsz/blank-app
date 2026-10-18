@@ -1,7 +1,7 @@
 import {useState} from "react";
 import {ArrowRight,Check,Search,Users} from "lucide-react";
 import {Button} from "@/components/ui/button";
-import {act,useGame} from "@/game/store";
+import {act,getState,useGame} from "@/game/store";
 import {money,employees} from "@/game/data";
 import * as C from "@/game/ceo";
 import * as A from "@/game/acquisition";
@@ -39,7 +39,7 @@ function Proposal({lead,locked}:{lead:Lead;locked:boolean}){
   </details><Stats lead={lead}/>
  </div>;
 }
-function DealView({id,back,teams}:{id:string|null;back:()=>void;teams:()=>void}){
+function DealView({id,back,teams}:{id:string|null;back:()=>void;teams:(leadId:string)=>void}){
  const s=useGame(x=>x),c=s.ceo!,l=c.leads.find(x=>x.id===id);
  if(!l)return <p className="mt-growth-empty">Choose a client from Pipeline to continue.</p>;
  const p=c.pitch?.id===l.id?c.pitch:null,n=c.negotiation?.id===l.id?c.negotiation:null;
@@ -124,14 +124,14 @@ function DealView({id,back,teams}:{id:string|null;back:()=>void;teams:()=>void})
   </section>}
   {l.status==="signed"&&<section className="mt-growth-flow"><h4>Contract Signed</h4>
    {l.contractType==="annual-retainer"&&<p><b>365-day annual retainer · PAID IN FULL.</b> Media budget is separate and tracked monthly. See Client Team for delivery and reporting.</p>}
-   <p>Build the client's dedicated campaign team. Staff cannot serve two clients simultaneously.</p><Button onClick={teams}>Open Client Teams <Users size={15}/></Button></section>}
+   <p>Build the client's dedicated campaign team. Staff cannot serve two clients simultaneously.</p><Button onClick={()=>teams(l.id)}>Open {l.brand} Client Team <Users size={15}/></Button></section>}
   {["declined","lost"].includes(l.status)&&<p className="mt-growth-result">Opportunity closed. History remains available in CRM; no client team has been reserved.</p>}
   <details className="mt-growth-relationship"><summary>CRM Relationship History · {relation.wins} wins, {relation.referrals} referrals</summary>
    {relation.notes.length?relation.notes.slice(0,8).map((text,i)=><p key={i}>• {text}</p>):<p>No prior client history recorded.</p>}
   </details>
  </div>;
 }
-export function GrowthDesk({onTeams}:{onTeams:()=>void}){
+export function GrowthDesk({onTeams}:{onTeams:(leadId:string)=>void}){
  const s=useGame(x=>x),c=s.ceo!;
  const [view,setView]=useState<View>(c.activeDealId?"deal":"pipeline"),[stage,setStage]=useState("Open"),[query,setQuery]=useState("");
  const [current,setCurrent]=useState<string|null>(c.activeDealId??null),[page,setPage]=useState(0);
@@ -146,7 +146,11 @@ export function GrowthDesk({onTeams}:{onTeams:()=>void}){
    {([["discover","Discover"],["pipeline","Pipeline"],["deal","Deal Room"]] as const).map(([id,label])=>
     <button key={id} type="button" role="tab" aria-selected={view===id} className={view===id?"active":""} onClick={()=>setView(id)}>{label}</button>)}
   </div>
-  {view==="discover"&&<ClientCatalog mode="agency" onSelected={()=>{setStage("Open");setPage(0);setView("pipeline");}}/>}
+  {view==="discover"&&<ClientCatalog mode="agency" onSelected={()=>{
+   setStage("Open");setPage(0);
+   const id=getState().ceo?.activeDealId;
+   if(id)select(id);else setView("pipeline");
+  }}/>}
   {view==="pipeline"&&<>
    <div className="mt-growth-kpis">
     <div><small>OPEN DEALS</small><b>{open.length}</b></div>
@@ -174,3 +178,4 @@ export function GrowthDesk({onTeams}:{onTeams:()=>void}){
   {view==="deal"&&<DealView id={current??c.activeDealId??null} back={()=>setView("pipeline")} teams={onTeams}/>}
  </div>;
 }
+

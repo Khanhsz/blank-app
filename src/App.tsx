@@ -23,6 +23,8 @@ import {cityLots,findOffice,currentOffice,cityCounts,type DistrictKind} from "./
 import {AssetRegistry} from "./components/game/AssetRegistry";
 import type {SceneId} from "./game/state";
 import {CLIENT_BY_ID} from "./game/clientDatabase";
+import {newWorkforceView,workstationHint,type CEOSection} from "./game/workflowNavigation";
+import "./workflow.css";
 
 const buildings=cityLots;
 const sceneName:Record<SceneId,string>={room:"The Bedroom",city:"Marketing City",office:"Agency HQ",boardroom:"The Boardroom"};
@@ -62,12 +64,13 @@ function Customize(){
 export default function App(){
  const s=useGame(x=>x);
  const [panel,setPanel]=useState<Panel>(getState().created?(getState().agencyUnlocked?"ceo":"none"):"onboard");
+ const [ceoTab,setCeoTab]=useState<CEOSection>(getState().ceo?.activeDealId?"pipeline":"inbox");
+ const [workforceView,setWorkforceView]=useState(newWorkforceView);
  const [selected,setSelected]=useState<string|null>(null);
  const [directoryType,setDirectoryType]=useState<"all"|"upgraded"|DistrictKind>("all");
  const [directorySearch,setDirectorySearch]=useState("");
  const [webgl,setWebgl]=useState(true);
  const [map2d,setMap2d]=useState(false);
- const [computerHint,setComputerHint]=useState(false);
  const [avatarYaw,setAvatarYaw]=useState(0);
  const [avatarZoom,setAvatarZoom]=useState(1);
  const [sceneFocus,setSceneFocus]=useState<string|null>(null);
@@ -89,7 +92,7 @@ export default function App(){
  // Pricing now runs as a mandatory part of agency lead qualification and pitch preparation.
  useEffect(()=>{prepareAgencyPricing()},[s.agencyUnlocked,s.ceo?.leads,s.ceo?.pitch?.id,s.staff.length]);
  useEffect(()=>{prepareMarketIntelligence()},[s.clock.week,s.companyMarket?.lastWeek,s.companyMarket?.intelligence.lastWeek]);
- useEffect(()=>{if(panel!=="ceo"||!s.agencyUnlocked)return;const board=!!(s.ceo?.pitch||s.ceo?.negotiation);if(board&&s.scene!=="boardroom")act(d=>{d.scene="boardroom"});else if(!board&&s.scene==="boardroom")act(d=>{d.scene="office"})},[panel,s.agencyUnlocked,!!s.ceo?.pitch,!!s.ceo?.negotiation,s.scene]);
+ useEffect(()=>{if(panel!=="ceo"||!s.agencyUnlocked)return;const board=ceoTab==="pipeline"&&!!(s.ceo?.pitch||s.ceo?.negotiation);if(board&&s.scene!=="boardroom")act(d=>{d.scene="boardroom"});else if(!board&&s.scene==="boardroom")act(d=>{d.scene="office"})},[panel,ceoTab,s.agencyUnlocked,!!s.ceo?.pitch,!!s.ceo?.negotiation,s.scene]);
  useEffect(()=>{const p=previousMilestones.current;let message="";
   if(!p.city&&s.cityUnlocked)message="MARKETING CITY UNLOCKED";
   else if(!p.agency&&s.agencyUnlocked)message="AGENCY FOUNDED · CEO JOURNEY UNLOCKED";
@@ -109,22 +112,31 @@ export default function App(){
    tier:b.kind==="rival"?(s.ceo?.rivals.find(r=>r.id===b.rivalId)?.officeTier??1):1,
    locked:!s.cityUnlocked||(b.id==="brand"&&!s.agencyUnlocked&&s.reputation<BRAND_HQ_REP)||(b.kind==="office"&&(!s.agencyUnlocked||s.reputation<findOffice(b.id).minRep))
  }));
- const change=(to:SceneId)=>{setMoveInput("");setSceneFocus(null);if(to==="city"&&!s.cityUnlocked)return;if((to==="office"||to==="boardroom")&&!s.agencyUnlocked)return;act(d=>{d.scene=to});setSelected(null);setPanel(to==="office"||to==="boardroom"?"ceo":"none")};
+ const change=(to:SceneId)=>{if(transitionTimer.current!==null)window.clearTimeout(transitionTimer.current);setMoveInput("");setSceneFocus(null);if(to==="city"&&!s.cityUnlocked)return;if((to==="office"||to==="boardroom")&&!s.agencyUnlocked)return;act(d=>{d.scene=to});setSelected(null);setPanel(to==="office"||to==="boardroom"?"ceo":"none")};
  const locate=(id:string)=>{setSelected(id);setPanel("location")};
  const roomInteract=(id:"board"|"phone"|"wardrobe")=>{if(getState().scene!=="room")return;setSceneFocus(id);if(transitionTimer.current!==null)window.clearTimeout(transitionTimer.current);transitionTimer.current=window.setTimeout(()=>setPanel(id==="board"?"journal":id==="phone"?"phone":"avatar"),reduceMotion?0:370)};
- // Only the bedroom computer opens freelance briefs; menu actions guide you home.
- const approachComputer=()=>{setSceneFocus(null);
-   if(getState().agencyUnlocked){setPanel("ceo");return;}
+ // Both the physical computer and its shortcut enter the same bedroom workstation.
+ const approachComputer=()=>{
+   if(transitionTimer.current!==null)window.clearTimeout(transitionTimer.current);
+   setMoveInput("");
+   if(getState().agencyUnlocked){change("office");return;}
    if(getState().scene!=="room")act(d=>{d.scene="room"});
-   setSelected(null);setPanel("none");setComputerHint(true);
+   setSceneFocus("pc");setSelected(null);setPanel("campaign");
  };
  const interactComputer=()=>{
    const state=getState();
    if(!state.created||state.scene!=="room")return;
-   setSelected(null);setComputerHint(false);setSceneFocus("pc");if(transitionTimer.current!==null)window.clearTimeout(transitionTimer.current);transitionTimer.current=window.setTimeout(()=>setPanel(state.agencyUnlocked?"ceo":"campaign"),reduceMotion?0:390);
+   approachComputer();
  };
- const fromLocation=(next:"campaign"|"ceo")=>next==="campaign"?approachComputer():change("office");
- const title=panel==="settings"?"Settings & Save Files":panel==="campaign"?"Client Approach · Bedroom Workstation":panel==="ceo"?"CEO Command Center":panel==="avatar"?"Your Creative Identity":panel==="journal"?"Your Campaign Moodboard":panel==="phone"?"Your Messages":panel==="map"?"World Directory":panel==="location"?(selected?.startsWith("fortune-hq-")?(CLIENT_BY_ID[selected.slice("fortune-hq-".length)]?.brand??"Fortune")+" · Headquarters":buildings.find(b=>b.id===selected)?.name||"Location"):"Welcome to Marketing Tycoon";
+ const fromLocation=(next:"campaign"|"ceo")=>{
+   if(next==="campaign"){approachComputer();return;}
+   const kind=buildings.find(b=>b.id===selected)?.kind;
+   if(selected?.startsWith("fortune-hq-")||selected==="brand"||selected==="network"||kind==="client")setCeoTab("pipeline");
+   else if(kind==="rival")setCeoTab("rivals");
+   change("office");
+ };
+ const workstation=workstationHint(s);
+ const title=panel==="settings"?"Settings & Save Files":panel==="campaign"?(s.campaign.catalogClientId?"Freelance Workstation":"Freelance Job Board"):panel==="ceo"?"CEO Command Center":panel==="avatar"?"Your Creative Identity":panel==="journal"?"Your Campaign Moodboard":panel==="phone"?"Your Messages":panel==="map"?"World Directory":panel==="location"?(selected?.startsWith("fortune-hq-")?(CLIENT_BY_ID[selected.slice("fortune-hq-".length)]?.brand??"Fortune")+" · Headquarters":buildings.find(b=>b.id===selected)?.name||"Location"):"Welcome to Marketing Tycoon";
  return <div className="game">
    <div className="world">{webgl&&!map2d?<Suspense fallback={<div className="mt-world-loader" role="status"><span className="mt-world-loader-spin"/><b>Building your world…</b><small>Preparing the 3D environment</small></div>}><WorldScene scene={s.scene} districts={districts} selected={selected} onSelect={locate} onComputerInteract={interactComputer} onRoomInteract={roomInteract} focus={sceneFocus} preview={!s.created||panel==="onboard"} avatarYaw={avatarYaw} avatarZoom={avatarZoom} moveInput={moveInput} officeName={buildings.find(b=>b.id===s.officeId)?.name||"Starter HQ"} officeCapacity={currentOffice(s).capacity} character={s.character} room={s.room} staff={s.staff.length} quality={s.graphics}/></Suspense>:<div className="fallback"><h2>WORLD DIRECTORY</h2><h1>{sceneName[s.scene]}</h1>{s.scene==="city"&&<div className="gridmap">{buildings.map(b=><button onClick={()=>locate(b.id)} key={b.id}>{b.name}</button>)}</div>}{s.scene==="room"&&s.created&&<button id="bedroom-computer-fallback" className="fallback-computer" onClick={interactComputer}>Use bedroom computer → Approach a client</button>}</div>}</div>
    {s.scene==="city"&&s.cityUnlocked&&<button type="button" className="mt-3d-tour-cta" onClick={()=>{setDirectoryType("upgraded");setPanel("map")}}>✦ NEW 3D CITY · EXPLORE ALL DISTRICTS <span>27 UPGRADED ↗</span></button>}
@@ -132,8 +144,8 @@ export default function App(){
 
    {s.created&&<div className="stats"><div>REPUTATION<strong>{s.reputation}</strong></div><div>EXPERTISE<strong>{s.expertise}</strong></div><div className="darkstat">CASH<strong>{money(s.agencyUnlocked?s.agencyCash:s.personalCash)}</strong></div></div>}
    {s.created&&<WeekIndicator week={s.clock.week} day={s.clock.day} count={s.clock.editions.length} unread={!!s.clock.editions.some(x=>!x.read)} onAdvance={()=>act((d,fx)=>endWeek(d,fx))} onReview={()=>setReviewNews(s.clock.editions[0]?.id??null)}/>}
-   {s.created&&<nav className="dock"><button onClick={()=>change("room")} className={s.scene==="room"?"active":""}><Home size={19}/>Home</button><button disabled={!s.cityUnlocked} onClick={()=>change("city")} className={s.scene==="city"?"active":""}>{s.cityUnlocked?<Compass size={19}/>:<LockKeyhole size={19}/>}City</button><button id="navigate-workstation" onClick={()=>s.agencyUnlocked?setPanel("ceo"):approachComputer()}><Map size={19}/>{s.agencyUnlocked?"Projects":"Computer"}</button><button disabled={!s.agencyUnlocked&&!s.cityUnlocked} onClick={()=>s.agencyUnlocked?change("office"):(change("city"),locate("agency"))}><BriefcaseBusiness size={19}/>Agency</button><button onClick={()=>setPanel("avatar")}><Users size={19}/>Avatar</button><button onClick={()=>setPanel("settings")} aria-label="Settings"><Settings2 size={19}/>Settings</button></nav>}
-   {s.created&&!s.agencyUnlocked&&s.scene==="room"&&panel==="none"&&<div className="computer-instruction" role="status"><strong>{computerHint?"You are back in your bedroom.":"Start by approaching a client."}</strong><span>Click the glowing computer to approach a Startup or SME with Gemini.</span></div>}
+   {s.created&&<nav className="dock"><button onClick={()=>change("room")} className={s.scene==="room"?"active":""}><Home size={19}/>Home</button><button disabled={!s.cityUnlocked} onClick={()=>change("city")} className={s.scene==="city"?"active":""}>{s.cityUnlocked?<Compass size={19}/>:<LockKeyhole size={19}/>}City</button><button id="navigate-workstation" onClick={()=>{if(s.agencyUnlocked){setCeoTab("workforce");change("office");}else approachComputer();}}><Map size={19}/>{s.agencyUnlocked?"Projects":"Computer"}</button><button disabled={!s.agencyUnlocked&&!s.cityUnlocked} onClick={()=>s.agencyUnlocked?change("office"):(change("city"),locate("agency"))}><BriefcaseBusiness size={19}/>Agency</button><button onClick={()=>setPanel("avatar")}><Users size={19}/>Avatar</button><button onClick={()=>setPanel("settings")} aria-label="Settings"><Settings2 size={19}/>Settings</button></nav>}
+   {s.created&&!s.agencyUnlocked&&s.scene==="room"&&panel==="none"&&<div className="computer-instruction" role="status"><strong>{workstation.title}</strong><span>{workstation.detail}</span><button type="button" onClick={approachComputer}>Open workstation <ArrowRight size={14}/></button></div>}
 
    {s.created&&s.scene==="city"&&panel==="none"&&<div className="mt-city-controls" aria-label="Touch character controls">
     <span>MOVE</span><div className="mt-city-pad">
@@ -145,9 +157,9 @@ export default function App(){
     </div></div>}
    {s.created&&s.scene==="city"&&<div className="maptip">Drag to orbit · Scroll to zoom · Click buildings <button onClick={()=>setMap2d(!map2d)}>{map2d?"3D mode":"2D mode"}</button></div>}
    <AnimatePresence mode="wait">{panel!=="none"&&<motion.section key={panel} initial={{opacity:0,x:30,scale:.986}} animate={{opacity:1,x:0,scale:1}} exit={{opacity:0,x:18,scale:.988}} transition={{type:"spring",stiffness:285,damping:29}} className={"panel "+(panel==="onboard"?"onboardpanel":"")}><header><div><span className="eyebrow">MT® / WORLD EDITION</span><h2>{title}</h2></div>{panel!=="onboard"&&<button className="close" onClick={()=>setPanel("none")} aria-label="Close"><X size={20}/></button>}</header><div className="panelbody">
-   {panel==="onboard"&&<Intro onRotate={n=>setAvatarYaw(y=>y+n)} onZoom={n=>setAvatarZoom(z=>Math.max(.65,Math.min(1.45,z+n)))} done={()=>{setSceneFocus(null);setPanel("none");setComputerHint(true)}}/>}
+   {panel==="onboard"&&<Intro onRotate={n=>setAvatarYaw(y=>y+n)} onZoom={n=>setAvatarZoom(z=>Math.max(.65,Math.min(1.45,z+n)))} done={()=>{setSceneFocus(null);setPanel("none")}}/>}
    {panel==="campaign"&&!s.agencyUnlocked&&<CampaignWorkspace/>}
-   {panel==="ceo"&&s.agencyUnlocked&&<CEOCommandCenter onReadEdition={setReviewNews}/>}
+   {panel==="ceo"&&s.agencyUnlocked&&<CEOCommandCenter onReadEdition={setReviewNews} tab={ceoTab} onTabChange={setCeoTab} workforceView={workforceView} onWorkforceChange={setWorkforceView}/>}
    {panel==="location"&&selected&&<LocationPanel id={selected} onOpen={fromLocation} onVisitCompany={clientId=>{setSelected("fortune-hq-"+clientId);setPanel("location");}}/>}
    {panel==="avatar"&&<Customize/>}
    {panel==="settings"&&<GameSettings onReset={()=>{setPanel("onboard");setSelected(null);setSceneFocus(null)}}/>}
@@ -165,3 +177,4 @@ export default function App(){
    <Toaster position="top-center" richColors/>
  </div>
 }
+

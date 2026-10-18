@@ -175,8 +175,8 @@ function Main({c}:{c:Campaign}){
 }
 export function CampaignJourney(){
  const c=useGame(s=>s.campaign);
- const [browse,setBrowse]=useState(true);
- useEffect(()=>{if(c.phase==="brief"&&!c.catalogClientId)setBrowse(true);},[c.briefId]);
+ const [browse,setBrowse]=useState(()=>!c.catalogClientId);
+ useEffect(()=>{setBrowse(!c.catalogClientId);},[c.briefId,c.catalogClientId]);
  return <div className="mt-client-journey-wrap">
   {c.phase==="brief"&&<div className="mt-client-journey-switch">
     <Button size="sm" variant={browse?"default":"outline"} onClick={()=>setBrowse(true)}>Freelance Job Board</Button>
@@ -188,3 +188,4 @@ export function CampaignJourney(){
    <Main key={c.briefId} c={c}/>}
  </div>;
 }
+
