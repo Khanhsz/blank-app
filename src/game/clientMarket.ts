@@ -3,6 +3,7 @@ import {getClient,agencyLeadForClient,scenarioForClient,type ClientSegment} from
 import type {GameState,Lead} from "./state";
 import type {Fx} from "./store";
 import {marketCompany,currentMarketingBudgetVnd} from "./companyMarket";
+import {canContractFortune} from "./fortuneAccounts";
 
 /** Unlocks premium RFPs after proven AGENCY delivery, not freelancer wins. */
 export function bigCorpAccess(s:GameState){
@@ -13,9 +14,17 @@ export function bigCorpAccess(s:GameState){
 }
 export const canApproachSegment=(s:GameState,segment:ClientSegment)=>s.agencyUnlocked&&(segment!=="bigcorp"||bigCorpAccess(s).unlocked);
 
-export function approachCatalogClient(s:GameState,fx:Fx,clientId:string):boolean{
+export function approachCatalogClient(s:GameState,fx:Fx,clientId:string,channel:"marketplace"|"hq"="marketplace"):boolean{
  const client=getClient(clientId),ceo=s.ceo;
  if(!client||!s.agencyUnlocked||!ceo)return false;
+ if(client.fortuneRank!==null&&channel!=="hq"){
+  fx.toast("Fortune 50 accounts can only be approached by visiting Corporate HQ in the city.");return false;
+ }
+ if(channel==="hq"&&client.fortuneRank===null)return false;
+ if(client.fortuneRank!==null){
+  const check=canContractFortune(s,clientId);
+  if(!check.ok){fx.toast(check.reason);return false;}
+ }
  if(!canApproachSegment(s,client.segment)){
   fx.toast("Big Corp opportunities unlock after 3 completed agency campaigns and 55 reputation.");
   return false;
@@ -31,7 +40,8 @@ export function approachCatalogClient(s:GameState,fx:Fx,clientId:string):boolean
   seed.desc+=" Current modeled business growth: "+live.totalGrowthPct.toFixed(1)+"%; annual marketing spend and proposed campaign budget reflect market changes.";
  }
  const suffix=ceo.day+"-"+(++ceo.seq);
- const lead:Lead={...seed,id:"approach-"+clientId+"-"+suffix,status:"prospecting",source:"outbound",relationship:seed.trust,outreachAttempts:0};
+ const lead:Lead={...seed,id:"approach-"+clientId+"-"+suffix,status:"prospecting",source:"outbound",relationship:seed.trust,outreachAttempts:0,
+  ...(client.fortuneRank!==null?{contractType:"annual-retainer" as const,hqApproach:true}:{} )};
  ceo.leads.unshift(lead);
  fx.log("Prospected "+client.brand+" · "+client.segment+" · "+client.sector+" · "+(client.fortuneRank?"Fortune 50 demo":"fictional client"));
  fx.toast("Prospect added: "+client.brand+". Choose an outreach strategy in Deal Room.");
@@ -45,6 +55,7 @@ export function contractBrief(clientId:string,contract:{value:number;fee:number;
  const brief=scenarioForClient(client);
  return {...brief,budget:contract.value,fee:contract.fee,days:contract.days,target:contract.target};
 }
+export const approachFortuneAtHQ=(s:GameState,fx:Fx,clientId:string)=>approachCatalogClient(s,fx,clientId,"hq");
 export function isOpenCatalogLead(s:GameState,clientId:string):boolean{
  return !!s.ceo?.leads.some(l=>l.clientMasterId===clientId&&
   ["new","qualified","pitch","pitch_won","negotiating","signed","renewal"].includes(l.status));
