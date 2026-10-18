@@ -128,3 +128,60 @@
 @media(max-width:660px){.mt-v6-workbench-head{flex-direction:column}.mt-v6-calendar-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.mt-v6-hotspots,.mt-v6-research-wall,.mt-v6-budget-bars{grid-template-columns:1fr}.mt-v6-channels,.mt-v6-launch-phases{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:430px){.mt-v6-calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mt-v6-social-canvas{grid-template-columns:1fr}.mt-v6-social-screen{max-width:200px}}
 @media(prefers-reduced-motion:reduce){.mt-v6-workbench button{transition:none}}
+
+/* V6.1 container-aware workstation: the desktop game panel is only ~490px
+   even when the BROWSER viewport is wide. Viewport @media breakpoints alone
+   cannot protect workspaces embedded inside that narrow panel. */
+.mt-v6{container-type:inline-size}
+.mt-v6 .mt-v4-panel,
+.mt-v6 .mt-v6-editor,
+.mt-v6 .mt-v6-workbench,
+.mt-v6 .mt-v6-card-fields,
+.mt-v6 .mt-v6-preview-sheet{min-width:0;max-width:100%}
+.mt-v6-editor-grid{grid-template-columns:minmax(0,1fr)}
+.mt-v6-card-options{grid-template-columns:minmax(0,1fr)}
+.mt-v6-live-preview{position:static;min-width:0;width:100%}
+.mt-v6-card-option{min-width:0;overflow-wrap:anywhere}
+.mt-v6-field-heading{flex-wrap:wrap}
+.mt-v6-field-heading span{white-space:normal}
+.mt-v6-preview-sheet,
+.mt-v6-preview-line,
+.mt-v6-workbench,
+.mt-v6-workbench button{overflow-wrap:anywhere}
+.mt-v6-workbench button{min-width:0}
+.mt-v6-workbench-head{flex-direction:column}
+.mt-v6-brief-grid{grid-template-columns:minmax(0,1fr)}
+.mt-v6 .mt-v4-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mt-v6 .mt-v4-selector,
+.mt-v6 .mt-v4-choices{grid-template-columns:minmax(0,1fr)}
+.mt-v6 .mt-v4-panel{padding:12px}
+.mt-v6-calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mt-v6-hotspots,.mt-v6-research-wall,.mt-v6-budget-bars{grid-template-columns:minmax(0,1fr)}
+.mt-v6-channels,.mt-v6-launch-phases{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mt-v6-social-canvas{grid-template-columns:minmax(0,1fr)}
+.mt-v6-social-screen{max-width:240px}
+.mt-v6-meta-builder>div:first-child{flex-wrap:wrap}
+.mt-v6-page-tools>div:not(.mt-v6-landing){flex-wrap:wrap}
+.mt-v6-landing-bar{flex-wrap:wrap}
+.mt-v6-landing-block h4,
+.mt-v6-landing-block p{overflow-wrap:anywhere}
+
+/* Expand based on the REAL freelance desk width, not window width. */
+@container (min-width:560px){
+ .mt-v6-card-options{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .mt-v6-brief-grid,.mt-v6 .mt-v4-selector,.mt-v6 .mt-v4-choices{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .mt-v6 .mt-v4-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .mt-v6-calendar-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .mt-v6-hotspots,.mt-v6-research-wall,.mt-v6-budget-bars{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .mt-v6-social-canvas{grid-template-columns:150px minmax(0,1fr)}
+ .mt-v6-social-screen{max-width:none}
+}
+@container (min-width:850px){
+ .mt-v6-editor-grid{grid-template-columns:minmax(0,1.12fr) minmax(300px,.88fr)}
+ .mt-v6-live-preview{position:sticky;top:12px}
+ .mt-v6-card-options{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .mt-v6-workbench-head{flex-direction:row}
+ .mt-v6-calendar-grid{grid-template-columns:repeat(7,minmax(0,1fr))}
+ .mt-v6-hotspots,.mt-v6-research-wall,.mt-v6-budget-bars{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .mt-v6-channels,.mt-v6-launch-phases{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
