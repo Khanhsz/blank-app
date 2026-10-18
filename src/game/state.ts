@@ -6,7 +6,7 @@ export type Phase = "brief" | "planning" | "executing" | "live" | "results" | "r
 export const PHASES: Phase[] = ["planning", "executing", "live", "results"];
 export const PHASE_LABEL: Record<Phase, string> = { brief: "Brief", planning: "Planning", executing: "Executing", live: "Live", results: "Results", research: "Planning", survey: "Planning", validation: "Planning", strategy: "Planning", creative: "Executing", media: "Executing" };
 
-export type AIBriefStatus = "pending" | "generating" | "ready" | "fallback";
+export type AIBriefStatus = "pending" | "generating" | "ready" | "error" | "fallback";
 export type JourneyStep = "brief" | "research" | "strategy" | "creative" | "production" | "live" | "report";
 export interface CampaignJourney {
   step: JourneyStep;
@@ -215,7 +215,7 @@ export function migrate(raw: unknown): GameState {
   // Keep old saves playable; only unaccepted briefs become automatic-AI candidates.
   if (!out.campaign.briefId || typeof out.campaign.briefId!=="string") out.campaign.briefId=newCampaign(out.campaign.scenarioIndex).briefId;
   if (out.campaign.aiScenario) out.campaign.aiStatus="ready";
-  else if (out.campaign.phase==="brief" && !["fallback","pending","generating"].includes(out.campaign.aiStatus)) out.campaign.aiStatus="pending";
+  else if (out.campaign.phase==="brief" && !["fallback","pending","generating","error"].includes(out.campaign.aiStatus)) out.campaign.aiStatus="pending";
   else if (out.campaign.phase!=="brief" && !out.campaign.aiScenario) out.campaign.aiStatus="fallback";
   if (!["room", "city", "office", "boardroom"].includes(out.scene)) out.scene = out.agencyUnlocked ? "office" : "room";
   if (out.agencyUnlocked && out.ceo) {
