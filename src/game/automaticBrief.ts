@@ -1,75 +1,75 @@
 import {act,getState} from "./store";
 import {activateAIBrief} from "./campaign";
+import {getClient} from "./clientDatabase";
 import type {Scenario} from "./data";
 
-// A single request per campaign is allowed in an active browser session.
-// Generation starts on character creation / after the next client is requested,
-// not when the player opens a menu.
+// Every newly approached bedroom client MUST be grounded in a successful Gemini
+// response. The game never silently substitutes a deterministic/static brief.
 const API="https://marketing-tycoon-ai-api.onrender.com";
 const active=new Set<string>();
 const MAX_WAIT_MS=65000;
-
-function match(id:string){
+function match(id:string,clientId:string){
  const s=getState();
- return s.created&&!s.agencyUnlocked&&s.campaign.phase==="brief"&&s.campaign.briefId===id&&!s.campaign.aiScenario;
+ return s.created&&!s.agencyUnlocked&&s.campaign.phase==="brief"&&
+  s.campaign.briefId===id&&s.campaign.catalogClientId===clientId&&!s.campaign.aiScenario;
 }
 function friendlyError(message:string){
- if(/limit|quota|429/i.test(message))return "Gemini reached its current usage limit. A built-in brief is ready instead.";
- if(/key|configur|503/i.test(message))return "AI service is not configured. A built-in brief is ready instead.";
- return "Gemini is temporarily unavailable. Your campaign can continue with a built-in brief.";
+ if(/quota|limit|429/i.test(message))return "Gemini quota has been reached. Retry the selected client later; no substitute brief will be used.";
+ if(/key|configur|503/i.test(message))return "Gemini API is not configured. This client approach requires a working API connection.";
+ if(/abort|timeout/i.test(message))return "Gemini did not respond in time. Retry this client approach.";
+ return "Gemini could not develop this client's context and strategy. Retry the approach.";
 }
-function fallback(id:string,message:string){
- if(!match(id))return;
+function fail(id:string,clientId:string,message:string){
+ if(!match(id,clientId))return;
  act((s,fx)=>{
-  if(s.campaign.briefId!==id||s.campaign.phase!=="brief"||s.campaign.aiScenario)return;
-  s.campaign.aiStatus="fallback";
+  if(s.campaign.briefId!==id||s.campaign.catalogClientId!==clientId||s.campaign.aiScenario)return;
+  s.campaign.aiStatus="error";
   s.campaign.aiError=friendlyError(message);
-  fx.log("Built-in campaign brief used because AI generation was unavailable.");
+  fx.log("Gemini approach failed for "+clientId+" · player can retry without losing progress");
  });
 }
-
-/** Called from the game's persistent root, never from an optional menu. */
+/** Persistent root watcher; begins ONLY after the player approaches a client. */
 export function prepareNextBrief(){
- const current=getState();
- if(!current.created||current.agencyUnlocked||current.campaign.phase!=="brief"||current.campaign.aiScenario)return;
- if(current.campaign.aiStatus!=="pending"&&current.campaign.aiStatus!=="generating")return;
- const id=current.campaign.briefId;
+ const current=getState(),c=current.campaign;
+ if(!current.created||current.agencyUnlocked||c.phase!=="brief"||!c.catalogClientId||c.aiScenario)return;
+ if(c.aiStatus!=="pending"&&c.aiStatus!=="generating")return;
+ const id=c.briefId,clientId=c.catalogClientId;
  if(!id||active.has(id))return;
+ const client=getClient(clientId);
+ if(!client||client.segment==="bigcorp"){fail(id,clientId,"Invalid client approach");return;}
  active.add(id);
  act(s=>{
-  if(s.campaign.briefId===id&&s.campaign.phase==="brief"){
-   s.campaign.aiStatus="generating";
-   s.campaign.aiError=null;
+  if(s.campaign.briefId===id&&s.campaign.catalogClientId===clientId){
+   s.campaign.aiStatus="generating";s.campaign.aiError=null;
   }
  });
- const controller=new AbortController();
- const timer=setTimeout(()=>controller.abort(),MAX_WAIT_MS);
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),MAX_WAIT_MS);
  void (async()=>{
   try{
    const res=await fetch(API+"/api/generate-brief",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({category:["coffee","beauty","fashion","education","tech","fitness","food"][current.history.length%7]}),
-    signal:controller.signal
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({category:client.sector,client:{
+     id:client.id,brand:client.brand,sector:client.sector,segment:client.segment,
+     description:client.description,industry:client.industry,marketingBudgetVnd:client.marketingBudgetVnd
+    }}),signal:controller.signal
    });
-   const data=await res.json().catch(()=>null) as {scenario?:Scenario;error?:string}|null;
-   if(!res.ok)throw new Error(data?.error||"Gemini request failed ("+res.status+")");
-   const scenario=data?.scenario;
-   if(!scenario?.aiMeta||!scenario.reports?.interview||!Array.isArray(scenario.insightOptions))throw Error("Incomplete generated scenario");
-   if(match(id)){
+   const body=await res.json().catch(()=>null) as {scenario?:Scenario;mode?:string;error?:string}|null;
+   if(!res.ok)throw Error(body?.error||"Gemini HTTP "+res.status);
+   const scenario=body?.scenario;
+   if(body?.mode!=="ai"||!scenario?.aiMeta||scenario.aiMeta.clientId!==clientId||
+     scenario.brand!==client.brand||!scenario.clientAnswers?.barrier||
+     !scenario.aiPlanning?.context||!scenario.aiPlanning?.insight||!scenario.aiPlanning?.strategy)
+    throw Error("Invalid Gemini client response");
+   if(match(id,clientId)){
+    let accepted=false;
     act((s,fx)=>{
-     if(s.campaign.briefId!==id||s.campaign.phase!=="brief"||s.campaign.aiScenario)return;
-     if(activateAIBrief(s,fx,scenario)){
-      s.campaign.aiStatus="ready";
-      s.campaign.aiError=null;
-     }
+     if(s.campaign.briefId!==id||s.campaign.catalogClientId!==clientId||s.campaign.aiScenario)return;
+     accepted=activateAIBrief(s,fx,scenario);
+     if(accepted){s.campaign.aiStatus="ready";s.campaign.aiError=null;}
     });
+    if(!accepted)fail(id,clientId,"Gemini generated an invalid campaign");
    }
-  }catch(error){
-   fallback(id,error instanceof Error?error.message:"AI generation failed");
-  }finally{
-   clearTimeout(timer);
-   active.delete(id);
-  }
+  }catch(error){fail(id,clientId,error instanceof Error?error.message:"Gemini unavailable")}
+  finally{clearTimeout(timer);active.delete(id);}
  })();
 }
