@@ -153,3 +153,23 @@ test("Seven job-specific workbenches share persisted decision choices and no fak
  assert.equal(calendar.units.length,7,"entry job starts with seven scheduled posts");
  assert.ok(calendar.units.every(a=>a.id.startsWith("day-")));
 });
+
+test("V6 workstation adapts to modal width, not only the browser viewport",()=>{
+ const css=readFileSync("src/freelance-overhaul.css","utf8");
+ const gameCss=readFileSync("src/styles.css","utf8");
+ assert.match(gameCss,/\.panel\{[^}]*width:min\(490px,/,"Gameplay desk is a narrow overlay on desktop");
+ const app=readFileSync("src/App.tsx","utf8");
+ assert.ok(app.includes("panel-freelance"),"Expanded layout must be exclusive to active freelance work");
+ assert.match(css,/\.panel\.panel-freelance\{width:min\(980px,calc\(100vw - 48px\)\)\}/);
+ assert.match(css,/@media\(max-width:750px\)\{\s*\.panel\.panel-freelance\{width:auto;/);
+ assert.match(css,/\.mt-v6\{container-type:inline-size\}/,"Freelance workspaces must measure their panel container");
+ assert.match(css,/@container\s*\(min-width:560px\)/);
+ assert.match(css,/@container\s*\(min-width:850px\)/);
+ const mobileFirst=css.split("/* V6.1 container-aware workstation:")[1].split("@container (min-width:560px)")[0];
+ assert.match(mobileFirst,/\.mt-v6-editor-grid\{grid-template-columns:minmax\(0,1fr\)\}/);
+ assert.match(mobileFirst,/\.mt-v6-card-options\{grid-template-columns:minmax\(0,1fr\)\}/);
+ assert.match(mobileFirst,/\.mt-v6-live-preview\{position:static/);
+ for(const cls of ["mt-v6-calendar-grid","mt-v6-hotspots","mt-v6-budget-bars","mt-v6-channels","mt-v6-social-canvas"]){
+  assert.ok(mobileFirst.includes("."+cls),cls+" must have a compact layout rule");
+ }
+});
