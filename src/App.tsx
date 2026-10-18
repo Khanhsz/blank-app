@@ -20,6 +20,7 @@ import {money,BRAND_HQ_REP} from "./game/data";
 import {cityLots,findOffice,currentOffice,cityCounts,type DistrictKind} from "./game/city";
 import {AssetRegistry} from "./components/game/AssetRegistry";
 import type {SceneId} from "./game/state";
+import {CLIENT_BY_ID} from "./game/clientDatabase";
 
 const buildings=cityLots;
 const sceneName:Record<SceneId,string>={room:"The Bedroom",city:"Marketing City",office:"Agency HQ",boardroom:"The Boardroom"};
@@ -119,7 +120,7 @@ export default function App(){
    setSelected(null);setComputerHint(false);setSceneFocus("pc");if(transitionTimer.current!==null)window.clearTimeout(transitionTimer.current);transitionTimer.current=window.setTimeout(()=>setPanel(state.agencyUnlocked?"ceo":"campaign"),reduceMotion?0:390);
  };
  const fromLocation=(next:"campaign"|"ceo")=>next==="campaign"?approachComputer():change("office");
- const title=panel==="settings"?"Settings & Save Files":panel==="campaign"?"Client Approach · Bedroom Workstation":panel==="ceo"?"CEO Command Center":panel==="avatar"?"Your Creative Identity":panel==="journal"?"Your Campaign Moodboard":panel==="phone"?"Your Messages":panel==="map"?"World Directory":panel==="location"?(buildings.find(b=>b.id===selected)?.name||"Location"):"Welcome to Marketing Tycoon";
+ const title=panel==="settings"?"Settings & Save Files":panel==="campaign"?"Client Approach · Bedroom Workstation":panel==="ceo"?"CEO Command Center":panel==="avatar"?"Your Creative Identity":panel==="journal"?"Your Campaign Moodboard":panel==="phone"?"Your Messages":panel==="map"?"World Directory":panel==="location"?(selected?.startsWith("fortune-hq-")?(CLIENT_BY_ID[selected.slice("fortune-hq-".length)]?.brand??"Fortune")+" · Headquarters":buildings.find(b=>b.id===selected)?.name||"Location"):"Welcome to Marketing Tycoon";
  return <div className="game">
    <div className="world">{webgl&&!map2d?<Suspense fallback={<div className="mt-world-loader" role="status"><span className="mt-world-loader-spin"/><b>Building your world…</b><small>Preparing the 3D environment</small></div>}><WorldScene scene={s.scene} districts={districts} selected={selected} onSelect={locate} onComputerInteract={interactComputer} onRoomInteract={roomInteract} focus={sceneFocus} preview={!s.created||panel==="onboard"} avatarYaw={avatarYaw} avatarZoom={avatarZoom} moveInput={moveInput} officeName={buildings.find(b=>b.id===s.officeId)?.name||"Starter HQ"} officeCapacity={currentOffice(s).capacity} character={s.character} room={s.room} staff={s.staff.length} quality={s.graphics}/></Suspense>:<div className="fallback"><h2>WORLD DIRECTORY</h2><h1>{sceneName[s.scene]}</h1>{s.scene==="city"&&<div className="gridmap">{buildings.map(b=><button onClick={()=>locate(b.id)} key={b.id}>{b.name}</button>)}</div>}{s.scene==="room"&&s.created&&<button id="bedroom-computer-fallback" className="fallback-computer" onClick={interactComputer}>Use bedroom computer → Approach a client</button>}</div>}</div>
    {s.scene==="city"&&s.cityUnlocked&&<button type="button" className="mt-3d-tour-cta" onClick={()=>{setDirectoryType("upgraded");setPanel("map")}}>✦ NEW 3D CITY · EXPLORE ALL DISTRICTS <span>27 UPGRADED ↗</span></button>}
