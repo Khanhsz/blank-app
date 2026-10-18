@@ -264,6 +264,7 @@ export function migrate(raw: unknown): GameState {
   if(out.campaign.productionReadyDay===undefined && out.campaign.creative)out.campaign.productionReadyDay=day;
   if(out.campaign.mediaBooked===undefined)out.campaign.mediaBooked=Object.values(out.campaign.media).some(v=>v>0);
   if(!Array.isArray(out.campaign.weeklyResults))out.campaign.weeklyResults=[];
+  if(out.campaign.phase==="brief"&&out.campaign.aiScenario&&!out.campaign.aiScenario.aiPlanning)out.campaign.legacyBrief=true;
   // Keep old saves playable; only unaccepted briefs become automatic-AI candidates.
   if (!out.campaign.briefId || typeof out.campaign.briefId!=="string") out.campaign.briefId=newCampaign(out.campaign.scenarioIndex).briefId;
   if (out.campaign.aiScenario) out.campaign.aiStatus="ready";

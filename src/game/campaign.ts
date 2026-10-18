@@ -65,7 +65,7 @@ export function scoreModel(s: GameState, c: Campaign, mode: "final" | "interim" 
 
 // ---- Actions: three brief-driven phases, resolved by the shared weekly clock ----
 export const acceptBrief=(s:GameState,fx:Fx)=>{
- const c=s.campaign;if(c.phase!=="brief")return;
+ const c=s.campaign;if(c.phase!=="brief"||(!c.legacyBrief&&(!c.catalogClientId||!c.aiScenario?.aiPlanning)))return;
  c.startedDay=s.clock.day;c.day=s.clock.day;c.phase="planning";
  fx.log("Accepted brief from "+scenarioOf(c).brand+" · "+scheduleOf(c).weeks+" week schedule");
 };
@@ -153,42 +153,36 @@ export function finalize(s:GameState,fx:Fx){
  if(!s.cityUnlocked){s.cityUnlocked=true;fx.toast("Marketing City unlocked — new opportunities await");}
  else fx.toast("Campaign reviewed — portfolio updated");
 }
-/** Choose freely among startup and SME clients; the brief is generated locally
- * from the canonical catalog, with no fabricated public-company statistics.
+/** Freelance begins by APPROACHING a real catalog entry (fictional startup/SME).
+ * No scenario or fabricated market insight is unlocked until Gemini returns.
  */
 export function chooseFreelanceClient(s:GameState,fx:Fx,clientId:string):boolean{
  if(s.agencyUnlocked||s.campaign.phase!=="brief")return false;
  const client=getClient(clientId);
  if(!client||client.segment==="bigcorp")return false;
  const c=s.campaign;
- // A user must explicitly select a client. The existing AI API provides
- // its fictional context: never silently substitute a static scenario.
- // A new request identity prevents an earlier pending response from leaking
- // into the next client when the player changes their mind.
- if(c.catalogClientId!==client.id)c.briefId=newCampaign(c.scenarioIndex,s.clock.day).briefId;
  c.catalogClientId=client.id;
- c.aiScenario=null;c.aiStatus="pending";c.aiError=null;c.legacyBrief=false;
+ c.legacyBrief=false;
+ c.aiScenario=null;
+ c.aiStatus="pending";c.aiError=null;
+ c.briefId=newCampaign(c.scenarioIndex,s.clock.day).briefId;
  c.journey={step:"brief",questions:[],diagnosis:null,confidence:0,approach:null,message:"",pitchedCreative:null,pitchFeedback:null,pitchCount:0,mediaPlan:null,review:null};
- fx.log("Selected "+client.segment+" client "+client.brand+" from the client master database");
- fx.toast("Client brief selected: "+client.brand);
+ fx.log("Approached "+client.segment+" client "+client.brand+" from bedroom · Gemini discovery requested");
+ fx.toast("Approaching "+client.brand+" · Gemini preparing the client context");
  return true;
 }
-/** Retry an unsuccessful client approach without losing the player's choice.
- * A new brief ID prevents the previous aborted in-flight request from
- * clobbering the next Gemini result. */
 export function retryFreelanceApproach(s:GameState,fx:Fx){
  const c=s.campaign;
- if(!s.created||s.agencyUnlocked||c.phase!=="brief"||!c.catalogClientId||c.aiStatus!=="error")return;
- c.aiStatus="pending";c.aiError=null;c.aiScenario=null;
- c.briefId=newCampaign(c.scenarioIndex,s.clock.day).briefId;
- fx.log("Retrying Gemini client approach: "+c.catalogClientId);
+ if(s.agencyUnlocked||c.phase!=="brief"||!c.catalogClientId||c.aiScenario||c.aiStatus!=="error")return;
+ c.aiStatus="pending";c.aiError=null;
+ fx.log("Retrying Gemini client approach · "+c.catalogClientId);
 }
 export function nextClient(s:GameState,fx:Fx){
  if(s.agencyUnlocked||s.campaign.phase!=="results"||(s.campaign.journey&&!s.campaign.journey.review))return fx.toast("Complete the Client Review before requesting another brief.");
  const next=(s.campaign.scenarioIndex+1)%3;
  s.campaign=newCampaign(next,s.clock.day);
- fx.log("New brief from "+scenarios[next].brand+" at Week "+s.clock.week);
- fx.toast("New brief: "+scenarios[next].brand);
+ fx.log("Ready to approach a new client from the bedroom at Week "+s.clock.week);
+ fx.toast("Choose a Startup or SME to approach from your bedroom computer.");
 }
 export function buyUpgrade(s: GameState, fx: Fx, id: UpgradeId | "cowork") {
   const item = id === "cowork" ? { cost: COWORK_COST, name: "Coworking Membership" } : upgrades[id];
@@ -218,6 +212,9 @@ export function createAgency(s: GameState, fx: Fx, name: string) {
 export function activateAIBrief(s:GameState,fx:Fx,sc:import("./data").Scenario){
  if(s.agencyUnlocked||s.campaign.phase!=="brief")return false;
  if(!sc?.id?.startsWith("ai-")||!sc.aiMeta||!["awareness","value","location","trust","style"].includes(sc.trueInsight))return false;
+ if(!s.campaign.catalogClientId||sc.aiMeta.clientId!==s.campaign.catalogClientId)return false;
+ if(!sc.aiPlanning?.context||!sc.aiPlanning?.insight||!sc.aiPlanning?.strategy||!sc.clientAnswers?.audience)return false;
+ if(getClient(s.campaign.catalogClientId)?.brand!==sc.brand)return false;
  if(!Number.isFinite(sc.budget)||sc.budget<8000000||sc.budget>16000000)return false;
  if(!Array.isArray(sc.insightOptions)||sc.insightOptions.length!==5)return false;
  s.campaign.aiScenario=structuredClone(sc);
