@@ -2,12 +2,14 @@ import http from "node:http";
 import {inputCategory,prompt,clientPrompt,validateApproachClient,validateCandidate,GEMINI_SCHEMA,CLIENT_SCENARIO_SCHEMA} from "./scenario.mjs";
 import {validatePricingInput,pricePrompt,buildPriceAdvice,PRICING_SCHEMA} from "./pricing.mjs";
 import {validateMarketRequest,validateMarketIntelligence,fallbackMarketReport,marketPrompt,MARKET_SCHEMA} from "./company-intelligence.mjs";
+import {FINANCE_SCHEMA,financePrompt,validateFinanceCalibration,fallbackFinanceCalibration} from "./finance-calibration.mjs";
 const PORT=Number(process.env.PORT||4187);
 const ORIGIN=process.env.GAME_ORIGIN||"https://marketing-tycoon-bedroom-play.onrender.com";
 const MODEL=process.env.GEMINI_MODEL||"gemini-3.5-flash-lite";
 const apiKey=()=>process.env.GEMINI_API_KEY?.trim();
 const counter=new Map();
 const globalCounter={day:"",calls:0};
+let financeCache={day:"",report:null};
 function counted(key,limit,timeMs){
  const now=Date.now(),p=counter.get(key);
  if(!p||now-p.start>=timeMs){counter.set(key,{start:now,count:1});return true}
@@ -90,13 +92,46 @@ async function generateMarketIntelligence(input){
  }finally{clearTimeout(timer)}
 }
 
+/** Gemini proposes only narrow sector multipliers; no raw financial values. */
+async function generateFinancialCalibration(){
+ if(!apiKey())return fallbackFinanceCalibration();
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),28000);
+ try{
+  const upstream=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(MODEL)+":generateContent",{
+   method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":apiKey()},
+   body:JSON.stringify({contents:[{role:"user",parts:[{text:financePrompt()}]}],
+    generationConfig:{responseMimeType:"application/json",responseSchema:FINANCE_SCHEMA,temperature:.25,maxOutputTokens:1550}}),
+   signal:controller.signal
+  });
+  if(!upstream.ok)throw Error("Gemini finance HTTP "+upstream.status);
+  const json=await upstream.json();
+  const content=json?.candidates?.[0]?.content?.parts?.filter(p=>typeof p.text==="string").map(p=>p.text).join("");
+  if(!content)throw Error("Empty calibration");
+  return validateFinanceCalibration(JSON.parse(content));
+ }catch(error){
+  console.warn("Financial calibration fallback:",String(error?.message||"unknown").slice(0,100));
+  return fallbackFinanceCalibration();
+ }finally{clearTimeout(timer)}
+}
+
 const server=http.createServer(async(req,res)=>{
  const allowed=req.headers.origin===ORIGIN||req.headers.origin==="http://localhost:5173";
  if(req.method==="OPTIONS"){
   if(!allowed)return response(res,403,{error:"Origin not allowed"});
   res.writeHead(204,{"Access-Control-Allow-Origin":req.headers.origin,"Access-Control-Allow-Methods":"POST,GET,OPTIONS","Access-Control-Allow-Headers":"Content-Type","Access-Control-Max-Age":"600"});res.end();return;
  }
- if(req.url==="/api/status"&&req.method==="GET")return response(res,200,{available:!!apiKey(),model:MODEL,version:"v4.7",features:["ai-scenario-generator","bedroom-client-approach","agency-pricing-advisor","company-market-intelligence"]},allowed?req.headers.origin:null);
+ if(req.url==="/api/status"&&req.method==="GET")return response(res,200,{available:!!apiKey(),model:MODEL,version:"v4.8",features:["ai-scenario-generator","bedroom-client-approach","agency-pricing-advisor","company-market-intelligence","client-financial-calibration"]},allowed?req.headers.origin:null);
+ if(req.url==="/api/finance-calibration"&&req.method==="GET"){
+  if(!allowed)return response(res,403,{error:"Game origin required"});
+  const today=new Date().toISOString().slice(0,10);
+  if(financeCache.day===today&&financeCache.report)
+   return response(res,200,{calibration:financeCache.report,mode:financeCache.report.source},req.headers.origin);
+  if(globalCounter.day!==today){globalCounter.day=today;globalCounter.calls=0}
+  // Small shared budget; never block the game if Gemini is unavailable.
+  const report=apiKey()&&globalCounter.calls<45?(globalCounter.calls++,await generateFinancialCalibration()):fallbackFinanceCalibration();
+  financeCache={day:today,report};
+  return response(res,200,{calibration:report,mode:report.source},req.headers.origin);
+ }
  if(req.url==="/api/company-market-intelligence"&&req.method==="POST"){
   if(!allowed)return response(res,403,{error:"Game origin required"});
   if(!counted("market:"+remoteIP(req),3,3600000))return response(res,429,{error:"Hourly market insight limit reached."},req.headers.origin);
