@@ -4,6 +4,7 @@
  * All actions change the existing CEO state; no fabricated wins are presented.
  */
 import {ceoRand,ceoLeadDefs,employees,clamp,money} from "./data";
+import {CLIENT_DATABASE,agencyLeadForClient} from "./clientDatabase";
 import type {Rival} from "./data";
 import type {GameState,CEO,Lead,RivalTender,RivalEvent,TalentOffer} from "./state";
 import type {Fx} from "./store";
@@ -173,10 +174,11 @@ export function runRivalAgents(s:GameState,c:CEO,fx:Fx){
    // Startup agencies receive SME-sized incoming RFPs only. Premium
    // corporate tenders enter this channel after agency achievements unlock.
    const premiumUnlocked=s.history.filter(h=>h.agency).length>=3&&s.reputation>=55;
-   const pool=premiumUnlocked?ceoLeadDefs:ceoLeadDefs.filter(x=>x.businessSize==="small"||x.businessSize==="medium");
-   const base=pool[(Math.floor(day/28)-1)%pool.length];
+   const base=premiumUnlocked
+    ? ceoLeadDefs[(Math.floor(day/28)-1)%ceoLeadDefs.length]
+    : agencyLeadForClient(CLIENT_DATABASE.filter(x=>x.segment!=="bigcorp")[(Math.floor(day/28)-1)*11%56]);
    const factor=.86+noise(base.id+"rfp",day)*.27;
-   const id="market-"+base.id+"-"+day;
+   const id="market-"+(base.clientMasterId??base.id)+"-"+day;
    if(!c.leads.some(l=>l.id===id)){
     const l:Lead={...base,id,brand:base.brand,origin:"New seasonal request for proposal",value:Math.round(base.value*factor),fee:Math.round(base.fee*factor),status:"new",relationship:base.trust,insightKnown:false};
     c.leads.push(l);
