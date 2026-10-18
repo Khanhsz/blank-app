@@ -125,3 +125,16 @@ test("Bedroom Job Board displays all weekly jobs directly with no filters",()=>{
  assert.ok(!view.includes('aria-label="Filter freelance industry"'));
  assert.ok(!view.includes('aria-label="Filter freelance client size"'));
 });
+
+test("Prepare Application expands in the selected job card and auto-scrolls into view on mobile",()=>{
+ const view=readFileSync("src/components/game/FreelanceMarketplace.tsx","utf8");
+ const cards=view.indexOf("visibleListings.map(l=>");
+ const inline=view.indexOf("selected&&selectedTemplate&&l.id===active");
+ const cardEnd=view.indexOf("</article>;",cards);
+ const history=view.indexOf('className="mt-job-market-applications"');
+ assert.ok(cards>=0&&inline>cards&&inline<cardEnd,"application lives in selected job card");
+ assert.ok(cardEnd<history,"application is not hidden after all listing cards");
+ assert.ok(view.includes("applicationRef.current?.scrollIntoView"));
+ assert.ok(view.includes('aria-label="Job application form"'));
+ assert.ok(view.includes("onClick={()=>setActive(null)}"),"user can close application");
+});

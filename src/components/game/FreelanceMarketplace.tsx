@@ -1,4 +1,4 @@
-import {useEffect,useState} from "react";
+import {useEffect,useRef,useState} from "react";
 import {ArrowRight,BriefcaseBusiness,CheckCircle2,LockKeyhole,Users} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {act,useGame} from "@/game/store";
@@ -15,6 +15,17 @@ import type {FreelanceBidApproach,FreelanceBidPrice} from "@/game/state";
 export function FreelanceMarketplace({onSelected}:{onSelected?:()=>void}){
  const game=useGame(s=>s),board=game.freelanceBoard;
  const [active,setActive]=useState<string|null>(null);
+ const applicationRef=useRef<HTMLElement|null>(null);
+ // The sheet scrolls independently on mobile. Ensure the selected application
+ // is visible immediately instead of leaving it beyond all seven job cards.
+ useEffect(()=>{
+  if(!active)return;
+  const frame=requestAnimationFrame(()=>{
+   applicationRef.current?.scrollIntoView({behavior:"smooth",block:"center",inline:"nearest"});
+   applicationRef.current?.focus({preventScroll:true});
+  });
+  return ()=>cancelAnimationFrame(frame);
+ },[active]);
  const [approach,setApproach]=useState<FreelanceBidApproach>("creative");
  const [price,setPrice]=useState<FreelanceBidPrice>("standard");
  useEffect(()=>{if(!board)act(d=>{Market.ensureFreelanceBoard(d);});},[!!board]);
@@ -62,11 +73,7 @@ export function FreelanceMarketplace({onSelected}:{onSelected?:()=>void}){
        onClick={()=>{setActive(l.id);setApproach("creative");setPrice("standard");}}>
        {application?"Application "+application.status:locked?"Locked — "+(game.reputation<=30&&Market.isHighBudgetJob(t)?"Rep 31":"Portfolio"):"Prepare Application"} <ArrowRight size={14}/>
      </Button>
-    </article>;
-   })}
-  </div>
-  {!visibleListings.length&&<p className="mt-job-market-empty">No job listings this week. New opportunities appear after End Week.</p>}
-  {selected&&selectedTemplate&&<section className="mt-job-market-apply">
+  {selected&&selectedTemplate&&l.id===active&&<section ref={applicationRef} tabIndex={-1} aria-label="Job application form" className="mt-job-market-apply">
    <div className="mt-job-market-applyhead"><div><small>APPLICATION PREVIEW · NO CONTRACT YET</small><h3>{CLIENT_BY_ID[selected.clientId].brand} · {selectedTemplate.title}</h3></div>
     <Button size="sm" variant="outline" onClick={()=>setActive(null)}>Close</Button></div>
    <p>Choose a proposal approach and fee. The client will evaluate applicants at the next End Week. Each application uses one work hour, not cash.</p>
@@ -88,6 +95,11 @@ export function FreelanceMarketplace({onSelected}:{onSelected?:()=>void}){
    </Button>
    <small>Selection is deterministic and recorded when the listing closes. Client media never becomes personal income.</small>
   </section>}
+    </article>;
+   })}
+  </div>
+  {!visibleListings.length&&<p className="mt-job-market-empty">No job listings this week. New opportunities appear after End Week.</p>}
+
   <section className="mt-job-market-applications"><h3>My Applications & Offers</h3>
    {!applications.length&&<p>No applications yet. Choose a Starter Gig above and submit your first proposal.</p>}
    {[...applications].reverse().slice(0,12).map(a=><div className="mt-job-market-app" key={a.id}>
