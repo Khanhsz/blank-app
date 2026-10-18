@@ -7,7 +7,7 @@
 import {CLIENT_DATABASE,CLIENT_BY_ID,type ClientSector} from "./clientDatabase";
 import {FREELANCE_JOBS,getFreelanceJob,type FreelanceJobTemplate} from "./freelanceJobTemplates";
 import {canOfferJob,workload,WEEKLY_CAPACITY} from "./freelanceJobs";
-import {eligibleGigStaff,agencyGigGate} from "./agencyFreelance";
+import {eligibleGigStaff,agencyGigGate,gigRole} from "./agencyFreelance";
 import {taskFit} from "./personnel";
 import type {GameState,FreelanceListing,FreelanceApplication,FreelanceBoard,FreelanceBidApproach,FreelanceBidPrice} from "./state";
 import type {Fx} from "./store";
@@ -83,7 +83,7 @@ export function bidFee(t:FreelanceJobTemplate,price:FreelanceBidPrice){
 function bidScore(s:GameState,l:FreelanceListing,approach:FreelanceBidApproach,quote:number){
  const client=CLIENT_BY_ID[l.clientId],t=getFreelanceJob(l.templateId)!;
  const portfolio=workload(s).completedGigs+workload(s).completedProjects;
- const skill=s.agencyUnlocked?clamp(eligibleGigStaff(s,t.id).reduce((v,id)=>Math.max(v,taskFit(s,id,{ "social-audit":"analytics","meta-setup":"media","audience-research":"research","mini-launch":"strategy","content-calendar":"strategy","content-sprint":"production"}[t.id]??"creative",t.id)),45),30,97):clamp(46+s.expertise*1.4+Math.min(14,portfolio*2.2),30,97);
+ const skill=s.agencyUnlocked?clamp(eligibleGigStaff(s,t.id).reduce((v,id)=>Math.max(v,taskFit(s,id,gigRole(t.id),t.id)),45),30,97):clamp(46+s.expertise*1.4+Math.min(14,portfolio*2.2),30,97);
  const relevant=s.history.filter(x=>!x.agency&&x.brand===client.brand).length;
  const portfolioScore=clamp(35+Math.min(40,portfolio*5)+Math.min(20,relevant*10)+(s.agencyUnlocked?Math.min(25,s.ceo?.history.length??0):0),20,95);
  const proposal=clamp(53+(SECTOR_PREF[client.sector]===approach?24:approach==="research"?7:0),20,100);
