@@ -144,7 +144,7 @@ export function projectedTeam(s:GameState,l:Lead,requestedIds:string[]=[]){
 }
 export function opportunityForecast(s:GameState,l:Lead,proposedFee=l.fee,plan?:ProposalPlan){
  const scope=clamp(l.scope,3,16);
- const duration=clamp(l.duration,14,70);
+ const duration=l.contractType==="annual-retainer"?365:clamp(l.duration,14,70);
  const team=projectedTeam(s,l,plan?.selectedTalentIds);
  const base=ceoTaskDefs.reduce((sum,t)=>sum+t.cost,0)*scope/8;
  const outsourced=ceoTaskDefs.filter(t=>team.missing.includes(t.role)).reduce((sum,t)=>sum+t.cost*2.1*scope/8,0);
