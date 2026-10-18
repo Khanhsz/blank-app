@@ -48,8 +48,7 @@ export function fortuneConflict(s:GameState,clientId:string,excludingLeadId?:str
  const accounts=ensureFortuneAccounts(s),now=s.ceo.day;
  const conflict=FORTUNE_CLIENTS.find(c=>c.id!==clientId&&c.fortuneRank!==null&&c.fortuneRank<=10&&c.sector===firm.sector&&(
   accounts[c.id]?.ownerAgencyId==="player"&&(accounts[c.id]?.endsDay??0)>now||
-  s.ceo!.projects.some(p=>p.status==="active"&&p.clientMasterId===c.id)||
-  s.ceo!.leads.some((l:Lead)=>l.id!==excludingLeadId&&l.clientMasterId===c.id&&l.status==="signed")
+  s.ceo!.projects.some(p=>p.status==="active"&&p.clientMasterId===c.id)
  ));
  return conflict?.brand??null;
 }
