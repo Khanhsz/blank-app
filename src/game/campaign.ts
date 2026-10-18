@@ -169,6 +169,16 @@ export function chooseFreelanceClient(s:GameState,fx:Fx,clientId:string):boolean
  fx.toast("Client brief selected: "+client.brand);
  return true;
 }
+/** Retry an unsuccessful client approach without losing the player's choice.
+ * A new brief ID prevents the previous aborted in-flight request from
+ * clobbering the next Gemini result. */
+export function retryFreelanceApproach(s:GameState,fx:Fx){
+ const c=s.campaign;
+ if(!s.created||s.agencyUnlocked||c.phase!=="brief"||!c.catalogClientId||c.aiStatus!=="error")return;
+ c.aiStatus="pending";c.aiError=null;c.aiScenario=null;
+ c.briefId=newCampaign(c.scenarioIndex,s.clock.day).briefId;
+ fx.log("Retrying Gemini client approach: "+c.catalogClientId);
+}
 export function nextClient(s:GameState,fx:Fx){
  if(s.agencyUnlocked||s.campaign.phase!=="results"||(s.campaign.journey&&!s.campaign.journey.review))return fx.toast("Complete the Client Review before requesting another brief.");
  const next=(s.campaign.scenarioIndex+1)%3;

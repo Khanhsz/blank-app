@@ -7,7 +7,7 @@ export type Phase = "brief" | "planning" | "executing" | "live" | "results" | "r
 export const PHASES: Phase[] = ["planning", "executing", "live", "results"];
 export const PHASE_LABEL: Record<Phase, string> = { brief: "Brief", planning: "Planning", executing: "Executing", live: "Live", results: "Results", research: "Planning", survey: "Planning", validation: "Planning", strategy: "Planning", creative: "Executing", media: "Executing" };
 
-export type AIBriefStatus = "pending" | "generating" | "ready" | "fallback";
+export type AIBriefStatus = "pending" | "generating" | "ready" | "fallback" | "error";
 export type JourneyStep = "brief" | "research" | "strategy" | "creative" | "production" | "live" | "report";
 export interface CampaignJourney {
   step: JourneyStep;
@@ -35,7 +35,7 @@ export function inferJourney(c:Campaign):CampaignJourney {
   pitchedCreative:c.creative??null,mediaPlan:c.mediaBooked?"legacy":null};
 }
 export interface Campaign {
-  briefId: string; aiStatus: AIBriefStatus; aiError?: string | null; journey?:CampaignJourney;
+  briefId: string; aiStatus: AIBriefStatus; aiError?: string | null; legacyBrief?:boolean; journey?:CampaignJourney;
   scenarioIndex: number; catalogClientId?:string|null; aiScenario?: Scenario | null; phase: Phase; day: number; spent: number; research: string[];
   startedDay?: number; productionReadyDay?: number; mediaBooked?: boolean; actualLaunchDay?: number;
   liveWeeks?: number; lastOptimizationWeek?: number; weeklyResults?: {week:number;reach:number;uplift:number;decision:string}[];
