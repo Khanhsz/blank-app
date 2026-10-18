@@ -14,7 +14,7 @@ export interface Unit {id:string;title:string;description:string;fields:Field[];
 export interface JobDesign {id:FreelanceJobType;name:string;intro:string;workstation:string;units:Unit[]}
 const c=(id:string,label:string,detail:string,fit:number):Choice=>({id,label,detail,fit});
 const f=(id:string,label:string,...options:Choice[]):Field=>({id,label,options});
-const fields={
+const fields:Record<string,Field[]>={
  post:[
   f("objective","Content objective",c("awareness","Awareness","Make the brand recognizable",90),c("engagement","Engagement","Invite meaningful responses",86),c("conversion","Conversion","Direct response with credible offer",76)),
   f("pillar","Content pillar",c("product","Product story","Highlight a real product benefit",86),c("lifestyle","Lifestyle moment","Connect to an everyday occasion",92),c("education","Useful tips","Give audience a helpful takeaway",95)),
@@ -41,6 +41,7 @@ const fields={
   f("objective","Campaign objective",c("leads","Leads","Collect qualified intent",94),c("traffic","Traffic","Drive landing-page visits",87),c("sales","Sales","Optimize toward purchases",86)),
   f("audience","Audience plan",c("local","Local intent segment","Clear geography and behaviors",94),c("interest","Interest clusters","Audience hypotheses to test",90),c("broad","Broad exploration","Requires more learning budget",76)),
   f("tracking","Measurement event",c("lead","Lead","Verified lead capture event",95),c("view","ViewContent","Landing-page diagnostic event",82),c("purchase","Purchase","Transaction completion event",90)),
+  f("budget","Media allocation",c("603010","60% prospect / 30% retarget / 10% test","A bounded test plan with room to learn",95),c("5050","50% discovery / 50% retarget","Balanced but assumes existing audience volume",84),c("100","100% broad reach","No testing or follow-up reserve",39)),
   f("qa","Preflight validation",c("verify","Event + landing QA","Confirm pixel, UTM and event match",97),c("creative","Creative QA only","Review ad previews and policies",76),c("skip","Skip preflight","Risk invalid measurement",30))
  ],
  research:[
@@ -78,7 +79,7 @@ const DESIGNS:Record<FreelanceJobType,JobDesign>={
  "meta-setup":{id:"meta-setup",name:"Meta Ads Setup",workstation:"Ads Manager Simulator",intro:"Configure a fictional campaign; check audience, events and launch readiness. Client media is separate.",units:units("ads",["Campaign & objective","Audience / ad set","Tracking & events","Launch-readiness QA"],fields.meta,title=>"Configuration: "+title+".\nImplement a measured, budget-bounded setup using the client's fictional brief.\nAcceptance: Clear naming, objective/event consistency and verifiable QA checks.")},
  "audience-research":{id:"audience-research",name:"Audience Research Sprint",workstation:"Consumer Insight Lab",intro:"Design and synthesize a limited fictional study. Distinguish observations, inferences and limitations.",units:units("research",["Research question","Sampling & fieldwork","Interview theme coding","Audience segmentation","Insight / limitations"],fields.research,title=>"Research section: "+title+".\nEvidence: Use the supplied interview or competitor signals as hypotheses, not population facts.\nConclusion: State an insight with uncertainty and a feasible validation step.")},
  "content-sprint":{id:"content-sprint",name:"Multi-channel Content Sprint",workstation:"Content Operations Center",intro:"Create six adapted channel assets from a unified message and production plan.",units:units("asset",["Hero message","TikTok adaptation","Instagram adaptation","Email / CRM","Landing page","Handover matrix"],fields.sprint,title=>"Deliverable: "+title+".\nMaster message: Explain the audience benefit consistently.\nChannel adaptation: Tailor hook, visual hierarchy and CTA to the chosen platform.\nHandover: Include execution notes.")},
- "mini-launch":{id:"mini-launch",name:"Local Mini Launch Campaign",workstation:"Campaign Command Center",intro:"Build and hand over a seven-stage local campaign with credible scope, channel allocation and KPI measurement.",units:units("stage",["Research & diagnosis","Audience / strategy","Key message & concept","Creative executions","Local media allocation","Launch & optimization","KPI report & handover"],fields.launch,title=>"Stage: "+title+".\nDecision: Make a local-scale marketing choice grounded in the client context.\nDeliverable: Document responsibilities, budget assumptions and measurable outcome.\nNext step: Identify a check before sign-off.")}
+ "mini-launch":{id:"mini-launch",name:"Local Mini Launch Campaign",workstation:"Campaign Command Center",intro:"Build and hand over a seven-stage local campaign with credible scope, channel allocation and KPI measurement.",units:units("stage",["Before launch · audience & message","Launch day · local activation","After launch · follow-up & KPI"],fields.launch,title=>"Stage: "+title+".\nDecision: Make a local-scale marketing choice grounded in the client context.\nDeliverable: Document responsibilities, budget assumptions and measurable outcome.\nNext step: Identify a check before sign-off.")}
 };
 export const designFor=(id:string|null|undefined)=>id&&id in DESIGNS?DESIGNS[id as FreelanceJobType]:null;
 export const allDesigns=Object.values(DESIGNS).filter(d=>d.id!=="short-video");
@@ -180,6 +181,17 @@ export function openV4Board(s:GameState,fx:Fx){
  if(v4HasDrafts(v))return fx.toast("Save your edited drafts as deliverable versions before opening the board."),false;
  if(v.artifacts.some(a=>!isArtifactComplete(s.campaign.freelanceJob?.templateId??"",a)||a.status==="draft"||a.status==="revise"))return fx.toast("Complete and save all deliverables before review."),false;
  v.step="board";return true;
+}
+/** Landing blocks are real ordered page sections; order is preserved in the save. */
+export function moveV4Unit(s:GameState,id:string,direction:-1|1){
+ const p=s.campaign.freelanceJob,v=p?.v4;
+ if(p?.templateId!=="landing-page"||!v||v.step!=="workspace")return false;
+ const at=v.artifacts.findIndex(a=>a.id===id),target=at+direction;
+ if(at<0||target<0||target>=v.artifacts.length)return false;
+ const [block]=v.artifacts.splice(at,1);v.artifacts.splice(target,0,block);
+ // Layout edits can change placement-dependent interpretation of approved sections.
+ for(const a of v.artifacts)if(a.status==="approved"){a.status="ready";a.approvedVersion=undefined;}
+ return true;
 }
 export function returnV4Workspace(s:GameState,id?:string){
  const v=s.campaign.freelanceJob?.v4;
