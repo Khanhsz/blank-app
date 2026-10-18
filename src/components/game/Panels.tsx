@@ -17,6 +17,7 @@ import {recruitmentFee,recruitmentScore} from "@/game/recruitment";
 import {ClientTeamBoard} from "./ClientTeamBoard";
 import {GrowthDesk} from "./GrowthDesk";
 import * as A from "@/game/acquisition";
+import {bigCorpAccess} from "@/game/clientMarket";
 import * as T from "@/game/clientTeams";
 import {CampaignJourney} from "./CampaignJourney";
 
@@ -48,7 +49,8 @@ export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaig
     const l=cityClient(s,lot.clientId);
     if(!l)return <FeedbackStrip>This client is not available in your current game state.</FeedbackStrip>;
     const live=s.ceo?.leads.find(x=>x.id===l.id);
-    const status=live?.status||"future";
+    const locked=!live&&!bigCorpAccess(s).unlocked;
+    const status=live?.status||(locked?"locked":"future");
     const tender=s.ceo?tenderFor(s.ceo,l.id):undefined;
     const scope=l.duration+" days · "+l.scope+" workstreams";
     return <div className="mt-city-building-panel">
@@ -59,7 +61,8 @@ export function LocationPanel({ id, onOpen }: { id: string; onOpen: (p: "campaig
       <div className="mt-location-stat-grid"><GameStat label="CAMPAIGN BUDGET" value={money(l.value)}/><GameStat label="AGENCY FEE" value={money(l.fee)}/><GameStat label="DIFFICULTY" value={Math.round(l.difficulty)+"/100"}/></div>
       <div className="mt-location-fact"><b>Client requirements</b><p>{l.objective} · {scope}. Preferred capability: {l.pref}. You will compete with other agencies in the city.</p></div>
       <p className="text-xs text-muted-foreground">Outreach, discovery, qualification, pitch and negotiation are managed in the unified Growth Desk.</p>
-      {!s.agencyUnlocked?<FeedbackStrip>This is a potential corporate client. Found your own agency to qualify their lead and compete for the account.</FeedbackStrip>:
+      {!s.agencyUnlocked?<FeedbackStrip>This is a future corporate opportunity. Found your agency first.</FeedbackStrip>:
+       !live?<FeedbackStrip>{locked?"Corporate HQ RFPs unlock after 3 completed agency campaigns and 55 reputation. Find Startup and SME clients in Growth Desk.":"No active corporate RFP. Check the Growth Desk marketplace or upcoming tenders."}</FeedbackStrip>:
        <div className="mt-client-actions">
         <Button className="w-full" onClick={()=>{act(d=>A.focusDeal(d,l.id));onOpen("ceo");}}>Open {l.brand} in Growth Desk →</Button>
         {status==="signed"&&<FeedbackStrip tone="positive">Contract signed. Manage delivery through the dedicated Client Team.</FeedbackStrip>}
