@@ -56,7 +56,21 @@ const FORTUNE:{rank:number;brand:string;sector:ClientSector;model:string;revenue
 ];
 const FORTUNE_SOURCE="https://fortune.com/ranking/fortune500/";
 const FORTUNE_REVENUE_SOURCE="https://fortune.com/ranking/global500/";
-const segmentFactor:Record<ClientSegment,number>={startup:1,sme:18,bigcorp:240};
+/** Fictional revenue and marketing shares. Deliberately non-overlapping tiers.
+ * These are GAME balance assumptions, not statutory SME thresholds or filings.
+ * Gemini can influence subsequent growth through the market pulse, not overwrite
+ * these starting boundaries or any published Fortune revenue.
+ */
+export const FINANCIAL_BANDS={
+ startup:{revenueMinVnd:350_000_000,revenueMaxVnd:2_500_000_000,marketingShareMin:.065,marketingShareMax:.095},
+ sme:{revenueMinVnd:4_000_000_000,revenueMaxVnd:55_000_000_000,marketingShareMin:.045,marketingShareMax:.075},
+ bigcorp:{revenueMinVnd:10_000_000_000_000,revenueMaxVnd:80_000_000_000_000,marketingShareMin:.027,marketingShareMax:.043}
+} as const;
+export const SIMULATED_USD_TO_VND=25_000;
+/** Fortune unknown revenues are simulated ONLY, never recorded as verified. */
+export function simulatedFortuneRevenueUsd(rank:number){
+ return Math.round((90+(51-rank)*4.3+hashSeed("fortune:"+rank)*45)*1e9);
+}
 const tierAwareness:Record<ClientSegment,number>={startup:12,sme:35,bigcorp:66};
 const tierScale:Record<ClientSegment,number>={startup:14,sme:43,bigcorp:79};
 const modelRate:Record<ClientSegment,number>={startup:.13,sme:.095,bigcorp:.065};
@@ -67,22 +81,26 @@ function makeFictional(sector:ClientSector,segment:ClientSegment,index:number):C
  const idx=(segment==="startup"?0:segment==="sme"?4:8)+index;
  const name=WORDS[sector][idx]??(["Summit","Pinnacle"][index-4]+" "+SECTORS.find(s=>s.id===sector)!.label+" Holdings");
  const id=segment+"-"+sector+"-"+index;
- const rand=hashSeed(id);
- const employeeBase=segment==="startup"?4:segment==="sme"?35:420;
- const employees=Math.round(employeeBase*(.65+rand*1.5));
- const annualRevenueVnd=vnd((segment==="startup"?1400000000:segment==="sme"?26000000000:2200000000000)*sectorBias[sector]*(0.75+rand*.85));
- const marketingBudgetVnd=vnd(annualRevenueVnd*modelRate[segment]*(0.8+rand*.4));
+ const rand=hashSeed(id),band=FINANCIAL_BANDS[segment];
+ const employeeBase=segment==="startup"?3:segment==="sme"?18:900;
+ const employees=Math.round(employeeBase*(.7+rand*1.5));
+ const revenueCandidate=(band.revenueMinVnd+(band.revenueMaxVnd-band.revenueMinVnd)*rand)*sectorBias[sector];
+ const annualRevenueVnd=vnd(clamp(revenueCandidate,band.revenueMinVnd,band.revenueMaxVnd));
+ const share=band.marketingShareMin+(band.marketingShareMax-band.marketingShareMin)*hashSeed("budget:"+id);
+ const marketingBudgetVnd=vnd(annualRevenueVnd*share);
  const brandAwareness=clamp(Math.round(tierAwareness[segment]+rand*20),2,98);
  const scaleScore=clamp(Math.round(tierScale[segment]+rand*16),0,98);
  return {id,brand:name,sector,segment,industry:SECTORS.find(x=>x.id===sector)!.label,
   market:"Simulated Vietnam market",businessModel:"Fictional "+sector+" company",description:SECTORS.find(x=>x.id===sector)!.brief,
   basis:"simulated",employees,annualRevenueVnd,verifiedRevenueUsd:null,marketingBudgetVnd,brandAwareness,scaleScore,
   commercialScore:0,fortuneRank:null,fortuneYear:null,rankingSource:null,revenueSource:null,
-  sourceNote:"Fictional client. Revenue, staff, marketing budget and awareness are deterministic gameplay estimates."};
+  sourceNote:"Fictional client. Starting revenue, payroll scale, marketing share and awareness are bounded gameplay estimates; Gemini affects future game market dynamics."};
 }
 function makeFortune({rank,brand,sector,model,revenueUsd}:typeof FORTUNE[number]):ClientMaster{
  const modeledAwareness=clamp(78+Math.round((51-rank)*.26),65,97);
- const budget=vnd((850000000000+Math.round((51-rank)*42000000000))*sectorBias[sector]);
+ const baselineRevenueUsd=revenueUsd??simulatedFortuneRevenueUsd(rank);
+ const fortuneMarketingRate=sector==="food"?.018:sector==="tech"?.04:.032;
+ const budget=vnd(baselineRevenueUsd*SIMULATED_USD_TO_VND*fortuneMarketingRate);
  return {id:"f50-"+rank,brand,sector,segment:"bigcorp",industry:SECTORS.find(x=>x.id===sector)!.label,
   market:"United States / global",businessModel:model,description:"Fictional marketing brief for a real company. Not an actual RFP, contract, endorsement or partnership.",
   basis:"fortune-2026",employees:null,annualRevenueVnd:null,verifiedRevenueUsd:revenueUsd??null,
@@ -125,8 +143,8 @@ export function queryClients(opts:{sector?:ClientSector|"all";segment?:ClientSeg
 export function scenarioForClient(c:ClientMaster):Scenario{
  const sec=SECTORS.find(s=>s.id===c.sector)!;
  const freelance=c.segment!=="bigcorp",small=c.segment==="startup";
- const budget=freelance?Math.max(8000000,Math.min(26000000,vnd(c.marketingBudgetVnd*(small?.08:.022)))):
-  Math.max(30000000,Math.min(160000000,vnd(c.marketingBudgetVnd*.00012)));
+ const budget=freelance?clamp(vnd(c.marketingBudgetVnd*(small?.09:.025)),small?2_500_000:5_000_000,small?12_000_000:26_000_000):
+  clamp(vnd(c.marketingBudgetVnd*.0004),150_000_000,650_000_000);
  const days=small?14:c.segment==="sme"?21:35;
  const defaultFee=vnd(budget*(small?.42:.34));
  const insightOptions=[
@@ -152,11 +170,11 @@ export function scenarioForClient(c:ClientMaster):Scenario{
 }
 export function agencyLeadForClient(c:ClientMaster):LeadDef{
  const sec=SECTORS.find(x=>x.id===c.sector)!;
- const budget=clamp(vnd(c.marketingBudgetVnd*(c.segment==="startup"?.09:c.segment==="sme"?.055:.0011)),
-  c.segment==="startup"?9000000:c.segment==="sme"?55000000:480000000,
-  c.segment==="startup"?22000000:c.segment==="sme"?350000000:2400000000);
- const fee=vnd(Math.max(c.segment==="startup"?9000000:c.segment==="sme"?25000000:100000000,
-   budget*(c.segment==="startup"?.48:c.segment==="sme"?.23:.13)));
+ const budget=clamp(vnd(c.marketingBudgetVnd*(c.segment==="startup"?.09:c.segment==="sme"?.05:.0006)),
+  c.segment==="startup"?2_500_000:c.segment==="sme"?12_000_000:450_000_000,
+  c.segment==="startup"?16_000_000:c.segment==="sme"?150_000_000:3_200_000_000);
+ const fee=vnd(Math.max(c.segment==="startup"?7_500_000:c.segment==="sme"?15_000_000:120_000_000,
+   budget*(c.segment==="startup"?.8:c.segment==="sme"?.32:.16)));
  const fortune=c.fortuneRank!==null;
  return {id:"db-"+c.id,brand:c.brand,industry:sec.label,businessSize:c.segment==="startup"?"small":c.segment==="sme"?"medium":"enterprise",
   clientMasterId:c.id,sector:c.sector,segment:c.segment,value:budget,fee,duration:c.segment==="startup"?21:c.segment==="sme"?30:42,
