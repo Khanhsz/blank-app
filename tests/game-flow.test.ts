@@ -108,8 +108,9 @@ test("AI brief cannot overwrite campaign already in progress",()=>{
  seedApproachedClient(s);
  C.acceptBrief(s,fx);
  const sample={...scenarios[0],id:"ai-something",aiMeta:{category:"coffee",seed:1,label:"Fictional"},insightOptions:["awareness","value","location","trust","style"].map(id=>({id,title:id,desc:id+" detail"}))};
+ const original=s.campaign.aiScenario;
  assert.equal(C.activateAIBrief(s,fx,sample),false);
- assert.equal(s.campaign.aiScenario,null);
+ assert.deepEqual(s.campaign.aiScenario,original,"late AI result may not replace an in-progress client");
 });
 
 test("brief deadlines, optimization and agency functions share one calendar",()=>{
