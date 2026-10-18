@@ -69,7 +69,7 @@ export function applyCheat(s:GameState,fx:Fx,command:string,customAmount?:number
  const code=command.trim().toUpperCase();
  if(code in CASH_PRESETS||code==="CASH"){
   const amount=code==="CASH"?customAmount:CASH_PRESETS[code as keyof typeof CASH_PRESETS];
-  if(!Number.isSafeInteger(amount)||!amount||amount<1||amount>MAX_BALANCE)
+  if(typeof amount!=="number"||!Number.isSafeInteger(amount)||amount<1||amount>MAX_BALANCE)
    return fx.toast("Enter a positive whole-number VND amount of at most 1 trillion."),false;
   const added=credit(s,amount);
   if(added<=0)return fx.toast("This wallet reached the sandbox cash ceiling."),false;
