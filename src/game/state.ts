@@ -39,6 +39,11 @@ export function inferJourney(c:Campaign):CampaignJourney {
 }
 export interface FreelanceJobProgress {templateId:string;stage:"brief"|"work"|"feedback"|"delivery"|"done";hoursWorked:number;revisionHours:number;focus:"research"|"quality"|"speed"|null;clientFeedback:string|null;quality:number;revisions:number;deadlineDay:number;weekHours:number;actualWorkHours?:number;deliveredDay?:number;acceptedFee?:number;}
 export interface FreelanceInvoice {id:string;clientId:string;amount:number;dueDay:number;status:"pending"|"late"|"paid";reminded:boolean}
+export type FreelanceBidApproach="creative"|"performance"|"research"|"value";
+export type FreelanceBidPrice="competitive"|"standard"|"premium";
+export interface FreelanceListing {id:string;clientId:string;templateId:string;postedWeek:number;closeWeek:number;fee:number;mediaBudget:number;applicantIds:string[];status:"open"|"closed";}
+export interface FreelanceApplication {id:string;listingId:string;clientId:string;templateId:string;week:number;approach:FreelanceBidApproach;price:FreelanceBidPrice;proposedFee:number;score:number;winChance:number;status:"pending"|"selected"|"rejected"|"accepted"|"declined";feedback:string;}
+export interface FreelanceBoard {lastWeek:number;listings:FreelanceListing[];applications:FreelanceApplication[];}
 export interface FreelanceCareer {completedGigs:number;completedProjects:number;completedMiniCampaigns:number;positiveReviews:number;repeatClients:number;weeklyHours:number;weeklyWeek:number;clientWins:Record<string,number>;invoices:FreelanceInvoice[];completedIds:string[];}
 export const newFreelanceCareer=():FreelanceCareer=>({completedGigs:0,completedProjects:0,completedMiniCampaigns:0,positiveReviews:0,repeatClients:0,weeklyHours:0,weeklyWeek:1,clientWins:{},invoices:[],completedIds:[]});
 export interface Campaign {freelanceJob?:FreelanceJobProgress;
@@ -169,7 +174,7 @@ export interface GameState {
   version: 2; created: boolean; character: Character; room: RoomStyle; scene: SceneId;
   reputation: number; expertise: number; personalCash: number; agencyCash: number; agencyUnlocked: boolean; agencyName: string;
   staff: string[]; personnel:Record<string,PersonnelProfile>; recruitment?:RecruitmentMarket; teamLeads:Record<string,string>; upgrades: string[]; cityUnlocked: boolean; campaign: Campaign; clock: GameClock; officeId:string;
-  world: WorldProgress;companyMarket?:CompanyMarket;financeCalibration?:FinanceCalibration;freelanceCareer?:FreelanceCareer;
+  world: WorldProgress;companyMarket?:CompanyMarket;financeCalibration?:FinanceCalibration;freelanceCareer?:FreelanceCareer;freelanceBoard?:FreelanceBoard;
   history: { brand: string; outcome: number; score: number; spent: number; rep: number; xp: number; scenarioIndex: number; agency: boolean; caseStudy?: {highlight:string;reason:string;next:string;score:number;diagnosis:string|null;insight:string|null;approach:string|null;creative:string|null;message:string;mediaPlan:string|null;liveWeeks:number} }[];
   log: { t: number; msg: string }[]; graphics: "high" | "low"; ceo: CEO | null;
 }

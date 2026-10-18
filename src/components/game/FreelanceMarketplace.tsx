@@ -79,7 +79,7 @@ export function FreelanceMarketplace({onSelected}:{onSelected?:()=>void}){
      </div>
      <p className="mt-job-market-scope">{t.deliverables}. {t.revisions} included revision{t.revisions!==1?"s":""}. {t.mediaBudget>0?"Client-owned media: "+money(t.mediaBudget)+".":"No client media spend."}</p>
      {locked&&<p className="mt-job-market-locked">{locked}</p>}
-     <Button block size="sm" variant="outline" disabled={!!locked||!!application||game.campaign.phase!=="brief"}
+     <Button className="w-full" size="sm" variant="outline" disabled={!!locked||!!application||game.campaign.phase!=="brief"}
        onClick={()=>{setActive(l.id);setApproach("creative");setPrice("standard");}}>
        {application?"Application "+application.status:locked?"Locked — "+(game.reputation<=30&&Market.isHighBudgetJob(t)?"Rep 31":"Portfolio"):"Prepare Application"} <ArrowRight size={14}/>
      </Button>
@@ -103,7 +103,7 @@ export function FreelanceMarketplace({onSelected}:{onSelected?:()=>void}){
     <div><small>ESTIMATED WIN CHANCE</small><b>{estimate.probability}%</b></div>
     <div><small>OTHER APPLICANTS</small><b>{selected.applicantIds.length}</b></div>
    </div>}
-   <Button block disabled={appliedThisWeek>=Market.FREELANCE_APPLICATION_LIMIT||career.weeklyHours+1>28||!!applications.find(a=>a.listingId===selected.id)}
+   <Button className="w-full" disabled={appliedThisWeek>=Market.FREELANCE_APPLICATION_LIMIT||career.weeklyHours+1>28||!!applications.find(a=>a.listingId===selected.id)}
     onClick={()=>{act((s,fx)=>Market.applyFreelanceJob(s,fx,selected.id,approach,price));setActive(null);}}>
     Submit Application · 1 work hour
    </Button>

@@ -25,7 +25,7 @@ function businessMoney(c:ClientMaster,sim?:{simulatedAnnualRevenue:number;curren
  if(c.annualRevenueVnd!==null)return money(c.annualRevenueVnd);
  return "Not independently verified";
 }
-export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelected?:()=>void}){
+function ClientCatalogDirectory({mode="freelancer",onSelected}:{mode?:Mode;onSelected?:()=>void}){
  const game=useGame(x=>x);
  const [sector,setSector]=useState<ClientSector|"all">("all");
  const [segment,setSegment]=useState<ClientSegment|"all">("all");
@@ -57,8 +57,6 @@ export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelec
  const canSelect=mode==="agency"?game.agencyUnlocked:game.campaign.phase==="brief";
  const clients=liveAll.slice(0,shown);
  const next="Approach";
- // Bedroom has one Job Board, never the corporate client directory.
- if(mode==="freelancer")return <FreelanceMarketplace onSelected={onSelected}/>;
  return <div className="mt-client-catalog">
   <header className="mt-client-catalog-head"><div><small>CLIENT INTELLIGENCE / MASTER DATABASE V1</small><h2>Client Marketplace</h2>
    <p>{mode==="freelancer"?"Approach a Startup or SME from your bedroom. Gemini generates that company’s fictional business context, discovery dialogue, insight and strategy. No prewritten brief is used.":bigCorpUnlocked?"Research companies from Startups to Big Corp. Higher-tier RFPs need strong delivery proof and reputation.":"Your new agency can approach Startups and SMEs. Deliver three agency campaigns and reach 55 reputation to access Big Corp."}</p></div><Database size={25}/></header>
@@ -134,4 +132,11 @@ export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelec
   {shown<all.length&&<Button variant="outline" className="w-full" onClick={()=>setShown(n=>n+12)}>Show 12 more <ArrowDown size={15}/></Button>}
   <p className="mt-client-disclaimer"><ShieldCheck size={15}/> Data policy: fictional revenue and base marketing shares are bounded by company size; annual budgets adapt to simulated business growth, including Gemini market signals. Fortune published revenue is never rewritten. All contracts and marketing allocations are gameplay estimates.</p>
  </div>;
+}
+
+/** Public entry: a single unrestricted-to-view Job Board in Bedroom;
+ * Agency retains the independent corporate client directory. */
+export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelected?:()=>void}){
+ return mode==="freelancer"?<FreelanceMarketplace onSelected={onSelected}/>:
+ <ClientCatalogDirectory mode="agency" onSelected={onSelected}/>;
 }
