@@ -112,6 +112,9 @@ export function updatePersonnelDay(s:GameState){
  for(const p of s.ceo.projects.filter(p=>p.status==="active"))for(const t of p.tasks){
   if(t.status==="in_progress"&&t.employee&&s.staff.includes(t.employee))busy[t.employee]=(busy[t.employee]??0)+1;
  }
+ // Side gigs occupy the same staffing capacity as CEO production tasks.
+ for(const gig of s.ceo.agencyGigs??[])if((gig.status==="working"||gig.status==="revision")&&s.staff.includes(gig.staffId))
+  busy[gig.staffId]=(busy[gig.staffId]??0)+1;
  for(const id of s.staff){
   const p=s.personnel[id]??(s.personnel[id]=defaultProfile(id));
   if(p.trainingUntil!==undefined&&day>=p.trainingUntil){
