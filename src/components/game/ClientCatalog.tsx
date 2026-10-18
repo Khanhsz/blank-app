@@ -8,7 +8,7 @@ import {CLIENT_COUNTS,queryClients,SECTORS,type ClientSector,type ClientSegment,
 import {money} from "@/game/data";
 import {FREELANCE_JOBS} from "@/game/freelanceJobTemplates";
 import {canOfferJob,workload} from "@/game/freelanceJobs";
-import {FortuneSimulationBoard} from "./FortuneSimulationBoard";
+/* Fortune 50 accounts are accessed only through the corporate HQ in City. */
 import {ensureCompanyMarket,currentMarketingBudgetVnd} from "@/game/companyMarket";
 
 type Mode="freelancer"|"agency";
@@ -30,15 +30,14 @@ export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelec
  const [segment,setSegment]=useState<ClientSegment|"all">("all");
  const [sort,setSort]=useState<"rank"|"scale"|"revenue"|"budget"|"awareness"|"name">("rank");
  const [query,setQuery]=useState("");
- const [onlyFortune,setOnlyFortune]=useState(false);
  const [shown,setShown]=useState(12);
  const [selected,setSelected]=useState<string|null>(null);
  const [selectedJob,setSelectedJob]=useState("social-pack");
  const premium=mode==="agency"&&M.bigCorpAccess(game);
  const bigCorpUnlocked=!!premium&&premium.unlocked;
  const segments=SEGMENTS.filter(s=>s.id!=="bigcorp"||(mode==="agency"&&bigCorpUnlocked));
- const all=useMemo(()=>queryClients({sector,segment:!bigCorpUnlocked&&segment==="bigcorp"?"all":segment,search:query,sort,fortuneOnly:bigCorpUnlocked&&onlyFortune})
-  .filter(c=>c.segment!=="bigcorp"||bigCorpUnlocked),[sector,segment,query,sort,onlyFortune,mode,bigCorpUnlocked]);
+ const all=useMemo(()=>queryClients({sector,segment:!bigCorpUnlocked&&segment==="bigcorp"?"all":segment,search:query,sort})
+  .filter(c=>c.fortuneRank===null&&(c.segment!=="bigcorp"||bigCorpUnlocked)),[sector,segment,query,sort,mode,bigCorpUnlocked]);
 
  const gameMarket=ensureCompanyMarket(game);
  const latest=gameMarket.quarters[0];
@@ -68,19 +67,19 @@ export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelec
     <div className="mt-freelance-offer-row"><span>Completed gigs/projects: <b>{workload(game).completedGigs+workload(game).completedProjects}</b></span><span>Mini campaigns: <b>{workload(game).completedMiniCampaigns}</b></span></div>
   </div>}
   <div className="mt-client-catalog-summary">
-   <div><small>AVAILABLE CLIENTS</small><b>{bigCorpUnlocked?CLIENT_COUNTS.total:CLIENT_COUNTS.startup+CLIENT_COUNTS.sme}</b></div>
+   <div><small>AVAILABLE CLIENTS</small><b>{bigCorpUnlocked?CLIENT_COUNTS.total-CLIENT_COUNTS.fortune:CLIENT_COUNTS.startup+CLIENT_COUNTS.sme}</b></div>
    <div><small>STARTUPS</small><b>{CLIENT_COUNTS.startup}</b></div>
    <div><small>SMEs</small><b>{CLIENT_COUNTS.sme}</b></div>
-   <div><small>BIG CORP {bigCorpUnlocked?"":"· LOCKED"}</small><b>{CLIENT_COUNTS.bigcorp}</b></div>
+   <div><small>BIG CORP {bigCorpUnlocked?"":"· LOCKED"}</small><b>{CLIENT_COUNTS.bigcorp-CLIENT_COUNTS.fortune}</b></div>
   </div>
   {mode==="agency"&&!bigCorpUnlocked&&premium&&<p className="mt-client-catalog-count">Big Corp & Fortune RFPs locked · completed agency campaigns {premium.completed}/{premium.requiredCampaigns} · reputation {premium.reputation}/{premium.requiredReputation}</p>}
-  {mode==="agency"&&bigCorpUnlocked&&<FortuneSimulationBoard/>}
+  {mode==="agency"&&bigCorpUnlocked&&<p className="mt-client-catalog-count">Fortune HQ: visit the Brand Headquarters building in Marketing City to approach a Fortune account. These companies never appear here.</p>}
   <div className="mt-client-filters">
    <label><span>Sector</span><select aria-label="Client sector" value={sector} onChange={e=>{setSector(e.target.value as ClientSector|"all");setShown(12);}}><option value="all">All 7 sectors</option>{SECTORS.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></label>
    <label><span>Company size</span><select aria-label="Client segment" value={segment} onChange={e=>{setSegment(e.target.value as ClientSegment|"all");setShown(12);}}>{segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select></label>
    <label><span>Sort by</span><select aria-label="Client ranking" value={sort} onChange={e=>setSort(e.target.value as typeof sort)}><option value="rank">Commercial Index</option><option value="scale">Company Scale</option><option value="revenue">Revenue</option><option value="budget">Marketing Budget</option><option value="awareness">Brand Awareness</option><option value="name">Company Name</option></select></label>
    <label className="mt-client-search"><span>Find company</span><div><Search size={15}/><input value={query} onChange={e=>{setQuery(e.target.value);setShown(12);}} aria-label="Search client companies" placeholder="Brand or sector"/></div></label>
-   {mode==="agency"&&bigCorpUnlocked&&<label className="mt-client-check"><input type="checkbox" checked={onlyFortune} onChange={e=>{setOnlyFortune(e.target.checked);setShown(12);}}/> Fortune 50 only</label>}
+   
   </div>
   <div className="mt-client-catalog-count"><span>{all.length} matching clients · showing {clients.length}</span><span>7 sectors · {bigCorpUnlocked?"3":"2"} available segments</span></div>
   <div className="mt-client-results">
