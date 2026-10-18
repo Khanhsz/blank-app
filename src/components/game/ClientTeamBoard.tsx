@@ -50,7 +50,7 @@ function ResourcePlanner({onRecruit,onTeam}:{onRecruit:(teamId:string)=>void;onT
  const advice=plan?.advice;
  const busy=(id:string)=>s.ceo?.projects.some(p=>p.status==="active"&&p.tasks.some(t=>t.employee===id&&t.status==="in_progress"))??false;
  const task=advice?.priorityTask;
- const ready=!!task&&s.ceo?.projects.some(p=>p.status==="active"&&p.teamId===teamId&&p.tasks.some(t=>t.key===task.key&&t.pre.every(pr=>p.tasks.some(x=>x.key===pr&&x.status==="completed"))));
+ const ready=!!task&&s.ceo?.projects.some(p=>p.id===advice?.priorityProjectId&&p.status==="active"&&p.teamId===teamId&&p.tasks.includes(task)&&task.pre.every(pr=>p.tasks.some(x=>x.key===pr&&x.status==="completed")));
  const alternatives=plan?.alternatives??[];
  const options=[{kind:"recruit",name:"Recruit Creative",icon:<UserPlus size={18}/>,detail:"Target a specialist; applicants arrive next week, subject to availability."},
   {kind:"outsource",name:"Outsource task",icon:<Handshake size={18}/>,detail:"Deliver eligible Creative work externally; no permanent headcount."},
@@ -108,7 +108,7 @@ function ResourcePlanner({onRecruit,onTeam}:{onRecruit:(teamId:string)=>void;onT
       const run=()=>{
        if(!teamId||!eligible)return;
        if(opt.kind==="recruit")onRecruit(teamId);
-       if(opt.kind==="outsource"&&task)act((d,fx)=>K.outsourceTeamTask(d,fx,d.ceo?.projects.find(p=>p.status==="active"&&p.teamId===teamId&&p.tasks.some(t=>t.key===task.key))?.id??"",task.key));
+       if(opt.kind==="outsource"&&task&&advice?.priorityProjectId)act((d,fx)=>K.outsourceTeamTask(d,fx,advice.priorityProjectId!,task.key));
        if(opt.kind==="reallocate"&&selectedEmployee)act((d,fx)=>{
         const from=T.ownerTeam(d,selectedEmployee);
         if(from)T.transferClientMember(d,fx,from.id,teamId,selectedEmployee);

@@ -87,3 +87,26 @@ test("targeted hiring produces a Creative applicant after next weekly refresh an
  assert.equal(candidates[0].specialty,"creative");
  assert.equal(s.recruitment!.postings!.length,0);
 });
+
+test("Creative outsource selection identifies the exact project within a multi-campaign client squad",()=>{
+ const s=agency();
+ const first=project("campaign-one",["strategy","creative"]),second=project("campaign-two",["creative"]);
+ second.brand=first.brand;
+ s.ceo!.projects.push(first,second);
+ const t1=startClientTeam(s,first),t2=startClientTeam(s,second);
+ assert.equal(t1.id,t2.id);
+ const advice=creativeAdvice(s,t1.id)!;
+ assert.equal(advice.priorityProjectId,second.id,"ready Creative must be chosen over blocked Creative");
+ const opted=forecastChoice(s,{kind:"outsource",teamId:t1.id,projectId:advice.priorityProjectId!,taskKey:"creative"});
+ assert.ok(opted.completedTasks>0);
+ assert.equal(opted.upfront,Math.round(ceoTaskDefs.find(t=>t.key==="creative")!.cost*2.1*(second.scope/8)));
+});
+test("planner cannot outsource an in-progress Creative task or suggest non-role-qualified talent",()=>{
+ const s=agency();hire(s,fx,"buyer2");
+ const p=project("creative-current");p.tasks[0].status="in_progress";p.tasks[0].progress=1;
+ s.ceo!.projects.push(p);const team=startClientTeam(s,p);
+ const advice=creativeAdvice(s,team.id)!;
+ assert.equal(advice.priorityTask,null,"already running work cannot be outsourced");
+ assert.equal(advice.bestReallocate,null,"Media specialist cannot unblock Creative");
+ assert.equal(compareCreativeOptions(s,team.id)!.alternatives.find(x=>x.kind==="outsource")!.viable,false);
+});

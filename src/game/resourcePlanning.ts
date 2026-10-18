@@ -12,7 +12,7 @@ import type {GameState,Task,Project,TalentFunction,RecruitmentChannel} from "./s
 
 export type PlannerAction="baseline"|"recruit"|"outsource"|"reallocate"|"upskill";
 export type PaidChannel=Exclude<RecruitmentChannel,"organic">;
-export interface PlannerChoice {kind:PlannerAction;teamId:string;employeeId?:string;taskKey?:string;channel?:PaidChannel}
+export interface PlannerChoice {kind:PlannerAction;teamId:string;employeeId?:string;taskKey?:string;projectId?:string;channel?:PaidChannel}
 export interface ResourceForecast {
  kind:PlannerAction;teamId:string;cost30:number;upfront:number;monthly:number;
  completionDay:number|null;deadlineDaysLate:number|null;completedTasks:number;totalTasks:number;
@@ -20,10 +20,10 @@ export interface ResourceForecast {
 }
 export interface ResourceAdvice {
  teamId:string;brand:string;role:"creative";focus:TalentFunction;missing:boolean;
- pendingTasks:Task[];priorityTask:Task|null;pool:string[];transfer:string[];upskill:string[];
+ pendingTasks:Task[];priorityTask:Task|null;priorityProjectId:string|null;pool:string[];transfer:string[];upskill:string[];
  bestReallocate:string|null;bestUpskill:string|null;hasDesk:boolean;
 }
-const creativeKey="creative",HORIZON=84;
+const HORIZON=84;
 function unfinished(p:Project){return p.tasks.filter(t=>t.status!=="completed");}
 export const daysToApplicants=(s:GameState)=>7-((Math.max(1,s.clock.day)-1)%7);
 /** Supply/demand is in task-effort units over four weeks, not headcount. */
@@ -59,17 +59,24 @@ export function creativeAdvice(s:GameState,teamId:string):ResourceAdvice|null{
  const active=(s.ceo?.projects??[]).filter(p=>p.status==="active"&&p.teamId===teamId);
  const pending=active.flatMap(p=>p.tasks.filter(t=>t.status!=="completed"&&!t.outsourced&&["creative","production"].includes(t.role)));
  const creative=pending.filter(t=>t.role==="creative");
- const priorityTask=creative.find(t=>active.some(p=>p.tasks.includes(t)&&t.pre.every(k=>p.tasks.some(x=>x.key===k&&x.status==="completed"))))??creative[0]??null;
- const pool=talentPool(s).filter(id=>effectiveCapacity(s,id)>0&&pending.some(t=>eligibleForRole(id,t.role)))
-  .sort((a,b)=>Math.max(...pending.filter(t=>eligibleForRole(b,t.role)).map(t=>taskFit(s,b,t.role,t.key)))-Math.max(...pending.filter(t=>eligibleForRole(a,t.role)).map(t=>taskFit(s,a,t.role,t.key))));
+ // If the Creative concept itself is waiting, a Production-only employee does
+ // not solve that bottleneck. Task eligibility remains mandatory, even after training.
+ const focusTasks=creative.length?creative:pending;
+ const canCover=(id:string)=>focusTasks.some(t=>eligibleForRole(id,t.role));
+ const callable=creative.filter(t=>t.status==="assigned"||t.status==="backlog");
+ const priorityTask=callable.find(t=>active.some(p=>p.tasks.includes(t)&&t.pre.every(k=>p.tasks.some(x=>x.key===k&&x.status==="completed"))))??callable[0]??null;
+ const priorityProjectId=priorityTask?active.find(p=>p.tasks.includes(priorityTask))?.id??null:null;
+ const highestFit=(id:string)=>Math.max(...focusTasks.filter(t=>eligibleForRole(id,t.role)).map(t=>taskFit(s,id,t.role,t.key)));
+ const pool=talentPool(s).filter(id=>effectiveCapacity(s,id)>0&&canCover(id))
+  .sort((a,b)=>highestFit(b)-highestFit(a));
  const transfer=(s.ceo?.clientTeams??[]).filter(t=>t.id!==teamId&&t.status==="active").flatMap(t=>t.memberIds)
-  .filter(id=>pending.some(t=>eligibleForRole(id,t.role))&&effectiveCapacity(s,id)>0&&!(s.ceo?.projects.some(p=>p.status==="active"&&p.tasks.some(t=>t.employee===id&&t.status==="in_progress"))))
-  .sort((a,b)=>(talentStats(s,b).cre)-(talentStats(s,a).cre));
- const upskill=team.memberIds.filter(id=>pending.some(t=>eligibleForRole(id,t.role))&&effectiveCapacity(s,id)>0&&talentStats(s,id).cre<94&&
+  .filter(id=>canCover(id)&&effectiveCapacity(s,id)>0&&!(s.ceo?.projects.some(p=>p.status==="active"&&p.tasks.some(t=>t.employee===id&&t.status==="in_progress"))))
+  .sort((a,b)=>highestFit(b)-highestFit(a));
+ const upskill=team.memberIds.filter(id=>canCover(id)&&effectiveCapacity(s,id)>0&&talentStats(s,id).cre<94&&
   !(s.ceo?.projects.some(p=>p.status==="active"&&p.tasks.some(t=>t.employee===id&&t.status==="in_progress"))))
   .sort((a,b)=>talentStats(s,b).cre-talentStats(s,a).cre);
  return {teamId,brand:team.brand,role:"creative",focus:"cre",missing:creative.some(t=>!team.memberIds.some(id=>eligibleForRole(id,t.role)&&effectiveCapacity(s,id)>0)),
-  pendingTasks:pending,priorityTask,pool,transfer,upskill,bestReallocate:pool[0]??transfer[0]??null,bestUpskill:upskill[0]??null,
+  pendingTasks:pending,priorityTask,priorityProjectId,pool,transfer,upskill,bestReallocate:pool[0]??transfer[0]??null,bestUpskill:upskill[0]??null,
   hasDesk:s.staff.length<currentOffice(s).capacity};
 }
 interface SimTask {key:string;role:string;effort:number;progress:number;pre:string[];status:Task["status"];employee:string|null;preferredEmployee?:string|null;outsourced:boolean;reviewDay?:number;doneDay?:number}
@@ -95,6 +102,7 @@ function deliverySimulation(s:GameState,choice:PlannerChoice):Pick<ResourceForec
  const upskill=choice.kind==="upskill"&&!!choice.employeeId&&members.includes(choice.employeeId);
  const skillLift=choice.employeeId&&upskill?choice.employeeId:null;
  const preferredTask=choice.taskKey??projects.flatMap(p=>p.tasks).find(t=>t.role==="creative"&&t.status!=="completed")?.key;
+ const preferredProject=choice.projectId??projects.find(p=>p.tasks.some(t=>t.key===preferredTask&&t.role==="creative"&&t.status!=="completed"))?.id;
  let outsourced=false,firstProgress:number|null=null;
  let finishedDay:number|null=null,overdue:number|null=null;
  for(let offset=1;offset<=HORIZON;offset++){
@@ -113,7 +121,7 @@ function deliverySimulation(s:GameState,choice:PlannerChoice):Pick<ResourceForec
      continue;
     }
     if(t.status==="backlog"&&t.pre.every(k=>p.tasks.some(prev=>prev.key===k&&prev.status==="completed")))t.status="assigned";
-    if(t.status==="assigned"&&choice.kind==="outsource"&&!outsourced&&t.key===preferredTask&&t.role==="creative"){
+    if(t.status==="assigned"&&choice.kind==="outsource"&&!outsourced&&t.key===preferredTask&&t.role==="creative"&&p.id===preferredProject){
      t.status="in_progress";t.employee="external";t.outsourced=true;outsourced=true;
     }
     if(t.status==="assigned"){
@@ -178,13 +186,13 @@ export function compareCreativeOptions(s:GameState,teamId:string,channel:PaidCha
  const base=forecastChoice(s,{kind:"baseline",teamId});
  const alternatives:ResourceForecast[]=[
   forecastChoice(s,{kind:"recruit",teamId,channel}),
-  forecastChoice(s,{kind:"outsource",teamId,taskKey:advice.priorityTask?.key}),
+  forecastChoice(s,{kind:"outsource",teamId,taskKey:advice.priorityTask?.key,projectId:advice.priorityProjectId??undefined}),
   forecastChoice(s,{kind:"reallocate",teamId,employeeId:advice.bestReallocate??undefined}),
   forecastChoice(s,{kind:"upskill",teamId,employeeId:advice.bestUpskill??undefined})
  ];
  return {advice,baseline:base,alternatives:alternatives.map(f=>({
   ...f,daysSaved:base.completionDay!==null&&f.completionDay!==null?base.completionDay-f.completionDay:null,
-  viable:f.kind==="recruit"?advice.hasDesk&&!!advice.priorityTask:
+  viable:f.kind==="recruit"?advice.hasDesk&&creativeAdvice(s,teamId)!.pendingTasks.some(t=>t.role==="creative"):
    f.kind==="outsource"?!!advice.priorityTask:
    f.kind==="reallocate"?!!advice.bestReallocate:
    f.kind==="upskill"?!!advice.bestUpskill:false
