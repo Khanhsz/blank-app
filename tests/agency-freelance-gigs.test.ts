@@ -119,6 +119,16 @@ test("Agency side gig work advances on CEO's existing simulation clock, and publ
  Market.advanceFreelanceBoard(s,1,fx);
  assert.equal(s.freelanceBoard!.listings.filter(l=>l.postedWeek===2).length,7);
 });
+test("Two concurrent gigs share one employee's already-paid daily labor cost",()=>{
+ const s=agency(),a=offer(s,"social-pack"),b=offer(s,"landing-page");
+ assert.equal(Gigs.acceptAgencyGigOffer(s,fx,a.id,"creator"),true);
+ assert.equal(Gigs.acceptAgencyGigOffer(s,fx,b.id,"creator"),true);
+ s.ceo!.day++;
+ Gigs.progressAgencyGigsDay(s,fx);
+ const wages=(s.ceo!.agencyGigs??[]).reduce((sum,g)=>sum+g.laborCost,0);
+ assert.ok(wages>0);
+ assert.ok(wages<=2_000_000/30+0.01,"two side gigs cannot attribute more than one daily employee salary");
+});
 test("CEO Side Gigs tab renders employee assignment, deliverable approval and finance",()=>{
  const view=readFileSync("src/components/game/AgencyFreelanceDesk.tsx","utf8");
  const panels=readFileSync("src/components/game/Panels.tsx","utf8");
