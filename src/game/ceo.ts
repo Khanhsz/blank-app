@@ -352,8 +352,9 @@ export function terms(s: GameState, n: Negotiation, l: Lead) {
 }
 export function counter(s: GameState, fx: Fx, action: string) {
   const c = ceoInit(s)!, n = c.negotiation; if (!n || n.status !== "open") return; const l = lead(c, n.id)!;
+  if(l.contractType==="annual-retainer"&&["advance","deadline"].includes(action)){fx.toast("Fortune HQ contracts use fixed 365-day terms and full annual service fee billing.");return;}
   if (action === "walk") { n.status = "walked"; l.status = "declined"; n.notes.push("Agency walked away to protect capacity."); return; }
-  if (action === "accept" && n.counter) { Object.assign(n, n.counter); n.counter = null; return sign(s, fx); }
+  if (action === "accept" && n.counter) { Object.assign(n, n.counter); n.counter = null; if(l.contractType==="annual-retainer"){n.advance=100;n.deadline=365;} return sign(s, fx); }
   if (action === "maintain") { n.trust -= 5; n.notes.push("Held current terms; client needs more business reasons."); }
   if (action === "discount") { n.fee = Math.round(n.fee * 0.91); n.trust += 5; n.notes.push("Cut fee 9% — margin shrinks."); }
   if (action === "scope") { n.scope = Math.max(4, n.scope - 2); n.trust += 1; n.notes.push("Cut 2 deliverables, kept price."); }
