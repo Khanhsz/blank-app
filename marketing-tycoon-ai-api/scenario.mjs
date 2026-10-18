@@ -129,7 +129,7 @@ export const CLIENT_ANSWERS=["audience","barrier","success","constraint"];
 export function clientPrompt(category,client){
  const c=validateApproachClient(client);
  return [
- prompt(category),
+ prompt(category).replace("exactly these top-level fields:", "the listed top-level fields PLUS aiPlanning and clientAnswers:").replace("channel, reports, insightOptions.", "channel, reports, insightOptions, aiPlanning, clientAnswers."),
  "IMPORTANT: This is NOT a random incoming client. The player explicitly approached a client from their bedroom workstation.",
  "Selected fictional company: "+JSON.stringify(c)+". The fictional client brand MUST equal "+JSON.stringify(c.brand)+".",
  "Use selected company sector, business challenge and simulated marketing budget to create a UNIQUE 14-day freelance campaign. The annual marketing budget is NOT the project's budget; choose a reasonable 8M–16M VND project spend.",
