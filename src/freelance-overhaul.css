@@ -185,3 +185,13 @@
  .mt-v6-hotspots,.mt-v6-research-wall,.mt-v6-budget-bars{grid-template-columns:repeat(3,minmax(0,1fr))}
  .mt-v6-channels,.mt-v6-launch-phases{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
+
+/* V6.1 wider desktop workspace: only the active freelancer editor expands.
+   Job board, CEO, directory and other panels retain their original widths. */
+.panel.panel-freelance{width:min(980px,calc(100vw - 48px))}
+.panel.panel-freelance .panelbody{min-width:0;overscroll-behavior:contain}
+@media(max-width:750px){
+ .panel.panel-freelance{width:auto;left:7px;right:7px;top:auto;bottom:72px;height:67dvh}
+ .panel.panel-freelance>header{padding:13px 17px}
+ .panel.panel-freelance .panelbody{padding:14px 18px}
+}
