@@ -119,6 +119,16 @@ export function applyFreelanceJob(s:GameState,fx:Fx,id:string,approach:Freelance
  fx.toast("Application submitted. Selection takes place at End Week.");
  return true;
 }
+/** One-click job application with a client-industry-fit pitch and the listed
+ * standard service fee. The regular application validator still enforces
+ * reputation, portfolio, work-hours and the 3-applications-per-week cap.
+ */
+export function applyDefaultFreelanceJob(s:GameState,fx:Fx,id:string){
+ const listing=ensureFreelanceBoard(s).listings.find(l=>l.id===id);
+ if(!listing||!CLIENT_BY_ID[listing.clientId])return false;
+ const approach=SECTOR_PREF[CLIENT_BY_ID[listing.clientId].sector];
+ return applyFreelanceJob(s,fx,id,approach,"standard");
+}
 export function advanceFreelanceBoard(s:GameState,closingWeek:number,fx:Fx){
  if(!s.freelanceBoard||s.agencyUnlocked)return;
  const b=s.freelanceBoard;

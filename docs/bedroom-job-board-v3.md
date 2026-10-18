@@ -31,3 +31,9 @@ There is **one** Freelancer Job Board, open from the first day. It includes Star
 
 ## Tuning / next phase
 The seven weekly listings currently follow a guaranteed mixture of gig and project templates. Further enhancements can add specialist NPC portfolios, bounded interview rounds and dynamic client demand without changing the saved contract schema.
+
+## V3.1: one-click Apply UX
+- **Apply Job** submits immediately; there is no Prepare Application preview/form on Bedroom mobile or desktop.
+- Engine chooses the existing sector-matched default approach and the **Standard** job listing service fee. NPC scoring, 3 applications/week, 1-hour effort, Rep 31 premium gate, skill unlocks, End Week decision and explicit Accept Offer remain unchanged.
+- After tapping Apply, listing status becomes **PENDING** and a saved entry appears in **My Applications & Offers**. The player does not automatically win or begin client work.
+- Existing applications retain their originally chosen approach and quoted bid price. All old saves remain compatible.

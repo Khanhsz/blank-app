@@ -126,15 +126,27 @@ test("Bedroom Job Board displays all weekly jobs directly with no filters",()=>{
  assert.ok(!view.includes('aria-label="Filter freelance client size"'));
 });
 
-test("Prepare Application expands in the selected job card and auto-scrolls into view on mobile",()=>{
+test("Bedroom Apply Job submits immediately, with no Prepare Application screen or form",()=>{
  const view=readFileSync("src/components/game/FreelanceMarketplace.tsx","utf8");
- const cards=view.indexOf("visibleListings.map(l=>");
- const inline=view.indexOf("selected&&selectedTemplate&&l.id===active");
- const cardEnd=view.indexOf("</article>;",cards);
- const history=view.indexOf('className="mt-job-market-applications"');
- assert.ok(cards>=0&&inline>cards&&inline<cardEnd,"application lives in selected job card");
- assert.ok(cardEnd<history,"application is not hidden after all listing cards");
- assert.ok(view.includes("applicationRef.current?.scrollIntoView"));
- assert.ok(view.includes('aria-label="Job application form"'));
- assert.ok(view.includes("onClick={()=>setActive(null)}"),"user can close application");
+ assert.ok(view.includes('Market.applyDefaultFreelanceJob(s,fx,l.id)'));
+ assert.ok(view.includes(':"Apply Job"'));
+ assert.ok(!view.includes("Prepare Application"));
+ assert.ok(!view.includes("applicationRef"));
+ assert.ok(!view.includes('aria-label="Job application form"'));
+ assert.ok(!view.includes("mt-job-market-apply"));
+});
+test("One-click Apply uses the industry-aligned strategy and listed fee and does not bypass gating",()=>{
+ const s=game(),board=Market.ensureFreelanceBoard(s);
+ const starter=board.listings.find(l=>l.templateId==="social-pack")!;
+ const standard=Market.bidFee(getFreelanceJob(starter.templateId)!,"standard");
+ assert.equal(Market.applyDefaultFreelanceJob(s,fx,starter.id),true);
+ const a=board.applications[0];
+ assert.equal(a.proposedFee,standard);
+ assert.equal(a.price,"standard");
+ assert.equal(a.status,"pending");
+ assert.equal(s.freelanceCareer!.weeklyHours,1);
+ assert.equal(Market.applyDefaultFreelanceJob(s,fx,starter.id),false,"same job cannot be applied twice");
+ const premium=board.listings.find(l=>Market.isHighBudgetJob(getFreelanceJob(l.templateId)!))!;
+ assert.equal(Market.applyDefaultFreelanceJob(s,fx,premium.id),false,"reputation and portfolio gates still apply");
+ assert.equal(board.applications.length,1);
 });
