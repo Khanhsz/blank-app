@@ -9,7 +9,7 @@ import {runRivalAgents,ensureTender,rivalBidScore,registerRivalWin,resolveTalent
 import {candidatesForRole,primaryRole,eligibleForRole,profile,effectiveCapacity,employeeReadiness,staffRate,defaultProfile,updatePersonnelDay,recordDelivery} from "./personnel";
 import {teamForProject,ownerTeam,startClientTeam,reconcileClientTeams,teamCoverage} from "./clientTeams";
 import {contractBrief} from "./clientMarket";
-import {ensureFortuneAccounts,canContractFortune,signFortuneAccount,advanceFortuneAccounts,FORTUNE_YEAR_DAYS} from "./fortuneAccounts";
+import {ensureFortuneAccounts,canContractFortune,signFortuneAccount,advanceFortuneAccounts,isGameFortuneTop10,FORTUNE_YEAR_DAYS} from "./fortuneAccounts";
 import {recordClientDelivery} from "./companyMarket";
 import {catalogForBrand} from "./clientDatabase";
 import {ensureLocalPricing,qualificationQuote} from "./pricingAdvisor";
@@ -145,7 +145,7 @@ function progressProject(s: GameState, c: CEO, p: Project, fx: Fx) {
     fx.log("Monthly account report · "+p.brand+" · month "+Math.ceil(p.days/30));
   }
   if (!p.contractTerms&&p.days >= p.duration * 0.55 && !p.midpoint) { p.midpoint = true; schedulePayment(c, p, p.fee * 0.3, 2, "Mid-project milestone"); }
-  if (p.tasks.every((t) => t.status === "completed") && (p.contractTerms?p.days>=FORTUNE_YEAR_DAYS:p.days>=Math.max(10,Math.floor(p.duration*.6)))) finishProject(s, c, p, fx);
+  if ((p.contractTerms&&p.days>=FORTUNE_YEAR_DAYS)||(!p.contractTerms&&p.tasks.every(t=>t.status==="completed")&&p.days>=Math.max(10,Math.floor(p.duration*.6)))) finishProject(s,c,p,fx);
 }
 
 function applyTask(p: Project, t: Task) {
@@ -389,7 +389,7 @@ export function sign(s: GameState, fx: Fx) {
       monthlyReports:true,reportingIntervalDays:30,scopeOfWork:l.objective,
       deliverables:["Consumer research","Annual strategy and creative","Quarterly campaigns","Media and creator management","Monthly KPI dashboard","Year-end performance report"],
       kpiTarget:l.target,terminationNoticeDays:30,confidentiality:true as const,intellectualProperty:"client-owns-approved-paid-work" as const,
-      mediaSpendSeparate:true as const,top10SectorExclusivity:true}}:{}) };
+      mediaSpendSeparate:true as const,top10SectorExclusivity:isGameFortuneTop10(s,l.clientMasterId!)}}:{}) };
   c.projects.push(p);
   startClientTeam(s,p);
   if(annual){
