@@ -77,22 +77,7 @@ test("late Gemini response is discarded if the player approaches a different cli
   assert.equal(getState().campaign.aiScenario,null);
  }finally{globalThis.fetch=prior}
 });
-test("internal hourly limit displays the game-side cap and actual wait rather than claiming Google quota",async()=>{
- resetGame();
- const prior=globalThis.fetch;
- globalThis.fetch=(async()=>new Response(JSON.stringify({
-  code:"local_hourly_limit",error:"Marketing Tycoon's hourly brief limit is reached.",retryAfterSeconds:3570
- }),{status:429})) as typeof fetch;
- try{
-  act((s,fx)=>{s.created=true;chooseFreelanceClient(s,fx,"startup-coffee-0")});
-  prepareNextBrief();await settle();
-  assert.equal(getState().campaign.aiStatus,"error");
-  assert.match(getState().campaign.aiError||"",/Marketing Tycoon reached its own hourly/i);
-  assert.match(getState().campaign.aiError||"",/60 minute/i);
-  assert.equal(getState().campaign.aiScenario,null);
- }finally{globalThis.fetch=prior}
-});
-test("provider quota errors are distinguished from game's local limits",async()=>{
+test("Gemini provider rate-limit responses remain distinct without game-imposed quotas",async()=>{
  resetGame();
  const prior=globalThis.fetch;
  globalThis.fetch=(async()=>new Response(JSON.stringify({
