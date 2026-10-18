@@ -94,9 +94,11 @@ test("startup agency seasonal leads are SME only and never include unearned corp
  const s=game(),c=s.ceo!;
  c.leads=[];
  for(let i=0;i<27;i++)ceoDay(s,c,fx);
- const current=c.leads.find(l=>l.id==="market-sora-28");
+ const current=c.leads.find(l=>l.id==="market-startup-coffee-0-28");
  assert.ok(current);
- assert.equal(current.businessSize,"medium");
+ assert.equal(current.segment,"startup");
+ assert.ok(current.value<=16_000_000);
+ assert.ok(current.fee<=20_000_000);
  assert.equal(c.leads.some(l=>l.id==="market-orion-28"),false);
 });
 test("fresh fictional corporate tenders recur once qualified agency reaches premium status",()=>{
