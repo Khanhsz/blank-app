@@ -21,7 +21,7 @@ export function validatePricingInput(raw){
   mediaBudget:finite(raw.mediaBudget,1000000,10000000000,"media budget"),
   baselineFee:finite(raw.baselineFee,1000000,2000000000,"base fee"),
   scope:finite(raw.scope,1,24,"scope"),
-  duration:finite(raw.duration,7,180,"duration"),
+  duration:finite(raw.duration,7,365,"duration"),
   difficulty:finite(raw.difficulty,0,100,"difficulty"),
   target:finite(raw.target,0,100,"KPI target"),
   intensity:finite(raw.intensity,0,1,"intensity"),
