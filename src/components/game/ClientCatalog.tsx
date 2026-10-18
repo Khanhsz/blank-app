@@ -7,6 +7,7 @@ import * as M from "@/game/clientMarket";
 import {CLIENT_COUNTS,queryClients,SECTORS,type ClientSector,type ClientSegment,type ClientMaster} from "@/game/clientDatabase";
 import {money} from "@/game/data";
 import {FREELANCE_JOBS} from "@/game/freelanceJobTemplates";
+import {FreelanceMarketplace} from "./FreelanceMarketplace";
 import {canOfferJob,workload} from "@/game/freelanceJobs";
 /* Fortune 50 accounts are accessed only through the corporate HQ in City. */
 import {ensureCompanyMarket,currentMarketingBudgetVnd,currentFortuneBoard} from "@/game/companyMarket";
@@ -56,6 +57,8 @@ export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelec
  const canSelect=mode==="agency"?game.agencyUnlocked:game.campaign.phase==="brief";
  const clients=liveAll.slice(0,shown);
  const next="Approach";
+ // Bedroom has one Job Board, never the corporate client directory.
+ if(mode==="freelancer")return <FreelanceMarketplace onSelected={onSelected}/>;
  return <div className="mt-client-catalog">
   <header className="mt-client-catalog-head"><div><small>CLIENT INTELLIGENCE / MASTER DATABASE V1</small><h2>Client Marketplace</h2>
    <p>{mode==="freelancer"?"Approach a Startup or SME from your bedroom. Gemini generates that company’s fictional business context, discovery dialogue, insight and strategy. No prewritten brief is used.":bigCorpUnlocked?"Research companies from Startups to Big Corp. Higher-tier RFPs need strong delivery proof and reputation.":"Your new agency can approach Startups and SMEs. Deliver three agency campaigns and reach 55 reputation to access Big Corp."}</p></div><Database size={25}/></header>

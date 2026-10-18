@@ -178,8 +178,8 @@ export function CampaignJourney(){
  useEffect(()=>{if(c.phase==="brief"&&!c.catalogClientId)setBrowse(true);},[c.briefId]);
  return <div className="mt-client-journey-wrap">
   {c.phase==="brief"&&<div className="mt-client-journey-switch">
-    <Button size="sm" variant={browse?"default":"outline"} onClick={()=>setBrowse(true)}>Approach Startup & SME Clients</Button>
-    <Button size="sm" variant={!browse?"default":"outline"} onClick={()=>setBrowse(false)} disabled={!c.catalogClientId}>Selected Client · Gemini</Button>
+    <Button size="sm" variant={browse?"default":"outline"} onClick={()=>setBrowse(true)}>Freelance Job Board</Button>
+    <Button size="sm" variant={!browse?"default":"outline"} onClick={()=>setBrowse(false)} disabled={!c.catalogClientId}>Awarded Job · Gemini Brief</Button>
   </div>}
   {c.phase==="brief"&&(browse||!c.catalogClientId)?<ClientCatalog mode="freelancer" onSelected={()=>setBrowse(false)}/>:
    c.freelanceJob&&getFreelanceJob(c.freelanceJob.templateId)?.tier!=="campaign"&&c.aiScenario?<FreelanceJobDesk/>:

@@ -10,6 +10,7 @@ import {ensureRecruitment} from "./recruitment";
 import {advanceCompanyMarket,recordClientDelivery,ensureCompanyMarket} from "./companyMarket";
 import {catalogForBrand} from "./clientDatabase";
 import {settleFreelanceWeek} from "./freelanceJobs";
+import {ensureFreelanceBoard,advanceFreelanceBoard} from "./freelanceMarket";
 import type {Fx} from "./store";
 import type {GameState,GameClock,WeeklyArticle,WeeklyCategory,WeeklyDecision,WeeklyEdition} from "./state";
 
@@ -91,6 +92,8 @@ export function endWeek(s:GameState,fx:Fx):WeeklyEdition|null{
    if(weekly.day>job.deadlineDay&&job.stage==="work")simulationFx.log("Freelance deadline passed; quality penalty applies at client review.");
   }else progressFreelanceWeek(s,simulationFx);
   settleFreelanceWeek(s,simulationFx);
+  ensureFreelanceBoard(s);
+  advanceFreelanceBoard(s,completed,simulationFx);
  }
  const to=weekly.day;
  if(c)c.weekly=weekly;

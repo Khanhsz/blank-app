@@ -6,6 +6,7 @@ import { ceoInit } from "./ceo";
 import {getClient} from "./clientDatabase";
 import {getFreelanceJob} from "./freelanceJobTemplates";
 import {canOfferJob,recordMiniCampaign,completedGigCount,workload} from "./freelanceJobs";
+import {hasAcceptedOffer,jobGate} from "./freelanceMarket";
 
 export const scenarioOf = (c: Campaign) => c.aiScenario ?? scenarios[c.scenarioIndex % scenarios.length];
 /** A brief specifies the actual deadline; stages are suggested windows, not fixed gates. */
@@ -148,7 +149,7 @@ export function finalize(s:GameState,fx:Fx){
  const r={...theoretical,pct,outcome:Math.round(sc.baseline*(1+pct/100)),adReach:Math.round(theoretical.adReach*delivered),performance:pct>=sc.target?"target" as const:pct>=sc.target*0.7?"near" as const:"under" as const};
  const qualityScore=clamp(Math.round(34+r.quality*.34+pct*.55+(r.fit.insight+r.fit.segment+r.fit.objective)*3),15,99);
  const rep=clamp(Math.round(6+qualityScore/6),6,25),xp=clamp(Math.round(4+qualityScore/12),5,13);
- s.personalCash+=sc.fee;s.reputation+=rep;s.expertise+=xp;c.day=s.clock.day;
+ s.personalCash+=(c.freelanceJob?.acceptedFee??sc.fee);s.reputation+=rep;s.expertise+=xp;c.day=s.clock.day;
  c.final={...r,qualityScore,rep,xp};c.phase="results";if(c.journey)c.journey.step="report";
  s.history.push({brand:sc.brand,outcome:pct,score:qualityScore,spent:c.spent,rep,xp,scenarioIndex:c.scenarioIndex,agency:false});
  recordMiniCampaign(s);
@@ -163,7 +164,10 @@ export function chooseFreelanceClient(s:GameState,fx:Fx,clientId:string,jobId="s
  if(s.agencyUnlocked||s.campaign.phase!=="brief")return false;
  const client=getClient(clientId);
  if(!client||client.segment==="bigcorp")return false;
- const job=getFreelanceJob(jobId);if(!job||!canOfferJob(s,job))return false;
+ const job=getFreelanceJob(jobId);if(!job||!canOfferJob(s,job)||jobGate(s,job))return false;
+ // Once the new Job Board is initialized, no direct client-approach bypass:
+ // only an awarded and accepted application can create a freelancer brief.
+ if(s.freelanceBoard&&!hasAcceptedOffer(s,clientId,jobId))return false;
  const c=s.campaign;
  // A user must explicitly select a client. The existing AI API provides
  // its fictional context: never silently substitute a static scenario.
@@ -171,7 +175,8 @@ export function chooseFreelanceClient(s:GameState,fx:Fx,clientId:string,jobId="s
  // into the next client when the player changes their mind.
  if(c.catalogClientId!==client.id)c.briefId=newCampaign(c.scenarioIndex,s.clock.day).briefId;
  c.catalogClientId=client.id;
- c.freelanceJob={templateId:job.id,stage:"brief",hoursWorked:0,revisionHours:0,focus:null,clientFeedback:null,quality:50,revisions:0,deadlineDay:0,weekHours:0,actualWorkHours:0};
+ c.freelanceJob={templateId:job.id,stage:"brief",hoursWorked:0,revisionHours:0,focus:null,clientFeedback:null,quality:50,revisions:0,deadlineDay:0,weekHours:0,actualWorkHours:0,
+ acceptedFee:s.freelanceBoard?.applications.find(a=>a.clientId===clientId&&a.templateId===jobId&&a.status==="accepted")?.proposedFee??job.fee};
  c.aiScenario=null;c.aiStatus="pending";c.aiError=null;c.legacyBrief=false;
  c.journey={step:"brief",questions:[],diagnosis:null,confidence:0,approach:null,message:"",pitchedCreative:null,pitchFeedback:null,pitchCount:0,mediaPlan:null,review:null};
  fx.log("Selected "+client.segment+" client "+client.brand+" from the client master database");

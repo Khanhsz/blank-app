@@ -989,3 +989,40 @@ button.mt-work-person-row{cursor:pointer}.mt-work-person-row:hover{border-color:
 .mt-delivery-forecast span{padding:4px 6px;background:var(--muted,#f1f5f6);border-radius:5px}
 .mt-work-person-text .mt-functional-skills{max-width:380px}
 @media(max-width:640px){.mt-functional-skills{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:6px}.mt-team-capabilities{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Bedroom V3: unified weekly freelance job board and competitive applications. */
+.mt-job-market{display:flex;flex-direction:column;gap:14px;min-width:0;padding:0 0 14px}
+.mt-job-market-head{padding:15px;border-radius:9px;background:rgba(53,137,148,.08);display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.mt-job-market-head>svg{flex:none;color:#32788b}.mt-job-market-head small{font-size:9px;font-weight:800;letter-spacing:.06em;color:var(--muted-foreground,#64808a)}
+.mt-job-market-head h2{font-size:21px;margin:4px 0;font-weight:800}.mt-job-market-head p{font-size:11px;line-height:1.6;color:var(--muted-foreground,#64808a)}
+.mt-job-market-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.mt-job-market-stats>div{display:flex;flex-direction:column;gap:4px;min-width:0;padding:10px 8px;background:var(--card,#fff);border:1px solid var(--border,#cedade);border-radius:7px}
+.mt-job-market-stats small{font-size:9px;line-height:1.3;font-weight:750;color:var(--muted-foreground,#64808a)}
+.mt-job-market-stats b{font-size:17px;font-weight:850;font-variant-numeric:tabular-nums}
+.mt-job-market-unlock{display:flex;align-items:flex-start;gap:9px;padding:11px;border:1px solid var(--border,#d4dee0);border-radius:7px;background:rgba(100,143,153,.07);font-size:11px;line-height:1.5}
+.mt-job-market-unlock svg{flex:none;color:#39798b}.mt-job-market-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.mt-job-market-filters label{display:flex;flex-direction:column;gap:4px;min-width:0}.mt-job-market-filters label>span{font-size:10px;font-weight:700;color:var(--muted-foreground,#627b83)}
+.mt-job-market-filters select,.mt-job-market-search{width:100%;background:var(--card,#fff);border:1px solid var(--border,#c9d7dc);border-radius:7px;padding:8px;font-size:12px}
+.mt-job-market-search{display:flex;align-items:center;gap:6px}.mt-job-market-search input{background:transparent;border:0;min-width:0;width:100%;outline:none}
+.mt-job-market-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.mt-job-market-card{display:flex;flex-direction:column;gap:9px;border:1px solid var(--border,#c9d7da);background:var(--card,#fff);border-radius:8px;padding:12px;min-width:0}
+.mt-job-market-card.chosen{border-color:#388599}.mt-job-market-cardtop{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.mt-job-market-cardtop span{font-size:10px;color:var(--muted-foreground,#647a84)}.mt-job-market-cardtop b{display:flex;align-items:center;gap:3px;font-size:9px;font-weight:750;color:#296e72}
+.mt-job-market-cardtop b.locked{color:#ab7c33}.mt-job-market-card h3{font-size:14px;font-weight:800;line-height:1.4}
+.mt-job-market-card>p{font-size:11px;line-height:1.5;color:var(--muted-foreground,#647a84)}
+.mt-job-market-specs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.mt-job-market-specs>div{display:flex;flex-direction:column;gap:3px;background:rgba(58,130,149,.065);border-radius:6px;padding:7px}
+.mt-job-market-specs small{font-size:9px;font-weight:700;color:var(--muted-foreground,#647a84)}.mt-job-market-specs b{font-size:11px}
+.mt-job-market-card .mt-job-market-scope{flex:1}.mt-job-market-locked{font-size:10px!important;font-weight:750;color:#a36b29!important}
+.mt-job-market-apply,.mt-job-market-applications{border:1px solid var(--border,#cbd9dd);border-radius:8px;padding:13px;display:flex;flex-direction:column;gap:11px;background:var(--card,#fff)}
+.mt-job-market-applyhead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.mt-job-market-applyhead small{font-size:9px;color:var(--muted-foreground,#637b86)}.mt-job-market-applyhead h3,.mt-job-market-applications h3{font-size:14px;font-weight:800}
+.mt-job-market-apply>p,.mt-job-market-apply>small,.mt-job-market-applications>p{font-size:11px;line-height:1.55;color:var(--muted-foreground,#637b86)}
+.mt-job-market-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.mt-job-market-choices label{display:flex;flex-direction:column;gap:5px;min-width:0}.mt-job-market-choices label span{font-size:11px;font-weight:700}.mt-job-market-choices select{padding:9px;border:1px solid var(--border,#cbd9dd);border-radius:6px;background:var(--card,#fff);min-width:0;font-size:12px}
+.mt-job-market-estimate{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.mt-job-market-estimate>div{display:flex;flex-direction:column;gap:4px;padding:10px;background:rgba(76,141,151,.08);border-radius:6px}.mt-job-market-estimate small{font-size:9px;color:var(--muted-foreground,#637b86)}.mt-job-market-estimate b{font-size:15px;font-weight:800}
+.mt-job-market-app{padding:11px;border:1px solid var(--border,#d4dfe2);border-radius:7px;display:flex;flex-direction:column;gap:9px}
+.mt-job-market-app>div:first-child{display:flex;flex-direction:column;gap:4px}.mt-job-market-app b{font-size:12px}.mt-job-market-app small,.mt-job-market-app p{font-size:10px;line-height:1.5;color:var(--muted-foreground,#647b85)}
+.mt-job-market-offer{display:flex;gap:6px;flex-wrap:wrap}.mt-job-market-footer{display:flex;align-items:flex-start;gap:7px;font-size:10px;color:var(--muted-foreground,#647b85);line-height:1.5}.mt-job-market-footer svg{flex:none}
+.mt-job-market-empty{padding:20px;text-align:center;font-size:12px;color:var(--muted-foreground,#647b85)}
+@media(max-width:680px){.mt-job-market-grid{grid-template-columns:1fr}.mt-job-market-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.mt-job-market-choices,.mt-job-market-filters{grid-template-columns:1fr}}

@@ -38,9 +38,10 @@ export function startSmallJob(s:GameState,fx:Fx){
  c.startedDay=s.clock.day;c.phase="planning";
  // Client media remains in a separate non-player budget. Partial upfront fee
  // represents a real commitment; delivery and payment are still required.
- const deposit=Math.round(template.fee*.2/10000)*10000;
+ const fee=p.acceptedFee??template.fee;
+ const deposit=Math.round(fee*.2/10000)*10000;
  s.personalCash+=deposit;
- fx.log("Signed freelancer scope: "+template.title+" · "+money(template.fee)+" service fee · deposit "+money(deposit));
+ fx.log("Signed freelancer scope: "+template.title+" · "+money(fee)+" service fee · deposit "+money(deposit));
 }
 export function doWork(s:GameState,fx:Fx,choice:"research"|"quality"|"speed"){
  const c=s.campaign,p=c.freelanceJob,t=getFreelanceJob(p?.templateId);
@@ -90,7 +91,8 @@ export function deliverSmallJob(s:GameState,fx:Fx){
  const late=deliveryDay>p.deadlineDay;
  const quality=clamp(p.quality-(late?8:0),0,99);
  const rating=quality>=75&&!late;
- const remaining=Math.max(0,Math.round((t.fee-Math.round(t.fee*.2/10000)*10000)*(quality<68?.8:1)/10000)*10000);
+ const fee=p.acceptedFee??t.fee;
+ const remaining=Math.max(0,Math.round((fee-Math.round(fee*.2/10000)*10000)*(quality<68?.8:1)/10000)*10000);
  const invoiceId="freelance-"+id;
  const delay=clientId.length%5===0?14:7;
  career.invoices.push({id:invoiceId,clientId,amount:remaining,dueDay:deliveryDay+delay,status:"pending",reminded:false});

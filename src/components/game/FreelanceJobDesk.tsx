@@ -52,7 +52,7 @@ export function FreelanceJobDesk(){
    </section>}
   {p.stage==="done"&&<section className="mt-gig-panel">
    <h3><CheckCircle2 size={18}/> Deliverables accepted</h3>
-   <p>Quality {p.quality}/100 · Full service fee {money(t.fee)} · Personal expenses {money(t.outOfPocket)}.</p>
+   <p>Quality {p.quality}/100 · Agreed service fee {money(p.acceptedFee??t.fee)} · Personal expenses {money(t.outOfPocket)}.</p>
    <p>Modeled handover Day {p.deliveredDay??s.clock.day}. Final invoice is paid after its due date in a future End Week. Returning clients build repeat-business history.</p>
    <Button className="w-full" onClick={()=>act(C.nextClient)}>Find another freelance job</Button>
   </section>}

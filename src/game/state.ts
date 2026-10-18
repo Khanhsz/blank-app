@@ -37,7 +37,7 @@ export function inferJourney(c:Campaign):CampaignJourney {
  return {...newJourney(),step,questions:step==="brief"?[]:["audience","barrier"],diagnosis:c.insight??null,confidence:c.research.length?55:0,
   pitchedCreative:c.creative??null,mediaPlan:c.mediaBooked?"legacy":null};
 }
-export interface FreelanceJobProgress {templateId:string;stage:"brief"|"work"|"feedback"|"delivery"|"done";hoursWorked:number;revisionHours:number;focus:"research"|"quality"|"speed"|null;clientFeedback:string|null;quality:number;revisions:number;deadlineDay:number;weekHours:number;actualWorkHours?:number;deliveredDay?:number;}
+export interface FreelanceJobProgress {templateId:string;stage:"brief"|"work"|"feedback"|"delivery"|"done";hoursWorked:number;revisionHours:number;focus:"research"|"quality"|"speed"|null;clientFeedback:string|null;quality:number;revisions:number;deadlineDay:number;weekHours:number;actualWorkHours?:number;deliveredDay?:number;acceptedFee?:number;}
 export interface FreelanceInvoice {id:string;clientId:string;amount:number;dueDay:number;status:"pending"|"late"|"paid";reminded:boolean}
 export interface FreelanceCareer {completedGigs:number;completedProjects:number;completedMiniCampaigns:number;positiveReviews:number;repeatClients:number;weeklyHours:number;weeklyWeek:number;clientWins:Record<string,number>;invoices:FreelanceInvoice[];completedIds:string[];}
 export const newFreelanceCareer=():FreelanceCareer=>({completedGigs:0,completedProjects:0,completedMiniCampaigns:0,positiveReviews:0,repeatClients:0,weeklyHours:0,weeklyWeek:1,clientWins:{},invoices:[],completedIds:[]});
@@ -341,6 +341,7 @@ export function migrate(raw: unknown): GameState {
   }
   const career=s.freelanceCareer??newFreelanceCareer();
   out.freelanceCareer={...newFreelanceCareer(),...career,invoices:Array.isArray(career.invoices)?career.invoices:[],completedIds:Array.isArray(career.completedIds)?career.completedIds:[],clientWins:career.clientWins??{},weeklyWeek:Number.isInteger(career.weeklyWeek)?career.weeklyWeek:out.clock.week};
+  if(out.freelanceBoard&&(!Array.isArray(out.freelanceBoard.listings)||!Array.isArray(out.freelanceBoard.applications)))out.freelanceBoard=undefined;
   if(!out.agencyUnlocked||!out.ceo)ensureRecruitment(out);
   ensureCompanyMarket(out);
   if(out.agencyUnlocked&&out.ceo)ensureFortuneAccounts(out);
