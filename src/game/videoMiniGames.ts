@@ -119,7 +119,7 @@ export function changeVideoDraft(s:GameState,id:string,change:Partial<VideoMiniS
   next.beatCuts.length>4||next.beatCuts.some(x=>!Number.isFinite(x)||x<0||x>7)||
   next.captions.length!==4||next.captions.some(x=>!Number.isFinite(x)||x<0||x>11)||
   next.order.length!==5||new Set(next.order).size!==5||
-  next.order.some(x=>!MATCH_IDEAL.includes(x))||
+  next.order.some(x=>!new Set<string>(MATCH_IDEAL).has(x))||
   next.lengths.length!==5||next.lengths.some(x=>!Number.isInteger(x)||x<2||x>10))return false;
  a.videoDraft=next;
  return true;
