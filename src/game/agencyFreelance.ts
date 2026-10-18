@@ -112,7 +112,8 @@ export function progressAgencyGigsDay(s:GameState,fx:Fx){
   const work=Math.min(g.requiredHours-g.workHours,Math.max(.5,Math.round(4*speed*100)/100));
   if(work<=0){produce(s,g);continue;}
   g.workHours=Number((g.workHours+work).toFixed(2));
-  g.laborCost+=((employeeById(g.staffId)?.salary??3000000)/30)*Math.min(1,work/4);
+  // Allocate the already-paid daily wage across concurrent side gigs, rather than double counting salary.
+  g.laborCost+=((employeeById(g.staffId)?.salary??3000000)/30)*Math.min(1,work/4)/Math.max(1,taskLoad);
   if(g.workHours+0.001>=g.requiredHours){
    produce(s,g);
    fx.log("Side gig output ready · "+(CLIENT_BY_ID[g.clientId]?.brand??g.clientId)+" · quality "+g.quality);
