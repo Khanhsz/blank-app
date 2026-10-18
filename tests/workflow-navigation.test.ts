@@ -4,18 +4,29 @@ import {defaults,newCEO,newCampaign,type Project} from "../src/game/state";
 import {startClientTeam} from "../src/game/clientTeams";
 import {approachCatalogClient} from "../src/game/clientMarket";
 import {chooseFreelanceClient} from "../src/game/campaign";
+import {focusDeal} from "../src/game/acquisition";
+import {startPitch} from "../src/game/ceo";
 import {newWorkforceView,workforceForDeal,workstationHint} from "../src/game/workflowNavigation";
 import type {Fx} from "../src/game/store";
 const fx:Fx={log:()=>{},toast:()=>{}};
 
-test("approaching an eligible catalog client focuses its exact new deal",()=>{
+test("approaching a client focuses its exact deal and preserves the previous active pitch",()=>{
  const s=defaults();s.created=true;s.agencyUnlocked=true;s.ceo=newCEO(50);
+ s.agencyCash=50e6;
+ const previous=s.ceo.leads[0];previous.status="qualified";
+ focusDeal(s,previous.id);startPitch(s,fx,previous.id);
+ assert.ok(s.ceo.pitch);s.ceo.pitch!.step="objection";
+ const pitch=structuredClone(s.ceo.pitch);
  assert.equal(approachCatalogClient(s,fx,"startup-coffee-0"),true);
  assert.equal(s.ceo.activeDealId,s.ceo.leads[0].id);
  assert.equal(s.ceo.leads[0].clientMasterId,"startup-coffee-0");
+ assert.equal(s.ceo.pitch,null);
+ assert.deepEqual(s.ceo.dealSessions?.[previous.id]?.pitch,pitch);
  const active=s.ceo.activeDealId;
  assert.equal(approachCatalogClient(s,fx,"startup-coffee-0"),false);
  assert.equal(s.ceo.activeDealId,active,"failed approach keeps the current deal");
+ focusDeal(s,previous.id);
+ assert.deepEqual(s.ceo.pitch,pitch,"the old pitch resumes with its objection intact");
 });
 
 test("a signed contract opens its client squad even when another team was previously viewed",()=>{

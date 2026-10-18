@@ -4,6 +4,7 @@ import type {GameState,Lead} from "./state";
 import type {Fx} from "./store";
 import {marketCompany,currentMarketingBudgetVnd} from "./companyMarket";
 import {canContractFortune,isGameFortune50} from "./fortuneAccounts";
+import {focusDeal} from "./acquisition";
 
 /** Unlocks premium RFPs after proven AGENCY delivery, not freelancer wins. */
 export function bigCorpAccess(s:GameState){
@@ -50,7 +51,7 @@ export function approachCatalogClient(s:GameState,fx:Fx,clientId:string,channel:
  const lead:Lead={...seed,id:"approach-"+clientId+"-"+suffix,status:"prospecting",source:"outbound",relationship:seed.trust,outreachAttempts:0,
   ...(isFortune?{contractType:"annual-retainer" as const,hqApproach:true}:{} )};
  ceo.leads.unshift(lead);
- ceo.activeDealId=lead.id;
+ focusDeal(s,lead.id);
  fx.log("Prospected "+client.brand+" · "+client.segment+" · "+client.sector+" · "+(client.fortuneRank?"Fortune 50 demo":"fictional client"));
  fx.toast("Prospect added: "+client.brand+". Choose an outreach strategy in Deal Room.");
  return true;
