@@ -7,7 +7,7 @@ export type Phase = "brief" | "planning" | "executing" | "live" | "results" | "r
 export const PHASES: Phase[] = ["planning", "executing", "live", "results"];
 export const PHASE_LABEL: Record<Phase, string> = { brief: "Brief", planning: "Planning", executing: "Executing", live: "Live", results: "Results", research: "Planning", survey: "Planning", validation: "Planning", strategy: "Planning", creative: "Executing", media: "Executing" };
 
-export type AIBriefStatus = "pending" | "generating" | "ready" | "error" | "fallback";
+export type AIBriefStatus = "pending" | "generating" | "ready" | "fallback";
 export type JourneyStep = "brief" | "research" | "strategy" | "creative" | "production" | "live" | "report";
 export interface CampaignJourney {
   step: JourneyStep;
@@ -36,7 +36,7 @@ export function inferJourney(c:Campaign):CampaignJourney {
 }
 export interface Campaign {
   briefId: string; aiStatus: AIBriefStatus; aiError?: string | null; journey?:CampaignJourney;
-  scenarioIndex: number; catalogClientId?:string|null; aiScenario?: Scenario | null; legacyBrief?:boolean; phase: Phase; day: number; spent: number; research: string[];
+  scenarioIndex: number; catalogClientId?:string|null; aiScenario?: Scenario | null; phase: Phase; day: number; spent: number; research: string[];
   startedDay?: number; productionReadyDay?: number; mediaBooked?: boolean; actualLaunchDay?: number;
   liveWeeks?: number; lastOptimizationWeek?: number; weeklyResults?: {week:number;reach:number;uplift:number;decision:string}[];
   survey: { audience: string; sample: number; question: string } | null; insight: string | null;
@@ -151,7 +151,7 @@ export interface GameState {
 export const newCampaign = (i: number, day = 1): Campaign => ({
   briefId: "brief-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,9),
   aiStatus:"pending", aiError:null,
-  scenarioIndex: i, catalogClientId:null, aiScenario:null, legacyBrief:false, phase: "brief", journey:newJourney(), day, startedDay:day, spent: 0, research: [], mediaBooked:false, productionReadyDay:undefined, liveWeeks:0, weeklyResults:[], survey: null, insight: null,
+  scenarioIndex: i, catalogClientId:null, aiScenario:null, phase: "brief", journey:newJourney(), day, startedDay:day, spent: 0, research: [], mediaBooked:false, productionReadyDay:undefined, liveWeeks:0, weeklyResults:[], survey: null, insight: null,
   strategy: { segment: "students", objective: "visits", position: "study" }, creative: null,
   media: { paid: 0, creator: 0, promo: 0, flyer: 0 }, optimization: null, liveMetrics: null, final: null,
 });
@@ -178,6 +178,33 @@ export const SAVE_KEY = "marketing-tycoon-lovable-v2";
 const LEGACY_KEY = "marketing-tycoon-save-v1";
 
 /** Safe migration: accepts v1 saves from the original game (same field names) and fills gaps. */
+/** The pre-Growth-Desk agency founder silently inherited a Freelancer brief,
+ * constructing an ACTIVE "legacy-N" project with no signed client contract.
+ * This is not a legitimate Agency client. Strip only unmistakable artifacts of
+ * that automatic transfer, never signed projects or completed historical work.
+ * Do not retroactively edit cash or paid ledger entries in existing saves.
+ */
+export function removeUncontractedLegacyAgencyClients(s:GameState):number {
+ const c=s.ceo;if(!c||!s.agencyUnlocked)return 0;
+ const stale=c.projects.filter(p=>p.legacy===true&&p.leadId==="legacy"&&
+   /^legacy-[0-9]+$/.test(p.id)&&p.status==="active");
+ if(!stale.length)return 0;
+ const ids=new Set(stale.map(p=>p.id));
+ c.projects=c.projects.filter(p=>!ids.has(p.id));
+ c.inbox=c.inbox.filter(entry=>!ids.has(entry.project));
+ const valid=new Set(c.projects.map(p=>p.id));
+ // Release the synthetic client's team, including any assigned employees,
+ // but do not touch another real project sharing the same brand.
+ c.clientTeams=(c.clientTeams??[]).filter(team=>{
+  team.projectIds=team.projectIds.filter(id=>!ids.has(id));
+  return team.projectIds.some(id=>valid.has(id))||c.projects.some(p=>p.teamId===team.id);
+ });
+ // Historic fees may have been paid or spent; avoid altering the save economy.
+ // All future agencies start without this transfer and synthetic payment.
+ c.legacyCampaignMigration=2;
+ return stale.length;
+}
+
 export function migrate(raw: unknown): GameState {
   const d = defaults();
   if (!raw || typeof raw !== "object") return d;
@@ -236,12 +263,10 @@ export function migrate(raw: unknown): GameState {
   if(out.campaign.productionReadyDay===undefined && out.campaign.creative)out.campaign.productionReadyDay=day;
   if(out.campaign.mediaBooked===undefined)out.campaign.mediaBooked=Object.values(out.campaign.media).some(v=>v>0);
   if(!Array.isArray(out.campaign.weeklyResults))out.campaign.weeklyResults=[];
-  // Old accepted catalog briefs can finish; new approaches always require Gemini.
-  if(out.campaign.phase==="brief"&&out.campaign.aiScenario&&!out.campaign.aiScenario.aiPlanning)out.campaign.legacyBrief=true;
   // Keep old saves playable; only unaccepted briefs become automatic-AI candidates.
   if (!out.campaign.briefId || typeof out.campaign.briefId!=="string") out.campaign.briefId=newCampaign(out.campaign.scenarioIndex).briefId;
   if (out.campaign.aiScenario) out.campaign.aiStatus="ready";
-  else if (out.campaign.phase==="brief" && !["fallback","pending","generating","error"].includes(out.campaign.aiStatus)) out.campaign.aiStatus="pending";
+  else if (out.campaign.phase==="brief" && !["fallback","pending","generating"].includes(out.campaign.aiStatus)) out.campaign.aiStatus="pending";
   else if (out.campaign.phase!=="brief" && !out.campaign.aiScenario) out.campaign.aiStatus="fallback";
   if (!["room", "city", "office", "boardroom"].includes(out.scene)) out.scene = out.agencyUnlocked ? "office" : "room";
   if (out.agencyUnlocked && out.ceo) {
@@ -274,6 +299,7 @@ export function migrate(raw: unknown): GameState {
     const priorLeads=Array.isArray(out.ceo.leads)?out.ceo.leads:[];
     const knownIds=new Set(priorLeads.map(l=>l.id));
     out.ceo.leads=[...priorLeads,...base.leads.filter(l=>!knownIds.has(l.id))];
+    removeUncontractedLegacyAgencyClients(out);
     ensureRecruitment(out); // register generated staff before client-team reconciliation
     reconcileClientTeams(out);
   }

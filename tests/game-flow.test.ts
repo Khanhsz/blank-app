@@ -1,7 +1,7 @@
 import {scenarios} from "../src/game/data";
 import test from "node:test";
 import assert from "node:assert/strict";
-import {defaults,migrate} from "../src/game/state";
+import {defaults,migrate,newCampaign,newCEO,type Project} from "../src/game/state";
 import * as C from "../src/game/campaign";
 import * as K from "../src/game/ceo";
 import {endWeek,acknowledgeEdition} from "../src/game/weekly";
@@ -70,6 +70,63 @@ test("three campaigns unlock actual CEO mode; employee time and data survive mig
  assert.equal(restored.history.length,3);
  assert.equal(restored.campaign.phase,"results");
 });
+test("founding an agency mid-brief starts without an auto-inherited Mây Corner Coffee contract",()=>{
+ const s=defaults();s.created=true;
+ for(let i=0;i<3;i++){runCampaign(s);if(i<2)C.nextClient(s,fx);}
+ assert.equal(C.canOpenAgency(s),true);
+ C.nextClient(s,fx); // A new freelancer brief happens to be unaccepted.
+ assert.equal(s.campaign.phase,"brief");
+ const oldClient=scenarios[s.campaign.scenarioIndex].brand;
+ const freelancerHistory=s.history.length,week=s.clock.week;
+ C.createAgency(s,fx,"No Starter Client");
+ assert.equal(s.agencyUnlocked,true);
+ assert.equal(s.agencyCash,5000000,"founding must not grant an uncontracted customer advance");
+ assert.deepEqual(s.ceo?.projects,[],"no automatic client projects");
+ assert.deepEqual(s.ceo?.clientTeams,[],"no preassigned client squad");
+ assert.equal(s.ceo?.leads.some(l=>l.brand===oldClient),false);
+ assert.equal(s.history.length,freelancerHistory,"freelancer achievements stay in history");
+ assert.equal(s.clock.week,week);
+ const restored=migrate(JSON.parse(JSON.stringify(s)));
+ assert.equal(restored.ceo?.projects.length,0);
+});
+
+test("old saves remove only synthetic ACTIVE legacy clients and release their team",()=>{
+ const s=defaults();s.created=true;s.agencyUnlocked=true;s.agencyCash=6200000;
+ s.ceo=newCEO(65);s.staff=["creator"];s.ceo.day=22;s.clock.day=22;
+ const carry:Project={
+  id:"legacy-7",leadId:"legacy",brand:"Mây Corner Coffee",adBudget:8000000,fee:3200000,bonus:0,scope:2,duration:14,
+  industry:"Coffee",days:0,status:"active",scenarioIndex:0,startedDay:22,target:25,pitchQuality:70,
+  mediaSpent:0,mediaReserved:8000000,direct:0,campaign:newCampaign(0,22),tasks:[],paymentCount:0,legacy:true
+ };
+ s.ceo.projects=[carry];
+ s.ceo.clientTeams=[{id:"squad-may-corner-coffee",brand:carry.brand,clientId:"may-corner-coffee",
+   memberIds:["creator"],leadId:"creator",projectIds:[carry.id],status:"active",createdDay:22}];
+ s.ceo.inbox=[{id:"legacy-issue",type:"capacity",project:carry.id,message:"Missing staff",choices:["acknowledge"],status:"open",day:22}];
+ s.ceo.ledger.push({day:22,what:"Migrated client advance",value:960000,lead:carry.brand,status:"paid"});
+ const migrated=migrate(JSON.parse(JSON.stringify(s)));
+ assert.equal(migrated.ceo?.projects.length,0);
+ assert.equal(migrated.ceo?.clientTeams?.length,0);
+ assert.equal(migrated.ceo?.inbox.length,0);
+ assert.equal(migrated.staff.includes("creator"),true,"released employees remain hired");
+ assert.equal(migrated.agencyCash,s.agencyCash,"old save funds are not rewritten retroactively");
+ assert.equal(migrated.ceo?.ledger.length,1,"old financial audit records remain");
+ assert.equal(migrate(JSON.parse(JSON.stringify(migrated))).ceo?.projects.length,0);
+});
+
+test("an intentionally signed Mây Coffee project is never deleted by save cleanup",()=>{
+ const s=defaults();s.created=true;s.agencyUnlocked=true;
+ s.ceo=newCEO(52);s.ceo.day=s.clock.day;
+ const signed:Project={id:"project-8",leadId:"deal-128",brand:"Mây Corner Coffee",
+  adBudget:7000000,fee:4000000,bonus:0,scope:5,duration:21,industry:"Coffee",
+  days:2,status:"active",scenarioIndex:0,startedDay:1,target:20,pitchQuality:75,
+  mediaSpent:0,mediaReserved:7000000,direct:0,campaign:newCampaign(0),tasks:[],paymentCount:0};
+ s.ceo.projects.push(signed);
+ const restored=migrate(JSON.parse(JSON.stringify(s)));
+ assert.equal(restored.ceo?.projects.length,1);
+ assert.equal(restored.ceo?.projects[0].id,signed.id);
+ assert.equal(restored.ceo?.clientTeams?.length,1);
+});
+
 test("old saves receive new optional character attributes and world progress safely",()=>{
  const old=defaults() as any;
  delete old.world;

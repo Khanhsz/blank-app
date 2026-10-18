@@ -2,8 +2,8 @@
 import { AGENCY_REQ, COWORK_COST, clamp, creatives, hash, insights, money, optimizations, researchOptions, scenarios, surveyCosts, upgrades, type Channel, type UpgradeId } from "./data";
 import { newCampaign, type Campaign, type GameState, type ScoreResult } from "./state";
 import type { Fx } from "./store";
-import { ceoInit, ceoMigrateLegacy } from "./ceo";
-import {getClient} from "./clientDatabase";
+import { ceoInit } from "./ceo";
+import {getClient,scenarioForClient} from "./clientDatabase";
 
 export const scenarioOf = (c: Campaign) => c.aiScenario ?? scenarios[c.scenarioIndex % scenarios.length];
 /** A brief specifies the actual deadline; stages are suggested windows, not fixed gates. */
@@ -65,7 +65,7 @@ export function scoreModel(s: GameState, c: Campaign, mode: "final" | "interim" 
 
 // ---- Actions: three brief-driven phases, resolved by the shared weekly clock ----
 export const acceptBrief=(s:GameState,fx:Fx)=>{
- const c=s.campaign;if(c.phase!=="brief"||(!c.legacyBrief&&(!c.catalogClientId||!c.aiScenario?.aiPlanning)))return;
+ const c=s.campaign;if(c.phase!=="brief")return;
  c.startedDay=s.clock.day;c.day=s.clock.day;c.phase="planning";
  fx.log("Accepted brief from "+scenarioOf(c).brand+" · "+scheduleOf(c).weeks+" week schedule");
 };
@@ -153,8 +153,8 @@ export function finalize(s:GameState,fx:Fx){
  if(!s.cityUnlocked){s.cityUnlocked=true;fx.toast("Marketing City unlocked — new opportunities await");}
  else fx.toast("Campaign reviewed — portfolio updated");
 }
-/** Freelance begins by APPROACHING a real catalog entry (fictional startup/SME).
- * No scenario or fabricated market insight is unlocked until Gemini returns.
+/** Choose freely among startup and SME clients; the brief is generated locally
+ * from the canonical catalog, with no fabricated public-company statistics.
  */
 export function chooseFreelanceClient(s:GameState,fx:Fx,clientId:string):boolean{
  if(s.agencyUnlocked||s.campaign.phase!=="brief")return false;
@@ -162,27 +162,19 @@ export function chooseFreelanceClient(s:GameState,fx:Fx,clientId:string):boolean
  if(!client||client.segment==="bigcorp")return false;
  const c=s.campaign;
  c.catalogClientId=client.id;
- c.legacyBrief=false;
- c.aiScenario=null;
- c.aiStatus="pending";c.aiError=null;
- c.briefId=newCampaign(c.scenarioIndex,s.clock.day).briefId;
+ c.aiScenario=scenarioForClient(client);
+ c.aiStatus="ready";c.aiError=null;
  c.journey={step:"brief",questions:[],diagnosis:null,confidence:0,approach:null,message:"",pitchedCreative:null,pitchFeedback:null,pitchCount:0,mediaPlan:null,review:null};
- fx.log("Approached "+client.segment+" client "+client.brand+" from bedroom · Gemini discovery requested");
- fx.toast("Approaching "+client.brand+" · Gemini preparing the client context");
+ fx.log("Selected "+client.segment+" client "+client.brand+" from the client master database");
+ fx.toast("Client brief selected: "+client.brand);
  return true;
-}
-export function retryFreelanceApproach(s:GameState,fx:Fx){
- const c=s.campaign;
- if(s.agencyUnlocked||c.phase!=="brief"||!c.catalogClientId||c.aiScenario||c.aiStatus!=="error")return;
- c.aiStatus="pending";c.aiError=null;
- fx.log("Retrying Gemini client approach · "+c.catalogClientId);
 }
 export function nextClient(s:GameState,fx:Fx){
  if(s.agencyUnlocked||s.campaign.phase!=="results"||(s.campaign.journey&&!s.campaign.journey.review))return fx.toast("Complete the Client Review before requesting another brief.");
  const next=(s.campaign.scenarioIndex+1)%3;
  s.campaign=newCampaign(next,s.clock.day);
- fx.log("Ready to approach a new client from the bedroom at Week "+s.clock.week);
- fx.toast("Choose a Startup or SME to approach from your bedroom computer.");
+ fx.log("New brief from "+scenarios[next].brand+" at Week "+s.clock.week);
+ fx.toast("New brief: "+scenarios[next].brand);
 }
 export function buyUpgrade(s: GameState, fx: Fx, id: UpgradeId | "cowork") {
   const item = id === "cowork" ? { cost: COWORK_COST, name: "Coworking Membership" } : upgrades[id];
@@ -201,7 +193,10 @@ export const canOpenAgency = (s: GameState) => agencyReqs(s).every((r) => r.ok);
 export function createAgency(s: GameState, fx: Fx, name: string) {
   if (!canOpenAgency(s) || s.agencyUnlocked) return;
   s.agencyName = name.trim() || "Northstar Studio"; s.personalCash -= 8000000; s.agencyCash = 5000000; s.agencyUnlocked = true; s.scene = "office";
-  ceoInit(s); if(s.ceo){s.ceo.day=s.clock.day;s.ceo.weekly=s.clock;} ceoMigrateLegacy(s, fx);
+  // A newly opened Agency starts with no inherited Freelancer client contract.
+  // Past Freelancer results remain in history, but its current brief is NOT
+  // an agency agreement until the player deliberately signs one in Growth Desk.
+  ceoInit(s); if(s.ceo){s.ceo.day=s.clock.day;s.ceo.weekly=s.clock;}
   fx.log(`FOUNDED ${s.agencyName}. Startup capital 5,000,000đ.`); fx.toast("You are now Agency CEO");
 }
 
@@ -209,9 +204,6 @@ export function createAgency(s: GameState, fx: Fx, name: string) {
 export function activateAIBrief(s:GameState,fx:Fx,sc:import("./data").Scenario){
  if(s.agencyUnlocked||s.campaign.phase!=="brief")return false;
  if(!sc?.id?.startsWith("ai-")||!sc.aiMeta||!["awareness","value","location","trust","style"].includes(sc.trueInsight))return false;
- if(!s.campaign.catalogClientId||sc.aiMeta.clientId!==s.campaign.catalogClientId)return false;
- if(!sc.aiPlanning?.context||!sc.aiPlanning?.insight||!sc.aiPlanning?.strategy||!sc.clientAnswers?.audience)return false;
- if(getClient(s.campaign.catalogClientId)?.brand!==sc.brand)return false;
  if(!Number.isFinite(sc.budget)||sc.budget<8000000||sc.budget>16000000)return false;
  if(!Array.isArray(sc.insightOptions)||sc.insightOptions.length!==5)return false;
  s.campaign.aiScenario=structuredClone(sc);

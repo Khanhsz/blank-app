@@ -171,22 +171,9 @@ function finishProject(s: GameState, c: CEO, p: Project, fx: Fx) {
   fx.log(`CEO: completed ${p.brand}; ${p.kpi}% KPI`);
 }
 
-/** When the agency is founded mid-campaign, the open freelance campaign is handed to the team (V3.1 ceoMigrateLegacy). */
-export function ceoMigrateLegacy(s: GameState, fx: Fx) {
-  const c = ceoInit(s); if (!c || c.legacyCampaignMigration === 1) return;
-  c.legacyCampaignMigration = 1;
-  const old = s.campaign; if (!old || old.phase === "results" || old.final) return;
-  const sc = scenarios[old.scenarioIndex % scenarios.length];
-  const phase=old.phase;
-  const planningDone=["executing","live","results"].includes(phase);
-  const liveDone=["live","results"].includes(phase);
-  const done:Record<string,boolean>={account:phase!=="brief",research:planningDone,strategy:planningDone,creative:liveDone,production:liveDone,media:liveDone,kol:liveDone,operations:phase!=="brief",analytics:false};
-  const tasks: Task[] = ceoTaskDefs.map((t) => ({ ...t, status: done[t.key] ? "completed" : "backlog", progress: done[t.key] ? t.effort : 0, quality: done[t.key] ? 76 : 0, employee: done[t.key] ? "legacy" : null, outsourced: false }));
-  const p: Project = { id: "legacy-" + ++c.seq, leadId: "legacy", brand: sc.brand, adBudget: sc.budget, fee: sc.fee, bonus: 0, scope: 2, duration: Math.max(14, sc.days), industry: sc.industry, days: Math.max(0, c.day-(old.startedDay??old.day)), status: "active", scenarioIndex: old.scenarioIndex, startedDay: c.day, target: sc.target, pitchQuality: 70, mediaSpent: Math.min(sc.budget, old.spent), mediaReserved: Math.max(0, sc.budget - old.spent), direct: 0, campaign: structuredClone(old), tasks, paymentCount: 0, legacy: true, clientTrust: 60 };
-  c.projects.push(p);startClientTeam(s,p);schedulePayment(c, p, sc.fee * 0.3, 0, "Migrated client advance");
-  const e = c.ledger[0]; e.status = "paid"; c.totalPaid += e.value; s.agencyCash += e.value;
-  fx.log(`Handed ${sc.brand} campaign to the agency team. Founder no longer executes tasks.`);
-}
+// Agency founding no longer transfers an uncontracted Freelancer brief.
+// Existing historical automatic transfers are cleaned up in state.migrate().
+// All valid signed projects still use sign() and startClientTeam() below.
 
 // ---------- CEO decisions ----------
 export function hire(s: GameState, fx: Fx, id: string) {
