@@ -73,7 +73,6 @@ export function simulatedFortuneRevenueUsd(rank:number){
 }
 const tierAwareness:Record<ClientSegment,number>={startup:12,sme:35,bigcorp:66};
 const tierScale:Record<ClientSegment,number>={startup:14,sme:43,bigcorp:79};
-const modelRate:Record<ClientSegment,number>={startup:.13,sme:.095,bigcorp:.065};
 const sectorBias:Record<ClientSector,number>={coffee:.65,beauty:1.05,fashion:1,education:.82,tech:1.4,fitness:.7,food:1.1};
 const hashSeed=(key:string)=>{let h=2166136261;for(let i=0;i<key.length;i++)h=Math.imul(h^key.charCodeAt(i),16777619);return (h>>>0)%10000/10000;};
 const vnd=(n:number)=>Math.round(n/100000)*100000;

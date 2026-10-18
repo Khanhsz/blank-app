@@ -2,22 +2,33 @@
 import {getClient,agencyLeadForClient,scenarioForClient,type ClientSegment} from "./clientDatabase";
 import type {GameState,Lead} from "./state";
 import type {Fx} from "./store";
-import {marketCompany} from "./companyMarket";
+import {marketCompany,currentMarketingBudgetVnd} from "./companyMarket";
+
+/** Unlocks premium RFPs after proven AGENCY delivery, not freelancer wins. */
+export function bigCorpAccess(s:GameState){
+ const completed=s.history.filter(x=>x.agency).length;
+ const requiredCampaigns=3,requiredReputation=55;
+ return {completed,requiredCampaigns,reputation:s.reputation,requiredReputation,
+  unlocked:s.agencyUnlocked&&completed>=requiredCampaigns&&s.reputation>=requiredReputation};
+}
+export const canApproachSegment=(s:GameState,segment:ClientSegment)=>s.agencyUnlocked&&(segment!=="bigcorp"||bigCorpAccess(s).unlocked);
 
 export function approachCatalogClient(s:GameState,fx:Fx,clientId:string):boolean{
  const client=getClient(clientId),ceo=s.ceo;
  if(!client||!s.agencyUnlocked||!ceo)return false;
+ if(!canApproachSegment(s,client.segment)){
+  fx.toast("Big Corp opportunities unlock after 3 completed agency campaigns and 55 reputation.");
+  return false;
+ }
  const duplicate=ceo.leads.some(x=>x.clientMasterId===clientId&&
   ["new","prospecting","discovery","nurturing","qualified","pitch","shortlisted","pitch_won","negotiating","signed","renewal"].includes(x.status));
  if(duplicate){fx.toast("This company already has an open lead or signed opportunity.");return false;}
  if(ceo.leads.length>=150){fx.toast("Client pipeline limit reached. Resolve open opportunities first.");return false;}
- const seed=agencyLeadForClient(client);
+ const currentBudget=currentMarketingBudgetVnd(s,client);
+ const seed=agencyLeadForClient({...client,marketingBudgetVnd:currentBudget});
  const live=marketCompany(s,clientId);
  if(live){
-  const momentum=Math.max(.75,Math.min(1.3,Math.pow(live.simulatedAnnualRevenue/Math.max(1,live.baselineAnnualRevenue),.45)));
-  seed.value=Math.round(seed.value*momentum);
-  seed.fee=Math.round(seed.fee*momentum);
-  seed.desc+=" Current modeled business growth: "+live.totalGrowthPct.toFixed(1)+"%; game budget adjusted to match.";
+  seed.desc+=" Current modeled business growth: "+live.totalGrowthPct.toFixed(1)+"%; annual marketing spend and proposed campaign budget reflect market changes.";
  }
  const suffix=ceo.day+"-"+(++ceo.seq);
  const lead:Lead={...seed,id:"approach-"+clientId+"-"+suffix,status:"prospecting",source:"outbound",relationship:seed.trust,outreachAttempts:0};

@@ -3,7 +3,7 @@
  * Generated macro signals can influence only FUTURE weeks. Official Fortune
  * ranks and published revenues in clientDatabase are NEVER overwritten.
  */
-import {CLIENT_DATABASE,CLIENT_BY_ID,SECTORS, type ClientSector} from "./clientDatabase";
+import {CLIENT_DATABASE,CLIENT_BY_ID,SECTORS,SIMULATED_USD_TO_VND,simulatedFortuneRevenueUsd,type ClientMaster,type ClientSector} from "./clientDatabase";
 import {clamp,ceoRand} from "./data";
 import type {GameState,CompanyMarket,CompanyPerformance,MarketCampaignEvent,QuarterlyRanking} from "./state";
 import type {Fx} from "./store";
@@ -15,15 +15,25 @@ const round=(n:number,d=2)=>Number(n.toFixed(d));
 const hash=(key:string)=>ceoRand("client-business:v1:"+key);
 export const marketCompany=(s:GameState,id:string)=>s.companyMarket?.companies[id]??null;
 export const officialRank=(id:string)=>CLIENT_BY_ID[id]?.fortuneRank??null;
+/** Annual marketing envelope follows simulated revenue over time. Gemini's
+ * market-sector signals feed weekly growth; the budget shares remain guarded
+ * by the starting company tier and cannot be invented by a model.
+ */
+export function currentMarketingBudgetVnd(s:GameState,client:ClientMaster):number{
+ const live=marketCompany(s,client.id);
+ if(!live)return client.marketingBudgetVnd;
+ const growth=clamp(live.simulatedAnnualRevenue/Math.max(1,live.baselineAnnualRevenue),.65,1.8);
+ return Math.round(client.marketingBudgetVnd*growth/100000)*100000;
+}
 
 function startingRevenue(id:string){
  const c=CLIENT_BY_ID[id];
  if(c.segment!=="bigcorp")return c.annualRevenueVnd??1_000_000_000;
- // USD for ALL large multinationals. Game values are *simulated* even
- // when seeded from a published snapshot and are not real financial guidance.
+ // All Big Corp market values are USD. Fictional group revenues match the
+ // master database VND model using a disclosed GAME conversion assumption.
+ if(c.basis==="simulated")return Math.round((c.annualRevenueVnd??0)/SIMULATED_USD_TO_VND);
  if(c.verifiedRevenueUsd!==null)return c.verifiedRevenueUsd;
- const rankLevel=c.fortuneRank!==null?1.25-(c.fortuneRank/50)*.38:.43+(c.scaleScore/100)*.22;
- return Math.round((34+rankLevel*190+hash(id)*65)*1e9);
+ return simulatedFortuneRevenueUsd(c.fortuneRank??50);
 }
 function seedCompany(id:string):CompanyPerformance{
  const c=CLIENT_BY_ID[id],revenue=startingRevenue(id);
@@ -78,7 +88,8 @@ export function recordRivalDelivery(s:GameState,info:{clientId:string;projectId:
 }
 const companySector=(c:CompanyPerformance)=>CLIENT_BY_ID[c.id]?.sector??"tech";
 function campaignLift(e:MarketCampaignEvent,c:CompanyPerformance){
- const master=CLIENT_BY_ID[e.clientId],annual=master.marketingBudgetVnd;
+ const master=CLIENT_BY_ID[e.clientId];
+ const annual=Math.round(master.marketingBudgetVnd*clamp(c.simulatedAnnualRevenue/Math.max(1,c.baselineAnnualRevenue),.65,1.8));
  const spendFraction=Math.sqrt(Math.min(9,e.spendVnd/Math.max(1,annual/52)));
  const performance=clamp((e.quality-50)*.023+e.kpi*.014,-.65,2.1);
  return clamp(round((.085+performance*.26)*spendFraction),-.6,1.65);
@@ -96,7 +107,8 @@ function simulateAutonomousRivals(s:GameState,week:number){
   const c=list[Math.floor(hash("client"+week+":"+i)*list.length)];
   const id="rival-autonomous-"+week+"-"+rival.id+"-"+c.id;
   if(m.pending.some(e=>e.id===id)||m.activity.some(e=>e.id===id))continue;
-  const budget=Math.min(c.marketingBudgetVnd*.011,Math.max(3500000,c.marketingBudgetVnd*.002*(.75+hash(id))));
+  const yearly=currentMarketingBudgetVnd(s,c);
+  const budget=Math.min(yearly*.011,Math.max(500_000,yearly*.002*(.75+hash(id))));
   enqueueCompanyCampaign(s,{clientId:c.id,projectId:id,actor:"rival",agency:rival.name,
    spendVnd:Math.round(budget),quality:clamp(Math.round((rival.creative+rival.performance+rival.strategy)/3),25,98),kpi:12});
   const queued=m.pending.find(e=>e.projectId===id);

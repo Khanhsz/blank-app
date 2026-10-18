@@ -19,7 +19,7 @@ const OVERHEAD = 160000;
 
 export function ceoInit(s: GameState): CEO | null {
   if (!s.agencyUnlocked) return null;
-  if (!s.ceo) {s.ceo = newCEO(s.reputation);s.ceo.day=s.clock.day;s.ceo.weekly=s.clock;}
+  if (!s.ceo) {s.ceo = newCEO(s.reputation);s.ceo.leads=[];s.ceo.day=s.clock.day;s.ceo.weekly=s.clock;}
   if(!s.ceo.clientTeams)reconcileClientTeams(s);
   ensureRecruitment(s);
   return s.ceo;
