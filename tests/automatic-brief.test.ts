@@ -10,7 +10,7 @@ import {prepareNextBrief} from "../src/game/automaticBrief";
 const fx={toast:()=>{},log:()=>{}};
 const sample=(clientId="startup-coffee-0")=>{
  const client=getClient(clientId)!;
- return {...scenarios[0],id:"ai-approach-example",brand:client.brand,
+ return {...scenarios[0],id:"ai-approach-example",brand:client.brand,budget:0,fee:700000,days:4,
   jobMeta:{templateId:"social-pack",tier:"gig" as const,deliverables:"5 social posts",hours:12,revisions:2,serviceFee:700000,mediaBudget:0,successMetric:"Approved posts"},
   aiMeta:{category:client.sector,seed:27182,label:"Simulated Gemini scenario",clientId},
   insightOptions:["awareness","value","location","trust","style"].map(id=>({id,title:"The "+id+" hypothesis",desc:"Fictional client-specific evidence."})),

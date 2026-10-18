@@ -45,8 +45,10 @@ test("Big Corp unlock requires three completed agency campaigns AND reputation 5
  assert.equal(bigCorpAccess(s).unlocked,false);
  s.reputation=55;
  assert.equal(bigCorpAccess(s).unlocked,true);
- assert.equal(approachCatalogClient(s,fx,"f50-4"),true);
- assert.equal(approachCatalogClient(s,fx,"f50-4"),false);
+ assert.equal(approachCatalogClient(s,fx,"f50-4"),false,"Fortune prospecting requires a corporate HQ visit");
+ s.ceo.day=100;s.clock.day=100;
+ assert.equal(approachCatalogClient(s,fx,"f50-4","hq"),true,"RFP opens during incumbent renewal window");
+ assert.equal(approachCatalogClient(s,fx,"f50-4","hq"),false,"duplicate deal blocked");
 });
 test("bounded Gemini correction affects fictional starting revenue and marketing budget without falsifying Fortune data",()=>{
  const s=defaults(),before=CLIENT_BY_ID["sme-coffee-1"],published=CLIENT_BY_ID["f50-4"];

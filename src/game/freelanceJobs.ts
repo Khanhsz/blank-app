@@ -37,7 +37,7 @@ export function doWork(s:GameState,fx:Fx,choice:"research"|"quality"|"speed"){
  career.weeklyHours+=hours;p.hoursWorked+=hours;p.weekHours+=hours;
  p.focus=choice;
  const insightAligned=choice==="research"&&scInsightMatches(s);
- const gain=choice==="quality"?3:choice==="research"?(insightAligned?4:2):1;
+ const gain=choice==="quality"?4:choice==="research"?(insightAligned?4:2):1;
  p.quality=clamp((p.quality||50)+gain,0,100);
  fx.log("Solo work session: "+t.title+" · "+hours+"h ("+career.weeklyHours+"/"+WEEKLY_CAPACITY+" weekly capacity)");
 }
@@ -47,7 +47,7 @@ export function askForReview(s:GameState,fx:Fx){
  if(!p||!t||p.stage!=="work"||p.hoursWorked<t.hours+(p.revisions?4:0))return fx.toast("Finish the deliverables before sending to client.");
  p.stage="feedback";
  const late=s.clock.day>p.deadlineDay?12:0;
- const quality=clamp(p.quality+(p.focus==="quality"?8:0)+(p.focus==="research"?5:0)-late,0,99);
+ const quality=clamp(p.quality+(p.focus==="quality"?8:0)+(p.focus==="research"?5:0)+(p.revisions?6:0)-late,0,99);
  p.quality=quality;
  p.clientFeedback=quality>=68?"Client approved the agreed deliverables. Prepare handover and final invoice.":
  "Client asks for clearer alignment with the brand brief. Revise the work within the included rounds.";
