@@ -172,11 +172,13 @@ export function agencyLeadForClient(c:ClientMaster):LeadDef{
  const budget=clamp(vnd(c.marketingBudgetVnd*(c.segment==="startup"?.09:c.segment==="sme"?.05:.0006)),
   c.segment==="startup"?2_500_000:c.segment==="sme"?12_000_000:450_000_000,
   c.segment==="startup"?16_000_000:c.segment==="sme"?150_000_000:3_200_000_000);
- const fee=vnd(Math.max(c.segment==="startup"?7_500_000:c.segment==="sme"?15_000_000:120_000_000,
-   budget*(c.segment==="startup"?.8:c.segment==="sme"?.32:.16)));
+ const fee=vnd(c.fortuneRank!==null
+   ?Math.min(1_800_000_000,Math.max(280_000_000,budget*.38))
+   :Math.max(c.segment==="startup"?7_500_000:c.segment==="sme"?15_000_000:120_000_000,
+    budget*(c.segment==="startup"?.8:c.segment==="sme"?.32:.16)));
  const fortune=c.fortuneRank!==null;
  return {id:"db-"+c.id,brand:c.brand,industry:sec.label,businessSize:c.segment==="startup"?"small":c.segment==="sme"?"medium":"enterprise",
-  clientMasterId:c.id,sector:c.sector,segment:c.segment,value:budget,fee,duration:c.segment==="startup"?21:c.segment==="sme"?30:42,
+  clientMasterId:c.id,sector:c.sector,segment:c.segment,value:budget,fee,duration:fortune?365:c.segment==="startup"?21:c.segment==="sme"?30:42,
   objective:sec.brief,scope:c.segment==="startup"?4:c.segment==="sme"?8:12,
   intensity:c.segment==="startup"?.35:c.segment==="sme"?.60:.92,
   difficulty:clamp(Math.round(33+c.commercialScore*.49+(fortune?7:0)),35,93),
@@ -187,7 +189,7 @@ export function agencyLeadForClient(c:ClientMaster):LeadDef{
   target:c.segment==="startup"?26:c.segment==="sme"?19:16,
   scenario:c.sector==="coffee"?0:c.sector==="fitness"?1:c.sector==="fashion"?2:c.sector==="tech"?3:c.sector==="beauty"?4:c.sector==="food"?5:1,
   origin:fortune?"Fictional Fortune 50 brand brief (not a real RFP)":"Client master database · fictional",
-  desc:`${sec.brief}. Client tier: ${c.segment}. Indicative campaign media budget, not annual marketing spend.`};
+  desc:`${sec.brief}. Client tier: ${c.segment}. ${fortune?"Annual 365-day retainer: annual service fee and media budget are distinct, billed once on signing.":"Indicative campaign media budget, not annual marketing spend."}`};
 }
 // Legacy client names, invoices and wins are never overwritten.
 export function catalogForBrand(brand:string):ClientMaster|null{return CLIENT_DATABASE.find(c=>c.brand===brand)??null;}
