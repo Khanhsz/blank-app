@@ -35,7 +35,7 @@ export function inferJourney(c:Campaign):CampaignJourney {
 }
 export interface Campaign {
   briefId: string; aiStatus: AIBriefStatus; aiError?: string | null; journey?:CampaignJourney;
-  scenarioIndex: number; catalogClientId?:string|null; aiScenario?: Scenario | null; phase: Phase; day: number; spent: number; research: string[];
+  scenarioIndex: number; catalogClientId?:string|null; aiScenario?: Scenario | null; legacyBrief?:boolean; phase: Phase; day: number; spent: number; research: string[];
   startedDay?: number; productionReadyDay?: number; mediaBooked?: boolean; actualLaunchDay?: number;
   liveWeeks?: number; lastOptimizationWeek?: number; weeklyResults?: {week:number;reach:number;uplift:number;decision:string}[];
   survey: { audience: string; sample: number; question: string } | null; insight: string | null;
@@ -127,7 +127,7 @@ export interface GameState {
 export const newCampaign = (i: number, day = 1): Campaign => ({
   briefId: "brief-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,9),
   aiStatus:"pending", aiError:null,
-  scenarioIndex: i, catalogClientId:null, aiScenario:null, phase: "brief", journey:newJourney(), day, startedDay:day, spent: 0, research: [], mediaBooked:false, productionReadyDay:undefined, liveWeeks:0, weeklyResults:[], survey: null, insight: null,
+  scenarioIndex: i, catalogClientId:null, aiScenario:null, legacyBrief:false, phase: "brief", journey:newJourney(), day, startedDay:day, spent: 0, research: [], mediaBooked:false, productionReadyDay:undefined, liveWeeks:0, weeklyResults:[], survey: null, insight: null,
   strategy: { segment: "students", objective: "visits", position: "study" }, creative: null,
   media: { paid: 0, creator: 0, promo: 0, flyer: 0 }, optimization: null, liveMetrics: null, final: null,
 });
@@ -212,6 +212,8 @@ export function migrate(raw: unknown): GameState {
   if(out.campaign.productionReadyDay===undefined && out.campaign.creative)out.campaign.productionReadyDay=day;
   if(out.campaign.mediaBooked===undefined)out.campaign.mediaBooked=Object.values(out.campaign.media).some(v=>v>0);
   if(!Array.isArray(out.campaign.weeklyResults))out.campaign.weeklyResults=[];
+  // Old accepted catalog briefs can finish; new client approaches always require Gemini.
+  if(out.campaign.phase==="brief"&&out.campaign.aiScenario&&!out.campaign.aiScenario.aiPlanning)out.campaign.legacyBrief=true;
   // Keep old saves playable; only unaccepted briefs become automatic-AI candidates.
   if (!out.campaign.briefId || typeof out.campaign.briefId!=="string") out.campaign.briefId=newCampaign(out.campaign.scenarioIndex).briefId;
   if (out.campaign.aiScenario) out.campaign.aiStatus="ready";
