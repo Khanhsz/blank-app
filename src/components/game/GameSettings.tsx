@@ -4,8 +4,9 @@ import {Download,Upload,Save,RotateCcw,ShieldAlert,Monitor,Accessibility,FileChe
 import {act,getState,restoreGame,resetGame,saveNow,useGame} from "@/game/store";
 import {migrate} from "@/game/state";
 import {GameSection,FeedbackStrip} from "./GameVisuals";
+import {SandboxCheatConsole} from "./SandboxCheatConsole";
 
-export default function GameSettings({onReset}:{onReset:()=>void}){
+export default function GameSettings({onReset,cheatOpen,onCheatOpenChange}:{onReset:()=>void;cheatOpen:boolean;onCheatOpenChange:(open:boolean)=>void}){
  const s=useGame(x=>x),[confirm,setConfirm]=useState(false),input=useRef<HTMLInputElement>(null);
  const [loading,setLoading]=useState(false);
  function exportSave(){
@@ -30,6 +31,7 @@ export default function GameSettings({onReset}:{onReset:()=>void}){
   <GameSection eyebrow="GAME PREFERENCES" title="Make the world yours" icon={<Monitor size={22}/>} sub="Changes apply immediately and are stored in your current save."/>
   <div className="mt-setting-entry"><span><b>Graphics quality</b><small>Adjust shadows and render resolution</small></span><div className="mt-setting-choices">{(["low","high"] as const).map(q=><button key={q} aria-pressed={s.graphics===q} className={s.graphics===q?"active":""} onClick={()=>act(d=>{d.graphics=q})}>{q==="low"?"Performance":"High"}</button>)}</div></div>
   <div className="mt-setting-entry"><span><b>Weekly time progression</b><small>Time stays still while you plan. End Week advances seven game days and publishes a business newspaper.</small></span><div className="mt-setting-choices"><span className="mt-week-manual-status">{s.agencyUnlocked?"MANUAL · WEEK "+(s.ceo?.weekly?.week??1):"UNLOCKS WITH AGENCY"}</span></div></div>
+  <SandboxCheatConsole open={cheatOpen} onOpenChange={onCheatOpenChange}/>
   <GameSection eyebrow="PERSISTENCE" title="Your progress is yours" icon={<Save size={20}/>} sub="Autosave remains enabled. Download a backup before switching devices or clearing browser data."/>
   <div className="mt-save-controls">
    <button onClick={saveNow}><Save size={17}/> Save now</button>
