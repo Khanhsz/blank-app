@@ -16,8 +16,6 @@ function match(id:string,clientId:string){
 function friendlyError(message:string,code?:string,retryAfterSeconds?:number){
  const delay=typeof retryAfterSeconds==="number"&&Number.isFinite(retryAfterSeconds)&&retryAfterSeconds>0
   ?" Try again in about "+Math.max(1,Math.ceil(retryAfterSeconds/60))+" minute(s).":"";
- if(code==="local_hourly_limit")return "Marketing Tycoon reached its own hourly brief-request limit (not necessarily Google's quota)."+delay;
- if(code==="local_daily_limit")return "Marketing Tycoon reached its shared daily Gemini-call budget (not necessarily Google's quota)."+delay;
  if(code==="gemini_provider_rate_limit")return "Google Gemini returned a rate-limit or quota response. Check the API project's quota and try again later."+delay;
  if(code==="gemini_model_unavailable")return "The selected Gemini model is unavailable. The game owner needs to update GEMINI_MODEL in Render.";
  if(code==="gemini_credentials_rejected"||code==="gemini_not_configured")return "Google Gemini credentials are missing, invalid or lack permission. Check the API configuration in Render.";
