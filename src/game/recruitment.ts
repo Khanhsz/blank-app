@@ -97,7 +97,7 @@ export function ensureRecruitment(s:GameState):void{
    hired:(market?.hired??[]).filter(e=>s.staff.includes(e.id)),
    candidates:[...generate(seed,s.clock.week,"organic"),...arrivals.flatMap(p=>generate(seed,s.clock.week,p.channel))],
    postings:(market?.postings??[]).filter(p=>p.arrivalWeek>s.clock.week),
-   lastCampaignWeek:market?.lastCampaignWeek
+   ...(market?.lastCampaignWeek===undefined?{}:{lastCampaignWeek:market.lastCampaignWeek})
   };
  }else if(market.version!==2){
   // Upgrade legacy saves with 7–9 offers without changing employed people.
