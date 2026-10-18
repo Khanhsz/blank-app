@@ -1,3 +1,4 @@
+import "@/agency-freelance.css";
 import {useEffect,useState} from "react";
 import {BriefcaseBusiness,CheckCircle2,Clock3,UserRoundCheck,Wallet,LockKeyhole} from "lucide-react";
 import {Button} from "@/components/ui/button";
