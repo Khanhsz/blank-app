@@ -7,6 +7,8 @@ import {ceoRand,ceoLeadDefs,employees,clamp,money} from "./data";
 import type {Rival} from "./data";
 import type {GameState,CEO,Lead,RivalTender,RivalEvent,TalentOffer} from "./state";
 import type {Fx} from "./store";
+import {recordRivalDelivery} from "./companyMarket";
+import {catalogForBrand} from "./clientDatabase";
 
 const agentFocus:Record<string,NonNullable<Rival["focus"]>>={
  atlas:"premium",pulse:"growth",muse:"creative",lean:"value",north:"strategy"
@@ -58,7 +60,7 @@ export function registerRivalWin(s:GameState,c:CEO,leadId:string,rivalId:string,
  if(reason==="tender")c.inbox.unshift({id:"rival-win-"+(++c.seq),type:"rival-win",project:l.id,message:r.name+" won the "+l.brand+" tender while your agency was preparing.",choices:["acknowledge"],status:"open",day:c.day});
  return true;
 }
-function stepRivalStrategy(c:CEO,r:Rival,day:number){
+function stepRivalStrategy(s:GameState,c:CEO,r:Rival,day:number){
  r.officeTier ||= 1;
  const focus=focusOf(r);r.focus=focus;
  const monthlySalaries=r.people*(focus==="premium"?2500000:1900000);
@@ -67,6 +69,10 @@ function stepRivalStrategy(c:CEO,r:Rival,day:number){
  if(r.activeContracts?.length){
   for(const contract of [...r.activeContracts])if(day>=contract.finishDay){
    r.cash+=contract.revenue;
+   const original=c.leads.find(l=>l.id===contract.leadId);
+   const clientId=original?.clientMasterId??catalogForBrand(contract.brand)?.id;
+   if(clientId)recordRivalDelivery(s,{clientId,projectId:contract.leadId,agency:r.name,
+    spendVnd:original?.value??Math.round(contract.revenue*3),quality:Math.round((r.creative+r.performance+r.strategy)/3)});
    r.activeContracts.splice(r.activeContracts.indexOf(contract),1);
    r.rep=clamp(r.rep+(noise(r.id+contract.brand,day)-.45)*1.4,15,99);
   }
@@ -176,7 +182,7 @@ export function runRivalAgents(s:GameState,c:CEO,fx:Fx){
    }
   }
   for(const l of c.leads)if(["new","qualified","renewal"].includes(l.status))ensureTender(c,l,day);
-  for(const r of c.rivals)stepRivalStrategy(c,r,day);
+  for(const r of c.rivals)stepRivalStrategy(s,c,r,day);
   talentActivities(s,c,day);
   for(const tender of c.tenders){
    if(tender.status!=="open"||day<tender.deadline)continue;

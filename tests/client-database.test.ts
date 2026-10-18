@@ -8,13 +8,13 @@ import {sign} from "../src/game/ceo";
 import type {Fx} from "../src/game/store";
 const fx:Fx={toast:()=>{},log:()=>{}};
 const game=()=>{const s=defaults();s.created=true;return s;};
-test("98 canonical clients span seven exact sectors and all three segments",()=>{
+test("112 canonical clients span seven exact sectors and all three segments",()=>{
  assert.equal(SECTORS.length,7);
  assert.deepEqual(SECTORS.map(x=>x.id),["coffee","beauty","fashion","education","tech","fitness","food"]);
- assert.equal(CLIENT_COUNTS.total,98);
+ assert.equal(CLIENT_COUNTS.total,112);
  assert.equal(CLIENT_COUNTS.startup,28);
  assert.equal(CLIENT_COUNTS.sme,28);
- assert.equal(CLIENT_COUNTS.bigcorp,42);
+ assert.equal(CLIENT_COUNTS.bigcorp,56);
  assert.equal(CLIENT_COUNTS.fortune,14);
  assert.equal(new Set(CLIENT_DATABASE.map(x=>x.id)).size,CLIENT_DATABASE.length);
  for(const sector of SECTORS){
@@ -69,8 +69,8 @@ test("Freelancer can choose any startup/SME client independently of fixed scenar
  const s=game();
  assert.equal(chooseFreelanceClient(s,fx,"sme-tech-1"),true);
  assert.equal(s.campaign.catalogClientId,"sme-tech-1");
- assert.equal(s.campaign.aiStatus,"pending");
- assert.equal(s.campaign.aiScenario,null,"no prewritten bedroom brief before Gemini");
+ assert.equal(s.campaign.aiStatus,"ready");
+ assert.equal(scenarioOf(s.campaign).brand,getClient("sme-tech-1")?.brand);
  assert.equal(s.campaign.startedDay,1);
  assert.equal(chooseFreelanceClient(s,fx,"startup-fashion-2"),true);
  assert.equal(s.campaign.catalogClientId,"startup-fashion-2");
@@ -78,8 +78,7 @@ test("Freelancer can choose any startup/SME client independently of fixed scenar
  assert.equal(s.campaign.catalogClientId,"startup-fashion-2");
  const saved=migrate(JSON.parse(JSON.stringify(s)));
  assert.equal(saved.campaign.catalogClientId,"startup-fashion-2");
- assert.equal(saved.campaign.aiScenario,null);
- assert.equal(saved.campaign.aiStatus,"pending");
+ assert.equal(scenarioOf(saved.campaign).brand,getClient("startup-fashion-2")?.brand);
 });
 test("catalog generated briefs remain valid complete scenarios for the existing 7-mission engine",()=>{
  for(const c of CLIENT_DATABASE.filter(c=>c.segment!=="bigcorp")){
