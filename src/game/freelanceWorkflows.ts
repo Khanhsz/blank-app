@@ -174,7 +174,7 @@ export function finalizeV4(s:GameState,fx:Fx){
  const career=workload(s),id=c.briefId,clientId=c.catalogClientId??"unknown";
  if(career.completedIds.includes(id))return false; // exactly-once payment
  const fee=p.acceptedFee??t.fee;
- const paid=Math.round(fee*(1-v.deduction/100)/10000)*10000;
+ const paid=Math.max(0,Math.round(fee*(1-v.deduction/100)));
  v.step="paid";v.paidAmount=paid;v.expenseCharged=true;
  career.completedIds.push(id);
  s.personalCash+=paid-t.outOfPocket;

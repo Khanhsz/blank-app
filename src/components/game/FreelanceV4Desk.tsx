@@ -56,7 +56,7 @@ export function FreelanceV4Desk(){
  const approved=v.artifacts.filter(a=>a.status==="approved").length;
  const estimate=freelanceDeliveryEstimate(s);
  const fee=p.acceptedFee??job.fee;
- const amount=Math.round(fee*(1-v.deduction/100)/10000)*10000;
+ const amount=Math.max(0,Math.round(fee*(1-v.deduction/100)));
  const nav=phases.findIndex(x=>x.id===v.step);
  const reviewItems=v.artifacts.filter(a=>a.status==="revise");
  return <div className="mt-v4">

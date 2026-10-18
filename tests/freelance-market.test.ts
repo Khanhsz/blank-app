@@ -194,7 +194,7 @@ function fillV4(s:ReturnType<typeof game>,badId?:string){
    const best=badId===a.id?[...f.options].sort((a,b)=>a.fit-b.fit)[0]:[...f.options].sort((a,b)=>b.fit-a.fit)[0];
    return [f.id,best.id];
   }));
-  const copy=badId===a.id?"A short preliminary draft needing clearer detail.":a.copy;
+  const copy=badId===a.id?"Draft requires supporting facts.":a.copy;
   let saved=V4.editV4(s,fx,a.id,decisions,copy);
   if(!saved){s.clock.week++;saved=V4.editV4(s,fx,a.id,decisions,copy);}
   assert.equal(saved,true,"saving "+a.id);
@@ -266,7 +266,7 @@ test("V4 enforces capacity, completeness and 20% deduction when all included rev
  V4.openV4Board(s,fx);V4.submitV4Review(s,fx);
  assert.equal(v.step,"ready");assert.equal(v.deduction,20);
  const before=s.personalCash;assert.equal(V4.finalizeV4(s,fx),true);
- const fee=Math.round((p.acceptedFee??t.fee)*.8/10000)*10000;
+ const fee=Math.round((p.acceptedFee??t.fee)*.8);
  assert.equal(v.paidAmount,fee);
  assert.equal(s.personalCash,before+fee-t.outOfPocket);
 });
