@@ -238,7 +238,7 @@ export function finalizeV4(s:GameState,fx:Fx){
  const career=workload(s),id=c.briefId,clientId=c.catalogClientId??"unknown";
  const transactionId="freelance:"+id;
  if(career.completedIds.includes(id)||career.transactionIds?.includes(transactionId)||v.paymentTransactionId)return false; // exactly-once payment
- const fee=p.acceptedFee??t.fee;
+ const fee=v.briefSnapshot?.fee??p.acceptedFee??t.fee;
  const paid=v4PaymentAmount(fee,v.deduction);
  v.step="paid";v.paidAmount=paid;v.expenseCharged=true;v.paymentTransactionId=transactionId;
  career.completedIds.push(id);(career.transactionIds??=[]).push(transactionId);
