@@ -296,9 +296,7 @@ export function migrate(raw: unknown): GameState {
     out.ceo.weekly = out.clock;
     // New corporate clients appear in existing CEO saves without resetting
     // relationships, negotiation outcomes, ongoing projects or cash history.
-    const priorLeads=Array.isArray(out.ceo.leads)?out.ceo.leads:[];
-    const knownIds=new Set(priorLeads.map(l=>l.id));
-    out.ceo.leads=[...priorLeads,...base.leads.filter(l=>!knownIds.has(l.id))];
+    out.ceo.leads=Array.isArray(out.ceo.leads)?out.ceo.leads:[]; // Preserve signed/active legacy deals without injecting unsolicited prospects.
     removeUncontractedLegacyAgencyClients(out);
     ensureRecruitment(out); // register generated staff before client-team reconciliation
     reconcileClientTeams(out);
