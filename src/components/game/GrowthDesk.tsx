@@ -116,12 +116,15 @@ function DealView({id,back,teams}:{id:string|null;back:()=>void;teams:()=>void})
   </section>}
   {l.status==="negotiating"&&n&&<section className="mt-growth-flow"><h4>Negotiation · Round {n.round}</h4>
    <div className="mt-growth-kpis"><div><small>FEE</small><b>{money(n.fee)}</b></div><div><small>MARGIN</small><b>{money(C.terms(s,n,l).margin)}</b></div><div><small>SIGN PROB.</small><b>{C.terms(s,n,l).prob}%</b></div><div><small>DURATION</small><b>{n.deadline}d</b></div></div>
-   <p>Scope {n.scope} · Advance {n.advance}% · KPI bonus {money(n.bonus)}</p>
+   <p>Scope {n.scope} · {l.contractType==="annual-retainer"?"Annual service fee 100% paid at signing":"Advance "+n.advance+"%"} · KPI bonus {money(n.bonus)}</p>
+   {l.contractType==="annual-retainer"&&<details><summary>Annual marketing service agreement</summary><p>365-day engagement; annual service fee and separate media budget; monthly KPI reporting, scope/deliverables, confidentiality, client ownership of approved paid creative, 30-day termination notice, and Fortune top-10 category exclusivity.</p></details>}
    {n.notes.slice(-3).map((note,i)=><p className="mt-growth-answer" key={i}>{note}</p>)}
-   {n.status==="open"?<div className="mt-growth-grid">{([["maintain","Hold Terms"],["discount","Fee −9%"],["scope","Reduce Scope"],["bonus","KPI Bonus"],["advance","Lower Advance"],["deadline","Add 5 Days"],...(n.counter?[["accept","Accept Counter"] as const]:[]),["walk","Walk Away"]] as [string,string][]).map(([key,label])=>
+   {n.status==="open"?<div className="mt-growth-grid">{([["maintain","Hold Terms"],["discount","Fee −9%"],["scope","Reduce Scope"],["bonus","KPI Bonus"],...(l.contractType==="annual-retainer"?[]:[["advance","Lower Advance"],["deadline","Add 5 Days"]]),...(n.counter?[["accept","Accept Counter"] as const]:[]),["walk","Walk Away"]] as [string,string][]).map(([key,label])=>
     <Button key={key} size="sm" variant="outline" onClick={()=>act((d,fx)=>C.counter(d,fx,key))}>{label}</Button>)}</div>:<Button variant="outline" onClick={()=>act(C.closeNegotiation)}>Close ({n.status})</Button>}
   </section>}
-  {l.status==="signed"&&<section className="mt-growth-flow"><h4>Contract Signed</h4><p>Build the client's dedicated campaign team. Staff cannot serve two clients simultaneously.</p><Button onClick={teams}>Open Client Teams <Users size={15}/></Button></section>}
+  {l.status==="signed"&&<section className="mt-growth-flow"><h4>Contract Signed</h4>
+   {l.contractType==="annual-retainer"&&<p><b>365-day annual retainer · PAID IN FULL.</b> Media budget is separate and tracked monthly. See Client Team for delivery and reporting.</p>}
+   <p>Build the client's dedicated campaign team. Staff cannot serve two clients simultaneously.</p><Button onClick={teams}>Open Client Teams <Users size={15}/></Button></section>}
   {["declined","lost"].includes(l.status)&&<p className="mt-growth-result">Opportunity closed. History remains available in CRM; no client team has been reserved.</p>}
   <details className="mt-growth-relationship"><summary>CRM Relationship History · {relation.wins} wins, {relation.referrals} referrals</summary>
    {relation.notes.length?relation.notes.slice(0,8).map((text,i)=><p key={i}>• {text}</p>):<p>No prior client history recorded.</p>}
