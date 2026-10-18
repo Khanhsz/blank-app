@@ -1,5 +1,6 @@
 import http from "node:http";
 import {inputCategory,prompt,clientPrompt,validateApproachClient,validateCandidate,GEMINI_SCHEMA,CLIENT_SCENARIO_SCHEMA} from "./scenario.mjs";
+import {takeQuotaSlot,secondsUntilUtcMidnight,retryAfterSeconds,getCachedGeminiBrief,saveCachedGeminiBrief} from "./brief-quota.mjs";
 import {validatePricingInput,pricePrompt,buildPriceAdvice,PRICING_SCHEMA} from "./pricing.mjs";
 import {validateMarketRequest,validateMarketIntelligence,fallbackMarketReport,marketPrompt,MARKET_SCHEMA} from "./company-intelligence.mjs";
 import {FINANCE_SCHEMA,financePrompt,validateFinanceCalibration,fallbackFinanceCalibration} from "./finance-calibration.mjs";
@@ -10,6 +11,7 @@ const ORIGIN=process.env.GAME_ORIGIN||"https://marketing-tycoon-bedroom-play.onr
 const MODEL=process.env.GEMINI_MODEL||"gemini-3.5-flash-lite";
 const apiKey=()=>process.env.GEMINI_API_KEY?.trim();
 const counter=new Map();
+const briefCache=new Map();
 const globalCounter={day:"",calls:0};
 let financeCache={day:"",report:null};
 function counted(key,limit,timeMs){
@@ -39,7 +41,12 @@ async function generateScenario(category,client=null){
    }),
    signal:controller.signal
   });
-  if(!upstream.ok)throw Error("Gemini upstream HTTP "+upstream.status);
+  if(!upstream.ok){
+   const error=new Error("Gemini upstream HTTP "+upstream.status);
+   error.status=upstream.status;
+   error.retryAfterSeconds=retryAfterSeconds(upstream.headers.get("Retry-After"));
+   throw error;
+  }
   const result=await upstream.json();
   const text=result?.candidates?.[0]?.content?.parts?.filter(x=>typeof x.text==="string").map(x=>x.text).join("");
   if(!text)throw Error("Empty Gemini output; finishReason="+String(result?.candidates?.[0]?.finishReason||"unknown"));
@@ -226,27 +233,57 @@ const server=http.createServer(async(req,res)=>{
    const today=new Date().toISOString().slice(0,10);
    if(globalCounter.day!==today){globalCounter.day=today;globalCounter.calls=0}
    let advice;
-   if(apiKey()&&globalCounter.calls<50){globalCounter.calls++;advice=await generatePricingAdvice(x)}
+   if(apiKey()&&globalCounter.calls<42){globalCounter.calls++;advice=await generatePricingAdvice(x)}
    else advice=buildPriceAdvice(x,null,"rules");
    return response(res,200,{advice,mode:advice.source,model:advice.source==="gemini"?MODEL:null},req.headers.origin);
   }catch(error){return response(res,400,{error:"Invalid agency pricing request."},req.headers.origin)}
  }
  if(req.url!=="/api/generate-brief"||req.method!=="POST")return response(res,404,{error:"Not found"},allowed?req.headers.origin:null);
  if(!allowed)return response(res,403,{error:"Game origin required"});
- if(!apiKey())return response(res,503,{error:"Gemini API is not configured. The client approach cannot proceed until GEMINI_API_KEY is available."},req.headers.origin);
- if(!counted(remoteIP(req),8,3600000))return response(res,429,{error:"Gemini hourly budget reached. Retry your selected client after the quota resets."},req.headers.origin);
- const day=new Date().toISOString().slice(0,10);
- if(globalCounter.day!==day){globalCounter.day=day;globalCounter.calls=0}
- if(globalCounter.calls>=50)return response(res,429,{error:"Daily Gemini usage budget reached. Retry your selected client later."},req.headers.origin);
- globalCounter.calls++;
+ // Validate the selected client and V6 job before charging any Gemini quota.
+ let client,category;
  try{
   const body=await readJson(req);
-  const category=inputCategory(body.category);
-  const client=validateApproachClient(body.client);
+  category=inputCategory(body.category);
+  client=validateApproachClient(body.client);
   if(client.sector!==category)throw Error("Client sector mismatch");
+ }catch(error){
+  console.warn("Gemini brief rejected invalid client/job template:",String(error?.message||"invalid").slice(0,100));
+  return response(res,400,{code:"invalid_client_brief",error:"Selected client or freelance job was not accepted by the API. Refresh the game and retry."},req.headers.origin);
+ }
+ if(!apiKey())return response(res,503,{code:"gemini_not_configured",error:"Gemini API is not configured. An AI-generated client brief is required."},req.headers.origin);
+ const cacheKey=JSON.stringify(client);
+ const cached=getCachedGeminiBrief(briefCache,cacheKey);
+ if(cached)return response(res,200,{scenario:cached,mode:"ai",model:MODEL,cached:true},req.headers.origin);
+ const day=new Date().toISOString().slice(0,10);
+ if(globalCounter.day!==day){globalCounter.day=day;globalCounter.calls=0}
+ if(globalCounter.calls>=50){
+  console.warn("Gemini brief paused: internal shared daily limit reached");
+  return response(res,429,{code:"local_daily_limit",error:"Marketing Tycoon's shared daily AI call limit is reached.",retryAfterSeconds:secondsUntilUtcMidnight()},req.headers.origin);
+ }
+ const slot=takeQuotaSlot(counter,"brief:"+remoteIP(req),8,3600000);
+ if(!slot.allowed){
+  console.warn("Gemini brief paused: internal hourly limit reached");
+  return response(res,429,{code:"local_hourly_limit",error:"Marketing Tycoon's hourly brief limit is reached.",retryAfterSeconds:slot.retryAfterSeconds},req.headers.origin);
+ }
+ globalCounter.calls++;
+ try{
   const scenario=await generateScenario(category,client);
+  saveCachedGeminiBrief(briefCache,cacheKey,scenario);
   return response(res,200,{scenario,mode:"ai",model:MODEL},req.headers.origin);
- }catch(error){console.warn("AI scenario failed:",error?.message?.slice(0,160));return response(res,502,{error:"Gemini could not create a valid context, insight and strategy for this client. Retry the approach."},req.headers.origin)}
+ }catch(error){
+  const status=error?.status;
+  const code=status===429?"gemini_provider_rate_limit":status===404?"gemini_model_unavailable":status===401||status===403?"gemini_credentials_rejected":"gemini_generation_failed";
+  // Never log Gemini API keys, IPs or prompt data.
+  console.warn("AI scenario failed:",code,String(error?.message||"unknown").slice(0,90));
+  const body={code,error:status===429
+   ?"Google Gemini is rate-limiting this API key or project. Check the provider quota before retrying."
+   :status===404?"The configured Gemini model was not found by Google's API."
+   :status===401||status===403?"Google rejected the Gemini API credentials or permissions."
+   :"Gemini could not create a valid client context and strategy. Retry when the service is available."};
+  if(status===429&&Number.isFinite(error?.retryAfterSeconds))body.retryAfterSeconds=error.retryAfterSeconds;
+  return response(res,status===429?429:502,body,req.headers.origin);
+ }
 });
 server.listen(PORT,"0.0.0.0",()=>console.log("Marketing Tycoon AI API listening on",PORT));
 
