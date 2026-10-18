@@ -3,7 +3,7 @@ import {ArrowRight,BriefcaseBusiness,CheckCircle2,LockKeyhole,Search,Users} from
 import {Button} from "@/components/ui/button";
 import {act,useGame} from "@/game/store";
 import {money} from "@/game/data";
-import {CLIENT_BY_ID,SECTORS,type ClientSector} from "@/game/clientDatabase";
+import {CLIENT_BY_ID} from "@/game/clientDatabase";
 import {getFreelanceJob} from "@/game/freelanceJobTemplates";
 import {workload} from "@/game/freelanceJobs";
 import * as Market from "@/game/freelanceMarket";
@@ -14,8 +14,6 @@ import type {FreelanceBidApproach,FreelanceBidPrice} from "@/game/state";
  * deterministic saved application records, not Gemini-generated winners. */
 export function FreelanceMarketplace({onSelected}:{onSelected?:()=>void}){
  const game=useGame(s=>s),board=game.freelanceBoard;
- const [sector,setSector]=useState<ClientSector|"all">("all");
- const [segment,setSegment]=useState<"all"|"startup"|"sme">("all");
  const [search,setSearch]=useState("");
  const [filter,setFilter]=useState<"all"|"available"|"locked">("all");
  const [active,setActive]=useState<string|null>(null);
@@ -26,8 +24,6 @@ export function FreelanceMarketplace({onSelected}:{onSelected?:()=>void}){
  const filtered=activeListings.filter(l=>{
   const c=CLIENT_BY_ID[l.clientId],t=getFreelanceJob(l.templateId);
   if(!c||!t)return false;
-  if(sector!=="all"&&c.sector!==sector)return false;
-  if(segment!=="all"&&c.segment!==segment)return false;
   if(search&&!((c.brand+" "+t.title).toLowerCase().includes(search.toLowerCase())))return false;
   const locked=!!Market.jobGate(game,t);
   return filter==="all"||(filter==="locked"?locked:!locked);
@@ -54,13 +50,9 @@ export function FreelanceMarketplace({onSelected}:{onSelected?:()=>void}){
     <><LockKeyhole size={16}/><span>High-budget jobs are visible but locked at Rep ≤30. Finish smaller jobs to reach <b>Rep 31</b>.</span></>}
   </div>
   <div className="mt-job-market-filters">
-   <label><span>Industry</span><select aria-label="Filter freelance industry" value={sector} onChange={e=>setSector(e.target.value as ClientSector|"all")}>
-    <option value="all">All sectors</option>{SECTORS.map(x=><option key={x.id} value={x.id}>{x.label}</option>)}</select></label>
-   <label><span>Client size</span><select aria-label="Filter freelance client size" value={segment} onChange={e=>setSegment(e.target.value as "startup"|"sme"|"all")}>
-    <option value="all">Startup & SME</option><option value="startup">Startup</option><option value="sme">SME</option></select></label>
+   <label><span>Find job</span><div className="mt-job-market-search"><Search size={14}/><input aria-label="Search freelance jobs" placeholder="Client or job type" value={search} onChange={e=>setSearch(e.target.value)}/></div></label>
    <label><span>Access</span><select aria-label="Filter job access" value={filter} onChange={e=>setFilter(e.target.value as typeof filter)}>
     <option value="all">All jobs</option><option value="available">Available</option><option value="locked">Locked</option></select></label>
-   <label><span>Find job</span><div className="mt-job-market-search"><Search size={14}/><input aria-label="Search freelance jobs" placeholder="Client or job type" value={search} onChange={e=>setSearch(e.target.value)}/></div></label>
   </div>
   <div className="mt-job-market-grid">
    {filtered.map(l=>{

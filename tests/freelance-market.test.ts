@@ -1,4 +1,5 @@
 import test from "node:test";
+import {readFileSync} from "node:fs";
 import assert from "node:assert/strict";
 import {defaults,migrate} from "../src/game/state";
 import {FREELANCE_JOBS,getFreelanceJob} from "../src/game/freelanceJobTemplates";
@@ -109,4 +110,14 @@ test("Big Corp never appears in Bedroom and legacy saves without the board remai
  const migrated=migrate(JSON.parse(JSON.stringify(old)));
  assert.equal(migrated.freelanceBoard,undefined);
  assert.equal(chooseFreelanceClient(migrated,fx,"startup-coffee-0"),true,"legacy direct scenarios are preserved for pre-migration saves");
+});
+
+// UI regression: mobile Bedroom search and access remain, redundant company
+// filters belong to the Agency directory and must not appear in Job Board.
+test("Bedroom Job Board has only job search and access controls",()=>{
+ const view=readFileSync("src/components/game/FreelanceMarketplace.tsx","utf8");
+ assert.ok(view.includes('aria-label="Search freelance jobs"'));
+ assert.ok(view.includes('aria-label="Filter job access"'));
+ assert.ok(!view.includes('aria-label="Filter freelance industry"'));
+ assert.ok(!view.includes('aria-label="Filter freelance client size"'));
 });
