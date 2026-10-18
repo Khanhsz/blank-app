@@ -144,7 +144,7 @@ export default function App(){
    {panel==="onboard"&&<Intro onRotate={n=>setAvatarYaw(y=>y+n)} onZoom={n=>setAvatarZoom(z=>Math.max(.65,Math.min(1.45,z+n)))} done={()=>{setSceneFocus(null);setPanel("none");setComputerHint(true)}}/>}
    {panel==="campaign"&&!s.agencyUnlocked&&<CampaignWorkspace/>}
    {panel==="ceo"&&s.agencyUnlocked&&<CEOCommandCenter onReadEdition={setReviewNews}/>}
-   {panel==="location"&&selected&&<LocationPanel id={selected} onOpen={fromLocation}/>}
+   {panel==="location"&&selected&&<LocationPanel id={selected} onOpen={fromLocation} onVisitCompany={clientId=>{setSelected("fortune-hq-"+clientId);setPanel("location");}}/>}
    {panel==="avatar"&&<Customize/>}
    {panel==="settings"&&<GameSettings onReset={()=>{setPanel("onboard");setSelected(null);setSceneFocus(null)}}/>}
    {panel==="journal"&&<div className="world-ambient-panel"><div className="eyebrow">YOUR CREATIVE PROCESS</div><h3>Project moodboard</h3><p>Your research, strategy and creative decisions remain saved as you explore. Return to the bedroom computer for your active campaign.</p><div className="world-item-stat">Current phase <b>{s.campaign.phase}</b></div><button className="world-action" onClick={approachComputer}>Return to workstation ↗</button></div>}
