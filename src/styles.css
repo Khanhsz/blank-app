@@ -953,3 +953,19 @@ button.mt-work-person-row{cursor:pointer}.mt-work-person-row:hover{border-color:
 .mt-hiring-referral-note,.mt-hiring-warning{font-size:11px;line-height:1.5;color:var(--muted-foreground,#526b77)}
 .mt-hiring-warning{color:#986532}
 @media(max-width:640px){.mt-hiring-channels{grid-template-columns:1fr}.mt-hiring-channel-cta{gap:10px}}
+
+/* Bedroom V2.1: scoped gig/job cards, not an agency-sized media tender. */
+.mt-freelance-job-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.mt-freelance-job-option{display:flex;flex-direction:column;align-items:stretch;gap:6px;text-align:left;background:var(--card,#fff);color:var(--foreground,#263d49);padding:12px;border-radius:9px;border:1px solid var(--border,#cad9dd);min-width:0}
+.mt-freelance-job-option.selected{border-color:#277d8e;background:rgba(57,139,153,.10);box-shadow:inset 0 0 0 1px #277d8e}
+.mt-freelance-job-option:disabled{opacity:.55;cursor:not-allowed}
+.mt-freelance-job-title{display:flex;flex-direction:column;gap:3px}
+.mt-freelance-job-title b{font-size:12px;font-weight:800;line-height:1.4}
+.mt-freelance-job-title small{font-size:9px;letter-spacing:.05em;color:var(--muted-foreground,#627788);font-weight:800}
+.mt-freelance-job-option>strong{font-size:16px;font-weight:850;font-variant-numeric:tabular-nums}
+.mt-freelance-job-facts{font-size:10px;font-weight:650}
+.mt-freelance-job-scope,.mt-freelance-job-budget{font-size:10px;line-height:1.5;color:var(--muted-foreground,#61788a)}
+.mt-freelance-locked{font-size:10px;font-weight:750;color:#9a672b}
+.mt-freelance-selected{display:flex;flex-direction:column;gap:5px;border-radius:7px;background:rgba(57,142,154,.09);padding:10px}
+.mt-freelance-selected b{font-size:12px}.mt-freelance-selected span{font-size:11px;line-height:1.5;color:var(--muted-foreground,#627788)}
+@media(max-width:620px){.mt-freelance-job-grid{grid-template-columns:1fr}}

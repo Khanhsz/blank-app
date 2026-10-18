@@ -5,6 +5,23 @@ import {clamp,money} from "./data";
 import type {Fx} from "./store";
 
 export const WEEKLY_CAPACITY=28;
+/** Four real work hours per session; a freelancer can work at most eight
+ * hours per modeled work day. These day equivalents never advance the
+ * authoritative global End Week clock or other clients' simulations. */
+export const WORKDAY_HOURS=8;
+export function effectiveWorkDay(s:GameState){
+ const p=s.campaign.freelanceJob;
+ if(!p)return s.clock.day;
+ const start=s.campaign.startedDay??s.clock.day;
+ return Math.max(s.clock.day,start+Math.max(0,Math.ceil((p.actualWorkHours??p.hoursWorked)/WORKDAY_HOURS)-1));
+}
+export function freelanceDeliveryEstimate(s:GameState){
+ const p=s.campaign.freelanceJob,t=getFreelanceJob(p?.templateId);
+ if(!p||!t)return null;
+ return {workDay:effectiveWorkDay(s),deadlineDay:p.deadlineDay,
+  behindSchedule:effectiveWorkDay(s)>p.deadlineDay,
+  hoursLogged:p.actualWorkHours??p.hoursWorked};
+}
 export const workload=(s:GameState)=>s.freelanceCareer??(s.freelanceCareer=newFreelanceCareer());
 export const completedGigCount=(s:GameState)=>workload(s).completedGigs+workload(s).completedProjects;
 export function canOfferJob(s:GameState,t:FreelanceJobTemplate){
@@ -17,7 +34,7 @@ export function startSmallJob(s:GameState,fx:Fx){
  const c=s.campaign,p=c.freelanceJob,sc=c.aiScenario,template=getFreelanceJob(p?.templateId);
  if(s.agencyUnlocked||!p||!template||template.tier==="campaign"||!sc||c.aiStatus!=="ready"||c.phase!=="brief")return;
  if(!canOfferJob(s,template))return fx.toast("Build your portfolio before taking this scope.");
- p.stage="work";p.deadlineDay=s.clock.day+template.days;p.hoursWorked=0;p.weekHours=0;
+ p.stage="work";p.deadlineDay=s.clock.day+template.days;p.hoursWorked=0;p.weekHours=0;p.actualWorkHours=0;
  c.startedDay=s.clock.day;c.phase="planning";
  // Client media remains in a separate non-player budget. Partial upfront fee
  // represents a real commitment; delivery and payment are still required.
@@ -34,10 +51,14 @@ export function doWork(s:GameState,fx:Fx,choice:"research"|"quality"|"speed"){
  if(career.weeklyHours+hours>WEEKLY_CAPACITY)return fx.toast("Your solo workload is full this week. Advance End Week.");
  const required=t.hours+(p.revisions?4:0);
  if(p.hoursWorked>=required)return fx.toast("All agreed deliverables are ready for client review.");
- career.weeklyHours+=hours;p.hoursWorked+=hours;p.weekHours+=hours;
+ career.weeklyHours+=hours;p.actualWorkHours=(p.actualWorkHours??p.hoursWorked)+hours;
+ // Fast work makes six hours of deliverable progress in four worked hours,
+ // but sacrifices review quality. Quality and research use full time.
+ p.hoursWorked=Math.min(required,p.hoursWorked+(choice==="speed"?6:4));p.weekHours+=hours;
  p.focus=choice;
+ const researchSensitive=["social-audit","audience-research","content-calendar","meta-setup"].includes(t.id);
  const insightAligned=choice==="research"&&scInsightMatches(s);
- const gain=choice==="quality"?4:choice==="research"?(insightAligned?4:2):1;
+ const gain=choice==="quality"?4:choice==="research"?(researchSensitive&&insightAligned?5:2):-2;
  p.quality=clamp((p.quality||50)+gain,0,100);
  fx.log("Solo work session: "+t.title+" · "+hours+"h ("+career.weeklyHours+"/"+WEEKLY_CAPACITY+" weekly capacity)");
 }
@@ -46,8 +67,8 @@ export function askForReview(s:GameState,fx:Fx){
  const p=s.campaign.freelanceJob,t=getFreelanceJob(p?.templateId);
  if(!p||!t||p.stage!=="work"||p.hoursWorked<t.hours+(p.revisions?4:0))return fx.toast("Finish the deliverables before sending to client.");
  p.stage="feedback";
- const late=s.clock.day>p.deadlineDay?12:0;
- const quality=clamp(p.quality+(p.focus==="quality"?8:0)+(p.focus==="research"?5:0)+(p.revisions?6:0)-late,0,99);
+ const late=effectiveWorkDay(s)>p.deadlineDay?12:0;
+ const quality=clamp(p.quality+(p.focus==="quality"?8:0)+(p.focus==="research"?5:0)+(p.revisions?12:0)-late,0,99);
  p.quality=quality;
  p.clientFeedback=quality>=68?"Client approved the agreed deliverables. Prepare handover and final invoice.":
  "Client asks for clearer alignment with the brand brief. Revise the work within the included rounds.";
@@ -65,13 +86,15 @@ export function deliverSmallJob(s:GameState,fx:Fx){
  const career=workload(s),id=c.briefId,clientId=c.catalogClientId??"unknown";
  if(career.completedIds.includes(id))return;
  career.completedIds.push(id);
- const late=s.clock.day>p.deadlineDay;
+ const deliveryDay=effectiveWorkDay(s);
+ const late=deliveryDay>p.deadlineDay;
  const quality=clamp(p.quality-(late?8:0),0,99);
  const rating=quality>=75&&!late;
  const remaining=Math.max(0,Math.round((t.fee-Math.round(t.fee*.2/10000)*10000)*(quality<68?.8:1)/10000)*10000);
  const invoiceId="freelance-"+id;
  const delay=clientId.length%5===0?14:7;
- career.invoices.push({id:invoiceId,clientId,amount:remaining,dueDay:s.clock.day+delay,status:"pending",reminded:false});
+ career.invoices.push({id:invoiceId,clientId,amount:remaining,dueDay:deliveryDay+delay,status:"pending",reminded:false});
+ p.deliveredDay=deliveryDay;
  s.personalCash-=t.outOfPocket;
  if(t.tier==="gig")career.completedGigs++;else career.completedProjects++;
  if(rating)career.positiveReviews++;

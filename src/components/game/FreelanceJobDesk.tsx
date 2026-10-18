@@ -13,6 +13,7 @@ export function FreelanceJobDesk(){
  if(!p||!t)return null;
  const sc=C.scenarioOf(c),career=F.workload(s);
  const remaining=Math.max(0,t.hours+(p.revisions?4:0)-p.hoursWorked);
+ const timing=F.freelanceDeliveryEstimate(s);
  return <div className="mt-gig-desk">
   <header className="mt-gig-head"><div><small>BEDROOM · SOLO FREELANCE WORKSPACE</small><h2>{t.title}</h2><p>{sc.brand} · {sc.industry} · {t.tier==="gig"?"Solo Gig":"Freelance Project"}</p></div><PenTool size={25}/></header>
   <div className="mt-gig-metrics"><div><small>SERVICE FEE</small><b>{money(t.fee)}</b></div><div><small>CLIENT MEDIA</small><b>{money(t.mediaBudget)}</b></div><div><small>EFFORT</small><b>{t.hours} hours</b></div><div><small>DEADLINE</small><b>{t.days} days</b></div></div>
@@ -30,15 +31,16 @@ export function FreelanceJobDesk(){
   </section>}
   {p.stage==="work"&&<section className="mt-gig-panel">
     <h3>02 · Complete the deliverables</h3>
-    <p>{t.deliverables}. Work in focused four-hour sessions; you can use at most {F.WEEKLY_CAPACITY} hours per week across solo jobs.</p>
+    <p>{t.deliverables}. Each action logs four work hours. Better quality takes longer; working fast completes more scope but creates revision risk. You have {F.WEEKLY_CAPACITY} hours of freelance capacity each game week.</p>
     <div className="mt-gig-progress"><span>Hours completed: <b>{p.hoursWorked}/{t.hours+(p.revisions?4:0)}</b></span>
-     <span>Hours available this week: <b>{Math.max(0,F.WEEKLY_CAPACITY-career.weeklyHours)}</b></span></div>
+     <span>Real work hours: <b>{p.actualWorkHours??p.hoursWorked}</b> · remaining weekly <b>{Math.max(0,F.WEEKLY_CAPACITY-career.weeklyHours)}</b></span>
+     <span>Estimated completion Day <b>{timing?.workDay??s.clock.day}</b> / deadline Day <b>{p.deadlineDay}</b></span></div>
     <div className="mt-gig-choices">
-     <Button variant="outline" onClick={()=>act((x,fx)=>F.doWork(x,fx,"research"))}>Validate client brief · 4h</Button>
-     <Button variant="outline" onClick={()=>act((x,fx)=>F.doWork(x,fx,"quality"))}>Craft for quality · 4h</Button>
-     <Button variant="outline" onClick={()=>act((x,fx)=>F.doWork(x,fx,"speed"))}>Execute quickly · 4h</Button>
+     <Button variant="outline" disabled={career.weeklyHours+4>F.WEEKLY_CAPACITY} onClick={()=>act((x,fx)=>F.doWork(x,fx,"research"))}>Validate evidence · 4h / 4h progress</Button>
+     <Button variant="outline" disabled={career.weeklyHours+4>F.WEEKLY_CAPACITY} onClick={()=>act((x,fx)=>F.doWork(x,fx,"quality"))}>Craft for quality · 4h / 4h progress</Button>
+     <Button variant="outline" disabled={career.weeklyHours+4>F.WEEKLY_CAPACITY} onClick={()=>act((x,fx)=>F.doWork(x,fx,"speed"))}>Speed up · 4h / 6h progress</Button>
     </div>
-    <p className="mt-gig-note">Focus choices affect deliverable quality. Extra hours cannot be assigned beyond the weekly capacity.</p>
+    <p className="mt-gig-note">Work-day estimates assume eight productive hours a day within the global weekly turn. Passing End Week still advances the entire game. Speed sacrifices quality; evidence validation is especially useful for audit and research jobs.</p>
     <Button className="w-full" disabled={remaining>0} onClick={()=>act(F.askForReview)}>Send deliverables for client feedback</Button>
    </section>}
   {p.stage==="feedback"&&<section className="mt-gig-panel">
@@ -51,7 +53,7 @@ export function FreelanceJobDesk(){
   {p.stage==="done"&&<section className="mt-gig-panel">
    <h3><CheckCircle2 size={18}/> Deliverables accepted</h3>
    <p>Quality {p.quality}/100 · Full service fee {money(t.fee)} · Personal expenses {money(t.outOfPocket)}.</p>
-   <p>Your final invoice is payable after a future weekly review. Jobs delivered to the same client build repeat-business history.</p>
+   <p>Modeled handover Day {p.deliveredDay??s.clock.day}. Final invoice is paid after its due date in a future End Week. Returning clients build repeat-business history.</p>
    <Button className="w-full" onClick={()=>act(C.nextClient)}>Find another freelance job</Button>
   </section>}
   <details className="mt-gig-ledger"><summary>Freelancer finances & portfolio</summary>

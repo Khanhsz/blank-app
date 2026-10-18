@@ -171,7 +171,7 @@ export function chooseFreelanceClient(s:GameState,fx:Fx,clientId:string,jobId="s
  // into the next client when the player changes their mind.
  if(c.catalogClientId!==client.id)c.briefId=newCampaign(c.scenarioIndex,s.clock.day).briefId;
  c.catalogClientId=client.id;
- c.freelanceJob={templateId:job.id,stage:"brief",hoursWorked:0,revisionHours:0,focus:null,clientFeedback:null,quality:50,revisions:0,deadlineDay:0,weekHours:0};
+ c.freelanceJob={templateId:job.id,stage:"brief",hoursWorked:0,revisionHours:0,focus:null,clientFeedback:null,quality:50,revisions:0,deadlineDay:0,weekHours:0,actualWorkHours:0};
  c.aiScenario=null;c.aiStatus="pending";c.aiError=null;c.legacyBrief=false;
  c.journey={step:"brief",questions:[],diagnosis:null,confidence:0,approach:null,message:"",pitchedCreative:null,pitchFeedback:null,pitchCount:0,mediaPlan:null,review:null};
  fx.log("Selected "+client.segment+" client "+client.brand+" from the client master database");
@@ -192,8 +192,8 @@ export function nextClient(s:GameState,fx:Fx){
  if(s.agencyUnlocked||s.campaign.phase!=="results"||(s.campaign.journey&&!s.campaign.journey.review))return fx.toast("Complete the Client Review before requesting another brief.");
  const next=(s.campaign.scenarioIndex+1)%3;
  s.campaign=newCampaign(next,s.clock.day);
- fx.log("New brief from "+scenarios[next].brand+" at Week "+s.clock.week);
- fx.toast("New brief: "+scenarios[next].brand);
+ fx.log("Bedroom job desk reopened · Week "+s.clock.week+" · choose your next client and scope.");
+ fx.toast("Job complete. Choose a new freelance gig or client.");
 }
 export function buyUpgrade(s: GameState, fx: Fx, id: UpgradeId | "cowork") {
   const item = id === "cowork" ? { cost: COWORK_COST, name: "Coworking Membership" } : upgrades[id];
@@ -207,7 +207,7 @@ export const agencyReqs=(s:GameState)=>{
  const legacy=s.history.filter(x=>!x.agency).length>=3&&s.reputation>=AGENCY_REQ.reputation&&s.expertise>=AGENCY_REQ.expertise;
  return [
   {name:"8 freelance gigs/projects",ok:legacy||completedGigCount(s)>=8,num:completedGigCount(s)+"/8"},
-  {name:"2 mini campaigns",ok:legacy||p.completedMiniCampaigns>=2,num:p.completedMiniCampaigns+"/2"},
+  {name:"2 specialist freelance projects",ok:legacy||p.completedProjects>=2,num:p.completedProjects+"/2"},
   {name:"4 positive reviews",ok:legacy||p.positiveReviews>=4,num:p.positiveReviews+"/4"},
   {name:"1 repeat client",ok:legacy||p.repeatClients>=1,num:p.repeatClients+"/1"},
   {name:"Personal cash 8M",ok:s.personalCash>=AGENCY_REQ.cash,num:(s.personalCash/1e6).toFixed(1)+"/8M"}

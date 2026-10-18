@@ -59,14 +59,32 @@ export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelec
  return <div className="mt-client-catalog">
   <header className="mt-client-catalog-head"><div><small>CLIENT INTELLIGENCE / MASTER DATABASE V1</small><h2>Client Marketplace</h2>
    <p>{mode==="freelancer"?"Approach a Startup or SME from your bedroom. Gemini generates that company’s fictional business context, discovery dialogue, insight and strategy. No prewritten brief is used.":bigCorpUnlocked?"Research companies from Startups to Big Corp. Higher-tier RFPs need strong delivery proof and reputation.":"Your new agency can approach Startups and SMEs. Deliver three agency campaigns and reach 55 reputation to access Big Corp."}</p></div><Database size={25}/></header>
-  {mode==="freelancer"&&<div className="mt-freelance-offer"><b>Freelance Job Board · choose your scope</b>
-    <p>Small deliverable-based contracts first. Service fee is separate from client media budget.</p>
-    <select aria-label="Freelance job type" value={selectedJob} onChange={e=>setSelectedJob(e.target.value)}>
-      {FREELANCE_JOBS.map(job=><option key={job.id} value={job.id} disabled={!canOfferJob(game,job)}>{job.title} · {money(job.fee)} · {job.days}d{!canOfferJob(game,job)?" · Locked":""}</option>)}
-    </select>
-    <small>Unlocked by completed gigs and projects. Mini campaign opens after portfolio experience.</small>
-    <div className="mt-freelance-offer-row"><span>Completed gigs/projects: <b>{workload(game).completedGigs+workload(game).completedProjects}</b></span><span>Mini campaigns: <b>{workload(game).completedMiniCampaigns}</b></span></div>
-  </div>}
+  {mode==="freelancer"&&<section className="mt-freelance-offer"><b>Bedroom · Freelance Job Board</b>
+    <p>Choose the work you can realistically deliver alone, then approach a Startup or SME below. Each price is an agreed freelancer service fee—not the client's advertising budget.</p>
+    <div className="mt-freelance-job-grid" role="group" aria-label="Freelance job scopes">
+      {FREELANCE_JOBS.map(job=>{
+       const unlocked=canOfferJob(game,job);
+       const selected=selectedJob===job.id;
+       return <button key={job.id} type="button" aria-pressed={selected} disabled={!unlocked}
+        onClick={()=>setSelectedJob(job.id)} className={"mt-freelance-job-option "+(selected?"selected":"")}>
+        <span className="mt-freelance-job-title"><b>{job.title}</b><small>{job.tier==="gig"?"SOLO GIG":job.tier==="project"?"SPECIALIST PROJECT":"LOCAL MINI CAMPAIGN"}</small></span>
+        <strong>{money(job.fee)}</strong>
+        <span className="mt-freelance-job-facts">{job.days} days · {job.hours} work hours · {job.revisions} revisions</span>
+        <span className="mt-freelance-job-scope">{job.deliverables}</span>
+        <span className="mt-freelance-job-budget">{job.mediaBudget?money(job.mediaBudget)+" client-owned media":"No client media spend"}</span>
+        {!unlocked&&<span className="mt-freelance-locked">Unlock: {job.tier==="campaign"?"6 gigs/projects + 2 specialist projects":job.requiredGigs+" completed gigs/projects"}</span>}
+       </button>;
+      })}
+    </div>
+    <div className="mt-freelance-selected"><b>Selected: {FREELANCE_JOBS.find(j=>j.id===selectedJob)?.title}</b>
+     <span>Deliverables and agreed scope drive your client review; views and sales are not guaranteed for content-only jobs.</span>
+    </div>
+    <div className="mt-freelance-offer-row"><span>Completed gigs/projects: <b>{workload(game).completedGigs+workload(game).completedProjects}</b></span>
+     <span>Specialist projects: <b>{workload(game).completedProjects}</b></span>
+     <span>Positive reviews: <b>{workload(game).positiveReviews}</b></span>
+    </div>
+    <small>Job fees are simulated game-balance assumptions. Choose a client below to request a Gemini brief tied to this exact job scope.</small>
+  </section>}
   <div className="mt-client-catalog-summary">
    <div><small>AVAILABLE CLIENTS</small><b>{bigCorpUnlocked?CLIENT_COUNTS.total-50:CLIENT_COUNTS.startup+CLIENT_COUNTS.sme}</b></div>
    <div><small>STARTUPS</small><b>{CLIENT_COUNTS.startup}</b></div>
