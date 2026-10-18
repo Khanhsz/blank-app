@@ -1,3 +1,85 @@
+export const BEDROOM_JOBS={
+  "social-pack": {
+    "tier": "gig",
+    "fee": 700000,
+    "mediaBudget": 0,
+    "days": 4,
+    "hours": 12,
+    "revisions": 2,
+    "deliverables": "5 branded social posts",
+    "successMetric": "Approved deliverables"
+  },
+  "social-audit": {
+    "tier": "gig",
+    "fee": 600000,
+    "mediaBudget": 0,
+    "days": 3,
+    "hours": 8,
+    "revisions": 1,
+    "deliverables": "Channel audit and recommendations",
+    "successMetric": "Approved audit"
+  },
+  "content-calendar": {
+    "tier": "gig",
+    "fee": 1000000,
+    "mediaBudget": 0,
+    "days": 5,
+    "hours": 16,
+    "revisions": 2,
+    "deliverables": "Two-week content calendar",
+    "successMetric": "Client-approved calendar"
+  },
+  "short-video": {
+    "tier": "gig",
+    "fee": 1500000,
+    "mediaBudget": 0,
+    "days": 5,
+    "hours": 20,
+    "revisions": 2,
+    "deliverables": "5 edited short videos",
+    "successMetric": "Client-approved video assets"
+  },
+  "meta-setup": {
+    "tier": "project",
+    "fee": 1200000,
+    "mediaBudget": 2000000,
+    "days": 7,
+    "hours": 20,
+    "revisions": 2,
+    "deliverables": "Meta Ads setup and tracking",
+    "successMetric": "Correct setup, not guaranteed sales"
+  },
+  "audience-research": {
+    "tier": "project",
+    "fee": 2000000,
+    "mediaBudget": 0,
+    "days": 8,
+    "hours": 24,
+    "revisions": 2,
+    "deliverables": "Audience research and insight report",
+    "successMetric": "Evidence-backed recommendations"
+  },
+  "content-sprint": {
+    "tier": "project",
+    "fee": 3200000,
+    "mediaBudget": 1200000,
+    "days": 10,
+    "hours": 28,
+    "revisions": 2,
+    "deliverables": "Cross-platform content sprint",
+    "successMetric": "Approved channel assets"
+  },
+  "mini-launch": {
+    "tier": "campaign",
+    "fee": 4500000,
+    "mediaBudget": 3200000,
+    "days": 21,
+    "hours": 40,
+    "revisions": 2,
+    "deliverables": "Local mini campaign",
+    "successMetric": "Measured local results"
+  }
+};
 import {createHash} from "node:crypto";
 const INSIGHTS=["awareness","value","location","trust","style"];
 const SEGMENTS=["students","youngpros","genz","everyone"];
@@ -30,7 +112,7 @@ export function validateCandidate(raw,category="coffee",clientContext=null){
   return {id,title:string(v.title,90,"insight title "+id),desc:string(v.desc,190,"insight description "+id)};
  });if(seen.size!==INSIGHTS.length)throw Error("Missing insight");
  const channel={};for(const id of CHANNELS)channel[id]=number(raw.channel?.[id],.65,1.45,"channel");
- const budget=number(raw.budget,8000000,16000000,"budget");
+ const budget=number(raw.budget,clientContext?0:8000000,16000000,"budget");
  const target=number(raw.target,15,38,"target");
  const baseline=number(raw.baseline,15,120,"baseline");
  const fee=Math.round(budget*.4/100000)*100000;
@@ -46,7 +128,10 @@ export function validateCandidate(raw,category="coffee",clientContext=null){
  return {
   id:"ai-"+digest.slice(0,12),
   brand:selected?.brand??string(raw.brand,72,"brand"),industry:selected?.industry??string(raw.industry,85,"industry"),contact:string(raw.contact,90,"contact"),
-  budget:Math.round(budget/100000)*100000,fee,days:14,
+  budget:selected?BEDROOM_JOBS[selected.jobTemplateId].mediaBudget:Math.round(budget/100000)*100000,
+  fee:selected?BEDROOM_JOBS[selected.jobTemplateId].fee:fee,
+  days:selected?BEDROOM_JOBS[selected.jobTemplateId].days:14,
+  ...(selected?{jobMeta:{templateId:selected.jobTemplateId,...BEDROOM_JOBS[selected.jobTemplateId],serviceFee:BEDROOM_JOBS[selected.jobTemplateId].fee}}:{}),
   baseline,target,metric:string(raw.metric,60,"metric"),unit:string(raw.unit,30,"unit"),
   summary:string(raw.summary,190,"summary"),client:string(raw.client,420,"client"),
   ...truth,channel,reports,insightOptions,aiPlanning,clientAnswers,
@@ -123,7 +208,8 @@ export function validateApproachClient(raw){
  const description=string(raw.description,190,"catalog challenge");
  const industry=string(raw.industry,85,"catalog industry");
  const marketingBudgetVnd=number(raw.marketingBudgetVnd,1000000,100000000000,"fictional annual marketing budget");
- return {id,segment:match[1],sector:match[2],brand,industry,description,marketingBudgetVnd};
+ const jobTemplateId=raw.jobTemplateId===undefined?"social-pack":only(raw.jobTemplateId,Object.keys(BEDROOM_JOBS),"job template");
+ return {id,segment:match[1],sector:match[2],brand,industry,description,marketingBudgetVnd,jobTemplateId};
 }
 export const CLIENT_ANSWERS=["audience","barrier","success","constraint"];
 export function clientPrompt(category,client){
@@ -132,7 +218,10 @@ export function clientPrompt(category,client){
  prompt(category).replace("exactly these top-level fields:", "the listed top-level fields PLUS aiPlanning and clientAnswers:").replace("channel, reports, insightOptions.", "channel, reports, insightOptions, aiPlanning, clientAnswers."),
  "IMPORTANT: This is NOT a random incoming client. The player explicitly approached a client from their bedroom workstation.",
  "Selected fictional company: "+JSON.stringify(c)+". The fictional client brand MUST equal "+JSON.stringify(c.brand)+".",
- "Use selected company sector, business challenge and simulated marketing budget to create a UNIQUE 14-day freelance campaign. The annual marketing budget is NOT the project's budget; choose a reasonable 8M–16M VND project spend.",
+ "LOCKED FREELANCER JOB TEMPLATE: "+JSON.stringify(BEDROOM_JOBS[c.jobTemplateId])+". Job ID: "+c.jobTemplateId+".",
+ "This is a solo freelancer commission, not a full-service agency. Do not add nationwide launch, KOL network, or complex research unless within specified deliverables.",
+ "No promise of revenue lift for content deliverables. The score measures deliverables, brief fit, revision limits and timely handover.",
+ "The client's yearly marketing budget is NOT the freelancer fee. Set budget equal to the template mediaBudget, or zero; the server overwrites fee, media spend and schedule.",
  "Also return aiPlanning {context,insight,strategy} and clientAnswers {audience,barrier,success,constraint}.",
  "aiPlanning.context must be a plausible market/business situation with meaningful competitive tension, not a real-data claim.",
  "aiPlanning.insight must be a thoughtful human motivation or friction HYPOTHESIS with a falsifiable assumption; do not reveal enum trueInsight or guarantee validity.",

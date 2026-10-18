@@ -4,6 +4,8 @@ import { newCampaign, type Campaign, type GameState, type ScoreResult } from "./
 import type { Fx } from "./store";
 import { ceoInit } from "./ceo";
 import {getClient} from "./clientDatabase";
+import {getFreelanceJob} from "./freelanceJobTemplates";
+import {canOfferJob,recordMiniCampaign,completedGigCount,workload} from "./freelanceJobs";
 
 export const scenarioOf = (c: Campaign) => c.aiScenario ?? scenarios[c.scenarioIndex % scenarios.length];
 /** A brief specifies the actual deadline; stages are suggested windows, not fixed gates. */
@@ -149,6 +151,7 @@ export function finalize(s:GameState,fx:Fx){
  s.personalCash+=sc.fee;s.reputation+=rep;s.expertise+=xp;c.day=s.clock.day;
  c.final={...r,qualityScore,rep,xp};c.phase="results";if(c.journey)c.journey.step="report";
  s.history.push({brand:sc.brand,outcome:pct,score:qualityScore,spent:c.spent,rep,xp,scenarioIndex:c.scenarioIndex,agency:false});
+ recordMiniCampaign(s);
  fx.log("Campaign closed: "+pct+"% KPI · "+Math.round(delivered*100)+"% flight delivered");
  if(!s.cityUnlocked){s.cityUnlocked=true;fx.toast("Marketing City unlocked — new opportunities await");}
  else fx.toast("Campaign reviewed — portfolio updated");
@@ -156,10 +159,11 @@ export function finalize(s:GameState,fx:Fx){
 /** Choose freely among startup and SME clients; the brief is generated locally
  * from the canonical catalog, with no fabricated public-company statistics.
  */
-export function chooseFreelanceClient(s:GameState,fx:Fx,clientId:string):boolean{
+export function chooseFreelanceClient(s:GameState,fx:Fx,clientId:string,jobId="social-pack"):boolean{
  if(s.agencyUnlocked||s.campaign.phase!=="brief")return false;
  const client=getClient(clientId);
  if(!client||client.segment==="bigcorp")return false;
+ const job=getFreelanceJob(jobId);if(!job||!canOfferJob(s,job))return false;
  const c=s.campaign;
  // A user must explicitly select a client. The existing AI API provides
  // its fictional context: never silently substitute a static scenario.
@@ -167,6 +171,7 @@ export function chooseFreelanceClient(s:GameState,fx:Fx,clientId:string):boolean
  // into the next client when the player changes their mind.
  if(c.catalogClientId!==client.id)c.briefId=newCampaign(c.scenarioIndex,s.clock.day).briefId;
  c.catalogClientId=client.id;
+ c.freelanceJob={templateId:job.id,stage:"brief",hoursWorked:0,revisionHours:0,focus:null,clientFeedback:null,quality:50,revisions:0,deadlineDay:0,weekHours:0};
  c.aiScenario=null;c.aiStatus="pending";c.aiError=null;c.legacyBrief=false;
  c.journey={step:"brief",questions:[],diagnosis:null,confidence:0,approach:null,message:"",pitchedCreative:null,pitchFeedback:null,pitchCount:0,mediaPlan:null,review:null};
  fx.log("Selected "+client.segment+" client "+client.brand+" from the client master database");
@@ -197,12 +202,17 @@ export function buyUpgrade(s: GameState, fx: Fx, id: UpgradeId | "cowork") {
   s.upgrades.push(id); if (id === "cowork") s.expertise += 1;
   fx.log("Unlocked city service: " + item.name); fx.toast("Unlocked: " + item.name);
 }
-export const agencyReqs = (s: GameState) => [
-  { name: "Complete 3 campaigns", ok: s.history.length >= AGENCY_REQ.campaigns, num: `${s.history.length}/3` },
-  { name: "Reputation 38+", ok: s.reputation >= AGENCY_REQ.reputation, num: `${s.reputation}/38` },
-  { name: "Expertise 18+", ok: s.expertise >= AGENCY_REQ.expertise, num: `${s.expertise}/18` },
-  { name: "Personal cash 8M", ok: s.personalCash >= AGENCY_REQ.cash, num: `${(s.personalCash / 1e6).toFixed(1)}/8M` },
-];
+export const agencyReqs=(s:GameState)=>{
+ const p=workload(s);
+ const legacy=s.history.filter(x=>!x.agency).length>=3&&s.reputation>=AGENCY_REQ.reputation&&s.expertise>=AGENCY_REQ.expertise;
+ return [
+  {name:"8 freelance gigs/projects",ok:legacy||completedGigCount(s)>=8,num:completedGigCount(s)+"/8"},
+  {name:"2 mini campaigns",ok:legacy||p.completedMiniCampaigns>=2,num:p.completedMiniCampaigns+"/2"},
+  {name:"4 positive reviews",ok:legacy||p.positiveReviews>=4,num:p.positiveReviews+"/4"},
+  {name:"1 repeat client",ok:legacy||p.repeatClients>=1,num:p.repeatClients+"/1"},
+  {name:"Personal cash 8M",ok:s.personalCash>=AGENCY_REQ.cash,num:(s.personalCash/1e6).toFixed(1)+"/8M"}
+ ];
+};
 export const canOpenAgency = (s: GameState) => agencyReqs(s).every((r) => r.ok);
 export function createAgency(s: GameState, fx: Fx, name: string) {
   if (!canOpenAgency(s) || s.agencyUnlocked) return;
@@ -218,7 +228,9 @@ export function createAgency(s: GameState, fx: Fx, name: string) {
 export function activateAIBrief(s:GameState,fx:Fx,sc:import("./data").Scenario){
  if(s.agencyUnlocked||s.campaign.phase!=="brief")return false;
  if(!sc?.id?.startsWith("ai-")||!sc.aiMeta||!["awareness","value","location","trust","style"].includes(sc.trueInsight))return false;
- if(!Number.isFinite(sc.budget)||sc.budget<8000000||sc.budget>16000000)return false;
+ if(!Number.isFinite(sc.budget)||sc.budget<0||sc.budget>16000000)return false;
+ const template=getFreelanceJob(s.campaign.freelanceJob?.templateId);
+ if(template&&sc.jobMeta&&(sc.jobMeta.templateId!==template.id||sc.budget!==template.mediaBudget||sc.fee!==template.fee||sc.days!==template.days))return false;
  if(!Array.isArray(sc.insightOptions)||sc.insightOptions.length!==5)return false;
  s.campaign.aiScenario=structuredClone(sc);
  fx.log("AI Dynamic Brief: "+sc.brand+" · "+sc.aiMeta.category);

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {validateCandidate,inputCategory,prompt,validateApproachClient,clientPrompt,CLIENT_SCENARIO_SCHEMA} from "./scenario.mjs";
+import {validateCandidate,inputCategory,prompt,validateApproachClient,clientPrompt,CLIENT_SCENARIO_SCHEMA,BEDROOM_JOBS} from "./scenario.mjs";
 const input={brand:"Breeze Corner",industry:"F&B",contact:"Ms. Lee · Owner",budget:10000000,baseline:45,target:25,metric:"visits/week",unit:"visits",summary:"Grow the afternoon traffic from local students.",client:"Students pass our cafe but many do not come in.",trueInsight:"awareness",trueSegment:"students",truePosition:"study",trueCreative:"study",trueObjective:"visits",channel:{paid:1.1,creator:1.15,promo:.88,flyer:.8},reports:{audit:"Competitors communicate their location through local short videos.",reviews:"Customers like drinks but say not many people know about us.",industry:"Industry demand is growing but does not explain the specific problem.",interview:"Several students did not know the shop even though they pass it daily."},insightOptions:["awareness","value","location","trust","style"].map(id=>({id,title:"Hypothesis "+id,desc:"Some evidence may point to "+id}))};
 test("validated AI scenario retains simulation-compatible fields",()=>{const s=validateCandidate(input,"coffee");assert.equal(s.trueInsight,"awareness");assert.equal(s.reports.interview,input.reports.interview);assert.equal(s.insightOptions.length,5);assert.equal(s.fee,4000000);assert.match(s.id,/^ai-/);});
 test("rejects unbounded and invalid game outcomes",()=>{assert.throws(()=>validateCandidate({...input,trueInsight:"guaranteed_win"},"coffee"));assert.throws(()=>validateCandidate({...input,channel:{...input.channel,creator:30}},"coffee"));assert.throws(()=>validateCandidate({...input,budget:3000000000}));});
@@ -60,4 +60,17 @@ test("rejected arbitrary clients and incomplete AI hypothesis/direction",()=>{
  assert.throws(()=>validateApproachClient({...approached,sector:"fashion"}));
  assert.throws(()=>validateCandidate({...aiAnswer,aiPlanning:{...aiAnswer.aiPlanning,strategy:""}}, "coffee",approached));
  assert.throws(()=>validateCandidate({...aiAnswer,clientAnswers:{...aiAnswer.clientAnswers,barrier:""}}, "coffee",approached));
+});
+
+test("Bedroom V2 scope is server-authoritative, never invented or a full agency campaign",()=>{
+ const selected=validateApproachClient({...approached,jobTemplateId:"social-pack"});
+ const sc=validateCandidate({...aiAnswer,budget:0},selected.sector,selected);
+ assert.equal(sc.jobMeta.templateId,"social-pack");
+ assert.equal(sc.fee,700000);assert.equal(sc.budget,0);assert.equal(sc.days,4);
+ assert.match(clientPrompt(selected.sector,selected),/LOCKED FREELANCER JOB TEMPLATE/);
+ assert.throws(()=>validateApproachClient({...approached,jobTemplateId:"nationwide-rfp"}));
+ const mini=validateApproachClient({...approached,jobTemplateId:"mini-launch"});
+ const cmp=validateCandidate({...aiAnswer,budget:3200000},mini.sector,mini);
+ assert.equal(cmp.fee,4500000);assert.equal(cmp.budget,3200000);assert.equal(cmp.days,21);
+ assert.equal(Object.keys(BEDROOM_JOBS).length,8);
 });

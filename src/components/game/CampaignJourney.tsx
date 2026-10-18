@@ -7,6 +7,8 @@ import * as J from "@/game/journey";
 import {creatives,insights,mediaChannels,money,objectives,optimizations,positions,researchOptions,segments,surveyCosts,type Channel} from "@/game/data";
 import {AnimatedGauge,GameSection,GameStat,FeedbackStrip} from "./GameVisuals";
 import {AutomaticBriefWaiting} from "./AIBriefLauncher";
+import {FreelanceJobDesk} from "./FreelanceJobDesk";
+import {getFreelanceJob} from "@/game/freelanceJobTemplates";
 import {ClientCatalog} from "./ClientCatalog";
 import type {Campaign,CampaignJourney,JourneyStep} from "@/game/state";
 
@@ -179,6 +181,8 @@ export function CampaignJourney(){
     <Button size="sm" variant={browse?"default":"outline"} onClick={()=>setBrowse(true)}>Approach Startup & SME Clients</Button>
     <Button size="sm" variant={!browse?"default":"outline"} onClick={()=>setBrowse(false)} disabled={!c.catalogClientId}>Selected Client · Gemini</Button>
   </div>}
-  {c.phase==="brief"&&(browse||!c.catalogClientId)?<ClientCatalog mode="freelancer" onSelected={()=>setBrowse(false)}/>:<Main key={c.briefId} c={c}/>}
+  {c.phase==="brief"&&(browse||!c.catalogClientId)?<ClientCatalog mode="freelancer" onSelected={()=>setBrowse(false)}/>:
+   c.freelanceJob&&getFreelanceJob(c.freelanceJob.templateId)?.tier!=="campaign"&&c.aiScenario?<FreelanceJobDesk/>:
+   <Main key={c.briefId} c={c}/>}
  </div>;
 }

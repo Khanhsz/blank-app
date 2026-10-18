@@ -35,7 +35,11 @@ export function inferJourney(c:Campaign):CampaignJourney {
  return {...newJourney(),step,questions:step==="brief"?[]:["audience","barrier"],diagnosis:c.insight??null,confidence:c.research.length?55:0,
   pitchedCreative:c.creative??null,mediaPlan:c.mediaBooked?"legacy":null};
 }
-export interface Campaign {
+export interface FreelanceJobProgress {templateId:string;stage:"brief"|"work"|"feedback"|"delivery"|"done";hoursWorked:number;revisionHours:number;focus:"research"|"quality"|"speed"|null;clientFeedback:string|null;quality:number;revisions:number;deadlineDay:number;weekHours:number;}
+export interface FreelanceInvoice {id:string;clientId:string;amount:number;dueDay:number;status:"pending"|"late"|"paid";reminded:boolean}
+export interface FreelanceCareer {completedGigs:number;completedProjects:number;completedMiniCampaigns:number;positiveReviews:number;repeatClients:number;weeklyHours:number;weeklyWeek:number;clientWins:Record<string,number>;invoices:FreelanceInvoice[];completedIds:string[];}
+export const newFreelanceCareer=():FreelanceCareer=>({completedGigs:0,completedProjects:0,completedMiniCampaigns:0,positiveReviews:0,repeatClients:0,weeklyHours:0,weeklyWeek:1,clientWins:{},invoices:[],completedIds:[]});
+export interface Campaign {freelanceJob?:FreelanceJobProgress;
   briefId: string; aiStatus: AIBriefStatus; aiError?: string | null; legacyBrief?:boolean; journey?:CampaignJourney;
   scenarioIndex: number; catalogClientId?:string|null; aiScenario?: Scenario | null; phase: Phase; day: number; spent: number; research: string[];
   startedDay?: number; productionReadyDay?: number; mediaBooked?: boolean; actualLaunchDay?: number;
@@ -144,7 +148,7 @@ export interface GameState {
   version: 2; created: boolean; character: Character; room: RoomStyle; scene: SceneId;
   reputation: number; expertise: number; personalCash: number; agencyCash: number; agencyUnlocked: boolean; agencyName: string;
   staff: string[]; personnel:Record<string,PersonnelProfile>; recruitment?:RecruitmentMarket; teamLeads:Record<string,string>; upgrades: string[]; cityUnlocked: boolean; campaign: Campaign; clock: GameClock; officeId:string;
-  world: WorldProgress;companyMarket?:CompanyMarket;financeCalibration?:FinanceCalibration;
+  world: WorldProgress;companyMarket?:CompanyMarket;financeCalibration?:FinanceCalibration;freelanceCareer?:FreelanceCareer;
   history: { brand: string; outcome: number; score: number; spent: number; rep: number; xp: number; scenarioIndex: number; agency: boolean; caseStudy?: {highlight:string;reason:string;next:string;score:number;diagnosis:string|null;insight:string|null;approach:string|null;creative:string|null;message:string;mediaPlan:string|null;liveWeeks:number} }[];
   log: { t: number; msg: string }[]; graphics: "high" | "low"; ceo: CEO | null;
 }
@@ -162,7 +166,7 @@ export const defaults = (): GameState => ({
   character: { name: "Alex", skin: "#d6a681", outfit: "#4c9589", hair: "#352824", interest: "Strategy", hairstyle:"short", accessory:"none" },
   room: { wall: "#efe4d3", rug: "#bd694a", plant: true, lamp: true, shelf: false },
   scene: "room", reputation: 0, expertise: 0, personalCash: 2500000, agencyCash: 0, agencyUnlocked: false, agencyName: "",
-  staff: [], personnel:{}, recruitment:undefined, teamLeads:{}, upgrades: [], cityUnlocked: false, campaign: newCampaign(0), clock:{day:1,week:1,pending:[],editions:[],lastAdvanceDay:1}, officeId:"agency", world:{visited:[],contacts:[],leasedOffices:[]}, history: [], log: [], graphics: "high", ceo: null,
+  freelanceCareer:newFreelanceCareer(), staff: [], personnel:{}, recruitment:undefined, teamLeads:{}, upgrades: [], cityUnlocked: false, campaign: newCampaign(0), clock:{day:1,week:1,pending:[],editions:[],lastAdvanceDay:1}, officeId:"agency", world:{visited:[],contacts:[],leasedOffices:[]}, history: [], log: [], graphics: "high", ceo: null,
 });
 
 export const newCEO = (reputation: number): CEO => ({
@@ -302,6 +306,8 @@ export function migrate(raw: unknown): GameState {
     ensureRecruitment(out); // register generated staff before client-team reconciliation
     reconcileClientTeams(out);
   }
+  const career=s.freelanceCareer??newFreelanceCareer();
+  out.freelanceCareer={...newFreelanceCareer(),...career,invoices:Array.isArray(career.invoices)?career.invoices:[],completedIds:Array.isArray(career.completedIds)?career.completedIds:[],clientWins:career.clientWins??{},weeklyWeek:Number.isInteger(career.weeklyWeek)?career.weeklyWeek:out.clock.week};
   if(!out.agencyUnlocked||!out.ceo)ensureRecruitment(out);
   ensureCompanyMarket(out);
   return out;

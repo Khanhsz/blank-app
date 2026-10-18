@@ -4,12 +4,14 @@ import {resetGame,act,getState} from "../src/game/store";
 import {newCampaign} from "../src/game/state";
 import {scenarios} from "../src/game/data";
 import {getClient} from "../src/game/clientDatabase";
+import {getFreelanceJob} from "../src/game/freelanceJobTemplates";
 import {chooseFreelanceClient,retryFreelanceApproach} from "../src/game/campaign";
 import {prepareNextBrief} from "../src/game/automaticBrief";
 const fx={toast:()=>{},log:()=>{}};
 const sample=(clientId="startup-coffee-0")=>{
  const client=getClient(clientId)!;
  return {...scenarios[0],id:"ai-approach-example",brand:client.brand,
+  jobMeta:{templateId:"social-pack",tier:"gig" as const,deliverables:"5 social posts",hours:12,revisions:2,serviceFee:700000,mediaBudget:0,successMetric:"Approved posts"},
   aiMeta:{category:client.sector,seed:27182,label:"Simulated Gemini scenario",clientId},
   insightOptions:["awareness","value","location","trust","style"].map(id=>({id,title:"The "+id+" hypothesis",desc:"Fictional client-specific evidence."})),
   aiPlanning:{context:"A new local company competes for students.",insight:"Students need a clear reason to consider this venue.",strategy:"Test targeted proof and discoverability first."},

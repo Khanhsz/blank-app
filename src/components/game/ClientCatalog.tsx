@@ -6,6 +6,8 @@ import * as C from "@/game/campaign";
 import * as M from "@/game/clientMarket";
 import {CLIENT_COUNTS,queryClients,SECTORS,type ClientSector,type ClientSegment,type ClientMaster} from "@/game/clientDatabase";
 import {money} from "@/game/data";
+import {FREELANCE_JOBS} from "@/game/freelanceJobTemplates";
+import {canOfferJob,workload} from "@/game/freelanceJobs";
 import {FortuneSimulationBoard} from "./FortuneSimulationBoard";
 import {ensureCompanyMarket,currentMarketingBudgetVnd} from "@/game/companyMarket";
 
@@ -31,6 +33,7 @@ export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelec
  const [onlyFortune,setOnlyFortune]=useState(false);
  const [shown,setShown]=useState(12);
  const [selected,setSelected]=useState<string|null>(null);
+ const [selectedJob,setSelectedJob]=useState("social-pack");
  const premium=mode==="agency"&&M.bigCorpAccess(game);
  const bigCorpUnlocked=!!premium&&premium.unlocked;
  const segments=SEGMENTS.filter(s=>s.id!=="bigcorp"||(mode==="agency"&&bigCorpUnlocked));
@@ -56,6 +59,14 @@ export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelec
  return <div className="mt-client-catalog">
   <header className="mt-client-catalog-head"><div><small>CLIENT INTELLIGENCE / MASTER DATABASE V1</small><h2>Client Marketplace</h2>
    <p>{mode==="freelancer"?"Approach a Startup or SME from your bedroom. Gemini generates that company’s fictional business context, discovery dialogue, insight and strategy. No prewritten brief is used.":bigCorpUnlocked?"Research companies from Startups to Big Corp. Higher-tier RFPs need strong delivery proof and reputation.":"Your new agency can approach Startups and SMEs. Deliver three agency campaigns and reach 55 reputation to access Big Corp."}</p></div><Database size={25}/></header>
+  {mode==="freelancer"&&<div className="mt-freelance-offer"><b>Freelance Job Board · choose your scope</b>
+    <p>Small deliverable-based contracts first. Service fee is separate from client media budget.</p>
+    <select aria-label="Freelance job type" value={selectedJob} onChange={e=>setSelectedJob(e.target.value)}>
+      {FREELANCE_JOBS.map(job=><option key={job.id} value={job.id} disabled={!canOfferJob(game,job)}>{job.title} · {money(job.fee)} · {job.days}d{!canOfferJob(game,job)?" · Locked":""}</option>)}
+    </select>
+    <small>Unlocked by completed gigs and projects. Mini campaign opens after portfolio experience.</small>
+    <div className="mt-freelance-offer-row"><span>Completed gigs/projects: <b>{workload(game).completedGigs+workload(game).completedProjects}</b></span><span>Mini campaigns: <b>{workload(game).completedMiniCampaigns}</b></span></div>
+  </div>}
   <div className="mt-client-catalog-summary">
    <div><small>AVAILABLE CLIENTS</small><b>{bigCorpUnlocked?CLIENT_COUNTS.total:CLIENT_COUNTS.startup+CLIENT_COUNTS.sme}</b></div>
    <div><small>STARTUPS</small><b>{CLIENT_COUNTS.startup}</b></div>
@@ -88,7 +99,7 @@ export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelec
     <div className="mt-client-profile-footer"><small>{c.basis==="fortune-2026"?"Real company and published rank; proposal and marketing figures are fictional.":"Fictional company · modeled revenue, team size, awareness and budget."}</small>
      <Button size="sm" variant={selected===c.id?"outline":"default"} disabled={!canSelect||(mode==="agency"&&M.isOpenCatalogLead(game,c.id))}
       onClick={()=>{
-       if(mode==="freelancer")act((s,fx)=>C.chooseFreelanceClient(s,fx,c.id));
+       if(mode==="freelancer")act((s,fx)=>C.chooseFreelanceClient(s,fx,c.id,selectedJob));
        else act((s,fx)=>M.approachCatalogClient(s,fx,c.id));
        setSelected(c.id);
        onSelected?.();

@@ -50,14 +50,15 @@ export function prepareNextBrief(){
     method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({category:client.sector,client:{
      id:client.id,brand:client.brand,sector:client.sector,segment:client.segment,
-     description:client.description,industry:client.industry,marketingBudgetVnd:client.marketingBudgetVnd
+     description:client.description,industry:client.industry,marketingBudgetVnd:client.marketingBudgetVnd,jobTemplateId:c.freelanceJob?.templateId??"social-pack"
     }}),signal:controller.signal
    });
    const body=await res.json().catch(()=>null) as {scenario?:Scenario;mode?:string;error?:string}|null;
    if(!res.ok)throw Error(body?.error||"Gemini HTTP "+res.status);
    const scenario=body?.scenario;
    if(body?.mode!=="ai"||!scenario?.aiMeta||scenario.aiMeta.clientId!==clientId||
-     scenario.brand!==client.brand||!scenario.clientAnswers?.barrier||
+     scenario.brand!==client.brand||
+     (scenario.jobMeta?.templateId!==c.freelanceJob?.templateId)||!scenario.clientAnswers?.barrier||
      !scenario.aiPlanning?.context||!scenario.aiPlanning?.insight||!scenario.aiPlanning?.strategy)
     throw Error("Invalid Gemini client response");
    if(match(id,clientId)){

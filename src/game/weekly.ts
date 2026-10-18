@@ -9,6 +9,7 @@ import {employees,money} from "./data";
 import {ensureRecruitment} from "./recruitment";
 import {advanceCompanyMarket,recordClientDelivery,ensureCompanyMarket} from "./companyMarket";
 import {catalogForBrand} from "./clientDatabase";
+import {settleFreelanceWeek} from "./freelanceJobs";
 import type {Fx} from "./store";
 import type {GameState,GameClock,WeeklyArticle,WeeklyCategory,WeeklyDecision,WeeklyEdition} from "./state";
 
@@ -78,7 +79,14 @@ export function endWeek(s:GameState,fx:Fx):WeeklyEdition|null{
   weekly.day=c.day;
  }else weekly.day+=7;
  weekly.week++;weekly.lastAdvanceDay=weekly.day;
- if(!wasAgency)progressFreelanceWeek(s,simulationFx);
+ if(!wasAgency){
+  if(s.campaign.freelanceJob&&s.campaign.freelanceJob.stage!=="done"&&s.campaign.freelanceJob.stage!=="brief"&&s.campaign.freelanceJob.templateId!=="mini-launch"){
+   // Small jobs are driven by focused work sessions, not 7-stage media ticks.
+   const job=s.campaign.freelanceJob;
+   if(weekly.day>job.deadlineDay&&job.stage==="work")simulationFx.log("Freelance deadline passed; quality penalty applies at client review.");
+  }else progressFreelanceWeek(s,simulationFx);
+  settleFreelanceWeek(s,simulationFx);
+ }
  const to=weekly.day;
  if(c)c.weekly=weekly;
  // Project completions are queued by CEO, freelancer deliveries are queued
