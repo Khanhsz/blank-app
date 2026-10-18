@@ -91,18 +91,18 @@ test("catalog generated briefs remain valid complete scenarios for the existing 
   assert.ok(sc.reports.interview&&sc.reports.reviews&&sc.reports.audit);
  }
 });
-test("Agency can prospect any database company, but duplicate open leads are blocked",()=>{
- const s=game();s.agencyUnlocked=true;s.ceo=newCEO(75);
- // Big Corp RFPs unlock only after agency—not freelance—deliveries.
+test("new agency may prospect Startup/SME only; Big Corp unlock requires completed delivery and reputation",()=>{
+ const s=game();s.agencyUnlocked=true;s.ceo=newCEO(75);s.reputation=75;
  assert.equal(approachCatalogClient(s,fx,"f50-4"),false);
- for(let n=0;n<3;n++)s.history.push({brand:"Agency Case "+n,outcome:12,score:80,spent:100000,rep:5,xp:5,scenarioIndex:n,agency:true});
+ assert.equal(approachCatalogClient(s,fx,"sme-coffee-2"),true);
+ s.history=Array.from({length:3},()=>({brand:"Test",outcome:15,score:80,spent:1000000,rep:3,xp:7,scenarioIndex:0,agency:true}));
  assert.equal(approachCatalogClient(s,fx,"f50-4"),true);
  const a=s.ceo.leads.find(x=>x.clientMasterId==="f50-4")!;
  assert.equal(a.brand,"Apple");assert.equal(a.segment,"bigcorp");
  assert.equal(a.businessSize,"enterprise");assert.ok(a.value>0);
  assert.equal(approachCatalogClient(s,fx,"f50-4"),false);
  assert.equal(s.ceo.leads.filter(x=>x.clientMasterId==="f50-4").length,1);
- assert.equal(approachCatalogClient(s,fx,"sme-coffee-2"),true);
+ assert.equal(approachCatalogClient(s,fx,"sme-coffee-2"),false);
  assert.ok(s.ceo.leads.find(x=>x.clientMasterId==="sme-coffee-2"));
 });
 test("new agency contracts load client-specific scenario instead of inheriting wrong legacy category",()=>{
