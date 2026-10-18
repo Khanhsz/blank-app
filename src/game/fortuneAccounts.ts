@@ -2,12 +2,19 @@
  * Published Fortune ranks are NOT game contracts. Everything here is simulation.
  */
 import {CLIENT_DATABASE,CLIENT_BY_ID} from "./clientDatabase";
+import {currentFortuneBoard} from "./companyMarket";
 import type {GameState,FortuneAccount,Lead} from "./state";
 import type {Fx} from "./store";
 
 export const FORTUNE_YEAR_DAYS=365;
 export const FORTUNE_RFP_WINDOW=90;
-export const FORTUNE_CLIENTS=CLIENT_DATABASE.filter(x=>x.fortuneRank!==null);
+export const FORTUNE_CLIENTS=CLIENT_DATABASE.filter(x=>x.fortuneRank!==null); // published sample, not the dynamic game board
+export const isGameFortune50=(s:GameState,id:string)=>((currentFortuneBoard(s).positions[id]??Infinity)<=50);
+export const isGameFortuneTop10=(s:GameState,id:string)=>((currentFortuneBoard(s).positions[id]??Infinity)<=10);
+export function rankedFortuneClients(s:GameState){
+ const board=currentFortuneBoard(s);
+ return board.entries.map(e=>({firm:CLIENT_BY_ID[e.id],rank:e.rank})).filter(x=>!!x.firm);
+}
 const INITIAL_RIVAL_OWNERS:Record<string,{agencyId:string;endDay:number}>={
  "f50-1":{agencyId:"atlas",endDay:140},
  "f50-2":{agencyId:"pulse",endDay:220},
@@ -20,7 +27,7 @@ export function ensureFortuneAccounts(s:GameState):Record<string,FortuneAccount>
  if(!s.ceo)return {};
  if(!accounts||typeof accounts!=="object")s.ceo.fortuneAccounts={};
  const result=s.ceo.fortuneAccounts!;
- for(const firm of FORTUNE_CLIENTS){
+ for(const firm of CLIENT_DATABASE.filter(x=>x.segment==="bigcorp")){
   if(result[firm.id])continue;
   const incumbent=INITIAL_RIVAL_OWNERS[firm.id];
   result[firm.id]={clientId:firm.id,ownerAgencyId:incumbent?.agencyId??null,
@@ -39,14 +46,14 @@ export function fortuneRfpStatus(s:GameState,id:string){
  const remaining=Math.max(0,(account?.endsDay??day)-day);
  const owner=remaining>0?account?.ownerAgencyId??null:null;
  return {firm,account,owner,remaining,
-  open:!!firm?.fortuneRank&&(!owner||owner!=="player"&&remaining<=FORTUNE_RFP_WINDOW),
+  open:isGameFortune50(s,id)&&(!owner||owner!=="player"&&remaining<=FORTUNE_RFP_WINDOW),
   ownerName:account?fortuneOwnerName(s,account):"Available"};
 }
 export function fortuneConflict(s:GameState,clientId:string,excludingLeadId?:string){
- const firm=CLIENT_BY_ID[clientId],rank=firm?.fortuneRank;
- if(!rank||rank>10||!s.ceo)return null;
+ const firm=CLIENT_BY_ID[clientId];
+ if(!firm||!isGameFortuneTop10(s,clientId)||!s.ceo)return null;
  const accounts=ensureFortuneAccounts(s),now=s.ceo.day;
- const conflict=FORTUNE_CLIENTS.find(c=>c.id!==clientId&&c.fortuneRank!==null&&c.fortuneRank<=10&&c.sector===firm.sector&&(
+ const conflict=CLIENT_DATABASE.find(c=>c.id!==clientId&&c.segment==="bigcorp"&&isGameFortuneTop10(s,c.id)&&c.sector===firm.sector&&(
   accounts[c.id]?.ownerAgencyId==="player"&&(accounts[c.id]?.endsDay??0)>now||
   s.ceo!.projects.some(p=>p.status==="active"&&p.clientMasterId===c.id)
  ));
@@ -55,7 +62,7 @@ export function fortuneConflict(s:GameState,clientId:string,excludingLeadId?:str
 /** Read-only confirmation used at both HQ approach and at signature. */
 export function canContractFortune(s:GameState,id:string,leadId?:string){
  const firm=CLIENT_BY_ID[id];
- if(!firm?.fortuneRank||!s.agencyUnlocked||!s.ceo)return {ok:false,reason:"Not a Fortune HQ client."};
+ if(!firm||!isGameFortune50(s,id)||!s.agencyUnlocked||!s.ceo)return {ok:false,reason:"Not currently ranked in the game Fortune 50."};
  const done=s.history.filter(h=>h.agency).length;
  if(done<3||s.reputation<55)return {ok:false,reason:"Requires three completed agency campaigns and reputation 55."};
  const conflict=fortuneConflict(s,id,leadId);
