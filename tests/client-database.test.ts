@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {defaults,newCEO,migrate} from "../src/game/state";
 import {CLIENT_DATABASE,CLIENT_COUNTS,SECTORS,queryClients,getClient,scenarioForClient,agencyLeadForClient} from "../src/game/clientDatabase";
 import {chooseFreelanceClient,scenarioOf} from "../src/game/campaign";
-import {approachCatalogClient} from "../src/game/clientMarket";
+import {approachCatalogClient,approachFortuneAtHQ} from "../src/game/clientMarket";
 import {sign} from "../src/game/ceo";
 import type {Fx} from "../src/game/store";
 const fx:Fx={toast:()=>{},log:()=>{}};
@@ -96,7 +96,9 @@ test("new agency may prospect Startup/SME only; Big Corp unlock requires complet
  assert.equal(approachCatalogClient(s,fx,"f50-4"),false);
  assert.equal(approachCatalogClient(s,fx,"sme-coffee-2"),true);
  s.history=Array.from({length:3},()=>({brand:"Test",outcome:15,score:80,spent:1000000,rep:3,xp:7,scenarioIndex:0,agency:true}));
- assert.equal(approachCatalogClient(s,fx,"f50-4"),true);
+ assert.equal(approachCatalogClient(s,fx,"f50-4"),false,"Fortune accounts never accept Marketplace approach");
+ s.ceo.day=100; // Apple simulated incumbent renewal window is now open.
+ assert.equal(approachFortuneAtHQ(s,fx,"f50-4"),true);
  const a=s.ceo.leads.find(x=>x.clientMasterId==="f50-4")!;
  assert.equal(a.brand,"Apple");assert.equal(a.segment,"bigcorp");
  assert.equal(a.businessSize,"enterprise");assert.ok(a.value>0);
