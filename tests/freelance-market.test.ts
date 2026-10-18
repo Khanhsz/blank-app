@@ -262,7 +262,7 @@ test("V4 enforces capacity, completeness and 20% deduction when all included rev
  V4.returnV4Workspace(s,v.artifacts[0].id);
  const a=v.artifacts[0],unit=V4.unitFor(p.templateId,a.id)!;
  const low=Object.fromEntries(unit.fields.map(f=>[f.id,[...f.options].sort((a,b)=>a.fit-b.fit)[0].id]));
- assert.equal(V4.editV4(s,fx,a.id,low,a.copy+" Revision notes."),true);
+ assert.equal(V4.editV4(s,fx,a.id,low,"Draft needs supporting facts. R1"),true);
  V4.openV4Board(s,fx);V4.submitV4Review(s,fx);
  assert.equal(v.step,"ready");assert.equal(v.deduction,20);
  const before=s.personalCash;assert.equal(V4.finalizeV4(s,fx),true);
