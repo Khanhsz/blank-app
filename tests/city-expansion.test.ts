@@ -87,7 +87,7 @@ test("six corporate client headquarters map to real CEO opportunities",()=>{
   assert.ok(lead!.rivalIds.length>=1);
  }
 });
-test("new corporate leads appear in existing CEO saves without resetting negotiations",()=>{
+test("legacy CEO opportunities remain unchanged without injecting unearned corporate leads",()=>{
  const s=defaults();s.agencyUnlocked=true;s.ceo=newCEO(54);
  const oldIds=new Set(["orion","sora","vertex"]);
  s.ceo.leads=s.ceo.leads.filter(l=>oldIds.has(l.id));
@@ -95,11 +95,11 @@ test("new corporate leads appear in existing CEO saves without resetting negotia
  savedLead.status="qualified";savedLead.relationship=79;
  s.ceo.day=33;
  const loaded=migrate(JSON.parse(JSON.stringify(s)));
- assert.equal(loaded.ceo?.leads.length,6);
+ assert.equal(loaded.ceo?.leads.length,3);
  assert.equal(loaded.ceo?.leads.find(l=>l.id==="orion")?.status,"qualified");
  assert.equal(loaded.ceo?.leads.find(l=>l.id==="orion")?.relationship,79);
  assert.equal(loaded.ceo?.day,33);
- assert.ok(loaded.ceo?.leads.find(l=>l.id==="bloom"));
+ assert.equal(loaded.ceo?.leads.some(l=>l.id==="bloom"),false);
 });
 test("mapped corporate client uses actual qualification and competitive pitch system",()=>{
  const s=defaults();s.agencyUnlocked=true;s.ceo=newCEO(58);s.agencyCash=6000000;s.staff=["account","research","creative","media"];
