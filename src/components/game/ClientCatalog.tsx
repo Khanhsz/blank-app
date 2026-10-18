@@ -9,7 +9,7 @@ import {money} from "@/game/data";
 import {FREELANCE_JOBS} from "@/game/freelanceJobTemplates";
 import {canOfferJob,workload} from "@/game/freelanceJobs";
 /* Fortune 50 accounts are accessed only through the corporate HQ in City. */
-import {ensureCompanyMarket,currentMarketingBudgetVnd} from "@/game/companyMarket";
+import {ensureCompanyMarket,currentMarketingBudgetVnd,currentFortuneBoard} from "@/game/companyMarket";
 
 type Mode="freelancer"|"agency";
 const SEGMENTS=[{id:"all",title:"All sizes"},{id:"startup",title:"Startup"},{id:"sme",title:"SMEs"},{id:"bigcorp",title:"Big Corp"}] as const;
@@ -36,8 +36,9 @@ export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelec
  const premium=mode==="agency"&&M.bigCorpAccess(game);
  const bigCorpUnlocked=!!premium&&premium.unlocked;
  const segments=SEGMENTS.filter(s=>s.id!=="bigcorp"||(mode==="agency"&&bigCorpUnlocked));
+ const board=currentFortuneBoard(game);
  const all=useMemo(()=>queryClients({sector,segment:!bigCorpUnlocked&&segment==="bigcorp"?"all":segment,search:query,sort})
-  .filter(c=>c.fortuneRank===null&&(c.segment!=="bigcorp"||bigCorpUnlocked)),[sector,segment,query,sort,mode,bigCorpUnlocked]);
+  .filter(c=>(board.positions[c.id]??Infinity)>50&&(c.segment!=="bigcorp"||bigCorpUnlocked)),[sector,segment,query,sort,mode,bigCorpUnlocked,board.week]);
 
  const gameMarket=ensureCompanyMarket(game);
  const latest=gameMarket.quarters[0];
@@ -67,13 +68,13 @@ export function ClientCatalog({mode="freelancer",onSelected}:{mode?:Mode;onSelec
     <div className="mt-freelance-offer-row"><span>Completed gigs/projects: <b>{workload(game).completedGigs+workload(game).completedProjects}</b></span><span>Mini campaigns: <b>{workload(game).completedMiniCampaigns}</b></span></div>
   </div>}
   <div className="mt-client-catalog-summary">
-   <div><small>AVAILABLE CLIENTS</small><b>{bigCorpUnlocked?CLIENT_COUNTS.total-CLIENT_COUNTS.fortune:CLIENT_COUNTS.startup+CLIENT_COUNTS.sme}</b></div>
+   <div><small>AVAILABLE CLIENTS</small><b>{bigCorpUnlocked?CLIENT_COUNTS.total-50:CLIENT_COUNTS.startup+CLIENT_COUNTS.sme}</b></div>
    <div><small>STARTUPS</small><b>{CLIENT_COUNTS.startup}</b></div>
    <div><small>SMEs</small><b>{CLIENT_COUNTS.sme}</b></div>
-   <div><small>BIG CORP {bigCorpUnlocked?"":"· LOCKED"}</small><b>{CLIENT_COUNTS.bigcorp-CLIENT_COUNTS.fortune}</b></div>
+   <div><small>BIG CORP {bigCorpUnlocked?"":"· LOCKED"}</small><b>{CLIENT_COUNTS.bigcorp-50}</b></div>
   </div>
   {mode==="agency"&&!bigCorpUnlocked&&premium&&<p className="mt-client-catalog-count">Big Corp & Fortune RFPs locked · completed agency campaigns {premium.completed}/{premium.requiredCampaigns} · reputation {premium.reputation}/{premium.requiredReputation}</p>}
-  {mode==="agency"&&bigCorpUnlocked&&<p className="mt-client-catalog-count">Fortune HQ: visit the Brand Headquarters building in Marketing City to approach a Fortune account. These companies never appear here.</p>}
+  {mode==="agency"&&bigCorpUnlocked&&<p className="mt-client-catalog-count">Game Fortune Top 50: visit each company's HQ marker or Corporate HQ directory in Marketing City. These ranked clients never appear in Marketplace.</p>}
   <div className="mt-client-filters">
    <label><span>Sector</span><select aria-label="Client sector" value={sector} onChange={e=>{setSector(e.target.value as ClientSector|"all");setShown(12);}}><option value="all">All 7 sectors</option>{SECTORS.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></label>
    <label><span>Company size</span><select aria-label="Client segment" value={segment} onChange={e=>{setSegment(e.target.value as ClientSegment|"all");setShown(12);}}>{segments.map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select></label>
