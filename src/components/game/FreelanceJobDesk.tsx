@@ -44,9 +44,9 @@ export function FreelanceJobDesk(){
   {p.stage==="feedback"&&<section className="mt-gig-panel">
     <h3>03 · Client feedback</h3>
     <div className="mt-gig-context"><b>Client review</b><p>{p.clientFeedback}</p><small>Quality index: {p.quality}/100 · Revisions: {p.revisions}/{t.revisions}</small></div>
-    {p.quality>=68?<Button className="w-full" onClick={()=>act(F.deliverSmallJob)}>04 · Handover and send final invoice <FileCheck size={15}/></Button>:
+    {(p.quality>=68||p.revisions>=t.revisions)?<Button className="w-full" onClick={()=>act(F.deliverSmallJob)}>04 · Handover and send final invoice <FileCheck size={15}/></Button>:
      <Button variant="outline" className="w-full" disabled={p.revisions>=t.revisions} onClick={()=>act(F.reviseSmallJob)}>Apply included revision · 4h</Button>}
-    {p.quality<68&&p.revisions>=t.revisions&&<p>Revision limit reached. End Week, then discuss scope with the client before accepting more work.</p>}
+    {p.quality<68&&p.revisions>=t.revisions&&<p>Revision limit reached. You may hand over as-is with reduced client satisfaction and a 20% reduction in the remaining fee.</p>}
    </section>}
   {p.stage==="done"&&<section className="mt-gig-panel">
    <h3><CheckCircle2 size={18}/> Deliverables accepted</h3>

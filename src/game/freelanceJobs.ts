@@ -61,14 +61,14 @@ export function reviseSmallJob(s:GameState,fx:Fx){
 }
 export function deliverSmallJob(s:GameState,fx:Fx){
  const c=s.campaign,p=c.freelanceJob,t=getFreelanceJob(p?.templateId);
- if(!p||!t||p.stage!=="feedback"||p.quality<68||c.final)return fx.toast("Complete approved work and client feedback first.");
+ if(!p||!t||p.stage!=="feedback"||(p.quality<68&&p.revisions<t.revisions)||c.final)return fx.toast("Complete client feedback and included revision rounds first.");
  const career=workload(s),id=c.briefId,clientId=c.catalogClientId??"unknown";
  if(career.completedIds.includes(id))return;
  career.completedIds.push(id);
  const late=s.clock.day>p.deadlineDay;
  const quality=clamp(p.quality-(late?8:0),0,99);
  const rating=quality>=75&&!late;
- const remaining=t.fee-Math.round(t.fee*.2/10000)*10000;
+ const remaining=Math.max(0,Math.round((t.fee-Math.round(t.fee*.2/10000)*10000)*(quality<68?.8:1)/10000)*10000);
  const invoiceId="freelance-"+id;
  const delay=clientId.length%5===0?14:7;
  career.invoices.push({id:invoiceId,clientId,amount:remaining,dueDay:s.clock.day+delay,status:"pending",reminded:false});

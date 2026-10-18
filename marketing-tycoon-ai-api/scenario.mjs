@@ -215,7 +215,10 @@ export const CLIENT_ANSWERS=["audience","barrier","success","constraint"];
 export function clientPrompt(category,client){
  const c=validateApproachClient(client);
  return [
- prompt(category).replace("exactly these top-level fields:", "the listed top-level fields PLUS aiPlanning and clientAnswers:").replace("channel, reports, insightOptions.", "channel, reports, insightOptions, aiPlanning, clientAnswers."),
+ prompt(category).replace("exactly these top-level fields:", "the listed top-level fields PLUS aiPlanning and clientAnswers:")
+   .replace("channel, reports, insightOptions.", "channel, reports, insightOptions, aiPlanning, clientAnswers.")
+   .replace("budget integer from 8000000 to 16000000 VND; baseline integer 15–120; target number 15–38; metric and unit short strings; 14-day freelancer assignment.",
+            "budget integer from 0 to 3200000 VND for CLIENT-OWNED media ONLY. Set days and service fee exclusively from the locked template; baseline integer 15–120; target 15–38."),
  "IMPORTANT: This is NOT a random incoming client. The player explicitly approached a client from their bedroom workstation.",
  "Selected fictional company: "+JSON.stringify(c)+". The fictional client brand MUST equal "+JSON.stringify(c.brand)+".",
  "LOCKED FREELANCER JOB TEMPLATE: "+JSON.stringify(BEDROOM_JOBS[c.jobTemplateId])+". Job ID: "+c.jobTemplateId+".",
@@ -234,6 +237,7 @@ export function clientPrompt(category,client){
 export const CLIENT_SCENARIO_SCHEMA={
  ...GEMINI_SCHEMA,
  properties:{...GEMINI_SCHEMA.properties,
+  budget:{type:"INTEGER",description:"Client-owned media budget from 0 to 3200000 VND. Not freelancer fee."},
   aiPlanning:{type:"OBJECT",properties:{
    context:{type:"STRING"},insight:{type:"STRING"},strategy:{type:"STRING"}
   },required:["context","insight","strategy"]},
