@@ -89,3 +89,4 @@ test("V6 landing-page client brief is accepted with locked pricing and scope",()
 import "./freelance-review.test.mjs";
 
 import "./deliverables.test.mjs";
+import "./brief-quota.test.mjs";
