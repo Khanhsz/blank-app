@@ -12,6 +12,7 @@ import {contractBrief} from "./clientMarket";
 import {ensureFortuneAccounts,canContractFortune,signFortuneAccount,advanceFortuneAccounts,isGameFortuneTop10,FORTUNE_YEAR_DAYS} from "./fortuneAccounts";
 import {recordClientDelivery} from "./companyMarket";
 import {catalogForBrand} from "./clientDatabase";
+import {progressAgencyGigsDay} from "./agencyFreelance";
 import {ensureLocalPricing,qualificationQuote} from "./pricingAdvisor";
 import {ensureRecruitment,acceptCandidate,recruitmentFee,visibleCandidates} from "./recruitment";
 import {activeDealCount,activeDealLimit,proposalMerit,opportunityForecast,acquisitionDay,onProjectCompleted} from "./acquisition";
@@ -43,6 +44,7 @@ export const openIssues = (c: CEO | null) => c?.inbox.filter((i) => i.status ===
 export function capacity(c: CEO) {
   const busy: Record<string, number> = {};
   for (const p of c.projects) if (p.status === "active") for (const t of p.tasks) if (t.status === "in_progress" && t.employee) busy[t.employee] = (busy[t.employee] || 0) + 1;
+  for(const g of c.agencyGigs??[])if(g.status==="working"||g.status==="revision")busy[g.staffId]=(busy[g.staffId]??0)+1;
   return busy;
 }
 const wage = (id: string) => (employeeById(id)?.salary ?? 3000000) / 30;
@@ -98,6 +100,7 @@ export function ceoDay(s: GameState, c: CEO, fx: Fx) {
   const jobs=c.projects.filter(p=>p.status==="active").sort((a,b)=>Number(b.priority==="high")-Number(a.priority==="high") || (a.duration-a.days)-(b.duration-b.days));
   for(const p of jobs){p.days++;p.campaign.day=c.day;progressProject(s,c,p,fx);}
   reconcileClientTeams(s);
+  progressAgencyGigsDay(s,fx);
   updatePersonnelDay(s);
   for (const x of c.ledger) if (x.status === "due" && (x.due ?? 0) <= c.day) { x.status = "paid"; s.agencyCash += x.value; c.totalPaid += x.value; issue(c, fx, "payment", x.lead + x.day, `Received ${money(x.value)} from ${x.lead}`, ["acknowledge"]); }
   acquisitionDay(s,fx);
