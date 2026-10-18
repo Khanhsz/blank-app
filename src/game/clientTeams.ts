@@ -96,6 +96,8 @@ export function joinClientTeam(s:GameState,fx:Fx,teamId:string,employeeId:string
  if(team.memberIds.includes(employeeId))return;
  const other=ownerTeam(s,employeeId);
  if(other)return fx.toast(employeeById(employeeId)?.name+" is dedicated to "+other.brand+". Release or transfer first.");
+ if((s.ceo?.agencyGigs??[]).some(g=>g.staffId===employeeId&&(g.status==="working"||g.status==="revision")))
+  return fx.toast("Finish or reassign the employee\u2019s active side gig before adding them to a client squad.");
  team.memberIds.push(employeeId);team.status="active";
  if(!team.leadId)team.leadId=employeeId;
  fx.log(employeeById(employeeId)?.name+" joined dedicated client team "+team.brand);
