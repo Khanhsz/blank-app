@@ -266,7 +266,7 @@ export function migrate(raw: unknown): GameState {
   // Keep old saves playable; only unaccepted briefs become automatic-AI candidates.
   if (!out.campaign.briefId || typeof out.campaign.briefId!=="string") out.campaign.briefId=newCampaign(out.campaign.scenarioIndex).briefId;
   if (out.campaign.aiScenario) out.campaign.aiStatus="ready";
-  else if (out.campaign.phase==="brief" && !["fallback","pending","generating"].includes(out.campaign.aiStatus)) out.campaign.aiStatus="pending";
+  else if (out.campaign.phase==="brief" && !["fallback","pending","generating","error"].includes(out.campaign.aiStatus)) out.campaign.aiStatus="pending";
   else if (out.campaign.phase!=="brief" && !out.campaign.aiScenario) out.campaign.aiStatus="fallback";
   if (!["room", "city", "office", "boardroom"].includes(out.scene)) out.scene = out.agencyUnlocked ? "office" : "room";
   if (out.agencyUnlocked && out.ceo) {

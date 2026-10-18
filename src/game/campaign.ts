@@ -3,7 +3,7 @@ import { AGENCY_REQ, COWORK_COST, clamp, creatives, hash, insights, money, optim
 import { newCampaign, type Campaign, type GameState, type ScoreResult } from "./state";
 import type { Fx } from "./store";
 import { ceoInit } from "./ceo";
-import {getClient,scenarioForClient} from "./clientDatabase";
+import {getClient} from "./clientDatabase";
 
 export const scenarioOf = (c: Campaign) => c.aiScenario ?? scenarios[c.scenarioIndex % scenarios.length];
 /** A brief specifies the actual deadline; stages are suggested windows, not fixed gates. */
@@ -161,9 +161,13 @@ export function chooseFreelanceClient(s:GameState,fx:Fx,clientId:string):boolean
  const client=getClient(clientId);
  if(!client||client.segment==="bigcorp")return false;
  const c=s.campaign;
+ // A user must explicitly select a client. The existing AI API provides
+ // its fictional context: never silently substitute a static scenario.
+ // A new request identity prevents an earlier pending response from leaking
+ // into the next client when the player changes their mind.
+ if(c.catalogClientId!==client.id)c.briefId=newCampaign(c.scenarioIndex,s.clock.day).briefId;
  c.catalogClientId=client.id;
- c.aiScenario=scenarioForClient(client);
- c.aiStatus="ready";c.aiError=null;
+ c.aiScenario=null;c.aiStatus="pending";c.aiError=null;c.legacyBrief=false;
  c.journey={step:"brief",questions:[],diagnosis:null,confidence:0,approach:null,message:"",pitchedCreative:null,pitchFeedback:null,pitchCount:0,mediaPlan:null,review:null};
  fx.log("Selected "+client.segment+" client "+client.brand+" from the client master database");
  fx.toast("Client brief selected: "+client.brand);
