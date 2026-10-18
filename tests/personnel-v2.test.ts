@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import {defaults,migrate,newCEO,newCampaign,type GameState,type Project,type Task} from "../src/game/state";
 import {ceoTaskDefs} from "../src/game/data";
 import {ceoTick,dailyPayroll,hire} from "../src/game/ceo";
-import {departmentMetrics} from "../src/game/functions";
 import * as P from "../src/game/personnel";
 import * as T from "../src/game/clientTeams";
 import type {Fx} from "../src/game/store";
@@ -39,7 +38,7 @@ test("agency can recruit multiple specialists for the same marketing function",(
  assert.equal(P.primaryRole("creator2"),"creative");
  assert.equal(P.primaryRole("buyer2"),"media");
  assert.ok(P.candidatesForRole("creative").includes("creator2"));
- assert.equal(departmentMetrics(s).find(x=>x.id==="creative")?.primaryCount,2);
+ assert.equal(s.staff.filter(id=>P.primaryRole(id)==="creative").length,2);
 });
 test("two-slot staffing capacity is fixed and increasing skill improves work quality",()=>{
  const s=agency();hire(s,fx,"creator2");

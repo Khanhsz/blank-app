@@ -1,3 +1,5 @@
+> Historical note: This describes the original Arts Quarter vertical slice. For the currently deployed city, see [Full City Modernism](./full-city-modernism.md) and [Material System V5.3](./material-system-v5.3.md). Do not use this page as the current asset inventory.
+
 # Marketing Tycoon · Procedural Blender → GLB → Three.js
 
 ## Current status

@@ -4,7 +4,7 @@
 import {ceoTalent,clamp,employees,employeeById,money} from "./data";
 import type {Fx} from "./store";
 import type {GameState,PersonnelProfile,Task,TalentAttributes,TalentFunction} from "./state";
-import type {FunctionId} from "./functions";
+type FunctionId="account"|"research"|"strategy"|"creative"|"production"|"media"|"data"|"operations";
 
 export const TALENT_FUNCTIONS=[
  {id:"acc",label:"Account & Operations",short:"ACC"},

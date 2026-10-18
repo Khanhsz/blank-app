@@ -1,24 +1,17 @@
 import { useState } from "react";
-import {BriefcaseBusiness,Coins,FlaskConical,Target,Clapperboard,ChartNoAxesCombined,Handshake,Users,FileText,Activity,ShieldCheck,Check} from "lucide-react";
-import {AnimatedGauge,BarComparison,CampaignTimeline,DecisionCard,FeedbackStrip,GameSection,GameStat,PhaseScene,CEOOverview,RivalLandscape} from "./GameVisuals";
+import {BriefcaseBusiness,Coins,Target,Handshake,Users,FileText,Activity,Check} from "lucide-react";
+import {BarComparison,DecisionCard,FeedbackStrip,GameSection,GameStat,PhaseScene,CEOOverview,RivalLandscape} from "./GameVisuals";
 import { Button } from "@/components/ui/button";
-import {AutomaticBriefNotice,AutomaticBriefWaiting} from "./AIBriefLauncher";
 import { act, useGame } from "@/game/store";
 import * as C from "@/game/campaign";
 import * as K from "@/game/ceo";
-import {qualificationQuote} from "@/game/pricingAdvisor";
 import {tenderFor,marketShare,resolveTalentOffer} from "@/game/rivalAI";
-import { ceoPartners, ceoRoles, creatives, employees, employeeById, insights, mediaChannels, money, objectives, optimizations, positions, researchOptions, segments, surveyCosts, upgrades, BRAND_HQ_REP, type Channel, type UpgradeId } from "@/game/data";
-import { PHASES, PHASE_LABEL } from "@/game/state";
+import {ceoPartners,employees,money,upgrades,type UpgradeId} from "@/game/data";
 import {findCityLot,findOffice,currentOffice,cityRival,cityClient,leaseOffice} from "@/game/city";
-import {departmentMetrics} from "@/game/functions";
-import * as P from "@/game/personnel";
-import {recruitmentFee,recruitmentScore} from "@/game/recruitment";
 import {ClientTeamBoard} from "./ClientTeamBoard";
 import {GrowthDesk} from "./GrowthDesk";
 import * as A from "@/game/acquisition";
 import {bigCorpAccess} from "@/game/clientMarket";
-import * as T from "@/game/clientTeams";
 import {CampaignJourney} from "./CampaignJourney";
 import {FortuneHeadquarters} from "./FortuneHeadquarters";
 
@@ -91,9 +84,8 @@ export function LocationPanel({ id, onOpen, onVisitCompany }: { id: string; onOp
   if(id==="brand")return <FortuneHeadquarters onOpenDeal={()=>onOpen("ceo")} onVisitCompany={onVisitCompany}/>;
   if (id === "network") {
     if (s.agencyUnlocked) return <Button className="w-full" onClick={() => onOpen("ceo")}>Open sales pipeline</Button>;
-    const locked = false;
-    return <div className="space-y-3"><Row k="Campaigns completed" v={s.history.length} /><Row k="Reputation" v={s.reputation} />{locked && <p className="text-sm text-muted-foreground">Requires {BRAND_HQ_REP} reputation.</p>}
-      <Button className="w-full" disabled={locked || !s.campaign.journey?.review || s.campaign.phase !== "results"} onClick={() => act(C.nextClient)}>Request a new client brief</Button>
+    return <div className="space-y-3"><Row k="Campaigns completed" v={s.history.length} /><Row k="Reputation" v={s.reputation} />
+      <Button className="w-full" disabled={!s.campaign.journey?.review || s.campaign.phase !== "results"} onClick={() => act(C.nextClient)}>Request a new client brief</Button>
       {s.campaign.phase !== "results" && <Button variant="outline" className="w-full" onClick={() => onOpen("campaign")}>Continue current campaign</Button>}</div>;
   }
   if (id === "agency") {
@@ -142,7 +134,6 @@ export function CEOCommandCenter({onReadEdition}:{onReadEdition?:(id:string)=>vo
     </div>
   );
 }
-void ceoRoles;
 
 function PitchBox() {
   const p=useGame(x=>x.ceo!.pitch!);

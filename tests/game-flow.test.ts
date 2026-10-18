@@ -5,7 +5,7 @@ import {defaults,migrate,newCampaign,newCEO,type Project} from "../src/game/stat
 import * as C from "../src/game/campaign";
 import * as K from "../src/game/ceo";
 import {endWeek,acknowledgeEdition} from "../src/game/weekly";
-import {departmentMetrics} from "../src/game/functions";
+import {TALENT_FUNCTIONS} from "../src/game/personnel";
 import * as J from "../src/game/journey";
 import type {Fx} from "../src/game/store";
 import {seedApproachedClient} from "./helpers/approachedClient";
@@ -57,7 +57,7 @@ test("three campaigns unlock actual CEO mode; employee time and data survive mig
  assert.equal(s.agencyUnlocked,true);
  assert.ok(s.ceo);assert.equal(s.scene,"office");
  assert.equal(s.ceo!.day,s.clock.day,"founding agency must not reset Week 1");
- assert.equal(departmentMetrics(s).length,8);
+ assert.equal(TALENT_FUNCTIONS.length,4);
  const startingDay=s.ceo!.day;const c=s.ceo!;
  K.hire(s,fx,"researcher");
  assert.ok(s.staff.includes("researcher"));

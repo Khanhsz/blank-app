@@ -1,3 +1,5 @@
+> Historical specification: The former eight-department metrics dashboard has been retired. Current staffing and delivery use four talent capabilities (ACC, STR, CRE, MED) and `src/game/resourcePlanning.ts`. The role-specific task engine remains active.
+
 # Weekly campaigns and agency functions (Marketing Tycoon)
 
 ## Global turn clock
