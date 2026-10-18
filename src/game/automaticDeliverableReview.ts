@@ -3,11 +3,11 @@
  */
 import {act,getState} from "./store";
 import {applyV4AIReview} from "./freelanceWorkflows";
-import type {FreelanceV4Artifact} from "./state";
+import type {FreelanceV4Artifact,FreelanceV4Work} from "./state";
 const URL="https://marketing-tycoon-ai-api.onrender.com/api/freelance-deliverables-review";
 const attempts=new Set<string>();
-function payload(jobId:string,reviewRound:number,items:FreelanceV4Artifact[]){
- return {jobId,round:reviewRound,items:items.map(a=>({id:a.id,title:a.title,
+function payload(jobId:string,reviewRound:number,items:FreelanceV4Artifact[],brief:FreelanceV4Work["briefSnapshot"]){
+ return {jobId,round:reviewRound,brief:brief?{objective:brief.objective,audience:brief.audience,insight:brief.insight,acceptance:brief.acceptance,scope:brief.scope}:undefined,items:items.map(a=>({id:a.id,title:a.title,
   summary:a.copy.slice(0,350),issue:a.feedback.slice(0,250),score:a.score,
   status:a.status==="approved"?"approved":"revise"}))};
 }
@@ -17,7 +17,7 @@ export function prepareFreelanceDeliverableReview(){
    !["revision","ready"].includes(v.step)||s.agencyUnlocked)return;
  const briefId=s.campaign.briefId,reviewVersion=v.reviewVersion,key=briefId+":"+reviewVersion;
  if(attempts.has(key))return;attempts.add(key);
- const req=payload(p.templateId,v.reviewRound,v.artifacts);
+ const req=payload(p.templateId,v.reviewRound,v.artifacts,v.briefSnapshot);
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),19000);
  void fetch(URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(req),signal:controller.signal})
   .then(async res=>{if(!res.ok)throw Error("Client review unavailable");

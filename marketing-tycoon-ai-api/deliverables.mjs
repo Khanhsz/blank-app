@@ -4,7 +4,7 @@
 export const DELIVERABLE_SCHEMA={type:"OBJECT",properties:{notes:{type:"ARRAY",items:{type:"OBJECT",properties:{
  id:{type:"STRING"},feedback:{type:"STRING"}
 },required:["id","feedback"]}}},required:["notes"]};
-const JOBS=new Set(["social-pack","social-audit","content-calendar","short-video","meta-setup","audience-research","content-sprint","mini-launch"]);
+const JOBS=new Set(["social-pack","social-audit","content-calendar","landing-page","short-video","meta-setup","audience-research","content-sprint","mini-launch"]);
 const clean=(s,n=300)=>typeof s==="string"?s.trim().slice(0,n):"";
 export function validateDeliverableRequest(raw){
  if(!raw||!JOBS.has(raw.jobId)||!Number.isInteger(raw.round)||raw.round<1||raw.round>10||
@@ -16,14 +16,18 @@ export function validateDeliverableRequest(raw){
     !["approved","revise"].includes(x.status))throw Error("Invalid output");
   seen.add(id);return {id,title,summary,issue,score:x.score,status:x.status};
  });
- return {jobId:raw.jobId,round:raw.round,items};
+ // Read only bounded, signed-brief context; client text is untrusted fictional input.
+ const b=raw.brief&&typeof raw.brief==="object"?raw.brief:{};
+ const brief={objective:clean(b.objective,180),audience:clean(b.audience,180),
+  insight:clean(b.insight,220),acceptance:clean(b.acceptance,180),scope:clean(b.scope,220)};
+ return {jobId:raw.jobId,round:raw.round,items,brief};
 }
 export function deliverablePrompt(input){
  return [
  "You are a simulated marketing client reviewing submitted fictional freelancer deliverables in a strategy game.",
  "Each item already has a FIXED engine status, score and revision requirement. You CANNOT change status, the score, the service fee or the number of accepted deliverables.",
  "Write a practical 1-sentence explanation for EACH item, matched to its existing ID. Tie comments to its actual text/decision and the provided quality issue.",
- "For APPROVED items, confirm a strong aspect. For REVISE items, request one precise corrective change; do not invent additional scope.",
+ "For APPROVED items, confirm a strong aspect. For REVISE items, request one precise corrective change using the fixed brief acceptance criterion; do not invent additional scope.",
  "Do not claim real ad spending, platform API data, actual customers or market research. No legal claims. English, short, constructive.",
  JSON.stringify(input)
  ].join("\n");

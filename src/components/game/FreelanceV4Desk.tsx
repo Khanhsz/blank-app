@@ -1,4 +1,6 @@
-import {ArrowLeft,ArrowRight,CheckCircle2,ClipboardCheck,Clock3,FileCheck2,PenTool,RefreshCcw,Send,Wallet,BookOpen} from "lucide-react";
+import "@/freelance-overhaul.css";
+import {useEffect,useState} from "react";
+import {ArrowLeft,ArrowRight,CheckCircle2,ClipboardCheck,FileCheck2,PenTool,RefreshCcw,Send,Wallet,BookOpen,ChevronUp,ChevronDown} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {useGame,act} from "@/game/store";
 import {money} from "@/game/data";
@@ -11,140 +13,282 @@ import {prepareFreelanceDeliverableReview} from "@/game/automaticDeliverableRevi
 import type {FreelanceV4Artifact} from "@/game/state";
 import {VideoMiniGame,VideoDraftPreview} from "./VideoMiniGame";
 
-const phases=[{id:"brief",label:"Brief"},{id:"workspace",label:"Workspace"},{id:"board",label:"Deliverable Board"},{id:"revision",label:"Client Review"},{id:"ready",label:"Final Submit"},{id:"paid",label:"Paid"}] as const;
-function Editor({artifact,jobId}:{artifact:FreelanceV4Artifact;jobId:string}){
- const game=useGame(s=>s);
- const unit=Work.unitFor(jobId,artifact.id)!;
+const phases=[{id:"brief",label:"Brief"},{id:"workspace",label:"Workspace"},{id:"board",label:"Deliverable Board"},{id:"revision",label:"Client Review"},{id:"ready",label:"Final Submit"}] as const;
+
+/** The legacy select/text editor is available ONLY to video contracts signed before migration. */
+function LegacyVideoEditor({artifact,jobId}:{artifact:FreelanceV4Artifact;jobId:string}){
+ const game=useGame(s=>s),unit=Work.unitFor(jobId,artifact.id)!;
  const decisions=artifact.draft?.decisions??artifact.decisions,copy=artifact.draft?.copy??artifact.copy;
  const update=(choices:Record<string,string>,content:string)=>act(s=>{Work.saveV4Draft(s,artifact.id,choices,content);});
- const draft:FreelanceV4Artifact={...artifact,decisions,copy};
- const score=artifactScore(jobId,draft);
  const allChosen=unit.fields.every(f=>!!decisions[f.id]);
- const dirty=!!artifact.draft;
  const hours=Work.v4EditHours(game,artifact.id);
- const hoursLeft=Math.max(0,WEEKLY_CAPACITY-(game.freelanceCareer?.weeklyWeek===game.clock.week?game.freelanceCareer.weeklyHours:0));
- return <section className="mt-v4-panel" aria-label={"Editing "+unit.title}>
-  <div className="mt-v4-title"><div><small>JOB-SPECIFIC WORKSPACE</small><h3>{unit.title}</h3><p>{unit.description}</p></div><span>v{artifact.version||"Draft"}</span></div>
+ const left=Math.max(0,WEEKLY_CAPACITY-(game.freelanceCareer?.weeklyWeek===game.clock.week?game.freelanceCareer.weeklyHours:0));
+ return <section className="mt-v4-panel"><h3>{unit.title} · legacy contract</h3>
   <div className="mt-v4-choices">{unit.fields.map(field=><label key={field.id} className="mt-v4-field">
-   <span>{field.label}</span>
-   <select value={decisions[field.id]??""} onChange={e=>update({...decisions,[field.id]:e.target.value},copy)}>
-    <option value="">Choose a professional direction</option>
-    {field.options.map(o=><option key={o.id} value={o.id}>{o.label} — {o.detail}</option>)}
-   </select>
-  </label>)}</div>
-  <label className="mt-v4-copy"><span>Editable output · script / report / content</span>
-   <textarea rows={8} maxLength={2500} value={copy} onChange={e=>update(decisions,e.target.value)} aria-label="Edit deliverable content"/>
-  </label>
-  <div className="mt-v4-preview">
-   <div><b>Preview & QA · target {Work.V4_ACCEPTANCE_SCORE}/100</b><span>{allChosen?score+"/100":"Decisions incomplete"}</span></div>
-   <p>{copy}</p>
-   <div className="mt-v4-tags">{unit.fields.map(f=>{const chosen=f.options.find(x=>x.id===decisions[f.id]);return <span key={f.id}>{f.label}: {chosen?.label??"Not set"}</span>})}</div>
+   <span>{field.label}</span><select value={decisions[field.id]??""} onChange={e=>update({...decisions,[field.id]:e.target.value},copy)}>
+    <option value="">Choose a direction</option>{field.options.map(o=><option key={o.id} value={o.id}>{o.label}</option>)}
+   </select></label>)}</div>
+  <label className="mt-v4-copy"><span>Existing script</span><textarea rows={6} value={copy} maxLength={2500} onChange={e=>update(decisions,e.target.value)}/></label>
+  <Button disabled={!allChosen||copy.trim().length<20||hours>left} onClick={()=>act((s,fx)=>Work.editV4(s,fx,artifact.id,decisions,copy))}>Save legacy deliverable</Button>
+ </section>;
+}
+
+
+/** Mini workbenches operate on the same card decisions and saved output as Client Review. */
+function JobSpecificWorkbench({jobId,activeId,decisions,choose,brand}:{jobId:string;activeId:string;decisions:Record<string,string>;choose:(fieldId:string,optionId:string)=>void;brand:string}){
+ const game=useGame(s=>s);
+ const artifacts=game.campaign.freelanceJob?.v4?.artifacts??[];
+ if(jobId==="social-pack")return <div className="mt-v6-workbench">
+  <div className="mt-v6-workbench-head"><h4>Social creative canvas</h4><small>Pick a visual composition; your choice is saved into this post</small></div>
+  <div className="mt-v6-social-canvas"><div className="mt-v6-social-screen">
+   <small>{brand} · SOCIAL</small><div className="mt-v6-social-image">◎<span>{decisions.format==="carousel"?"1 / 3 CAROUSEL":decisions.format==="infographic"?"KEY FACTS / ICONS":"SINGLE HERO VISUAL"}</span></div>
+   <strong>{decisions.pillar==="education"?"Helpful advice":decisions.pillar==="lifestyle"?"A day in your life":"Meet the product"}</strong>
+   <small>CTA: {decisions.cta??"choose below"}</small></div>
+   <div className="mt-v6-workbench-choices">{[["carousel","Carousel"],["static","Single image"],["infographic","Infographic"]].map(([id,label])=>
+    <button type="button" key={id} aria-pressed={decisions.format===id} className={decisions.format===id?"selected":""} onClick={()=>choose("format",id)}>{label}</button>)}</div></div>
+ </div>;
+ if(jobId==="social-audit")return <div className="mt-v6-workbench">
+  <div className="mt-v6-workbench-head"><h4>Account inspection</h4><small>Simulated social signals · mark one evidence hotspot for this finding</small></div>
+  <div className="mt-v6-audit-profile"><div><b>@{brand.toLowerCase().replace(/[^a-z0-9]+/g,"")||"localbrand"}</b><small>Fictional account · 12 posts</small></div>
+   <div className="mt-v6-hotspots">{[
+    {id:"retention",label:"▶ Reel preview",desc:"Viewers leave early"},
+    {id:"engagement",label:"♡ Engagement",desc:"Saves and comments vary"},
+    {id:"cadence",label:"▦ Posting feed",desc:"Uneven weekly schedule"}
+   ].map(o=><button type="button" key={o.id} aria-pressed={decisions.signal===o.id}
+    onClick={()=>choose("signal",o.id)} className={decisions.signal===o.id?"selected":""}>
+    <b>{o.label}</b><small>{o.desc}</small><span>{decisions.signal===o.id?"📍 Marked":"Mark hotspot"}</span></button>)}</div></div>
+ </div>;
+ if(jobId==="content-calendar")return <div className="mt-v6-workbench">
+  <div className="mt-v6-workbench-head"><h4>14-day publishing calendar</h4><small>Seven scheduled outputs across two weeks · select a day to edit its saved card</small></div>
+  <div className="mt-v6-calendar-grid">{Array.from({length:14},(_,i)=>{
+   const day=i+1;const item=artifacts.find(a=>a.title.startsWith("Day "+day+" ·"));
+   return <button type="button" key={day} disabled={!item} aria-pressed={item?.id===activeId}
+    className={(item?"scheduled ":"rest ")+(item?.id===activeId?"selected":"")}
+    onClick={()=>item&&act(s=>Work.setV4Active(s,item.id))}>
+    <small>{day<=7?"WEEK 1":"WEEK 2"} · DAY {day}</small><b>{item?.title.split("·")[1]?.trim()??"Rest / production"}</b>
+    <span>{item?.version?"✓ Saved":item?"Edit post":"—"}</span></button>
+  })}</div></div>;
+ if(jobId==="meta-setup")return <div className="mt-v6-workbench">
+  <div className="mt-v6-workbench-head"><h4>Ads Manager · campaign draft</h4><small>Client-owned media budget. Select a split, not a freelancer payout</small></div>
+  <div className="mt-v6-meta-builder"><div><b>{brand}</b><small>Objective: {decisions.objective??"not set"} · Audience: {decisions.audience??"not set"}</small></div>
+   <div className="mt-v6-budget-bars">{[
+    {id:"603010",split:[60,30,10],label:"Prospect / retarget / test"},
+    {id:"5050",split:[50,50,0],label:"Discover / retarget"},
+    {id:"100",split:[100,0,0],label:"Broad only"}
+   ].map(a=><button key={a.id} type="button" aria-pressed={decisions.budget===a.id} className={decisions.budget===a.id?"selected":""} onClick={()=>choose("budget",a.id)}>
+    <b>{a.label}</b><span className="mt-v6-budget-track">{a.split.map((value,i)=>value>0&&<i key={i} style={{width:value+"%"}}>{value}%</i>)}</span>
+   </button>)}</div></div></div>;
+ if(jobId==="audience-research")return <div className="mt-v6-workbench">
+  <div className="mt-v6-workbench-head"><h4>Evidence sorting desk</h4><small>Fictional study snippets · choose how to interpret them</small></div>
+  <div className="mt-v6-research-wall"><div><small>Interview signal A</small><b>“I need to see what the product solves.”</b></div>
+   <div><small>Feedback signal B</small><b>“The offer details were not clear.”</b></div>
+   <div><small>Behavior signal C</small><b>Users compared options before acting.</b></div></div>
+  <div className="mt-v6-workbench-choices">{[["themes","Group recurring themes"],["quotes","Select supporting quotes"],["guess","Assume without evidence"]].map(([id,label])=>
+   <button type="button" key={id} className={decisions.evidence===id?"selected":""} aria-pressed={decisions.evidence===id} onClick={()=>choose("evidence",id)}>{label}</button>)}</div>
+ </div>;
+ if(jobId==="content-sprint")return <div className="mt-v6-workbench">
+  <div className="mt-v6-workbench-head"><h4>Channel adaptation studio</h4><small>Adapt the same master message to the selected channel</small></div>
+  <div className="mt-v6-channels">{[["instagram","Instagram","Visual + caption"],["tiktok","TikTok","Short hook + demo"],["email","Email","Subject + opt-in CTA"],["website","Website","Benefit + next step"]].map(([id,label,hint])=>
+   <button type="button" key={id} aria-pressed={decisions.channel===id} onClick={()=>choose("channel",id)}
+    className={decisions.channel===id?"selected":""}><b>{label}</b><small>{hint}</small><span>{decisions.channel===id?"✓ Selected":"Adapt here"}</span></button>)}</div>
+ </div>;
+ if(jobId==="mini-launch")return <div className="mt-v6-workbench">
+  <div className="mt-v6-workbench-head"><h4>Local launch timeline</h4><small>Build a complete pre-launch, launch day and follow-up sequence</small></div>
+  <div className="mt-v6-launch-phases">{artifacts.map((a,i)=><button type="button" key={a.id} aria-pressed={a.id===activeId}
+    className={a.id===activeId?"selected":""} onClick={()=>act(s=>Work.setV4Active(s,a.id))}>
+    <span>{i+1}</span><b>{a.title}</b><small>{a.version?"✓ Saved": "Plan activity"}</small></button>)}</div>
+  <div className="mt-v6-workbench-choices">{[["creator","Local creator"],["paid","Geo-targeted ads"],["pop-up","Neighborhood sampling"]].map(([id,label])=>
+   <button type="button" key={id} aria-pressed={decisions.activation===id} className={decisions.activation===id?"selected":""} onClick={()=>choose("activation",id)}>{label}</button>)}</div>
+ </div>;
+ return null;
+}
+
+/** Picking a card updates the persisted draft and its preview in the SAME store action. */
+function CardEditor({artifact,jobId,brand}:{artifact:FreelanceV4Artifact;jobId:string;brand:string}){
+ const game=useGame(s=>s),unit=Work.unitFor(jobId,artifact.id)!;
+ const decisions=artifact.draft?.decisions??artifact.decisions,copy=artifact.draft?.copy??artifact.copy;
+ const complete=unit.fields.every(f=>f.options.some(o=>o.id===decisions[f.id]));
+ const score=artifactScore(jobId,{...artifact,decisions,copy});
+ const hours=Work.v4EditHours(game,artifact.id);
+ const left=Math.max(0,WEEKLY_CAPACITY-(game.freelanceCareer?.weeklyWeek===game.clock.week?game.freelanceCareer.weeklyHours:0));
+ const changed=!!artifact.draft||artifact.version===0;
+ const choose=(fieldId:string,optionId:string)=>{
+  const next={...decisions,[fieldId]:optionId};
+  const content=Work.composeCardOutput(jobId,artifact.id,next,brand);
+  act(s=>{Work.saveV4Draft(s,artifact.id,next,content);});
+ };
+ return <section className="mt-v4-panel mt-v6-editor" aria-label={"Editing "+unit.title}>
+  <div className="mt-v4-title"><div><small>INTERACTIVE WORKSPACE · v{artifact.version||"Draft"}</small><h3>{unit.title}</h3><p>{unit.description}</p></div><PenTool size={20}/></div>
+  <JobSpecificWorkbench jobId={jobId} activeId={artifact.id} decisions={decisions} choose={choose} brand={brand}/>
+  <div className="mt-v6-editor-grid">
+   <div className="mt-v6-card-fields">{unit.fields.map((field,index)=><div className="mt-v6-card-group" key={field.id}>
+    <div className="mt-v6-field-heading"><b>{index+1}. {field.label}</b><span>{decisions[field.id]?"✓ Selected":"Choose one card"}</span></div>
+    <div className="mt-v6-card-options">{field.options.map(o=><button type="button" key={o.id}
+     className={"mt-v6-card-option "+(decisions[field.id]===o.id?"selected":"")} aria-pressed={decisions[field.id]===o.id}
+     onClick={()=>choose(field.id,o.id)}><b>{o.label}</b><small>{o.detail}</small><span>{decisions[field.id]===o.id?"✓":""}</span></button>)}</div>
+   </div>)}</div>
+   <aside className="mt-v6-live-preview"><div className="mt-v6-preview-heading"><b>LIVE DELIVERABLE PREVIEW</b><span>{complete?score+"/100":"Draft"}</span></div>
+    <div className={"mt-v6-preview-sheet mt-v6-"+jobId}>
+     <small>{brand} · MARKETING DELIVERABLE</small><h4>{unit.title}</h4>
+     {unit.fields.map(field=>{const choice=field.options.find(o=>o.id===decisions[field.id]);return <div className="mt-v6-preview-line" key={field.id}>
+      <small>{field.label}</small><b>{choice?.label??"Choose "+field.label.toLowerCase()}</b>
+      <p>{choice?.detail??"Your selected direction will appear here."}</p>
+     </div>})}
+    </div>
+    <details><summary>View the saved output text</summary><pre>{copy}</pre></details>
+    <p className="mt-v6-preview-note">Preview and client review are generated from the selected cards stored in this deliverable. No fictitious performance data is promised.</p>
+   </aside>
   </div>
   <div className="mt-v4-actions">
-   <Button disabled={!allChosen||copy.trim().length<20||hours>hoursLeft||(!dirty&&artifact.version>0)} onClick={()=>act((s,fx)=>{Work.editV4(s,fx,artifact.id,decisions,copy);})}>
+   <Button disabled={!complete||!changed||hours>left} onClick={()=>act((s,fx)=>Work.editV4(s,fx,artifact.id,decisions,copy))}>
     <CheckCircle2 size={15}/> {artifact.version?"Save Version "+(artifact.version+1):"Save Deliverable"} · {hours}h
    </Button>
-   <small role="status">{dirty?"Draft saved automatically. Save a deliverable version to include these changes in client review.":artifact.version?"Deliverable version saved for client review.":"Choose each direction, then save the deliverable."}</small>
-   {hours>hoursLeft&&<small className="mt-v4-capacity">Need {hours}h; {hoursLeft}h left this week. Your draft is saved. Use End Week to restore work hours.</small>}
+   <span role="status">{artifact.draft?"✓ Choices auto-saved · finalize the version to send":artifact.version?"✓ Version saved and ready for the Deliverable Board":"Choose one card from each row to create this output."}</span>
+   {hours>left&&<small className="mt-v4-capacity">Capacity {left}h left; your choices remain saved. End Week to restore work hours.</small>}
   </div>
  </section>;
 }
-export function FreelanceV4Desk(){
- const s=useGame(x=>x),c=s.campaign,p=c.freelanceJob,v=p?.v4,job=getFreelanceJob(p?.templateId);
- const def=designFor(p?.templateId),career=workload(s);
- if(!p||!v||!job||!def)return null;
- const sc=c.aiScenario;
- const current=v.artifacts.find(a=>a.id===v.activeId)??v.artifacts[0];
- const completed=v.artifacts.filter(a=>a.status==="ready"||a.status==="approved").length;
- const approved=v.artifacts.filter(a=>a.status==="approved").length;
- const drafts=v.artifacts.filter(a=>!!a.draft).length;
- const estimate=freelanceDeliveryEstimate(s);
- const fee=p.acceptedFee??job.fee;
- const amount=Work.v4PaymentAmount(fee,v.deduction);
- const nav=phases.findIndex(x=>x.id===(v.step==="client_review"?"revision":v.step));
- const reviewItems=v.artifacts.filter(a=>a.status==="revise");
- return <div className="mt-v4">
-  <header className="mt-v4-header">
-   <div><small>BEDROOM · {def.workstation.toUpperCase()}</small><h2>{job.title}</h2><p>{sc?.brand??"Client"} · {job.tier==="gig"?"Entry Gig":job.tier==="project"?"Specialist Project":"Mini Campaign"}</p></div><PenTool size={22}/>
-  </header>
-  <div className="mt-v4-metrics">
-   <div><small>AGREED FEE</small><b>{money(fee)}</b></div><div><small>CLIENT MEDIA</small><b>{money(job.mediaBudget)}</b></div><div><small>DELIVERABLES</small><b>{completed}/{v.artifacts.length}</b></div><div><small>WORK HOURS LEFT</small><b>{Math.max(0,WEEKLY_CAPACITY-career.weeklyHours)}</b></div>
-  </div>
-  <div className="mt-v4-route" aria-label="Freelance delivery stages">{phases.map((item,i)=><span key={item.id} className={nav===i?"active":nav>i?"complete":""}>{i+1}. {item.label}</span>)}</div>
-  {v.step==="brief"&&<section className="mt-v4-panel">
-   <div className="mt-v4-title"><div><small>01 · CLIENT BRIEF & REQUIREMENTS</small><h3>Understand the assignment</h3></div><BookOpen size={20}/></div>
-   <p className="mt-v4-main-copy">{sc?.client??sc?.summary??"Review the approved assignment."}</p>
-   {sc?.aiPlanning?.context&&<div className="mt-v4-client"><b>Gemini · Client context</b><p>{sc.aiPlanning.context}</p></div>}
-   {sc?.aiPlanning?.insight&&<div className="mt-v4-client"><b>Insight hypothesis</b><p>{sc.aiPlanning.insight}</p></div>}
-   <p><b>Scope:</b> {job.deliverables}</p><p><b>Acceptance:</b> {job.successMetric}</p>
-   <p><b>Deadline:</b> {job.days} days · <b>Revisions:</b> {job.revisions} included · <b>Est. effort:</b> {job.hours}h</p>
-   <p className="mt-v4-muted">Accepting this brief does not pay a deposit. You are paid after final delivery is approved. Client media is not freelance income.</p>
-   <Button className="w-full" onClick={()=>act(Work.startV4)}>Accept Job · Start Working <ArrowRight size={16}/></Button>
-  </section>}
-  {v.step==="workspace"&&<section className="mt-v4-work">
-   <div className="mt-v4-client"><b>Assignment</b><p>{def.intro}</p>{sc?.reports?.interview&&<details><summary>Client evidence and context</summary><p>{sc.reports.interview}</p><p>{sc.reports.audit}</p></details>}</div>
-   <div className="mt-v4-selector" aria-label="Choose a job deliverable">
-    {v.artifacts.map((a,i)=><button key={a.id} type="button" className={a.id===current.id?"active":""}
-     disabled={a.status==="approved"} onClick={()=>act(s=>Work.setV4Active(s,a.id))}>
-     <span>{i+1}. {a.title}</span><small>{a.status==="approved"?"Approved":a.draft?"Draft saved · version needed":a.version?"v"+a.version+" · "+a.status:"New draft"}</small>
-    </button>)}
-   </div>
-   {job.id==="short-video"&&(current.version===0||current.video||current.videoDraft)
-    ? <VideoMiniGame key={c.briefId+"-"+current.id} artifact={current} brand={sc?.brand??"Client"}/>
-    : <Editor key={c.briefId+"-"+current.id} artifact={current} jobId={job.id}/>}
-   <div className="mt-v4-bottom">
-    <div><small>Progress</small><b>{completed}/{v.artifacts.length} deliverable versions</b><small>{drafts>0?" · "+drafts+" edited draft(s) to save":""} · {p.actualWorkHours??0}h worked · deadline Day {p.deadlineDay} · est. Day {estimate?.workDay??s.clock.day}</small></div>
-    <Button disabled={completed!==v.artifacts.length||drafts>0} onClick={()=>act(Work.openV4Board)}>
-      Review All Deliverables <ArrowRight size={15}/>
-    </Button>
-   </div>
-  </section>}
-  {v.step==="board"&&<section className="mt-v4-panel">
-   <div className="mt-v4-title"><div><small>DELIVERABLE BOARD</small><h3>Confirm every output</h3><p>Inspect the actual draft and return to Workspace to edit before client review.</p></div><ClipboardCheck size={20}/></div>
-   <div className="mt-v4-boards">{v.artifacts.map(a=><div className="mt-v4-artifact" key={a.id}>
-    <div><b>{a.title}</b><span>{a.status} · v{a.version} · {a.score}/100</span></div>
-    <p>{a.copy}</p>
-    {a.video&&<VideoDraftPreview video={a.video} title={a.title}/>}
-    <div className="mt-v4-tags">{Object.entries(a.decisions).map(([key,value])=><span key={key}>{key}: {value}</span>)}</div>
-    <Button variant="outline" size="sm" disabled={a.status==="approved"} onClick={()=>act(s=>Work.returnV4Workspace(s,a.id))}><PenTool size={14}/> Back & Edit</Button>
-   </div>)}</div>
-   <Button className="w-full" onClick={()=>{act(Work.submitV4Review);prepareFreelanceDeliverableReview();}}>
-    <Send size={15}/> Submit for Client Review
-   </Button>
-  </section>}
-  {v.step==="revision"&&<section className="mt-v4-panel">
-   <div className="mt-v4-title"><div><small>CLIENT REVIEW · ROUND {v.reviewRound}/{job.revisions+1}</small><h3>Specific revisions requested</h3></div><RefreshCcw size={20}/></div>
-   <p>{p.clientFeedback}</p>
-   <div className="mt-v4-boards">{v.artifacts.map(a=><div className="mt-v4-artifact" key={a.id}>
-    <div><b>{a.title}</b><span>{a.status==="approved"?"Approved":"Needs revision"}</span></div>
-    <p>{a.feedback}</p>
-    {a.video&&<VideoDraftPreview video={a.video} title={a.title}/>}
-    {a.status==="revise"&&<Button variant="outline" size="sm" onClick={()=>act(s=>Work.returnV4Workspace(s,a.id))}>Edit This Deliverable <ArrowRight size={14}/></Button>}
-   </div>)}</div>
-   <p className="mt-v4-muted">{reviewItems.length} output(s) need adjustments. Approved outputs remain locked. Saving a revision uses 1 work hour.</p>
-  </section>}
-  {v.step==="ready"&&<section className="mt-v4-panel">
-   <div className="mt-v4-title"><div><small>CLIENT REVIEW FINISHED</small><h3>Final Submit & Payment</h3></div><FileCheck2 size={20}/></div>
-   <p>{p.clientFeedback}</p>
-   <div className="mt-v4-boards">{v.artifacts.map(a=><div className="mt-v4-artifact" key={a.id}>
-    <div><b>{a.title}</b><span>{a.status==="approved"?"Approved":"Accepted as-is"}</span></div><p>{a.feedback}</p>{a.video&&<VideoDraftPreview video={a.video} title={a.title}/>}
-   </div>)}</div>
-   <div className="mt-v4-payment">
-    <div><span>Service fee</span><b>{money(fee)}</b></div>
-    <div><span>Contractual deduction ({v.deduction}%)</span><b>-{money(fee-amount)}</b></div>
-    <div><span>Personal expenses</span><b>-{money(job.outOfPocket)}</b></div>
-    <div><span>Net cash credited</span><strong>{money(amount-job.outOfPocket)}</strong></div>
-   </div>
-   <p className="mt-v4-muted">No earlier deposit was paid. Final Submit records the client-approved payment once and closes this job. The client media budget is never credited to you.</p>
-   <Button className="w-full" onClick={()=>act(Work.finalizeV4)}><Wallet size={15}/> Final Submit · Receive {money(amount)}</Button>
-  </section>}
-  {v.step==="paid"&&<section className="mt-v4-panel">
-   <div className="mt-v4-title"><div><small>PROJECT CLOSED · PAID</small><h3><CheckCircle2 size={18}/> Deliverables accepted</h3></div><Wallet size={20}/></div>
-   <p>{v.artifacts.length} deliverables completed · overall quality {v.score}/100 · fee received {money(v.paidAmount??0)} · personal expenses {money(job.outOfPocket)}.</p>
-   <p>Portfolio updated. Individual deliverable versions remain saved for reference.</p>
-   <details><summary>Completed portfolio artifacts</summary>{v.artifacts.map(a=><div className="mt-v4-artifact" key={a.id}><b>{a.title} · v{a.version}</b><p>{a.copy}</p>{a.video&&<VideoDraftPreview video={a.video} title={a.title}/>}</div>)}</details>
-   <Button className="w-full" onClick={()=>act(Campaign.nextClient)}>Return to Job Board <ArrowRight size={16}/></Button>
-  </section>}
+
+function CashCelebration({amount,expenses,balance}:{amount:number;expenses:number;balance:number}){
+ const [display,setDisplay]=useState(Math.round(balance-amount+expenses));
+ useEffect(()=>{
+  if(window.matchMedia("(prefers-reduced-motion: reduce)").matches){setDisplay(balance);return;}
+  let frame=0;const start=performance.now(),from=balance-amount+expenses;
+  const tick=(now:number)=>{const t=Math.min(1,(now-start)/950),ease=1-Math.pow(1-t,3);
+   setDisplay(Math.round(from+(balance-from)*ease));if(t<1)frame=requestAnimationFrame(tick);};
+  frame=requestAnimationFrame(tick);return()=>cancelAnimationFrame(frame);
+ },[amount,expenses,balance]);
+ return <section className="mt-v6-celebration" role="status" aria-live="polite" aria-label="Contract completed, payment credited">
+  <div className="mt-v6-coin" aria-hidden="true">$$</div><CheckCircle2 size={30}/>
+  <h3>Final Submit complete!</h3><strong>+{money(amount)}</strong>
+  <p>Money added once · Portfolio saved</p>
+  <div className="mt-v6-balance"><Wallet size={16}/> Wallet <b>{money(display)}</b></div>
+  <small>Returning to the Job Board automatically…</small>
+ </section>;
+}
+
+function LandingPagePreview({artifacts,brand}:{artifacts:FreelanceV4Artifact[];brand:string}){
+ return <div className="mt-v6-landing"><div className="mt-v6-landing-bar"><span>◉ ◉ ◉</span><b>{brand} / Preview</b><small>Mobile-ready</small></div>
+  {artifacts.map(a=><div className="mt-v6-landing-block" key={a.id}><small>{a.title}</small>
+   <h4>{a.draft?.decisions.message?Work.unitFor("landing-page",a.id)?.fields[0].options.find(o=>o.id===(a.draft?.decisions??a.decisions).message)?.label:
+     Work.unitFor("landing-page",a.id)?.fields[0].options.find(o=>o.id===a.decisions.message)?.label??"Select a headline"}</h4>
+   <p>{(a.draft?.decisions??a.decisions).visual?
+     Work.unitFor("landing-page",a.id)?.fields[1].options.find(o=>o.id===(a.draft?.decisions??a.decisions).visual)?.detail:"Select a visual direction"}</p>
+   <span>{Work.unitFor("landing-page",a.id)?.fields[2].options.find(o=>o.id===(a.draft?.decisions??a.decisions).action)?.label??"Choose CTA"}</span>
+  </div>)}
  </div>;
 }
 
+export function FreelanceV4Desk(){
+ const s=useGame(x=>x),c=s.campaign,p=c.freelanceJob,v=p?.v4,job=getFreelanceJob(p?.templateId);
+ const def=designFor(p?.templateId),career=workload(s);
+ useEffect(()=>{
+  if(v?.step!=="paid"||c.phase!=="results")return;
+  const timer=window.setTimeout(()=>act((state,fx)=>{
+   if(state.campaign.briefId===c.briefId&&state.campaign.freelanceJob?.v4?.step==="paid")Campaign.nextClient(state,fx);
+  }),1400);
+  return()=>window.clearTimeout(timer);
+ },[c.briefId,c.phase,v?.step]);
+ if(!p||!v||!job||!def)return null;
+ const sc=c.aiScenario,snapshot=v.briefSnapshot;
+ const current=v.artifacts.find(a=>a.id===v.activeId)??v.artifacts[0];
+ const completed=v.artifacts.filter(a=>Work.isArtifactComplete(job.id,a)&&["ready","approved"].includes(a.status)).length;
+ const drafts=Work.v4HasDrafts(v),estimate=freelanceDeliveryEstimate(s);
+ const fee=snapshot?.fee??p.acceptedFee??job.fee,amount=Work.v4PaymentAmount(fee,v.deduction);
+ const nav=phases.findIndex(x=>x.id===(v.step==="client_review"?"revision":v.step==="paid"?"ready":v.step));
+ const reviewItems=v.artifacts.filter(a=>a.status==="revise");
+ if(v.step==="paid")return <CashCelebration amount={v.paidAmount??0} balance={s.personalCash} expenses={job.outOfPocket}/>;
+ return <div className="mt-v4 mt-v6">
+  <header className="mt-v4-header"><div><small>BEDROOM · {def.workstation.toUpperCase()}</small><h2>{job.title}</h2>
+   <p>{sc?.brand??"Client"} · {job.tier==="gig"?"Entry Gig":job.tier==="project"?"Specialist Project":"Mini Campaign"}</p></div><PenTool size={22}/></header>
+  <div className="mt-v4-metrics">
+   <div><small>AGREED SERVICE FEE</small><b>{money(fee)}</b></div>
+   <div><small>CLIENT MEDIA · NOT INCOME</small><b>{money(job.mediaBudget)}</b></div>
+   <div><small>DELIVERABLES</small><b>{completed}/{v.artifacts.length}</b></div>
+   <div><small>HOURS LEFT THIS WEEK</small><b>{Math.max(0,WEEKLY_CAPACITY-career.weeklyHours)}</b></div>
+  </div>
+  <div className="mt-v4-route" aria-label="Freelance delivery stages">{phases.map((item,i)=><span key={item.id}
+   className={nav===i?"active":nav>i?"complete":""}>{i+1}. {item.label}</span>)}</div>
+
+  {v.step==="brief"&&<section className="mt-v4-panel">
+   <div className="mt-v4-title"><div><small>01 · CLIENT BRIEF & REQUIREMENTS</small><h3>Understand the assignment</h3></div><BookOpen size={20}/></div>
+   <p className="mt-v4-main-copy">{sc?.client??sc?.summary??"Review the approved assignment."}</p>
+   {sc?.aiPlanning?.context&&<div className="mt-v4-client"><b>Gemini · Simulated client context</b><p>{sc.aiPlanning.context}</p></div>}
+   {sc?.aiPlanning?.insight&&<div className="mt-v4-client"><b>Insight hypothesis</b><p>{sc.aiPlanning.insight}</p></div>}
+   <div className="mt-v6-brief-grid"><p><b>Marketing objective</b><span>{job.objective}</span></p><p><b>Target audience</b><span>{sc?.clientAnswers?.audience??"Audience in the client scenario"}</span></p>
+    <p><b>Scope & deliverables</b><span>{job.deliverables}</span></p><p><b>Acceptance criteria</b><span>{job.successMetric}</span></p></div>
+   <p><b>Fee:</b> {money(fee)} · <b>Deadline:</b> {job.days} days · <b>Included revision rounds:</b> {job.revisions}</p>
+   <p className="mt-v4-muted">No deposit. Client media budgets never become your income. Your brief is frozen when you accept.</p>
+   <Button className="w-full" onClick={()=>act(Work.startV4)}>Accept Brief · Open Workspace <ArrowRight size={16}/></Button>
+  </section>}
+
+  {v.step==="workspace"&&<section className="mt-v4-work">
+   <div className="mt-v4-client"><b>3 fixed requirements · {snapshot?.objective??job.objective}</b>
+    <p>{snapshot?.context??def.intro}</p>
+    <div className="mt-v6-pins"><span>Audience: {snapshot?.audience??"Client segment"}</span><span>{snapshot?.acceptance??job.successMetric}</span>
+     <span>Deadline: Day {snapshot?.deadlineDay??p.deadlineDay}</span></div>
+    <details><summary>Full contracted brief</summary><p>{snapshot?.scope??job.deliverables}</p><p>{snapshot?.insight??sc?.aiPlanning?.insight}</p></details>
+   </div>
+   <div className="mt-v4-selector" aria-label="Choose a job deliverable">{v.artifacts.map((a,i)=><button key={a.id} type="button" className={a.id===current.id?"active":""}
+    onClick={()=>act(state=>Work.setV4Active(state,a.id))}><span>{i+1}. {a.title}</span>
+    <small>{a.status==="approved"?"✓ Approved v"+a.version:a.draft?"Draft auto-saved":a.version?"v"+a.version+" · "+a.status:"New output"}</small></button>)}</div>
+   {job.id==="landing-page"&&<div className="mt-v6-page-tools"><h3>Landing page order</h3>
+    <p>Move each section to repair the page's hierarchy. Use arrow buttons on touch screens and keyboards.</p>
+    {v.artifacts.map((a,i)=><div key={a.id}><b>{i+1}. {a.title}</b><span>
+     <button aria-label={"Move "+a.title+" up"} disabled={i===0} onClick={()=>act(d=>Work.moveV4Unit(d,a.id,-1))}><ChevronUp size={16}/></button>
+     <button aria-label={"Move "+a.title+" down"} disabled={i===v.artifacts.length-1} onClick={()=>act(d=>Work.moveV4Unit(d,a.id,1))}><ChevronDown size={16}/></button>
+    </span></div>)}
+    <LandingPagePreview artifacts={v.artifacts} brand={sc?.brand??"Client"}/></div>}
+   {job.id==="short-video"&&(current.version===0||current.video||current.videoDraft)?
+    <VideoMiniGame key={c.briefId+"-"+current.id} artifact={current} brand={sc?.brand??"Client"}/>:
+    job.id==="short-video"?<LegacyVideoEditor key={current.id} artifact={current} jobId={job.id}/>:
+    <CardEditor key={current.id} artifact={current} jobId={job.id} brand={sc?.brand??"Client"}/>}
+   <div className="mt-v4-bottom"><div><small>Progress</small><b>{completed}/{v.artifacts.length} saved deliverables</b>
+    <small>{drafts?" · draft changes waiting to be finalized":""} · {p.actualWorkHours??0}h worked · Day {estimate?.workDay??s.clock.day}</small></div>
+    <Button disabled={completed!==v.artifacts.length||drafts} onClick={()=>act(Work.openV4Board)}>Open Deliverable Board <ArrowRight size={15}/></Button>
+   </div>
+  </section>}
+
+  {v.step==="board"&&<section className="mt-v4-panel">
+   <div className="mt-v4-title"><div><small>DELIVERABLE BOARD</small><h3>Inspect every output</h3><p>Review the versioned deliverables before sending them to the client.</p></div><ClipboardCheck size={20}/></div>
+   {job.id==="landing-page"&&<LandingPagePreview artifacts={v.artifacts} brand={sc?.brand??"Client"}/>}
+   <div className="mt-v4-boards">{v.artifacts.map(a=><div className="mt-v4-artifact" key={a.id}>
+    <div><b>{a.title}</b><span>{a.status==="approved"?"✓ Approved":a.status==="revise"?"Needs changes":"Ready for review"} · v{a.version} · {a.score}/100</span></div>
+    <p className="mt-v6-output-copy">{a.copy}</p>
+    {a.video&&<VideoDraftPreview video={a.video} title={a.title}/>}
+    <div className="mt-v4-tags">{Object.entries(a.decisions).map(([key,value])=><span key={key}>{key}: {value}</span>)}</div>
+    {a.feedback&&<p>{a.feedback}</p>}
+    <Button variant="outline" size="sm" onClick={()=>act(d=>Work.returnV4Workspace(d,a.id))}><PenTool size={14}/> Back & Edit This Output</Button>
+   </div>)}</div>
+   <Button className="w-full" disabled={drafts||completed!==v.artifacts.length} onClick={()=>{act(Work.submitV4Review);prepareFreelanceDeliverableReview();}}>
+    <Send size={15}/> Send Deliverables for Client Review
+   </Button>
+  </section>}
+
+  {v.step==="revision"&&<section className="mt-v4-panel">
+   <div className="mt-v4-title"><div><small>CLIENT REVIEW · ROUND {v.reviewRound}</small><h3>Fix the specific client feedback</h3></div><RefreshCcw size={20}/></div>
+   <p>{p.clientFeedback}</p><div className="mt-v4-boards">{v.artifacts.map(a=><div className="mt-v4-artifact" key={a.id}>
+    <div><b>{a.title}</b><span>{a.status==="approved"?"✓ Approved":"Revision requested"}</span></div>
+    <p>{a.feedback}</p>{a.video&&<VideoDraftPreview video={a.video} title={a.title}/>}
+    {a.status==="revise"&&<Button variant="outline" size="sm" onClick={()=>act(d=>Work.returnV4Workspace(d,a.id))}>Edit This Deliverable <ArrowRight size={14}/></Button>}
+   </div>)}</div>
+   <p className="mt-v4-muted">{reviewItems.length} output(s) need changes. Previously approved versions stay accepted unless edited.</p>
+  </section>}
+
+  {v.step==="ready"&&<section className="mt-v4-panel">
+   <div className="mt-v4-title"><div><small>CLIENT ACCEPTED THE FINAL VERSIONS</small><h3>Final Submit</h3></div><FileCheck2 size={20}/></div>
+   <p>{p.clientFeedback}</p><div className="mt-v4-boards">{v.artifacts.map(a=><div className="mt-v4-artifact" key={a.id}>
+    <div><b>{a.title}</b><span>{a.approvedVersion===a.version?"✓ Approved v"+a.version:"Version needs re-approval"}</span></div>
+    <p className="mt-v6-output-copy">{a.copy}</p><p>{a.feedback}</p>
+    <Button variant="outline" size="sm" onClick={()=>act(d=>Work.returnV4Workspace(d,a.id))}>Reopen & Edit</Button>
+   </div>)}</div>
+   <div className="mt-v4-payment"><div><span>Service fee</span><b>{money(fee)}</b></div>
+    <div><span>Agreed adjustment</span><b>-{money(fee-amount)}</b></div>
+    <div><span>Freelancer expenses</span><b>-{money(job.outOfPocket)}</b></div>
+    <div><span>Wallet increase</span><strong>{money(amount-job.outOfPocket)}</strong></div></div>
+   <p className="mt-v4-muted">Final Submit pays once, saves your portfolio and returns to the Job Board automatically. No deposit, claim or separate payment screen.</p>
+   <Button className="w-full" disabled={v.artifacts.some(a=>a.status!=="approved"||a.approvedVersion!==a.version)||drafts}
+    onClick={()=>act(Work.finalizeV4)}><Wallet size={15}/> Final Submit · Receive {money(amount)}</Button>
+  </section>}
+ </div>;
+}

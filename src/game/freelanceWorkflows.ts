@@ -14,7 +14,7 @@ export interface Unit {id:string;title:string;description:string;fields:Field[];
 export interface JobDesign {id:FreelanceJobType;name:string;intro:string;workstation:string;units:Unit[]}
 const c=(id:string,label:string,detail:string,fit:number):Choice=>({id,label,detail,fit});
 const f=(id:string,label:string,...options:Choice[]):Field=>({id,label,options});
-const fields={
+const fields:Record<string,Field[]>={
  post:[
   f("objective","Content objective",c("awareness","Awareness","Make the brand recognizable",90),c("engagement","Engagement","Invite meaningful responses",86),c("conversion","Conversion","Direct response with credible offer",76)),
   f("pillar","Content pillar",c("product","Product story","Highlight a real product benefit",86),c("lifestyle","Lifestyle moment","Connect to an everyday occasion",92),c("education","Useful tips","Give audience a helpful takeaway",95)),
@@ -41,6 +41,7 @@ const fields={
   f("objective","Campaign objective",c("leads","Leads","Collect qualified intent",94),c("traffic","Traffic","Drive landing-page visits",87),c("sales","Sales","Optimize toward purchases",86)),
   f("audience","Audience plan",c("local","Local intent segment","Clear geography and behaviors",94),c("interest","Interest clusters","Audience hypotheses to test",90),c("broad","Broad exploration","Requires more learning budget",76)),
   f("tracking","Measurement event",c("lead","Lead","Verified lead capture event",95),c("view","ViewContent","Landing-page diagnostic event",82),c("purchase","Purchase","Transaction completion event",90)),
+  f("budget","Media allocation",c("603010","60% prospect / 30% retarget / 10% test","A bounded test plan with room to learn",95),c("5050","50% discovery / 50% retarget","Balanced but assumes existing audience volume",84),c("100","100% broad reach","No testing or follow-up reserve",39)),
   f("qa","Preflight validation",c("verify","Event + landing QA","Confirm pixel, UTM and event match",97),c("creative","Creative QA only","Review ad previews and policies",76),c("skip","Skip preflight","Risk invalid measurement",30))
  ],
  research:[
@@ -64,22 +65,43 @@ const units=(prefix:string,names:string[],schema:Field[],start:(title:string,i:n
  id:prefix+"-"+(i+1),title,description:"Deliver a reviewed "+title.toLowerCase()+" that aligns with the client's brief.",
  fields:schema,starter:start(title,i)
 }));
+fields.landing=[
+ f("message","Message hierarchy",c("benefit","Clear customer benefit","A specific, audience-relevant value proposition",96),c("proof","Trust-first","Put verified customer evidence near the claim",94),c("vague","Brand slogan only","No actionable product explanation",30)),
+ f("visual","Page presentation",c("focused","Focused mobile layout","One clear promise per section with readable hierarchy",96),c("support","Product demonstration","Useful image with descriptive alternative text",93),c("clutter","Decorative collage","Crowds the page and hides the offer",40)),
+ f("action","Action and offer",c("explicit","Visible CTA + terms","Single explicit next step and honest offer conditions",97),c("gentle","Learn more","Low commitment but less conversion intent",83),c("hidden","CTA at page bottom","Hard to act on mobile",36))
+];
 const DESIGNS:Record<FreelanceJobType,JobDesign>={
  "social-pack":{id:"social-pack",name:"5 Social Posts",workstation:"Content Studio",intro:"Make five publishable posts with different content angles, captions and CTAs.",units:units("post",["Brand introduction","Product highlight","Helpful tip","Community moment","Offer / next step"],fields.post,(title)=>"Headline: "+title+".\nCaption: Introduce a relevant customer benefit using the client's tone.\nVisual direction: Show the product in a believable everyday setting.\nCTA: Invite the reader to discover the next step.")},
  "social-audit":{id:"social-audit",name:"TikTok / Instagram Audit",workstation:"Analytics Lab",intro:"Diagnose channel signals and deliver five prioritized, evidence-linked improvements.",units:units("finding",["Reach & discovery","Early video retention","Engagement signals","Content pillar mix","Publishing consistency"],fields.audit,(title)=>"Observation: Review "+title.toLowerCase()+" against the reported channel baseline.\nEvidence: Compare stronger and weaker posts before claiming causation.\nRecommendation: Test a measurable improvement with a clear success signal.")},
- "content-calendar":{id:"content-calendar",name:"2-Week Content Calendar",workstation:"Editorial Planner",intro:"Plan twelve distinct ideas across fourteen days with formats, funnel roles and realistic cadence.",units:units("day",Array.from({length:12},(_,i)=>"Day "+(i+1+(i>=6?2:0))+" · Content idea "+(i+1)),fields.calendar,(title,i)=>"Idea "+(i+1)+": "+title+".\nKey message: Help the target audience solve a practical issue.\nVisual: A clear first-frame concept and supporting caption.\nPublishing note: Reserve preparation time before posting.")},
+ "content-calendar":{id:"content-calendar",name:"2-Week Content Calendar",workstation:"Editorial Planner",intro:"Arrange seven useful posts across fourteen days, leaving sensible rest and production time.",units:units("day",Array.from({length:7},(_,i)=>"Day "+(i*2+1)+" · Content idea "+(i+1)),fields.calendar,(title,i)=>"Idea "+(i+1)+": "+title+".\nKey message: Help the target audience solve a practical issue.\nVisual: A clear first-frame concept and supporting caption.\nPublishing note: Reserve preparation time before posting.")},
+ "landing-page":{id:"landing-page",name:"Fix My Landing Page",workstation:"Landing Page Builder",intro:"Repair one page by composing five essential sections. The live page preview updates as you choose cards and reorder sections.",units:units("block",["Hero · headline & visual","Benefits · audience value","Proof · trust signals","Offer · terms & savings","CTA · next step"],fields.landing,(title)=>"Page block: "+title+". Select a clear audience benefit, proof-led visual and unambiguous action, then check the mobile preview.")},
  "short-video":{id:"short-video",name:"5 Short Videos",workstation:"Video Storyboard Studio",intro:"Build five distinct short-form storyboards and scripts. Video assets are simulated, not rendered MP4 files.",units:units("video",["Introduction","Product demonstration","Customer problem","How-it-works","Final invitation"],fields.video,title=>"0–3s: Hook for "+title.toLowerCase()+".\n3–12s: Scene 1 frames the customer need.\n12–22s: Show evidence or demonstration.\n22–30s: Relevant CTA.\nCaptions: Accessible on-screen text.")},
  "meta-setup":{id:"meta-setup",name:"Meta Ads Setup",workstation:"Ads Manager Simulator",intro:"Configure a fictional campaign; check audience, events and launch readiness. Client media is separate.",units:units("ads",["Campaign & objective","Audience / ad set","Tracking & events","Launch-readiness QA"],fields.meta,title=>"Configuration: "+title+".\nImplement a measured, budget-bounded setup using the client's fictional brief.\nAcceptance: Clear naming, objective/event consistency and verifiable QA checks.")},
  "audience-research":{id:"audience-research",name:"Audience Research Sprint",workstation:"Consumer Insight Lab",intro:"Design and synthesize a limited fictional study. Distinguish observations, inferences and limitations.",units:units("research",["Research question","Sampling & fieldwork","Interview theme coding","Audience segmentation","Insight / limitations"],fields.research,title=>"Research section: "+title+".\nEvidence: Use the supplied interview or competitor signals as hypotheses, not population facts.\nConclusion: State an insight with uncertainty and a feasible validation step.")},
  "content-sprint":{id:"content-sprint",name:"Multi-channel Content Sprint",workstation:"Content Operations Center",intro:"Create six adapted channel assets from a unified message and production plan.",units:units("asset",["Hero message","TikTok adaptation","Instagram adaptation","Email / CRM","Landing page","Handover matrix"],fields.sprint,title=>"Deliverable: "+title+".\nMaster message: Explain the audience benefit consistently.\nChannel adaptation: Tailor hook, visual hierarchy and CTA to the chosen platform.\nHandover: Include execution notes.")},
- "mini-launch":{id:"mini-launch",name:"Local Mini Launch Campaign",workstation:"Campaign Command Center",intro:"Build and hand over a seven-stage local campaign with credible scope, channel allocation and KPI measurement.",units:units("stage",["Research & diagnosis","Audience / strategy","Key message & concept","Creative executions","Local media allocation","Launch & optimization","KPI report & handover"],fields.launch,title=>"Stage: "+title+".\nDecision: Make a local-scale marketing choice grounded in the client context.\nDeliverable: Document responsibilities, budget assumptions and measurable outcome.\nNext step: Identify a check before sign-off.")}
+ "mini-launch":{id:"mini-launch",name:"Local Mini Launch Campaign",workstation:"Campaign Command Center",intro:"Build and hand over a seven-stage local campaign with credible scope, channel allocation and KPI measurement.",units:units("stage",["Before launch · audience insight","Before launch · asset preparation","Launch day · local activation","After launch · follow-up & KPI"],fields.launch,title=>"Stage: "+title+".\nDecision: Make a local-scale marketing choice grounded in the client context.\nDeliverable: Document responsibilities, budget assumptions and measurable outcome.\nNext step: Identify a check before sign-off.")}
 };
 export const designFor=(id:string|null|undefined)=>id&&id in DESIGNS?DESIGNS[id as FreelanceJobType]:null;
-export const allDesigns=Object.values(DESIGNS);
+export const allDesigns=Object.values(DESIGNS).filter(d=>d.id!=="short-video");
 export const V4_ACCEPTANCE_SCORE=78;
 /** Keep the payment preview and final settlement on the same VND calculation. */
 export const v4PaymentAmount=(fee:number,deduction:number)=>Math.max(0,Math.round(fee*(1-deduction/100)));
 export const unitFor=(jobId:string,unitId:string)=>designFor(jobId)?.units.find(u=>u.id===unitId);
+/** Source of truth for review eligibility; scores alone never constitute an output. */
+export function isArtifactComplete(jobId:string,a:FreelanceV4Artifact){
+ const unit=unitFor(jobId,a.id);
+ if(!unit||a.version<1||a.copy.trim().length<20||!!a.draft||!!a.videoDraft)return false;
+ if(jobId==="short-video"&&a.video)return videoScore(a.video)>0;
+ return unit.fields.every(f=>f.options.some(o=>o.id===a.decisions[f.id]));
+}
+/** Produce inspectable copy from actual player-selected cards, not a fixed Done button. */
+export function composeCardOutput(jobId:string,unitId:string,decisions:Record<string,string>,brand:string){
+ const unit=unitFor(jobId,unitId);if(!unit)return "";
+ return [brand+" · "+unit.title,...unit.fields.map(f=>{
+  const o=f.options.find(x=>x.id===decisions[f.id]);
+  return f.label+": "+(o?o.label+" — "+o.detail:"Not decided");
+ }),"Deliverable: "+unit.description].join("\n");
+}
 export function newFreelanceV4(jobId:string):FreelanceV4Work{
  const def=designFor(jobId);if(!def)throw Error("Unrecognized freelance workflow");
  return {step:"brief",activeId:def.units[0].id,reviewRound:0,reviewVersion:0,score:0,deduction:0,
@@ -100,6 +122,11 @@ export function startV4(s:GameState,fx:Fx){
  if(!p?.v4||p.v4.step!=="brief"||!def||!c.aiScenario||c.aiStatus!=="ready"||s.agencyUnlocked)return false;
  p.v4.step="workspace";p.stage="work";p.deadlineDay=s.clock.day+getFreelanceJob(def.id)!.days;
  c.startedDay=s.clock.day;c.phase="planning";p.actualWorkHours=0;p.hoursWorked=0;
+ const t=getFreelanceJob(def.id)!,sc=c.aiScenario;
+ p.v4.briefSnapshot??={briefId:c.briefId,context:sc.aiPlanning?.context??sc.client??sc.summary??"",
+ objective:sc.aiPlanning?.strategy??t.objective,audience:sc.clientAnswers?.audience??"Audience from client brief",
+ insight:sc.aiPlanning?.insight??"",fee:p.acceptedFee??t.fee,deadlineDay:p.deadlineDay,
+ scope:t.deliverables,acceptance:t.successMetric,revisions:t.revisions};
  fx.log("Accepted "+def.name+" · no deposit charged or paid. Build the agreed deliverables.");
  return true;
 }
@@ -107,7 +134,7 @@ export function startV4(s:GameState,fx:Fx){
 export function saveV4Draft(s:GameState,id:string,decisions:Record<string,string>,copy:string){
  const p=s.campaign.freelanceJob,v=p?.v4,a=v?.artifacts.find(x=>x.id===id);
  const unit=unitFor(p?.templateId??"",id);
- if(!v||v.step!=="workspace"||!a||a.status==="approved"||!unit||copy.length>2500)return false;
+ if(!v||v.step!=="workspace"||!a||!unit||copy.length>2500)return false;
  const choices=Object.fromEntries(unit.fields.map(f=>[f.id,decisions[f.id]??""]));
  if(unit.fields.some(f=>choices[f.id]&&!f.options.some(o=>o.id===choices[f.id])))return false;
  if(copy===a.copy&&unit.fields.every(f=>(a.decisions[f.id]??"")===choices[f.id]))delete a.draft;
@@ -125,7 +152,7 @@ export function editV4(s:GameState,fx:Fx,id:string,decisions:Record<string,strin
  const p=s.campaign.freelanceJob,v=p?.v4;
  if(!p||!v||v.step!=="workspace")return false;
  const unit=unitFor(p.templateId,id),a=v.artifacts.find(x=>x.id===id);
- if(!unit||!a||a.status==="approved"||copy.trim().length<20||copy.length>2500)return false;
+ if(!unit||!a||copy.trim().length<20||copy.length>2500)return false;
  // Existing pre-V5 saves can continue their saved text versions, but new
  // short-video deliverables must use their playable production mini-game.
  if(p.templateId==="short-video"&&a.version===0&&!a.video)return fx.toast("Complete the video mini-game to save this deliverable."),false;
@@ -139,50 +166,60 @@ export function editV4(s:GameState,fx:Fx,id:string,decisions:Record<string,strin
  career.weeklyHours+=hours;p.actualWorkHours=(p.actualWorkHours??0)+hours;p.hoursWorked=(p.hoursWorked??0)+hours;
  a.version++;a.copy=copy.trim();a.decisions={...decisions};a.score=artifactScore(p.templateId,a);
  a.versions.push({version:a.version,copy:a.copy,decisions:{...a.decisions}});
- a.versions=a.versions.slice(-8);a.status="ready";a.feedback="";delete a.draft;
+ a.versions=a.versions.slice(-8);a.status="ready";a.approvedVersion=undefined;a.feedback="";delete a.draft;
  fx.log("Saved "+a.title+" v"+a.version+" · "+hours+"h · score "+a.score+"/100");
  return true;
 }
 export function setV4Active(s:GameState,id:string){
  const v=s.campaign.freelanceJob?.v4;
- if(!v||!["workspace","board","revision"].includes(v.step)||!v.artifacts.some(a=>a.id===id&&a.status!=="approved"))return;
+ if(!v||!["workspace","board","revision","ready"].includes(v.step)||!v.artifacts.some(a=>a.id===id))return;
  v.activeId=id;v.step="workspace";
 }
 export function openV4Board(s:GameState,fx:Fx){
  const v=s.campaign.freelanceJob?.v4;
  if(!v||v.step!=="workspace")return false;
  if(v4HasDrafts(v))return fx.toast("Save your edited drafts as deliverable versions before opening the board."),false;
- if(v.artifacts.some(a=>a.status==="draft"||a.status==="revise"))return fx.toast("Complete or revise all deliverables before review."),false;
+ if(v.artifacts.some(a=>!isArtifactComplete(s.campaign.freelanceJob?.templateId??"",a)||a.status==="draft"||a.status==="revise"))return fx.toast("Complete and save all deliverables before review."),false;
  v.step="board";return true;
+}
+/** Landing blocks are real ordered page sections; order is preserved in the save. */
+export function moveV4Unit(s:GameState,id:string,direction:-1|1){
+ const p=s.campaign.freelanceJob,v=p?.v4;
+ if(p?.templateId!=="landing-page"||!v||v.step!=="workspace")return false;
+ const at=v.artifacts.findIndex(a=>a.id===id),target=at+direction;
+ if(at<0||target<0||target>=v.artifacts.length)return false;
+ const [block]=v.artifacts.splice(at,1);v.artifacts.splice(target,0,block);
+ // Layout edits can change placement-dependent interpretation of approved sections.
+ for(const a of v.artifacts)if(a.status==="approved"){a.status="ready";a.approvedVersion=undefined;}
+ return true;
 }
 export function returnV4Workspace(s:GameState,id?:string){
  const v=s.campaign.freelanceJob?.v4;
- if(!v||!["board","revision"].includes(v.step))return;
- const a=v.artifacts.find(x=>x.id===id&&x.status!=="approved")??v.artifacts.find(x=>x.status!=="approved");
+ if(!v||!["board","revision","ready"].includes(v.step))return;
+ const a=v.artifacts.find(x=>x.id===id)??v.artifacts.find(x=>x.status!=="approved");
  if(!a)return;
  v.activeId=a.id;v.step="workspace";
 }
 export function submitV4Review(s:GameState,fx:Fx){
  const p=s.campaign.freelanceJob,v=p?.v4,t=getFreelanceJob(p?.templateId);
- if(!v||!p||!t||v.step!=="board"||v4HasDrafts(v)||v.artifacts.some(a=>a.status==="draft"||a.status==="revise"))return false;
+ if(!v||!p||!t||v.step!=="board"||v4HasDrafts(v)||v.artifacts.some(a=>!isArtifactComplete(p.templateId,a)||a.status==="draft"||a.status==="revise"))return false;
  v.reviewVersion++;v.reviewRound++;
  const late=effectiveWorkDay(s)>p.deadlineDay;
  const scores=v.artifacts.map(a=>artifactScore(p.templateId,a));
  v.score=clamp(Math.round(scores.reduce((x,y)=>x+y,0)/scores.length-(late?12:0)),0,100);
  let issues=0;
  for(const [i,a] of v.artifacts.entries()){
-  if(a.status==="approved")continue;
+  if(a.status==="approved"&&a.approvedVersion===a.version)continue;
   a.score=scores[i];
-  if(a.score>=V4_ACCEPTANCE_SCORE){a.status="approved";a.feedback="Accepted: clear scope alignment and actionable output.";}
-  else {issues++;a.status="revise";a.feedback=a.score<62?"Major revision: improve weak choices and make the evidence/output more specific.":"Minor revision: strengthen message, evidence or implementation clarity.";}
+  if(a.score>=V4_ACCEPTANCE_SCORE){a.status="approved";a.approvedVersion=a.version;a.feedback="Accepted: clear scope alignment and actionable output.";} 
+  else {issues++;a.approvedVersion=undefined;a.status="revise";a.feedback=a.score<62?"Major revision: improve weak choices and make the evidence/output more specific.":"Minor revision: strengthen message, evidence or implementation clarity.";}
  }
  p.quality=v.score;
  v.reviewMode="rules";
  if(issues===0){v.step="ready";v.deduction=0;}
- else if(v.reviewRound<=t.revisions){v.step="revision";v.deduction=0;}
- else {v.step="ready";v.deduction=20;}
+ else {v.step="revision";v.deduction=0;} // Never hand over rejected output, even after included rounds.
  p.revisions=Math.min(t.revisions,v.reviewRound);
- p.clientFeedback=issues?issues+" deliverable(s) need work. "+(v.step==="ready"?"Included revisions exhausted; 20% fee deduction on final submit.":"Return to the workspace and resubmit."):"Client accepted every deliverable. Final submission is available.";
+ p.clientFeedback=issues?issues+" deliverable(s) need work. "+"Return to the marked workspace and resubmit the revised output.":"Client accepted every deliverable. Final submission is available.";
  fx.log("Client reviewed "+t.title+" · "+(v.artifacts.length-issues)+" approved / "+v.artifacts.length);
  return true;
 }
@@ -197,13 +234,16 @@ export function applyV4AIReview(s:GameState,reviewVersion:number,notes:{id:strin
 }
 export function finalizeV4(s:GameState,fx:Fx){
  const c=s.campaign,p=c.freelanceJob,v=p?.v4,t=getFreelanceJob(p?.templateId);
- if(!p||!v||!t||v.step!=="ready"||c.final)return false;
+ if(!p||!v||!t||v.step!=="ready"||c.final||v4HasDrafts(v)||!v.artifacts.length||v.artifacts.some(a=>a.status!=="approved"||a.approvedVersion!==a.version||!isArtifactComplete(p.templateId,a)))return false;
  const career=workload(s),id=c.briefId,clientId=c.catalogClientId??"unknown";
- if(career.completedIds.includes(id))return false; // exactly-once payment
- const fee=p.acceptedFee??t.fee;
+ const transactionId="freelance:"+id;
+ if(career.completedIds.includes(id)||career.transactionIds?.includes(transactionId)||v.paymentTransactionId)return false; // exactly-once payment
+ const fee=v.briefSnapshot?.fee??p.acceptedFee??t.fee;
  const paid=v4PaymentAmount(fee,v.deduction);
- v.step="paid";v.paidAmount=paid;v.expenseCharged=true;
- career.completedIds.push(id);
+ v.step="paid";v.paidAmount=paid;v.expenseCharged=true;v.paymentTransactionId=transactionId;
+ career.completedIds.push(id);(career.transactionIds??=[]).push(transactionId);
+ (career.portfolio??=[]).push({id,jobType:t.id,client:c.aiScenario?.brand??clientId,earned:paid,
+  quality:v.score,completedDay:effectiveWorkDay(s),feedback:p.clientFeedback??"",artifacts:structuredClone(v.artifacts)});
  s.personalCash+=paid-t.outOfPocket;
  p.stage="done";p.deliveredDay=effectiveWorkDay(s);p.quality=v.score;
  if(t.tier==="gig")career.completedGigs++;

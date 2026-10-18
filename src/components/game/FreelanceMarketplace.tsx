@@ -43,11 +43,11 @@ export function FreelanceMarketplace({onSelected}:{onSelected?:()=>void}){
     return <article key={l.id} className="mt-job-market-card">
      <div className="mt-job-market-cardtop"><span>{c.segment==="sme"?"SME":"STARTUP"} · {c.industry}</span>
       {application?<b>{application.status.toUpperCase()}</b>:locked?<b className="locked"><LockKeyhole size={12}/> LOCKED</b>:<b>OPEN</b>}</div>
-     <h3>{t.title}</h3><p>{c.brand}</p>
+     <h3>{t.title}</h3><p>{c.brand} · {t.tier==="gig"?"Starter":t.tier==="project"?"Intermediate":"Advanced"} scope</p>
      <div className="mt-job-market-specs">
       <div><small>SERVICE FEE</small><b>{money(t.fee)}</b></div>
       <div><small>DEADLINE</small><b>{t.days} days</b></div>
-      <div><small>DELIVERABLES</small><b>{t.hours}h effort</b></div>
+      <div><small>DELIVERABLES</small><b>{t.deliverables}</b></div>
       <div><small>APPLICANTS</small><b>{l.applicantIds.length} NPCs</b></div>
      </div>
      <p className="mt-job-market-scope">{t.deliverables}. {t.revisions} included revision{t.revisions!==1?"s":""}. {t.mediaBudget>0?"Client-owned media: "+money(t.mediaBudget)+".":"No client media spend."}</p>
@@ -77,6 +77,14 @@ export function FreelanceMarketplace({onSelected}:{onSelected?:()=>void}){
   </div>
   {!visibleListings.length&&<p className="mt-job-market-empty">No job listings this week. New opportunities appear after End Week.</p>}
 
+  <section className="mt-job-market-applications"><h3>Completed Freelance Portfolio</h3>
+   {(career.portfolio??[]).length===0?<p>Approved jobs will appear here with their saved deliverables and final payment.</p>:
+    [...(career.portfolio??[])].reverse().map(item=><details key={item.id} className="mt-v4-artifact">
+     <summary><b>{item.client} · {getFreelanceJob(item.jobType)?.title??item.jobType}</b> · Earned {money(item.earned)} · Quality {item.quality}/100</summary>
+     <p>Completed Day {item.completedDay}. {item.feedback}</p>
+     {item.artifacts.map(a=><div key={a.id} className="mt-v4-artifact"><b>{a.title} · v{a.version}</b><p style={{whiteSpace:"pre-line"}}>{a.copy}</p></div>)}
+    </details>)}
+  </section>
   <section className="mt-job-market-applications"><h3>My Applications & Offers</h3>
    {!applications.length&&<p>No applications yet. Choose an available job above and tap Apply Job.</p>}
    {[...applications].reverse().slice(0,12).map(a=><div className="mt-job-market-app" key={a.id}>

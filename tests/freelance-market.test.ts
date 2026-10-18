@@ -267,23 +267,32 @@ test("V4 deliverable board allows targeted edits, preserves approved items and c
  assert.equal(V4.applyV4AIReview(s,nextVersion,[{id:problem,feedback:"Client likes this revised social message and execution."}]),true);
  assert.deepEqual(v.artifacts.map(a=>a.status),originalStatus,"AI cannot change awards or review states");
 });
-test("V4 enforces capacity, completeness and 20% deduction when all included revisions exhausted",()=>{
+test("V6 keeps rejected artifacts in revision even when included rounds are exhausted; only approved versions can be paid",()=>{
  const s=v4Game("social-audit"),p=s.campaign.freelanceJob!,v=p.v4!,t=getFreelanceJob("social-audit")!;
  V4.startV4(s,fx);
  assert.equal(V4.openV4Board(s,fx),false);
  fillV4(s,v.artifacts[0].id);
  V4.openV4Board(s,fx);V4.submitV4Review(s,fx);
  assert.equal(v.step,"revision");
- V4.returnV4Workspace(s,v.artifacts[0].id);
- const a=v.artifacts[0],unit=V4.unitFor(p.templateId,a.id)!;
+ const problem=v.artifacts[0],unit=V4.unitFor(p.templateId,problem.id)!;
  const low=Object.fromEntries(unit.fields.map(f=>[f.id,[...f.options].sort((a,b)=>a.fit-b.fit)[0].id]));
- assert.equal(V4.editV4(s,fx,a.id,low,"Draft needs supporting facts. R1"),true);
- V4.openV4Board(s,fx);V4.submitV4Review(s,fx);
- assert.equal(v.step,"ready");assert.equal(v.deduction,20);
+ for(let round=0;round<t.revisions;round++){
+  V4.returnV4Workspace(s,problem.id);
+  assert.equal(V4.editV4(s,fx,problem.id,low,"Weak evidence for round "+round),true);
+  assert.equal(V4.openV4Board(s,fx),true);
+  assert.equal(V4.submitV4Review(s,fx),true);
+  assert.equal(v.step,"revision");
+  assert.equal(V4.finalizeV4(s,fx),false,"No payment for unresolved client feedback");
+ }
+ V4.returnV4Workspace(s,problem.id);
+ const best=Object.fromEntries(unit.fields.map(f=>[f.id,[...f.options].sort((a,b)=>b.fit-a.fit)[0].id]));
+ assert.equal(V4.editV4(s,fx,problem.id,best,"Evidence: compare saved posts and customer signal trends. Recommendation: test new hooks and verify engagement lift."),true);
+ assert.equal(V4.openV4Board(s,fx),true);
+ assert.equal(V4.submitV4Review(s,fx),true);
+ assert.equal(v.step,"ready");assert.equal(v.deduction,0);
  const before=s.personalCash;assert.equal(V4.finalizeV4(s,fx),true);
- const fee=Math.round((p.acceptedFee??t.fee)*.8);
- assert.equal(v.paidAmount,fee);
- assert.equal(s.personalCash,before+fee-t.outOfPocket);
+ assert.equal(v.paidAmount,p.acceptedFee??t.fee);
+ assert.equal(s.personalCash,before+(p.acceptedFee??t.fee)-t.outOfPocket);
 });
 
 

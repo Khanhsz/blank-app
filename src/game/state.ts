@@ -55,13 +55,14 @@ export interface FreelanceV4Artifact {
  video?:VideoMiniState;videoDraft?:VideoMiniState;
  /** Auto-saved V5.1 Perfect Shot capture can be retried without another work-hour charge until Continue. */
  perfectShotUnconfirmed?:boolean;
- status:"draft"|"ready"|"approved"|"revise";
+ approvedVersion?:number;status:"draft"|"ready"|"approved"|"revise";
  score:number;feedback:string;versions:{version:number;copy:string;decisions:Record<string,string>;video?:VideoMiniState}[];
 }
 export interface FreelanceV4Work {
  step:FreelanceV4Step;artifacts:FreelanceV4Artifact[];activeId:string;
  reviewRound:number;reviewVersion:number;score:number;deduction:number;
- reviewMode?:"rules"|"gemini";paidAmount?:number;expenseCharged?:boolean;
+ reviewMode?:"rules"|"gemini";paidAmount?:number;expenseCharged?:boolean;paymentTransactionId?:string;
+ briefSnapshot?:{briefId:string;context:string;objective:string;audience:string;insight:string;fee:number;deadlineDay:number;scope:string;acceptance:string;revisions:number};
 }
 export interface FreelanceJobProgress {templateId:string;stage:"brief"|"work"|"feedback"|"delivery"|"done";hoursWorked:number;revisionHours:number;focus:"research"|"quality"|"speed"|null;clientFeedback:string|null;quality:number;revisions:number;deadlineDay:number;weekHours:number;actualWorkHours?:number;deliveredDay?:number;acceptedFee?:number;v4?:FreelanceV4Work;}
 export interface FreelanceInvoice {id:string;clientId:string;amount:number;dueDay:number;status:"pending"|"late"|"paid";reminded:boolean}
@@ -70,8 +71,9 @@ export type FreelanceBidPrice="competitive"|"standard"|"premium";
 export interface FreelanceListing {id:string;clientId:string;templateId:string;postedWeek:number;closeWeek:number;fee:number;mediaBudget:number;applicantIds:string[];status:"open"|"closed";}
 export interface FreelanceApplication {id:string;listingId:string;clientId:string;templateId:string;week:number;approach:FreelanceBidApproach;price:FreelanceBidPrice;proposedFee:number;score:number;winChance:number;status:"pending"|"selected"|"rejected"|"accepted"|"declined";feedback:string;}
 export interface FreelanceBoard {lastWeek:number;listings:FreelanceListing[];applications:FreelanceApplication[];}
-export interface FreelanceCareer {completedGigs:number;completedProjects:number;completedMiniCampaigns:number;positiveReviews:number;repeatClients:number;weeklyHours:number;weeklyWeek:number;clientWins:Record<string,number>;invoices:FreelanceInvoice[];completedIds:string[];}
-export const newFreelanceCareer=():FreelanceCareer=>({completedGigs:0,completedProjects:0,completedMiniCampaigns:0,positiveReviews:0,repeatClients:0,weeklyHours:0,weeklyWeek:1,clientWins:{},invoices:[],completedIds:[]});
+export interface FreelancePortfolioItem {id:string;jobType:string;client:string;earned:number;quality:number;completedDay:number;feedback:string;artifacts:FreelanceV4Artifact[]}
+export interface FreelanceCareer {transactionIds?:string[];portfolio?:FreelancePortfolioItem[];completedGigs:number;completedProjects:number;completedMiniCampaigns:number;positiveReviews:number;repeatClients:number;weeklyHours:number;weeklyWeek:number;clientWins:Record<string,number>;invoices:FreelanceInvoice[];completedIds:string[];}
+export const newFreelanceCareer=():FreelanceCareer=>({completedGigs:0,completedProjects:0,completedMiniCampaigns:0,positiveReviews:0,repeatClients:0,weeklyHours:0,weeklyWeek:1,clientWins:{},invoices:[],completedIds:[],transactionIds:[],portfolio:[]});
 export interface Campaign {freelanceJob?:FreelanceJobProgress;
   briefId: string; aiStatus: AIBriefStatus; aiError?: string | null; legacyBrief?:boolean; journey?:CampaignJourney;
   scenarioIndex: number; catalogClientId?:string|null; aiScenario?: Scenario | null; phase: Phase; day: number; spent: number; research: string[];
@@ -372,6 +374,12 @@ export function migrate(raw: unknown): GameState {
   }
   const career=s.freelanceCareer??newFreelanceCareer();
   out.freelanceCareer={...newFreelanceCareer(),...career,invoices:Array.isArray(career.invoices)?career.invoices:[],completedIds:Array.isArray(career.completedIds)?career.completedIds:[],clientWins:career.clientWins??{},weeklyWeek:Number.isInteger(career.weeklyWeek)?career.weeklyWeek:out.clock.week};
+  out.freelanceCareer.transactionIds=Array.isArray(career.transactionIds)?career.transactionIds:[];
+  out.freelanceCareer.portfolio=Array.isArray(career.portfolio)?career.portfolio:[];
+  // Approval was implicit in V4 saves. Retain it without altering historical payment.
+  for(const artifact of out.campaign.freelanceJob?.v4?.artifacts??[]){
+   if(artifact.status==="approved"&&artifact.approvedVersion===undefined)artifact.approvedVersion=artifact.version;
+  }
   if(out.freelanceBoard&&(!Array.isArray(out.freelanceBoard.listings)||!Array.isArray(out.freelanceBoard.applications)))out.freelanceBoard=undefined;
   if(!out.agencyUnlocked||!out.ceo)ensureRecruitment(out);
   ensureCompanyMarket(out);

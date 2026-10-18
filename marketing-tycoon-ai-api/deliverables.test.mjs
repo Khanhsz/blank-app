@@ -22,3 +22,19 @@ test("Gemini text cannot modify item statuses, fees, review decisions or missing
  assert.equal(fallbackDeliverableReview(input).notes.length,2);
  assert.equal(validateDeliverableReview({notes:[]},input).notes[0].id,"post-1");
 });
+
+
+test("V6 landing page client review receives the signed, bounded brief and never client-owned media as an award",()=>{
+ const request={...req,jobId:"landing-page",brief:{
+  objective:"Signup conversion",audience:"Nearby first-time buyers",insight:"Need clear credible proof",
+  acceptance:"A visible benefit, honest offer and primary CTA",scope:"One landing page",
+  fee:9999999999999,mediaBudget:9999999999999
+ }};
+ const input=validateDeliverableRequest(request);
+ assert.equal(input.jobId,"landing-page");
+ assert.equal(input.brief.acceptance,"A visible benefit, honest offer and primary CTA");
+ assert.equal("fee" in input.brief,false);
+ assert.equal("mediaBudget" in input.brief,false);
+ assert.ok(deliverablePrompt(input).includes("Nearby first-time buyers"));
+ assert.equal(fallbackDeliverableReview(input).notes.length,2);
+});
