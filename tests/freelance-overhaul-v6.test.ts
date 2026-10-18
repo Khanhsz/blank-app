@@ -158,6 +158,10 @@ test("V6 workstation adapts to modal width, not only the browser viewport",()=>{
  const css=readFileSync("src/freelance-overhaul.css","utf8");
  const gameCss=readFileSync("src/styles.css","utf8");
  assert.match(gameCss,/\.panel\{[^}]*width:min\(490px,/,"Gameplay desk is a narrow overlay on desktop");
+ const app=readFileSync("src/App.tsx","utf8");
+ assert.ok(app.includes("panel-freelance"),"Expanded layout must be exclusive to active freelance work");
+ assert.match(css,/\.panel\.panel-freelance\{width:min\(980px,calc\(100vw - 48px\)\)\}/);
+ assert.match(css,/@media\(max-width:750px\)\{\s*\.panel\.panel-freelance\{width:auto;/);
  assert.match(css,/\.mt-v6\{container-type:inline-size\}/,"Freelance workspaces must measure their panel container");
  assert.match(css,/@container\s*\(min-width:560px\)/);
  assert.match(css,/@container\s*\(min-width:850px\)/);
