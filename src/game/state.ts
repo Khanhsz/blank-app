@@ -53,6 +53,8 @@ export interface FreelanceV4Artifact {
  decisions:Record<string,string>;copy:string;version:number;
  draft?:{decisions:Record<string,string>;copy:string};
  video?:VideoMiniState;videoDraft?:VideoMiniState;
+ /** Auto-saved V5.1 Perfect Shot capture can be retried without another work-hour charge until Continue. */
+ perfectShotUnconfirmed?:boolean;
  status:"draft"|"ready"|"approved"|"revise";
  score:number;feedback:string;versions:{version:number;copy:string;decisions:Record<string,string>;video?:VideoMiniState}[];
 }

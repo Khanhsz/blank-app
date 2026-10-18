@@ -1,10 +1,10 @@
-import {useEffect,useRef,useState,type PointerEvent} from "react";
+import {useEffect,useRef,useState} from "react";
 import {Camera,CheckCircle2,ChevronLeft,ChevronRight,Clapperboard,Play,RotateCcw,Scissors,Target,Volume2,WandSparkles} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {useGame,act} from "@/game/store";
 import {WEEKLY_CAPACITY} from "@/game/freelanceJobs";
 import {videoScore,videoComplete,videoSummary,currentVideoDraft,changeVideoDraft,commitVideoDraft,
- VIDEO_LEVELS,VIDEO_SCENES,HOOK_OPTIONS,HEADLINE_OPTIONS,MATCH_IDEAL,MATCH_DURATIONS,CAPTION_TARGETS,BEAT_TARGETS} from "@/game/videoMiniGames";
+ VIDEO_LEVELS,VIDEO_SCENES,HOOK_OPTIONS,HEADLINE_OPTIONS,MATCH_IDEAL,MATCH_DURATIONS,CAPTION_TARGETS,BEAT_TARGETS,PERFECT_SHOT_DURATION,PERFECT_SHOT_PEAK,capturePerfectShot,continuePerfectShot} from "@/game/videoMiniGames";
 import type {VideoMiniState,FreelanceV4Artifact} from "@/game/state";
 
 const clamp=(n:number,a:number,b:number)=>Math.max(a,Math.min(b,n));
@@ -74,40 +74,83 @@ function ScrollStopper({id,data,brand}:{id:string;data:VideoMiniState;brand:stri
  </div>
  </div></div>;
 }
-function PerfectShot({id,data}:{id:string;data:VideoMiniState}){
- const [time,setTime]=useState(0),[active,setActive]=useState(true);
- const start=useRef(0),ref=useRef<number>(0),drag=useRef(false);
+/** Reel Rush Lite V5.1. One action: CAPTURE. Playback starts on entry,
+ * then a timed press atomically saves the video deliverable to the V4 board.
+ * Retrying before Continue replaces the same version without extra work hours.
+ */
+function PerfectShot({id,artifact}:{id:string;artifact:FreelanceV4Artifact}){
+ const [playing,setPlaying]=useState(!artifact.perfectShotUnconfirmed);
+ const [time,setTime]=useState(0);
+ const started=useRef(0),raf=useRef(0);
+ const game=useGame(x=>x);
+ const career=game.freelanceCareer;
+ const hoursLeft=WEEKLY_CAPACITY-(career?.weeklyWeek===game.clock.week?career.weeklyHours:0);
+ const needed=artifact.perfectShotUnconfirmed?0:artifact.version?1:4;
+ const result=artifact.video?.kind==="perfect-shot"?artifact.video:null;
+ const recorded=artifact.perfectShotUnconfirmed&&!playing&&!!result;
  useEffect(()=>{
-  if(!active)return;
-  start.current=performance.now()-time*1000;
-  const tick=(now:number)=>{setTime(((now-start.current)/1000)%10);ref.current=requestAnimationFrame(tick)};
-  ref.current=requestAnimationFrame(tick);
-  return ()=>cancelAnimationFrame(ref.current);
- },[active]);
- const updatePointer=(e:PointerEvent<HTMLDivElement>)=>{
-  if(!drag.current)return;
-  const r=e.currentTarget.getBoundingClientRect();
-  next(id,{frameX:Math.round(clamp((e.clientX-r.left)/r.width*100,0,100)),
-   frameY:Math.round(clamp((e.clientY-r.top)/r.height*100,0,100))});
+  if(!playing)return;
+  started.current=performance.now();
+  const tick=(now:number)=>{
+   setTime(((now-started.current)/1000)%PERFECT_SHOT_DURATION);
+   raf.current=requestAnimationFrame(tick);
+  };
+  raf.current=requestAnimationFrame(tick);
+  return ()=>cancelAnimationFrame(raf.current);
+ },[playing]);
+ const capture=()=>{
+  const moment=((performance.now()-started.current)/1000)%PERFECT_SHOT_DURATION;
+  let saved=false;
+  act((s,fx)=>{saved=capturePerfectShot(s,fx,id,moment)});
+  if(saved){setPlaying(false);setTime(moment)}
  };
- return <div className="mt-reel-game">
- <div className="mt-reel-head"><h3>02 · Perfect Shot</h3><p>Move the viewfinder, zoom in and capture the product as the hero moment passes. Target timing: around 4.5 seconds.</p></div>
- <div className="mt-reel-layout">
- <div className="mt-reel-shot" onPointerDown={e=>{drag.current=true;e.currentTarget.setPointerCapture(e.pointerId);updatePointer(e)}}
- onPointerMove={updatePointer} onPointerUp={()=>{drag.current=false}} onPointerCancel={()=>{drag.current=false}}>
-  <Frame scene="product" frameX={data.frameX} frameY={data.frameY} zoom={data.zoom} progress={time}/>
-  <div className="mt-reel-reticle" style={{left:data.frameX+"%",top:data.frameY+"%"}}><span/></div>
- </div>
- <div className="mt-reel-tools">
-  <b>Camera controls · Drag reticle to frame</b>
-  <label>Horizontal framing {data.frameX}%<input type="range" min={0} max={100} value={data.frameX} onChange={e=>next(id,{frameX:+e.target.value})}/></label>
-  <label>Vertical framing {data.frameY}%<input type="range" min={0} max={100} value={data.frameY} onChange={e=>next(id,{frameY:+e.target.value})}/></label>
-  <label>Zoom {data.zoom.toFixed(2)}x<input type="range" min={.8} max={1.8} step={.02} value={data.zoom} onChange={e=>next(id,{zoom:+e.target.value})}/></label>
-  <div className="mt-reel-clock"><span>REC · {time.toFixed(2)}s / 10s</span><span>{active?"● Live camera":"Paused"}</span></div>
-  <Button onClick={()=>{next(id,{captureTime:+time.toFixed(2),captures:data.captures+1});setActive(false)}}><Camera size={15}/> Capture This Moment</Button>
-  <Button variant="outline" onClick={()=>{setTime(0);setActive(true)}}><RotateCcw size={14}/> Retry Timing</Button>
-  {data.captures>0&&<p role="status" className="mt-reel-feedback">Hero frame saved at {data.captureTime.toFixed(2)}s. You can adjust the camera and recapture.</p>}
- </div></div></div>;
+ const retry=()=>{setTime(0);setPlaying(true)};
+ const score=result?videoScore(result):0;
+ return <section className="mt-v4-panel mt-reel mt-reel-lite" aria-label="Perfect Shot one-button capture mini-game">
+  <div className="mt-v4-title"><div><small>VIDEO 2/5 · ONE-BUTTON CHALLENGE</small>
+   <h3>Perfect Shot</h3><p>Watch the product move. Tap CAPTURE when it reaches the spotlight. No camera setup required.</p>
+  </div><Camera size={21}/></div>
+  <div className="mt-reel-lite-stage">
+   <div className="mt-reel-lite-screen">
+    <Frame scene="product" headline="Capture the hero moment" caption="Look for the spotlight" progress={time} frameX={55} frameY={46} zoom={1.22}/>
+    <div className={"mt-reel-lite-spotlight"+(Math.abs(time-PERFECT_SHOT_PEAK)<.6?" is-near":"")}>
+     <span>{Math.abs(time-PERFECT_SHOT_PEAK)<.6?"✦ HERO MOMENT":"● LIVE"}</span>
+    </div>
+   </div>
+   <div className="mt-reel-lite-hud">
+    <span>{recorded?"CAPTURE SAVED":"AUTO PLAY · 8s LOOP"}</span>
+    <b>{recorded?result?.captureTime.toFixed(2)+"s":time.toFixed(2)+"s"}</b>
+   </div>
+   <div className="mt-reel-lite-progress" aria-label="Video playback progress">
+    <span className="mt-reel-lite-perfect-zone"/>
+    <span className="mt-reel-lite-cursor" style={{left:((recorded?result?.captureTime??time:time)/PERFECT_SHOT_DURATION*100)+"%"}}/>
+   </div>
+  </div>
+  {playing&&<>
+   <Button className="w-full mt-reel-lite-capture" size="lg" disabled={needed>hoursLeft} onClick={capture}>
+    <Camera size={20}/> CAPTURE!
+   </Button>
+   <p className="mt-reel-muted">{needed>hoursLeft?
+    "You need "+needed+" work-hours. End Week before capturing; no progress is lost.":
+    "One tap captures and autosaves your Video 2 draft. Aim for the bright hero moment."}</p>
+  </>}
+  {recorded&&<>
+   <div className="mt-reel-lite-result" role="status">
+    <small>AUTOSAVED · VIDEO 2 · VERSION {artifact.version}</small>
+    <strong>{score>=90?"PERFECT SHOT!":score>=70?"GOOD SHOT!":"NEEDS WORK"}</strong>
+    <span>{score}/100 · Captured at {result!.captureTime.toFixed(2)}s</span>
+    <p>Your timing is saved in the Deliverable Board. Retry replaces this attempt without charging more work-hours.</p>
+   </div>
+   <div className="mt-reel-lite-actions">
+    <Button variant="outline" onClick={retry}><RotateCcw size={15}/> Retry</Button>
+    <Button onClick={()=>act((s,fx)=>{continuePerfectShot(s,fx,id)})}>
+     Continue <ChevronRight size={15}/>
+    </Button>
+   </div>
+  </>}
+  {!playing&&!recorded&&<Button onClick={retry}><Play size={15}/> Play Again</Button>}
+  <p className="mt-reel-muted">Animated simulated footage; no physical camera or MP4 export. Payment still occurs only after client approval and Final Submit.</p>
+ </section>;
 }
 function MatchCut({id,data}:{id:string;data:VideoMiniState}){
  const [playhead,setPlayhead]=useState(0);
@@ -218,6 +261,7 @@ export function VideoDraftPreview({video,title}:{video:VideoMiniState;title:stri
 export function VideoMiniGame({artifact,brand}:{artifact:FreelanceV4Artifact;brand:string}){
  const s=useGame(x=>x),data=currentVideoDraft(s,artifact.id);
  if(!data)return null;
+ if(data.kind==="perfect-shot")return <PerfectShot id={artifact.id} artifact={artifact}/>;
  const level=VIDEO_LEVELS.find(x=>x.id===artifact.id),score=videoScore(data),complete=videoComplete(data);
  const hoursLeft=WEEKLY_CAPACITY-(s.freelanceCareer?.weeklyWeek===s.clock.week?s.freelanceCareer.weeklyHours:0);
  const hours=artifact.version?1:4;
@@ -225,7 +269,7 @@ export function VideoMiniGame({artifact,brand}:{artifact:FreelanceV4Artifact;bra
  return <section className="mt-v4-panel mt-reel" aria-label={"Video mini-game "+level?.name}>
  <div className="mt-v4-title"><div><small>VIDEO PRODUCTION · PLAYABLE CHALLENGE</small><h3>{level?.name}</h3><p>{level?.goal}</p></div><Clapperboard size={22}/></div>
  {data.kind==="scroll-stopper"&&<ScrollStopper id={artifact.id} data={data} brand={brand}/>}
- {data.kind==="perfect-shot"&&<PerfectShot id={artifact.id} data={data}/>}
+ 
  {data.kind==="match-cut"&&<MatchCut id={artifact.id} data={data}/>}
  {data.kind==="caption-rush"&&<CaptionRush id={artifact.id} data={data}/>}
  {data.kind==="beat-drop"&&<BeatDrop id={artifact.id} data={data}/>}

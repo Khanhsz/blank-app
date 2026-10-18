@@ -46,7 +46,13 @@ export function initialVideoState(id:string):VideoMiniState{
   captions:[0,0,0,0],captionY:15,
   beatCuts:[],beatAttempt:0};
 }
-const err=(x:number,target:number,scale:number)=>Math.abs(x-target)*scale;
+/** The capture timing is the ONLY skill input for Perfect Shot V5.1. */
+export const PERFECT_SHOT_DURATION=8;
+export const PERFECT_SHOT_PEAK=4.5;
+export function perfectShotTimingScore(seconds:number){
+ if(!Number.isFinite(seconds)||seconds<0||seconds>10)return 0; // legacy 10s V5 captures remain readable
+ return clamp(Math.round(100-Math.abs(seconds-PERFECT_SHOT_PEAK)*18),20,100);
+}
 export function videoScore(d:VideoMiniState):number{
  if(!videoComplete(d))return 0;
  switch(d.kind){
@@ -57,7 +63,7 @@ export function videoScore(d:VideoMiniState):number{
   return clamp(Math.round(hook*.61+headline*.39+lift),0,100);
  }
  case "perfect-shot":
-  return clamp(Math.round(100-err(d.frameX,55,.42)-err(d.frameY,46,.48)-err(d.zoom,1.22,39)-err(d.captureTime,4.5,11)),0,100);
+  return perfectShotTimingScore(d.captureTime);
  case "match-cut":{
   const matches=d.order.reduce((sum,id,i)=>sum+(id===MATCH_IDEAL[i]?1:0),0);
   const orderScore=matches/MATCH_IDEAL.length*73;
@@ -87,7 +93,7 @@ export function videoSummary(d:VideoMiniState,score=videoScore(d)):string{
  const label=VIDEO_LEVELS.find(x=>x.kind===d.kind)?.name??"Video";
  const parts:Record<VideoMiniKind,string>={
  "scroll-stopper":"Opening: "+d.hookClip+"; headline: "+d.headline+"; "+d.tests+" simulated hook test(s).",
- "perfect-shot":"Camera ("+d.frameX+"%, "+d.frameY+"%), zoom "+d.zoom.toFixed(2)+"; product captured at "+d.captureTime.toFixed(2)+"s.",
+ "perfect-shot":"One-button hero capture at "+d.captureTime.toFixed(2)+"s; timing "+(videoScore(d)>=90?"Perfect":videoScore(d)>=70?"Good":"Needs work")+".",
  "match-cut":"Edited sequence: "+d.order.join(" → ")+"; scene lengths "+d.lengths.join("/")+"s.",
  "caption-rush":"Caption cues: "+d.captions.map(n=>n.toFixed(1)+"s").join(", ")+"; position "+d.captionY+"% from top.",
  "beat-drop":"Timeline cuts: "+d.beatCuts.map(n=>n.toFixed(2)+"s").join(", ")+"; rhythm attempt "+d.beatAttempt+"."
@@ -146,4 +152,51 @@ export function commitVideoDraft(s:GameState,fx:Fx,id:string){
  a.versions=a.versions.slice(-8);
  fx.log("Saved "+a.title+" · "+VIDEO_LEVELS.find(x=>x.id===id)?.name+" · "+score+"/100 · "+hours+"h.");
  return true;
+}
+
+/** Capturing is an atomic autosave of the scored V4 deliverable. First capture
+ * spends 4h, subsequent official revision 1h. Retrying before Continue
+ * replaces only the current unconfirmed version, without extra work-hour
+ * charges, reputation, or payment side effects.
+ */
+export function capturePerfectShot(s:GameState,fx:Fx,id:string,seconds:number){
+ const p=s.campaign.freelanceJob,v=p?.v4,a=v?.artifacts.find(x=>x.id===id);
+ if(id!=="video-2"||p?.templateId!=="short-video"||!v||v.step!=="workspace"||!a||a.status==="approved"||
+    !Number.isFinite(seconds)||seconds<0||seconds>PERFECT_SHOT_DURATION)return false;
+ const video:VideoMiniState={...(a.videoDraft??a.video??initialVideoState(id)),
+  kind:"perfect-shot",captureTime:+seconds.toFixed(2),
+  captures:Math.max(1,(a.video?.captures??0)+(a.perfectShotUnconfirmed?0:1)),
+  frameX:55,frameY:46,zoom:1.22};
+ if(!videoComplete(video))return false;
+ if(a.perfectShotUnconfirmed&&a.version>0&&a.video?.kind==="perfect-shot"){
+  a.video=structuredClone(video);
+  a.score=videoScore(video);a.copy=videoSummary(video,a.score);
+  a.decisions={minigame:video.kind};a.status="ready";delete a.videoDraft;
+  const previous=a.versions[a.versions.length-1];
+  if(previous?.version===a.version){
+   previous.copy=a.copy;previous.decisions={...a.decisions};previous.video=structuredClone(video);
+  }
+  fx.log("Retook Perfect Shot · "+a.score+"/100 · no additional work hours.");
+  return true;
+ }
+ a.videoDraft=video;
+ if(!commitVideoDraft(s,fx,id))return false;
+ a.perfectShotUnconfirmed=true;
+ return true;
+}
+/** Continue advances directly to the next unfinished video, or opens the
+ * standard V4 deliverable board once all five have saved versions.
+ */
+export function continuePerfectShot(s:GameState,fx:Fx,id:string){
+ const p=s.campaign.freelanceJob,v=p?.v4,a=v?.artifacts.find(x=>x.id===id);
+ if(p?.templateId!=="short-video"||!v||v.step!=="workspace"||!a||!a.perfectShotUnconfirmed||!a.video)return false;
+ a.perfectShotUnconfirmed=false;
+ const next=v.artifacts.find((x,i)=>i>v.artifacts.indexOf(a)&&x.status!=="approved"&&x.version===0)
+  ??v.artifacts.find(x=>x.id!==id&&x.status==="revise")
+  ??v.artifacts.find(x=>x.id!==id&&x.status==="draft");
+ if(next){v.activeId=next.id;fx.toast("Perfect Shot saved. Next: "+next.title);return true;}
+ if(v.artifacts.every(x=>x.version>0&&x.status!=="revise")&&!v.artifacts.some(x=>x.videoDraft||x.draft)){
+  v.step="board";fx.toast("All five videos are ready in Deliverable Board.");return true;
+ }
+ fx.toast("Perfect Shot saved. Open another video or complete its draft.");return true;
 }
