@@ -22,7 +22,7 @@ export function FortuneHeadquarters({onOpenDeal,forcedClientId}:{onOpenDeal:()=>
  return <div className="mt-fortune-hq">
   <div className="mt-location-identity"><span className="mt-location-eyebrow">CORPORATE MILE / GLOBAL CLIENT HEADQUARTERS</span>
    <h3>Fortune 50 · HQ Visits</h3>
-   <p>Choose a company office to visit. Fortune accounts never accept direct Marketplace pitches. All contracts, incumbents and negotiations are fictional game scenarios.</p>
+   <p>{forcedClientId?"You are visiting this company's in-game office. Review incumbent commitments before requesting a meeting.":"This is the corporate directory. Find and visit the named Fortune HQ building on the city map to approach its procurement team."} All contracts and incumbent agency relationships are simulated.</p>
   </div>
   {!forcedClientId&&<div className="mt-client-catalog-count"><span>{FORTUNE_CLIENTS.length} simulated headquarters</span><span>365-day agency retainers</span></div>}
   {!forcedClientId&&<div className="mt-client-results">
@@ -46,11 +46,11 @@ export function FortuneHeadquarters({onOpenDeal,forcedClientId}:{onOpenDeal:()=>
    {selected.fortuneRank!==null&&selected.fortuneRank<=10&&<p><ShieldCheck size={14}/> Top 10 sector exclusivity: one agency may not simultaneously serve another top-10 client in the same industry.</p>}
    {signed&&<p><b>Active 12-month agreement</b> · Paid annual service fee {money(signed.contractTerms!.annualServiceFeeVnd)} · Ends day {signed.contractTerms!.endDay}.</p>}
    <p>{gate?.reason}</p>
-   <Button className="w-full" disabled={!gate?.ok||already} onClick={()=>{
+   <Button className="w-full" disabled={!forcedClientId||!gate?.ok||already} onClick={()=>{
     let success=false;
     act((d,fx)=>{success=approachFortuneAtHQ(d,fx,selected.id);});
     if(success)onOpenDeal();
-   }}>{already?"Already in pipeline":gate?.ok?"Approach "+selected.brand+" from HQ":"HQ approach unavailable"} <ArrowRight size={15}/></Button>
+   }}>{!forcedClientId?"Visit "+selected.brand+" HQ building in the city":already?"Already in pipeline":gate?.ok?"Approach "+selected.brand+" from HQ":"HQ approach unavailable"} <ArrowRight size={15}/></Button>
    <small>Procurement: contact → discovery → RFP qualification → competitive pitch → negotiation → 365-day written agreement. Annual service fee is invoiced once and settled on signing; media funds are separate.</small>
   </section>}
   {!forcedClientId&&<FortuneSimulationBoard/>}
