@@ -257,6 +257,7 @@ function CameraRig({scene,districts,selected,focus,preview,avatarZoom,player,pla
    const fortune=selected?.startsWith("fortune-hq-")?fortuneLocation(selected.slice("fortune-hq-".length)):null;
    if(building)c.setLookAt(building.x+14,Math.max(18,building.h+14),building.z+18,building.x,building.h*.45,building.z,true);
    else if(fortune)c.setLookAt(fortune.x+13,Math.max(16,fortune.h+12),fortune.z+14,fortune.x,fortune.h*.45,fortune.z,true);
+   else if(selected?.startsWith("fortune-hq-"))c.setLookAt(60,32,-25,48,9,-40,true);
    else c.setLookAt(78,73,86,0,0,0,true);
   }else if(scene==="room"){
    if(preview)c.setLookAt(2.5*(avatarZoom||1),3.5*(avatarZoom||1),6.3*(avatarZoom||1),0,1.2,1.35,true);
