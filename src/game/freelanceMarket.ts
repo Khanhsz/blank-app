@@ -7,6 +7,8 @@
 import {CLIENT_DATABASE,CLIENT_BY_ID,type ClientSector} from "./clientDatabase";
 import {FREELANCE_JOBS,getFreelanceJob,type FreelanceJobTemplate} from "./freelanceJobTemplates";
 import {canOfferJob,workload,WEEKLY_CAPACITY} from "./freelanceJobs";
+import {eligibleGigStaff,agencyGigGate} from "./agencyFreelance";
+import {taskFit} from "./personnel";
 import type {GameState,FreelanceListing,FreelanceApplication,FreelanceBoard,FreelanceBidApproach,FreelanceBidPrice} from "./state";
 import type {Fx} from "./store";
 
@@ -34,6 +36,7 @@ export function isHighBudgetJob(t:Pick<FreelanceJobTemplate,"fee"|"mediaBudget">
  return t.fee>=HIGH_BUDGET_MIN_FEE||t.mediaBudget>=HIGH_BUDGET_MIN_MEDIA;
 }
 export function jobGate(s:GameState,t:FreelanceJobTemplate){
+ if(s.agencyUnlocked)return agencyGigGate(s,t.id);
  if(isHighBudgetJob(t)&&s.reputation<=30)return "Requires reputation 31 or higher";
  if(!canOfferJob(s,t))return t.tier==="campaign"?"Requires 6 gigs/projects and 2 specialist projects":
   "Requires "+t.requiredGigs+" completed gigs/projects";
@@ -80,12 +83,12 @@ export function bidFee(t:FreelanceJobTemplate,price:FreelanceBidPrice){
 function bidScore(s:GameState,l:FreelanceListing,approach:FreelanceBidApproach,quote:number){
  const client=CLIENT_BY_ID[l.clientId],t=getFreelanceJob(l.templateId)!;
  const portfolio=workload(s).completedGigs+workload(s).completedProjects;
- const skill=clamp(46+s.expertise*1.4+Math.min(14,portfolio*2.2),30,97);
+ const skill=s.agencyUnlocked?clamp(eligibleGigStaff(s,t.id).reduce((v,id)=>Math.max(v,taskFit(s,id,{ "social-audit":"analytics","meta-setup":"media","audience-research":"research","mini-launch":"strategy","content-calendar":"strategy","content-sprint":"production"}[t.id]??"creative",t.id)),45),30,97):clamp(46+s.expertise*1.4+Math.min(14,portfolio*2.2),30,97);
  const relevant=s.history.filter(x=>!x.agency&&x.brand===client.brand).length;
- const portfolioScore=clamp(35+Math.min(40,portfolio*5)+Math.min(20,relevant*10),20,95);
+ const portfolioScore=clamp(35+Math.min(40,portfolio*5)+Math.min(20,relevant*10)+(s.agencyUnlocked?Math.min(25,s.ceo?.history.length??0):0),20,95);
  const proposal=clamp(53+(SECTOR_PREF[client.sector]===approach?24:approach==="research"?7:0),20,100);
  const affordability=clamp(90-Math.abs(quote/t.fee-1)*110,35,94);
- const load=workload(s).weeklyHours;
+ const load=s.agencyUnlocked?(s.ceo?.agencyGigs??[]).filter(g=>g.status==="working"||g.status==="revision").length*7:workload(s).weeklyHours;
  const availability=clamp(92-load*2,25,95);
  const trust=clamp(30+s.reputation*.53+Math.min(15,relevant*6),20,94);
  return +(skill*.27+portfolioScore*.20+proposal*.20+affordability*.12+availability*.12+trust*.09).toFixed(2);
@@ -106,7 +109,7 @@ export function winEstimate(s:GameState,l:FreelanceListing,approach:FreelanceBid
  return {score:p,probability:Math.round(100/sum),rivalScores:npc};
 }
 export function applyFreelanceJob(s:GameState,fx:Fx,id:string,approach:FreelanceBidApproach,price:FreelanceBidPrice){
- if(!s.created||s.agencyUnlocked||s.campaign.phase!=="brief")return false;
+ if(!s.created||(s.agencyUnlocked?!s.ceo:s.campaign.phase!=="brief"))return false;
  const b=ensureFreelanceBoard(s),l=b.listings.find(x=>x.id===id);
  if(!l||l.status!=="open"||l.closeWeek<s.clock.week)return false;
  const t=getFreelanceJob(l.templateId);
@@ -118,8 +121,10 @@ export function applyFreelanceJob(s:GameState,fx:Fx,id:string,approach:Freelance
  if(career.weeklyWeek!==s.clock.week){career.weeklyWeek=s.clock.week;career.weeklyHours=0;}
  const used=b.applications.filter(x=>x.week===s.clock.week).length;
  if(used>=FREELANCE_APPLICATION_LIMIT)return fx.toast("Only 3 applications per game week."),false;
- if(career.weeklyHours+APPLICATION_HOURS>WEEKLY_CAPACITY)return fx.toast("Weekly freelance capacity reached."),false;
- career.weeklyHours+=APPLICATION_HOURS;
+ if(!s.agencyUnlocked){
+  if(career.weeklyHours+APPLICATION_HOURS>WEEKLY_CAPACITY)return fx.toast("Weekly freelance capacity reached."),false;
+  career.weeklyHours+=APPLICATION_HOURS;
+ }
  const fee=bidFee(t,price);
  const match=winEstimate(s,l,approach,price);
  b.applications.push({id:"application-"+l.id,listingId:id,clientId:l.clientId,templateId:l.templateId,
@@ -173,7 +178,7 @@ export function completeFreelanceApplication(s:GameState,fx:Fx,applicationId:str
  return true;
 }
 export function advanceFreelanceBoard(s:GameState,closingWeek:number,fx:Fx){
- if(!s.freelanceBoard||s.agencyUnlocked)return;
+ if(!s.freelanceBoard)return;
  const b=s.freelanceBoard;
  if(b.lastWeek>closingWeek)return;
  for(const l of b.listings.filter(x=>x.status==="open"&&x.closeWeek<=closingWeek)){
