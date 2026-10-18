@@ -105,7 +105,8 @@ test("Agency gig consumes employee capacity, blocks exclusive client squads, and
  joinClientTeam(s,fx,"test-team","creator");
  assert.deepEqual(s.ceo!.clientTeams[0].memberIds,[]);
  assert.equal(Gigs.reassignAgencyGig(s,fx,g.id,"buyer"),false,"wrong specialty");
- assert.equal(Gigs.reassignAgencyGig(s,fx,g.id,"producer"),false,"wrong role");
+ assert.equal(Gigs.reassignAgencyGig(s,fx,g.id,"producer"),true,"production specialists can back up creative work");
+ assert.equal(g.staffId,"producer");
  assert.equal(Gigs.reassignAgencyGig(s,fx,g.id,"planner"),false,"wrong role");
 });
 test("Agency side gig work advances on CEO's existing simulation clock, and public offers refresh",()=>{
