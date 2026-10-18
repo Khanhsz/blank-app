@@ -5,8 +5,9 @@ import {endWeek,acknowledgeEdition} from "../src/game/weekly";
 import * as J from "../src/game/journey";
 import * as C from "../src/game/campaign";
 import type {Fx} from "../src/game/store";
+import {seedApproachedClient} from "./helpers/approachedClient";
 const fx:Fx={toast:()=>{},log:()=>{}};
-function game(){const s=defaults();s.created=true;s.campaign.aiStatus="fallback";return s}
+function game(){const s=defaults();s.created=true;seedApproachedClient(s);return s}
 
 test("Brief Room requires client questions and a business diagnosis before research",()=>{
  const s=game();J.approveBrief(s,fx,"discover");assert.equal(s.campaign.phase,"brief");
