@@ -7,6 +7,8 @@ import {ceoDay} from "./ceo";
 import {progressFreelanceWeek,scenarioOf,phaseOf,scheduleOf} from "./campaign";
 import {employees,money} from "./data";
 import {ensureRecruitment} from "./recruitment";
+import {advanceCompanyMarket,recordClientDelivery,ensureCompanyMarket} from "./companyMarket";
+import {catalogForBrand} from "./clientDatabase";
 import type {Fx} from "./store";
 import type {GameState,GameClock,WeeklyArticle,WeeklyCategory,WeeklyDecision,WeeklyEdition} from "./state";
 
@@ -79,6 +81,14 @@ export function endWeek(s:GameState,fx:Fx):WeeklyEdition|null{
  if(!wasAgency)progressFreelanceWeek(s,simulationFx);
  const to=weekly.day;
  if(c)c.weekly=weekly;
+ // Project completions are queued by CEO, freelancer deliveries are queued
+ // here; one business tick per End Week updates all clients and competitors.
+ if(!wasAgency&&s.history.length>historyCount){
+  const last=s.history[s.history.length-1];
+  recordClientDelivery(s,{clientId:s.campaign.catalogClientId??catalogForBrand(last.brand)?.id,
+   projectId:"freelance-"+s.campaign.briefId,spendVnd:last.spent,quality:last.score,kpi:last.outcome});
+ }
+ const quarterly=advanceCompanyMarket(s,completed,simulationFx);
  const articles:WeeklyArticle[]=[];
  const append=(category:WeeklyCategory,headline:string,body:string,evidence:string,impact:WeeklyArticle["impact"]="neutral")=>{
   articles.push({id:"story-"+completed+"-"+articles.length,category,headline,body,evidence,impact});
@@ -118,6 +128,18 @@ export function endWeek(s:GameState,fx:Fx):WeeklyEdition|null{
   if(to>sch.plannedLaunchDay&&phaseOf(p)!=="live"&&phaseOf(p)!=="results")
    append("clients","Scheduled launch has slipped","Missing production or strategy can shorten the campaign's media flight.","Target Day "+sch.plannedLaunchDay+" · today Day "+to,"negative");
  }
+ const liveMarket=ensureCompanyMarket(s);
+ if(quarterly){
+  const movers=quarterly.entries.filter(x=>x.change!==0).sort((a,b)=>Math.abs(b.change)-Math.abs(a.change)).slice(0,2)
+   .map(x=>{const prior=x.previousRank??0;return x.id+" #"+prior+" → #"+x.rank;});
+  append("clients","Simulation Fortune 50: quarterly ranking published",
+   "Big Corp positions have been recalculated from simulated revenue, brand strength and recent marketing performance.",
+   "Game Week "+completed+" · top-50 cohort · "+(movers.join("; ")||"No major rank changes"),"neutral");
+ }
+ const latestEvents=liveMarket.activity.filter(x=>x.week===completed);
+ if(latestEvents.length)append("clients","Campaigns influenced client businesses",
+   "Player and rival marketing activity changed modeled brand awareness, growth and revenue; impacts are bounded simulations.",
+   latestEvents.filter(x=>x.actor==="player").length+" player · "+latestEvents.filter(x=>x.actor==="rival").length+" rival campaigns","neutral");
  const delta=s.reputation-beforeRep;
  if(delta!==0)append("operations","Reputation "+(delta>0?"increased":"decreased"),"Campaign outcomes changed your standing.","Reputation "+beforeRep+" → "+s.reputation,delta>0?"positive":"negative");
  if(!decisions.length)append("decisions","No decisions recorded this week","Time still moved forward. Deadlines and automated work continue.","Week "+completed);

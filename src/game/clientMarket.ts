@@ -2,6 +2,7 @@
 import {getClient,agencyLeadForClient,scenarioForClient,type ClientSegment} from "./clientDatabase";
 import type {GameState,Lead} from "./state";
 import type {Fx} from "./store";
+import {marketCompany} from "./companyMarket";
 
 export function approachCatalogClient(s:GameState,fx:Fx,clientId:string):boolean{
  const client=getClient(clientId),ceo=s.ceo;
@@ -11,6 +12,13 @@ export function approachCatalogClient(s:GameState,fx:Fx,clientId:string):boolean
  if(duplicate){fx.toast("This company already has an open lead or signed opportunity.");return false;}
  if(ceo.leads.length>=150){fx.toast("Client pipeline limit reached. Resolve open opportunities first.");return false;}
  const seed=agencyLeadForClient(client);
+ const live=marketCompany(s,clientId);
+ if(live){
+  const momentum=Math.max(.75,Math.min(1.3,Math.pow(live.simulatedAnnualRevenue/Math.max(1,live.baselineAnnualRevenue),.45)));
+  seed.value=Math.round(seed.value*momentum);
+  seed.fee=Math.round(seed.fee*momentum);
+  seed.desc+=" Current modeled business growth: "+live.totalGrowthPct.toFixed(1)+"%; game budget adjusted to match.";
+ }
  const suffix=ceo.day+"-"+(++ceo.seq);
  const lead:Lead={...seed,id:"approach-"+clientId+"-"+suffix,status:"prospecting",source:"outbound",relationship:seed.trust,outreachAttempts:0};
  ceo.leads.unshift(lead);

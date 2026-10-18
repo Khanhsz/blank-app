@@ -9,6 +9,8 @@ import {runRivalAgents,ensureTender,rivalBidScore,registerRivalWin,resolveTalent
 import {candidatesForRole,primaryRole,eligibleForRole,profile,effectiveCapacity,employeeReadiness,staffRate,defaultProfile,updatePersonnelDay,recordDelivery} from "./personnel";
 import {teamForProject,ownerTeam,startClientTeam,reconcileClientTeams,teamCoverage} from "./clientTeams";
 import {contractBrief} from "./clientMarket";
+import {recordClientDelivery} from "./companyMarket";
+import {catalogForBrand} from "./clientDatabase";
 import {ensureLocalPricing,qualificationQuote} from "./pricingAdvisor";
 import {ensureRecruitment,acceptCandidate,recruitmentFee,visibleCandidates} from "./recruitment";
 import {activeDealCount,activeDealLimit,proposalMerit,opportunityForecast,acquisitionDay,onProjectCompleted} from "./acquisition";
@@ -163,6 +165,8 @@ function finishProject(s: GameState, c: CEO, p: Project, fx: Fx) {
   c.reputation.creative = clamp(c.reputation.creative + (p.quality >= 70 ? 3 : -2), 0, 100);
   schedulePayment(c, p, p.fee * 0.4, 7, "Final milestone — payment due");
   issue(c, fx, "renewal", p.id, `${p.brand} wrapped (${p.kpi >= 0 ? "+" : ""}${p.kpi}% KPI, margin ${money(p.margin)}). Renew?`, ["renew", "close"]);
+  recordClientDelivery(s,{clientId:p.clientMasterId??catalogForBrand(p.brand)?.id,
+    projectId:p.id,spendVnd:p.mediaSpent,quality:p.quality??55,kpi:p.kpi??0});
   onProjectCompleted(s,fx,p);
   fx.log(`CEO: completed ${p.brand}; ${p.kpi}% KPI`);
 }

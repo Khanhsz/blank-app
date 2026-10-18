@@ -8,13 +8,13 @@ import {sign} from "../src/game/ceo";
 import type {Fx} from "../src/game/store";
 const fx:Fx={toast:()=>{},log:()=>{}};
 const game=()=>{const s=defaults();s.created=true;return s;};
-test("98 canonical clients span seven exact sectors and all three segments",()=>{
+test("112 canonical clients span seven exact sectors and all three segments",()=>{
  assert.equal(SECTORS.length,7);
  assert.deepEqual(SECTORS.map(x=>x.id),["coffee","beauty","fashion","education","tech","fitness","food"]);
- assert.equal(CLIENT_COUNTS.total,98);
+ assert.equal(CLIENT_COUNTS.total,112);
  assert.equal(CLIENT_COUNTS.startup,28);
  assert.equal(CLIENT_COUNTS.sme,28);
- assert.equal(CLIENT_COUNTS.bigcorp,42);
+ assert.equal(CLIENT_COUNTS.bigcorp,56);
  assert.equal(CLIENT_COUNTS.fortune,14);
  assert.equal(new Set(CLIENT_DATABASE.map(x=>x.id)).size,CLIENT_DATABASE.length);
  for(const sector of SECTORS){

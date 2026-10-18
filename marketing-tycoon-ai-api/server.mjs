@@ -1,6 +1,7 @@
 import http from "node:http";
 import {inputCategory,prompt,validateCandidate,GEMINI_SCHEMA} from "./scenario.mjs";
 import {validatePricingInput,pricePrompt,buildPriceAdvice,PRICING_SCHEMA} from "./pricing.mjs";
+import {validateMarketRequest,validateMarketIntelligence,fallbackMarketReport,marketPrompt,MARKET_SCHEMA} from "./company-intelligence.mjs";
 const PORT=Number(process.env.PORT||4187);
 const ORIGIN=process.env.GAME_ORIGIN||"https://marketing-tycoon-bedroom-play.onrender.com";
 const MODEL=process.env.GEMINI_MODEL||"gemini-3.5-flash-lite";
@@ -68,13 +69,48 @@ async function generatePricingAdvice(input){
  }finally{clearTimeout(timer)}
 }
 
+/** Gemini writes bounded macro signals and explanations, never game finances. */
+async function generateMarketIntelligence(input){
+ if(!apiKey())return fallbackMarketReport(input);
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
+ try{
+  const upstream=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(MODEL)+":generateContent",{
+   method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":apiKey()},
+   body:JSON.stringify({contents:[{role:"user",parts:[{text:marketPrompt(input)}]}],
+    generationConfig:{responseMimeType:"application/json",responseSchema:MARKET_SCHEMA,temperature:.45,maxOutputTokens:1550}}),
+   signal:controller.signal});
+  if(!upstream.ok)throw Error("Gemini market HTTP "+upstream.status);
+  const json=await upstream.json();
+  const text=json?.candidates?.[0]?.content?.parts?.filter(p=>typeof p.text==="string").map(p=>p.text).join("");
+  if(!text)throw Error("Empty Gemini market response");
+  return validateMarketIntelligence(JSON.parse(text),input.week);
+ }catch(error){
+  console.warn("Market intelligence fallback:",String(error?.message||"unknown").slice(0,100));
+  return fallbackMarketReport(input);
+ }finally{clearTimeout(timer)}
+}
+
 const server=http.createServer(async(req,res)=>{
  const allowed=req.headers.origin===ORIGIN||req.headers.origin==="http://localhost:5173";
  if(req.method==="OPTIONS"){
   if(!allowed)return response(res,403,{error:"Origin not allowed"});
   res.writeHead(204,{"Access-Control-Allow-Origin":req.headers.origin,"Access-Control-Allow-Methods":"POST,GET,OPTIONS","Access-Control-Allow-Headers":"Content-Type","Access-Control-Max-Age":"600"});res.end();return;
  }
- if(req.url==="/api/status"&&req.method==="GET")return response(res,200,{available:!!apiKey(),model:MODEL,version:"v4.6",features:["ai-scenario-generator","agency-pricing-advisor"]},allowed?req.headers.origin:null);
+ if(req.url==="/api/status"&&req.method==="GET")return response(res,200,{available:!!apiKey(),model:MODEL,version:"v4.6",features:["ai-scenario-generator","agency-pricing-advisor","company-market-intelligence"]},allowed?req.headers.origin:null);
+ if(req.url==="/api/company-market-intelligence"&&req.method==="POST"){
+  if(!allowed)return response(res,403,{error:"Game origin required"});
+  if(!counted("market:"+remoteIP(req),3,3600000))return response(res,429,{error:"Hourly market insight limit reached."},req.headers.origin);
+  let input;
+  try{input=validateMarketRequest(await readJson(req,8500))}
+  catch{return response(res,400,{error:"Invalid game-market aggregate data"},req.headers.origin)}
+  const today=new Date().toISOString().slice(0,10);
+  if(globalCounter.day!==today){globalCounter.day=today;globalCounter.calls=0}
+  // Lower priority than gameplay briefs: never exhaust the shared Gemini pool.
+  let report;
+  if(apiKey()&&globalCounter.calls<35){globalCounter.calls++;report=await generateMarketIntelligence(input)}
+  else report=fallbackMarketReport(input);
+  return response(res,200,{report,mode:report.source,model:report.source==="gemini"?MODEL:null},req.headers.origin);
+ }
  if(req.url==="/api/pricing-advice"&&req.method==="POST"){
   if(!allowed)return response(res,403,{error:"Game origin required"});
   if(!counted("pricing:"+remoteIP(req),6,3600000))return response(res,429,{error:"Hourly pricing advice limit reached."},req.headers.origin);

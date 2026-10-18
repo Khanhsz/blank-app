@@ -64,7 +64,8 @@ const sectorBias:Record<ClientSector,number>={coffee:.65,beauty:1.05,fashion:1,e
 const hashSeed=(key:string)=>{let h=2166136261;for(let i=0;i<key.length;i++)h=Math.imul(h^key.charCodeAt(i),16777619);return (h>>>0)%10000/10000;};
 const vnd=(n:number)=>Math.round(n/100000)*100000;
 function makeFictional(sector:ClientSector,segment:ClientSegment,index:number):ClientMaster {
- const name=WORDS[sector][(segment==="startup"?0:segment==="sme"?4:8)+index];
+ const idx=(segment==="startup"?0:segment==="sme"?4:8)+index;
+ const name=WORDS[sector][idx]??(["Summit","Pinnacle"][index-4]+" "+SECTORS.find(s=>s.id===sector)!.label+" Holdings");
  const id=segment+"-"+sector+"-"+index;
  const rand=hashSeed(id);
  const employeeBase=segment==="startup"?4:segment==="sme"?35:420;
@@ -98,7 +99,8 @@ function score(c:ClientMaster):number{
  const budgetScale=clamp(Math.round(12+Math.log10(Math.max(1,c.marketingBudgetVnd)/1e8)*19),8,98);
  return clamp(Math.round(.30*revenueScale+.25*c.scaleScore+.25*budgetScale+.20*c.brandAwareness),0,100);
 }
-const fiction=SECTORS.flatMap(sec=>(["startup","sme","bigcorp"] as const).flatMap(segment=>Array.from({length:4},(_,i)=>makeFictional(sec.id,segment,i))));
+const fiction=SECTORS.flatMap(sec=>(["startup","sme","bigcorp"] as const).flatMap(segment=>
+ Array.from({length:segment==="bigcorp"?6:4},(_,i)=>makeFictional(sec.id,segment,i))));
 export const CLIENT_DATABASE:ClientMaster[]=[...fiction,...FORTUNE.map(makeFortune)].map(c=>({...c,commercialScore:score(c)}));
 export const CLIENT_BY_ID:Record<string,ClientMaster>=Object.fromEntries(CLIENT_DATABASE.map(x=>[x.id,x]));
 export const getClient=(id:string)=>CLIENT_BY_ID[id]??null;

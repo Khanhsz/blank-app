@@ -6,3 +6,27 @@ test("validated AI scenario retains simulation-compatible fields",()=>{const s=v
 test("rejects unbounded and invalid game outcomes",()=>{assert.throws(()=>validateCandidate({...input,trueInsight:"guaranteed_win"},"coffee"));assert.throws(()=>validateCandidate({...input,channel:{...input.channel,creator:30}},"coffee"));assert.throws(()=>validateCandidate({...input,budget:3000000000}));});
 test("rejects incomplete research or repeated insight options",()=>{assert.throws(()=>validateCandidate({...input,reports:{audit:"hi"}}));assert.throws(()=>validateCandidate({...input,insightOptions:Array(5).fill(input.insightOptions[0])}));});
 test("input restrictions",()=>{assert.equal(inputCategory("restricted-category"),"coffee");assert.match(prompt("coffee"),/fictional marketing client/);});
+
+import {SECTORS as MARKET_SECTORS,validateMarketRequest,validateMarketIntelligence,fallbackMarketReport,marketPrompt} from "./company-intelligence.mjs";
+const marketInput={week:4,sectors:MARKET_SECTORS.map(sector=>({sector,clientCount:16,averageGrowth:.21,averageAwareness:53,campaignCount:5})),
+ recent:[{sector:"tech",actor:"rival",impact:.3}]};
+test("company-market API accepts only seven bounded game sectors and aggregate data",()=>{
+ const request=validateMarketRequest(marketInput);
+ assert.equal(request.sectors.length,7);
+ assert.ok(marketPrompt(request).includes("FUTURE weeks"));
+ const bad={...marketInput,sectors:[...marketInput.sectors.slice(0,6),{...marketInput.sectors[0]}]};
+ assert.throws(()=>validateMarketRequest(bad));
+ assert.throws(()=>validateMarketRequest({...marketInput,week:"bad"}));
+});
+test("Gemini cannot insert companies, falsify finances or exceed permitted macro shocks",()=>{
+ const valid={headline:"Retail demand shifts in a fictional market",summary:"Simulated sector-level activity changes cautious consumer expectations.",
+  signals:MARKET_SECTORS.map(sector=>({sector,momentum:sector==="tech"?900:-900,reason:"Industry competition"}))};
+ const bounded=validateMarketIntelligence(valid,4);
+ assert.equal(bounded.signals.find(x=>x.sector==="tech").momentum,.65);
+ assert.equal(bounded.signals.find(x=>x.sector==="food").momentum,-.65);
+ assert.equal(bounded.signals.length,7);
+ assert.throws(()=>validateMarketIntelligence({...valid,signals:[...valid.signals,{sector:"crypto",momentum:5,reason:"False"}]},4));
+ const fallback=fallbackMarketReport(validateMarketRequest(marketInput));
+ assert.equal(fallback.source,"rules");
+ assert.equal(fallback.signals.length,7);
+});

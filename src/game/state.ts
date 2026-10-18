@@ -1,6 +1,7 @@
 import { ceoLeadDefs, ceoRivalDefs, type Channel, type Employee, type LeadDef, type Rival, type Scenario } from "./data";
 import {reconcileClientTeams} from "./clientTeams";
 import {ensureRecruitment} from "./recruitment";
+import {ensureCompanyMarket} from "./companyMarket";
 
 export type Phase = "brief" | "planning" | "executing" | "live" | "results" | "research" | "survey" | "validation" | "strategy" | "creative" | "media";
 export const PHASES: Phase[] = ["planning", "executing", "live", "results"];
@@ -115,11 +116,34 @@ export interface Character { name: string; skin: string; outfit: string; hair: s
 export interface RoomStyle { wall: string; rug: string; plant: boolean; lamp: boolean; shelf: boolean }
 
 export interface WorldProgress {visited:string[];contacts:string[];leasedOffices:string[]}
+export type MarketSector="coffee"|"beauty"|"fashion"|"education"|"tech"|"fitness"|"food";
+export interface MarketCampaignEvent {
+ id:string;projectId:string;clientId:string;actor:"player"|"rival";agency:string;week:number;
+ spendVnd:number;quality:number;kpi:number;impactPct?:number
+}
+export interface CompanyPerformance {
+ id:string;simulatedAnnualRevenue:number;baselineAnnualRevenue:number;currency:"VND"|"USD";
+ awareness:number;brandStrength:number;weeklyGrowthPct:number;totalGrowthPct:number;
+ momentum:number;rivalPressure:number;playerMarketingImpact:number;rivalMarketingImpact:number;
+ marketingSpendVnd:number;lastUpdatedWeek:number;campaigns:number;
+ history:{week:number;revenue:number;growth:number;awareness:number;playerLift:number;rivalLift:number}[];
+}
+export interface QuarterlyRanking {
+ week:number;quarter:number;positions:Record<string,number>;
+ entries:{id:string;rank:number;previousRank:number|null;change:number;revenue:number;score:number}[];
+}
+export interface CompanyMarket {
+ lastWeek:number;companies:Record<string,CompanyPerformance>;quarters:QuarterlyRanking[];
+ pending:MarketCampaignEvent[];activity:MarketCampaignEvent[];
+ macro:Record<MarketSector,number>;
+ intelligence:{lastWeek:number;status:"gemini"|"rules";headline:string;summary:string;
+ signals:{sector:MarketSector;momentum:number;reason:string}[]};
+}
 export interface GameState {
   version: 2; created: boolean; character: Character; room: RoomStyle; scene: SceneId;
   reputation: number; expertise: number; personalCash: number; agencyCash: number; agencyUnlocked: boolean; agencyName: string;
   staff: string[]; personnel:Record<string,PersonnelProfile>; recruitment?:RecruitmentMarket; teamLeads:Record<string,string>; upgrades: string[]; cityUnlocked: boolean; campaign: Campaign; clock: GameClock; officeId:string;
-  world: WorldProgress;
+  world: WorldProgress;companyMarket?:CompanyMarket;
   history: { brand: string; outcome: number; score: number; spent: number; rep: number; xp: number; scenarioIndex: number; agency: boolean; caseStudy?: {highlight:string;reason:string;next:string;score:number;diagnosis:string|null;insight:string|null;approach:string|null;creative:string|null;message:string;mediaPlan:string|null;liveWeeks:number} }[];
   log: { t: number; msg: string }[]; graphics: "high" | "low"; ceo: CEO | null;
 }
@@ -252,6 +276,7 @@ export function migrate(raw: unknown): GameState {
     reconcileClientTeams(out);
   }
   if(!out.agencyUnlocked||!out.ceo)ensureRecruitment(out);
+  ensureCompanyMarket(out);
   return out;
 }
 
