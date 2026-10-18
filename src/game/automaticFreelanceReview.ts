@@ -36,7 +36,7 @@ async function requestReview(payload:NonNullable<ReturnType<typeof requestInput>
 }
 export function prepareFreelanceApplicationReviews(){
  const state=getState();
- if(!state.created||state.agencyUnlocked)return;
+ if(!state.created)return;
  for(const application of state.freelanceBoard?.applications??[]){
   if(application.status!=="pending")continue;
   const payload=requestInput(state,application.id);
