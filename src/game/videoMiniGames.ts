@@ -78,7 +78,7 @@ export function videoComplete(d:VideoMiniState):boolean{
  switch(d.kind){
  case "scroll-stopper":return d.tests>=1&&HOOK_OPTIONS.some(x=>x.id===d.hookClip)&&HEADLINE_OPTIONS.some(x=>x.id===d.headline);
  case "perfect-shot":return d.captures>=1&&d.captureTime>=0&&d.captureTime<=10&&d.frameX>=0&&d.frameX<=100&&d.frameY>=0&&d.frameY<=100&&d.zoom>=.8&&d.zoom<=1.8;
- case "match-cut":return d.edits>=1&&d.order.length===5&&new Set(d.order).size===5&&d.order.every(x=>MATCH_IDEAL.includes(x))&&d.lengths.length===5&&d.lengths.every(n=>Number.isInteger(n)&&n>=2&&n<=10);
+ case "match-cut":return d.edits>=1&&d.order.length===5&&new Set(d.order).size===5&&d.order.every(x=>new Set<string>(MATCH_IDEAL).has(x))&&d.lengths.length===5&&d.lengths.every(n=>Number.isInteger(n)&&n>=2&&n<=10);
  case "caption-rush":return d.captions.length===4&&d.captions.every(n=>Number.isFinite(n)&&n>=0&&n<=11)&&d.captionY>=0&&d.captionY<=100&&d.captions.some(n=>n>0);
  case "beat-drop":return d.beatCuts.length===4&&d.beatCuts.every((n,i)=>Number.isFinite(n)&&n>=0&&n<=7&&(i===0||n>d.beatCuts[i-1]));
  }
