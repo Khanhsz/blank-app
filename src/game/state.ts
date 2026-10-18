@@ -208,7 +208,9 @@ export interface CompanyMarket {
  intelligence:{lastWeek:number;status:"gemini"|"rules";headline:string;summary:string;
  signals:{sector:MarketSector;momentum:number;reason:string}[]};
 }
+export interface SandboxCheatState {enabled:boolean;uses:number;cashGranted:number;lastCommand?:string;lastDay?:number}
 export interface GameState {
+  sandboxCheats?:SandboxCheatState;
   version: 2; created: boolean; character: Character; room: RoomStyle; scene: SceneId;
   reputation: number; expertise: number; personalCash: number; agencyCash: number; agencyUnlocked: boolean; agencyName: string;
   staff: string[]; personnel:Record<string,PersonnelProfile>; recruitment?:RecruitmentMarket; teamLeads:Record<string,string>; upgrades: string[]; cityUnlocked: boolean; campaign: Campaign; clock: GameClock; officeId:string;
@@ -227,6 +229,7 @@ export const newCampaign = (i: number, day = 1): Campaign => ({
 
 export const defaults = (): GameState => ({
   version: 2, created: false,
+  sandboxCheats:{enabled:false,uses:0,cashGranted:0},
   character: { name: "Alex", skin: "#d6a681", outfit: "#4c9589", hair: "#352824", interest: "Strategy", hairstyle:"short", accessory:"none" },
   room: { wall: "#efe4d3", rug: "#bd694a", plant: true, lamp: true, shelf: false },
   scene: "room", reputation: 0, expertise: 0, personalCash: 2500000, agencyCash: 0, agencyUnlocked: false, agencyName: "",
@@ -284,6 +287,13 @@ export function migrate(raw: unknown): GameState {
     character: { ...d.character, ...(s.character ?? {}) },
     room: { ...d.room, ...(s.room ?? {}) },
     campaign: { ...newCampaign(0), ...s.campaign },
+    sandboxCheats:s.sandboxCheats&&typeof s.sandboxCheats==="object"?{
+      enabled:s.sandboxCheats.enabled===true,
+      uses:Number.isFinite(s.sandboxCheats.uses)?Math.max(0,Math.floor(s.sandboxCheats.uses)):0,
+      cashGranted:Number.isFinite(s.sandboxCheats.cashGranted)?Math.max(0,Math.floor(s.sandboxCheats.cashGranted)):0,
+      ...(typeof s.sandboxCheats.lastCommand==="string"?{lastCommand:s.sandboxCheats.lastCommand}:{}),
+      ...(Number.isFinite(s.sandboxCheats.lastDay)?{lastDay:s.sandboxCheats.lastDay}:{})
+    }:d.sandboxCheats,
     officeId:typeof s.officeId==="string"?s.officeId:"agency",
     staff: Array.isArray(s.staff) ? s.staff : [],
     personnel:s.personnel&&typeof s.personnel==="object"?{...s.personnel}:{},

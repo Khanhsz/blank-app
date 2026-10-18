@@ -64,6 +64,7 @@ function Customize(){
 export default function App(){
  const s=useGame(x=>x);
  const [panel,setPanel]=useState<Panel>(getState().created?(getState().agencyUnlocked?"ceo":"none"):"onboard");
+ const [cheatOpen,setCheatOpen]=useState(false);
  const [ceoTab,setCeoTab]=useState<CEOSection>(getState().ceo?.activeDealId?"pipeline":"inbox");
  const [workforceView,setWorkforceView]=useState(newWorkforceView);
  const [selected,setSelected]=useState<string|null>(null);
@@ -82,6 +83,16 @@ export default function App(){
  const previousMilestones=useRef({phase:getState().campaign.phase,history:getState().history.length,agency:getState().agencyUnlocked,city:getState().cityUnlocked,staff:getState().staff.length,projects:getState().ceo?.projects.length??0,upgrades:getState().upgrades.length});
  useEffect(()=>{initStore();try{const cvs=document.createElement("canvas");setWebgl(!!(cvs.getContext("webgl2")||cvs.getContext("webgl")))}catch{setWebgl(false)}return()=>{if(transitionTimer.current!==null)window.clearTimeout(transitionTimer.current)}},[]);
  useEffect(()=>{if(s.agencyUnlocked&&panel==="campaign")setPanel("ceo")},[s.agencyUnlocked,panel]);
+ useEffect(()=>{
+  const handler=(e:KeyboardEvent)=>{
+   if(!e.altKey||!e.shiftKey||e.key.toLowerCase()!=="m"||!getState().created)return;
+   const target=e.target;
+   if(target instanceof HTMLElement&&(target.isContentEditable||["INPUT","TEXTAREA","SELECT"].includes(target.tagName)))return;
+   e.preventDefault();setCheatOpen(true);setPanel("settings");
+  };
+  window.addEventListener("keydown",handler);
+  return()=>window.removeEventListener("keydown",handler);
+ },[]);
  // The founder chooses a client in the bedroom; only then does Gemini build
  // that client’s context, insight and strategy. Never auto-create random briefs.
  useEffect(()=>{prepareNextBrief()},[s.created,s.agencyUnlocked,s.campaign.phase,s.campaign.briefId,s.campaign.catalogClientId,s.campaign.aiStatus]);
@@ -162,7 +173,7 @@ export default function App(){
    {panel==="ceo"&&s.agencyUnlocked&&<CEOCommandCenter onReadEdition={setReviewNews} tab={ceoTab} onTabChange={setCeoTab} workforceView={workforceView} onWorkforceChange={setWorkforceView}/>}
    {panel==="location"&&selected&&<LocationPanel id={selected} onOpen={fromLocation} onVisitCompany={clientId=>{setSelected("fortune-hq-"+clientId);setPanel("location");}}/>}
    {panel==="avatar"&&<Customize/>}
-   {panel==="settings"&&<GameSettings onReset={()=>{setPanel("onboard");setSelected(null);setSceneFocus(null)}}/>}
+   {panel==="settings"&&<GameSettings cheatOpen={cheatOpen} onCheatOpenChange={setCheatOpen} onReset={()=>{setPanel("onboard");setSelected(null);setSceneFocus(null);setCheatOpen(false)}}/>}
    {panel==="journal"&&<div className="world-ambient-panel"><div className="eyebrow">YOUR CREATIVE PROCESS</div><h3>Project moodboard</h3><p>Your research, strategy and creative decisions remain saved as you explore. Return to the bedroom computer for your active campaign.</p><div className="world-item-stat">Current phase <b>{s.campaign.phase}</b></div><button className="world-action" onClick={approachComputer}>Return to workstation ↗</button></div>}
    {panel==="phone"&&<div className="world-ambient-panel"><div className="eyebrow">MESSAGES & NETWORK</div><h3>Your professional life</h3><p>{s.agencyUnlocked?"Your Account Manager handles routine messages. Open CEO inbox for decisions that need you.":"Your bedroom computer is where you approach clients. Gemini builds their simulated business context and strategy."}</p><button className="world-action" onClick={()=>s.agencyUnlocked?setPanel("ceo"):approachComputer()}>{s.agencyUnlocked?"Open CEO inbox":"Go to computer"} ↗</button></div>}
    {panel==="map"&&<div className="mt-world-directory">
