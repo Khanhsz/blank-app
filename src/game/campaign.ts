@@ -65,7 +65,7 @@ export function scoreModel(s: GameState, c: Campaign, mode: "final" | "interim" 
 
 // ---- Actions: three brief-driven phases, resolved by the shared weekly clock ----
 export const acceptBrief=(s:GameState,fx:Fx)=>{
- const c=s.campaign;if(c.phase!=="brief"||!c.catalogClientId||!c.aiScenario?.aiPlanning)return;
+ const c=s.campaign;if(c.phase!=="brief"||(!c.legacyBrief&&(!c.catalogClientId||!c.aiScenario?.aiPlanning)))return;
  c.startedDay=s.clock.day;c.day=s.clock.day;c.phase="planning";
  fx.log("Accepted brief from "+scenarioOf(c).brand+" · "+scheduleOf(c).weeks+" week schedule");
 };
@@ -162,6 +162,7 @@ export function chooseFreelanceClient(s:GameState,fx:Fx,clientId:string):boolean
  if(!client||client.segment==="bigcorp")return false;
  const c=s.campaign;
  c.catalogClientId=client.id;
+ c.legacyBrief=false;
  c.aiScenario=null;
  c.aiStatus="pending";c.aiError=null;
  c.briefId=newCampaign(c.scenarioIndex,s.clock.day).briefId;
