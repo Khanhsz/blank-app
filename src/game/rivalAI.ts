@@ -170,7 +170,11 @@ export function runRivalAgents(s:GameState,c:CEO,fx:Fx){
   // Fresh fictional corporate RFPs keep the economy competitive beyond starter deals.
   // Same game-world client definitions and real CEO pitch/negotiation engine.
   if(day>=28&&day%28===0&&c.leads.length<90){
-   const base=ceoLeadDefs[(Math.floor(day/28)-1)%ceoLeadDefs.length];
+   // Startup agencies receive SME-sized incoming RFPs only. Premium
+   // corporate tenders enter this channel after agency achievements unlock.
+   const premiumUnlocked=s.history.filter(h=>h.agency).length>=3&&s.reputation>=55;
+   const pool=premiumUnlocked?ceoLeadDefs:ceoLeadDefs.filter(x=>x.businessSize==="small"||x.businessSize==="medium");
+   const base=pool[(Math.floor(day/28)-1)%pool.length];
    const factor=.86+noise(base.id+"rfp",day)*.27;
    const id="market-"+base.id+"-"+day;
    if(!c.leads.some(l=>l.id===id)){
