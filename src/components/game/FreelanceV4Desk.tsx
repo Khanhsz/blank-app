@@ -33,6 +33,76 @@ function LegacyVideoEditor({artifact,jobId}:{artifact:FreelanceV4Artifact;jobId:
  </section>;
 }
 
+
+/** Mini workbenches operate on the same card decisions and saved output as Client Review. */
+function JobSpecificWorkbench({jobId,activeId,decisions,choose,brand}:{jobId:string;activeId:string;decisions:Record<string,string>;choose:(fieldId:string,optionId:string)=>void;brand:string}){
+ const game=useGame(s=>s);
+ const artifacts=game.campaign.freelanceJob?.v4?.artifacts??[];
+ if(jobId==="social-pack")return <div className="mt-v6-workbench">
+  <div className="mt-v6-workbench-head"><h4>Social creative canvas</h4><small>Pick a visual composition; your choice is saved into this post</small></div>
+  <div className="mt-v6-social-canvas"><div className="mt-v6-social-screen">
+   <small>{brand} · SOCIAL</small><div className="mt-v6-social-image">◎<span>{decisions.format==="carousel"?"1 / 3 CAROUSEL":decisions.format==="infographic"?"KEY FACTS / ICONS":"SINGLE HERO VISUAL"}</span></div>
+   <strong>{decisions.pillar==="education"?"Helpful advice":decisions.pillar==="lifestyle"?"A day in your life":"Meet the product"}</strong>
+   <small>CTA: {decisions.cta??"choose below"}</small></div>
+   <div className="mt-v6-workbench-choices">{[["carousel","Carousel"],["static","Single image"],["infographic","Infographic"]].map(([id,label])=>
+    <button type="button" key={id} aria-pressed={decisions.format===id} className={decisions.format===id?"selected":""} onClick={()=>choose("format",id)}>{label}</button>)}</div></div>
+ </div>;
+ if(jobId==="social-audit")return <div className="mt-v6-workbench">
+  <div className="mt-v6-workbench-head"><h4>Account inspection</h4><small>Simulated social signals · mark one evidence hotspot for this finding</small></div>
+  <div className="mt-v6-audit-profile"><div><b>@{brand.toLowerCase().replace(/[^a-z0-9]+/g,"")||"localbrand"}</b><small>Fictional account · 12 posts</small></div>
+   <div className="mt-v6-hotspots">{[
+    {id:"retention",label:"▶ Reel preview",desc:"Viewers leave early"},
+    {id:"engagement",label:"♡ Engagement",desc:"Saves and comments vary"},
+    {id:"cadence",label:"▦ Posting feed",desc:"Uneven weekly schedule"}
+   ].map(o=><button type="button" key={o.id} aria-pressed={decisions.signal===o.id}
+    onClick={()=>choose("signal",o.id)} className={decisions.signal===o.id?"selected":""}>
+    <b>{o.label}</b><small>{o.desc}</small><span>{decisions.signal===o.id?"📍 Marked":"Mark hotspot"}</span></button>)}</div></div>
+ </div>;
+ if(jobId==="content-calendar")return <div className="mt-v6-workbench">
+  <div className="mt-v6-workbench-head"><h4>14-day publishing calendar</h4><small>Seven scheduled outputs across two weeks · select a day to edit its saved card</small></div>
+  <div className="mt-v6-calendar-grid">{Array.from({length:14},(_,i)=>{
+   const day=i+1;const item=artifacts.find(a=>a.title.startsWith("Day "+day+" ·"));
+   return <button type="button" key={day} disabled={!item} aria-pressed={item?.id===activeId}
+    className={(item?"scheduled ":"rest ")+(item?.id===activeId?"selected":"")}
+    onClick={()=>item&&act(s=>Work.setV4Active(s,item.id))}>
+    <small>{day<=7?"WEEK 1":"WEEK 2"} · DAY {day}</small><b>{item?.title.split("·")[1]?.trim()??"Rest / production"}</b>
+    <span>{item?.version?"✓ Saved":item?"Edit post":"—"}</span></button>
+  })}</div></div>;
+ if(jobId==="meta-setup")return <div className="mt-v6-workbench">
+  <div className="mt-v6-workbench-head"><h4>Ads Manager · campaign draft</h4><small>Client-owned media budget. Select a split, not a freelancer payout</small></div>
+  <div className="mt-v6-meta-builder"><div><b>{brand}</b><small>Objective: {decisions.objective??"not set"} · Audience: {decisions.audience??"not set"}</small></div>
+   <div className="mt-v6-budget-bars">{[
+    {id:"603010",split:[60,30,10],label:"Prospect / retarget / test"},
+    {id:"5050",split:[50,50,0],label:"Discover / retarget"},
+    {id:"100",split:[100,0,0],label:"Broad only"}
+   ].map(a=><button key={a.id} type="button" aria-pressed={decisions.budget===a.id} className={decisions.budget===a.id?"selected":""} onClick={()=>choose("budget",a.id)}>
+    <b>{a.label}</b><span className="mt-v6-budget-track">{a.split.map((value,i)=>value>0&&<i key={i} style={{width:value+"%"}}>{value}%</i>)}</span>
+   </button>)}</div></div></div>;
+ if(jobId==="audience-research")return <div className="mt-v6-workbench">
+  <div className="mt-v6-workbench-head"><h4>Evidence sorting desk</h4><small>Fictional study snippets · choose how to interpret them</small></div>
+  <div className="mt-v6-research-wall"><div><small>Interview signal A</small><b>“I need to see what the product solves.”</b></div>
+   <div><small>Feedback signal B</small><b>“The offer details were not clear.”</b></div>
+   <div><small>Behavior signal C</small><b>Users compared options before acting.</b></div></div>
+  <div className="mt-v6-workbench-choices">{[["themes","Group recurring themes"],["quotes","Select supporting quotes"],["guess","Assume without evidence"]].map(([id,label])=>
+   <button type="button" key={id} className={decisions.evidence===id?"selected":""} aria-pressed={decisions.evidence===id} onClick={()=>choose("evidence",id)}>{label}</button>)}</div>
+ </div>;
+ if(jobId==="content-sprint")return <div className="mt-v6-workbench">
+  <div className="mt-v6-workbench-head"><h4>Channel adaptation studio</h4><small>Adapt the same master message to the selected channel</small></div>
+  <div className="mt-v6-channels">{[["instagram","Instagram","Visual + caption"],["tiktok","TikTok","Short hook + demo"],["email","Email","Subject + opt-in CTA"],["website","Website","Benefit + next step"]].map(([id,label,hint])=>
+   <button type="button" key={id} aria-pressed={decisions.channel===id} onClick={()=>choose("channel",id)}
+    className={decisions.channel===id?"selected":""}><b>{label}</b><small>{hint}</small><span>{decisions.channel===id?"✓ Selected":"Adapt here"}</span></button>)}</div>
+ </div>;
+ if(jobId==="mini-launch")return <div className="mt-v6-workbench">
+  <div className="mt-v6-workbench-head"><h4>Local launch timeline</h4><small>Build a complete pre-launch, launch day and follow-up sequence</small></div>
+  <div className="mt-v6-launch-phases">{artifacts.map((a,i)=><button type="button" key={a.id} aria-pressed={a.id===activeId}
+    className={a.id===activeId?"selected":""} onClick={()=>act(s=>Work.setV4Active(s,a.id))}>
+    <span>{i+1}</span><b>{a.title}</b><small>{a.version?"✓ Saved": "Plan activity"}</small></button>)}</div>
+  <div className="mt-v6-workbench-choices">{[["creator","Local creator"],["paid","Geo-targeted ads"],["pop-up","Neighborhood sampling"]].map(([id,label])=>
+   <button type="button" key={id} aria-pressed={decisions.activation===id} className={decisions.activation===id?"selected":""} onClick={()=>choose("activation",id)}>{label}</button>)}</div>
+ </div>;
+ return null;
+}
+
 /** Picking a card updates the persisted draft and its preview in the SAME store action. */
 function CardEditor({artifact,jobId,brand}:{artifact:FreelanceV4Artifact;jobId:string;brand:string}){
  const game=useGame(s=>s),unit=Work.unitFor(jobId,artifact.id)!;
@@ -49,6 +119,7 @@ function CardEditor({artifact,jobId,brand}:{artifact:FreelanceV4Artifact;jobId:s
  };
  return <section className="mt-v4-panel mt-v6-editor" aria-label={"Editing "+unit.title}>
   <div className="mt-v4-title"><div><small>INTERACTIVE WORKSPACE · v{artifact.version||"Draft"}</small><h3>{unit.title}</h3><p>{unit.description}</p></div><PenTool size={20}/></div>
+  <JobSpecificWorkbench jobId={jobId} activeId={artifact.id} decisions={decisions} choose={choose} brand={brand}/>
   <div className="mt-v6-editor-grid">
    <div className="mt-v6-card-fields">{unit.fields.map((field,index)=><div className="mt-v6-card-group" key={field.id}>
     <div className="mt-v6-field-heading"><b>{index+1}. {field.label}</b><span>{decisions[field.id]?"✓ Selected":"Choose one card"}</span></div>
