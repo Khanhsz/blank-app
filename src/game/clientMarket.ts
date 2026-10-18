@@ -58,5 +58,5 @@ export function contractBrief(clientId:string,contract:{value:number;fee:number;
 export const approachFortuneAtHQ=(s:GameState,fx:Fx,clientId:string)=>approachCatalogClient(s,fx,clientId,"hq");
 export function isOpenCatalogLead(s:GameState,clientId:string):boolean{
  return !!s.ceo?.leads.some(l=>l.clientMasterId===clientId&&
-  ["new","qualified","pitch","pitch_won","negotiating","signed","renewal"].includes(l.status));
+  ["new","prospecting","discovery","nurturing","qualified","pitch","shortlisted","pitch_won","negotiating","signed","renewal"].includes(l.status));
 }
