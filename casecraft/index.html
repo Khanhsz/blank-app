@@ -194,6 +194,20 @@ body{font-size:14px;color:var(--cc-text)}.tiny,.note,.metric .caption,.panel-hea
 .ccnt-smalltitle{font-weight:700;font-size:13px;color:#244655}
 @media(max-width:880px){.ccnt-grid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.ccnt-play *{scroll-behavior:auto;transition:none!important}}
+
+/* Matplotlib embeds inside existing CaseCraft report page; inherits navy/white tokens. */
+.cc-py-panel {border:1px solid #dbe6ec;border-radius:12px;background:#f8fbfd;padding:18px;margin:20px 0}
+.cc-py-head {display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.cc-py-head h3 {margin:0;color:#112d46;font-size:17px}
+.cc-py-head p {margin:5px 0;color:#496476;font-size:13px}
+.cc-py-actions {display:flex;gap:8px;flex-wrap:wrap}
+.cc-py-status {font-size:13px;color:#445e70;padding:12px 0;min-height:28px}
+.cc-py-gallery {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.cc-py-figure {margin:0;border:1px solid #d6e3ec;border-radius:10px;background:#fff;overflow:hidden}
+.cc-py-figure img {display:block;width:100%;height:auto;aspect-ratio:1.8;object-fit:contain}
+.cc-py-figure figcaption {font-size:12.5px;color:#496476;padding:8px 12px 10px;border-top:1px solid #eef3f5}
+@media(max-width:950px){.cc-py-gallery{grid-template-columns:1fr}.cc-py-actions{width:100%}}
+@media(prefers-reduced-motion:reduce){.cc-py-panel *{scroll-behavior:auto!important;animation:none!important}}
 </style></head>
 <body>
 <div class="app-shell">
@@ -2389,15 +2403,16 @@ function xExpertPage(){initializeExpertNetwork(w);const c=xActive();if(!c)return
 function xReportCard(k,s){return `<article class="x-report-type"><div><span class="x-report-icon">▤</span><div><h3>${esc(s.name)}</h3><p>${esc(s.description)}</p><small>${s.cost} credits · ${s.delay} game days · ${s.focus.map(d=>xDomainNames[d]).join(' / ')}</small></div></div><button data-x-order-report="${k}" class="btn dark" ${w.cases.credits<s.cost?'disabled':''}>Commission</button></article>`;}
 function xReportDocument(d){const sourceIds=d.sourceIds||[],isCall=d.kind==='call';const rows=d.claims||[];
  return `<article class="x-report-doc"><div class="x-report-header"><small>CASECRAFT INTELLIGENCE / ${esc(d.id)} · SNAPSHOT DAY ${d.asOfDay}</small><h2>${esc(d.title)}</h2><p>Delivered day ${d.deliveredDay} · ${esc(d.classification)}</p><div class="x-tags"><span class="meta-chip">${esc(d.quality)}</span><span class="meta-chip">${isCall?'EXPERT INTERVIEW':`COUNCIL ${d.council.length} SPECIALISTS`}</span><span class="meta-chip">${sourceIds.length} SOURCE REFERENCES</span></div></div>
+ ${ccPythonReportSection(d)}
  ${d.sections.map((sec,i)=>`<section class="x-report-section"><span class="x-index">${String(i+1).padStart(2,'0')} / ${esc(sec.title.toUpperCase())}</span><p>${esc(sec.text)}</p></section>`).join('')}
  ${d.findings?.length?`<section class="x-report-section"><h3>Evidence-led findings</h3>${d.findings.map(f=>`<div class="x-finding"><b>${esc(f.classification)}</b><p>${esc(f.text)}</p><small>Source: ${esc(f.sourceId)}</small></div>`).join('')}</section>`:''}
- ${d.bridge?`<section class="x-report-section"><h3>Exhibit — EBIT movement bridge</h3><p>Historical financial impact, million synthetic credits. Positive bars improve EBIT; negative bars decrease it. This reconciles accounting movements rather than identifying definitive root causes.</p><div class="x-bridge-total"><span>Opening EBIT <b>${dec(d.bridge.opening,2)}M</b></span><span>Closing EBIT <b>${dec(d.bridge.closing,2)}M</b></span></div>${d.bridge.effects.map(x=>`<div class="x-bridge-row"><span>${esc(x.label)}</span><div class="x-bridge-track"><div class="x-bridge-bar ${x.value<0?'decrease':'increase'}" style="width:${Math.max(3,Math.min(100,Math.abs(x.value)/Math.max(.1,...d.bridge.effects.map(e=>Math.abs(e.value)))*100))}%"></div></div><b class="${x.value<0?'neg':'pos'}">${x.value>=0?'+':''}${dec(x.value,2)}M</b></div>`).join('')}<p class="x-note">Unallocated balance is computed as the difference needed to reconcile the reported EBIT movement; it is not independently established as a causal driver. Source: ${esc(d.bridge.effects[0].sourceId)}.</p></section>`:''}
+ ${d.bridge?`<section class="x-report-section" id="cc-py-bridge-fallback"><h3>Exhibit — EBIT movement bridge</h3><p>Historical financial impact, million synthetic credits. Positive bars improve EBIT; negative bars decrease it. This reconciles accounting movements rather than identifying definitive root causes.</p><div class="x-bridge-total"><span>Opening EBIT <b>${dec(d.bridge.opening,2)}M</b></span><span>Closing EBIT <b>${dec(d.bridge.closing,2)}M</b></span></div>${d.bridge.effects.map(x=>`<div class="x-bridge-row"><span>${esc(x.label)}</span><div class="x-bridge-track"><div class="x-bridge-bar ${x.value<0?'decrease':'increase'}" style="width:${Math.max(3,Math.min(100,Math.abs(x.value)/Math.max(.1,...d.bridge.effects.map(e=>Math.abs(e.value)))*100))}%"></div></div><b class="${x.value<0?'neg':'pos'}">${x.value>=0?'+':''}${dec(x.value,2)}M</b></div>`).join('')}<p class="x-note">Unallocated balance is computed as the difference needed to reconcile the reported EBIT movement; it is not independently established as a causal driver. Source: ${esc(d.bridge.effects[0].sourceId)}.</p></section>`:''}
  ${d.council?.length?`<section class="x-report-section"><h3>Cross-functional perspectives</h3>${d.council.map(e=>`<div class="x-perspective"><b>${esc(e.title)}</b><p>${esc(e.perspective)}</p><small>${e.sourceIds.length?'Uses '+e.sourceIds.map(esc).join(', '):'No domain-specific evidence yet'}</small></div>`).join('')}</section>`:''}
  <section class="x-report-section"><h3>Evidence exhibits</h3>${rows.length?`<div class="tablewrap"><table><thead><tr><th>Disclosed indicator</th><th class="right">Observed value</th><th class="right">Evidence ID</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.label)}</td><td class="right">${typeof r.value==='number'?dec(r.value,3):esc(r.value)}</td><td class="right">${esc(r.sourceId)}</td></tr>`).join('')}</tbody></table></div>`:'<p>No source-specific numerical facts available at the commission cutoff.</p>'}</section>
  <section class="x-report-section"><h3>Unresolved questions & quality gate</h3><ul>${d.gaps.map(s=>`<li>${esc(s)}</li>`).join('')}</ul>${d.checks?.map(ch=>`<p class="x-check ${ch.ok?'':'x-warning'}">${ch.ok?'✓':'○'} ${esc(ch.label)}</p>`).join('')||''}<p class="x-note">Opinion is not verified causality. All outputs use source snapshots available when commissioned, not future economic state.</p></section>
  <section class="x-report-section"><h3>Provenance & usage</h3><p>${sourceIds.length?sourceIds.map(id=>`<button class="btn minimal" data-x-source="${esc(id)}">${esc(id)} ↗</button>`).join(''):'No domain-specific source yet.'}</p><p class="x-note">The delivered report is registered as a case-specific evidence item in Evidence Lab and can be attached to Stage 04 hypotheses.</p><button class="btn dark" data-page="workspace">Use in Consulting Workspace →</button></section></article>`;}
 function xReportsPage(){initializeExpertNetwork(w);const c=xActive();if(!c)return `${xTitle()}${component('No current client','<p>Accept an engagement to commission in-world consulting reports.</p><button class="btn dark" data-page="cases">Open Case Desk →</button>')}`;
- const reports=xDeliverables(),selected=reports.find(x=>x.id===selectedDeepId)||reports.at(-1),tabLabels={library:'Report Library',commission:'Commission Research',queue:'Job Queue'};
+ const reports=xDeliverables(),selected=reports.find(x=>x.id===selectedDeepId)||reports.at(-1);if(reportTab==='library'&&selected?.kind==='report')setTimeout(()=>ccPyChartLoad(selected),30);const tabLabels={library:'Report Library',commission:'Commission Research',queue:'Job Queue'};
  return `${xTitle()}<div class="metrics">${metric('Research credits',String(w.cases.credits),'Across all research services')}${metric('Published',String(reports.length),'Including expert interviews')}${metric('Pending',String(xJobs().filter(j=>j.status==='pending').length),'World time dependent')}${metric('Evidence accessible',String(w.cases.evidence.filter(e=>e.caseId===c.id).length),'Used by reports')}</div><div class="x-tabs">${Object.entries(tabLabels).map(([k,v])=>`<button class="x-tab ${k===reportTab?'active':''}" data-x-report-tab="${k}">${v}</button>`).join('')}</div>
  ${reportTab==='commission'?component('Request a Deep Research Report',Object.entries(REPORT_TYPES).map(([k,v])=>xReportCard(k,v)).join(''),'SYNTHETIC ANALYTICAL COUNCIL','Order Evidence Lab source packs first for richer analysis. Reports freeze currently available evidence at commissioning.'):
  reportTab==='queue'?component('Research operations',xPending(),'SCHEDULED DELIVERIES','Continue World Clock for publication; no hidden data is disclosed early'):
@@ -2723,5 +2738,69 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-nt-adjust]
 },true);
 document.addEventListener('change',e=>{const select=e.target.closest('[data-nt-choice]');if(!select)return;const form=select.closest('form');if(!form)return;if(select.name==='hyp-choice'){const msg=CCNT_HYPOTHESES[select.value];ccntPut(form,'text',msg);const p=form.querySelector('[data-nt-hyp-preview]');if(p)p.textContent=msg;}if(select.name==='nt-strategy'){const val=CCNT_STRATEGIES[select.value];if(val){const p=form.querySelector('[data-nt-strategy-preview]');if(p)p.textContent=val.thesis;}}if(['cw-recommend-form','cw-journal-form','ccw-reflection-form'].includes(form.id))ccntUpdatePreview(form);if(select.name==='action-type'&&form.id==='decision-form'){draft.type=select.value;draft.value=valuesForType(select.value);render();}},true);
 document.addEventListener('input',e=>{const input=e.target;if(input.matches('input[type="range"]')){const out=input.closest('form')?.querySelector(`[data-nt-output="${input.name}"]`);if(out){const suffix=(out.textContent||'').match(/[%×]$/)?.[0]||'';out.textContent=input.value+suffix;}ccntLiveScenario(input.closest('form'));}},true);
+
+/** CaseCraft Matplotlib report exhibits — report-only disclosed snapshot, never WorldState. */
+const CC_REPORT_PY_URL='https://casecraft-report-engine.onrender.com';
+const ccPyCache=new Map();
+const ccPyJobs=new Map();
+
+function ccPyReportData(d){
+ const keys=['id','title','kind','quality','asOfDay','deliveredDay','coverage','required'];
+ const payload=Object.fromEntries(keys.filter(k=>d[k]!==undefined).map(k=>[k,d[k]]));
+ payload.sourceIds=(d.sourceIds||[]).slice(0,70).map(String);
+ payload.claims=(d.claims||[]).slice(0,50).map(r=>({label:String(r.label),value:r.value,sourceId:String(r.sourceId)}));
+ if(d.bridge){payload.bridge={opening:d.bridge.opening,closing:d.bridge.closing,reconciles:!!d.bridge.reconciles,effects:(d.bridge.effects||[]).slice(0,12).map(e=>({label:String(e.label),value:e.value,sourceId:String(e.sourceId),inferredResidual:!!e.inferredResidual}))};}
+ return payload;
+}
+function ccReportChartsMarkup(charts){
+ return charts.map(c=>`<figure class="cc-py-figure"><img src="${c.image}" alt="${esc(c.title)}. Biểu đồ từ báo cáo đã được công bố." loading="lazy"><figcaption>${esc(c.title)}</figcaption></figure>`).join('');
+}
+function ccUpdatePyStatus(id,html){let node=document.querySelector(`[data-cc-python-report="${id}"] .cc-py-status`);if(node)node.innerHTML=html;}
+function ccPyChartLoad(d){
+ if(!d||d.kind!=='report')return;
+ const panel=document.querySelector(`[data-cc-python-report="${d.id}"]`);
+ if(!panel)return;
+ if(ccPyCache.has(d.id)){
+   const charts=ccPyCache.get(d.id);
+   const list=panel.querySelector('.cc-py-gallery');
+   if(list){list.innerHTML=ccReportChartsMarkup(charts);list.hidden=!charts.length;}
+   const status=panel.querySelector('.cc-py-status');if(status)status.textContent=charts.length?`${charts.length} biểu đồ được tạo bằng Python · Matplotlib`:'Chưa đủ chỉ tiêu đồng đơn vị để vẽ biểu đồ.';
+   const fallback=document.getElementById('cc-py-bridge-fallback');if(fallback&&charts.some(c=>c.id==='bridge'))fallback.hidden=true;
+   return;
+ }
+ if(ccPyJobs.has(d.id))return;
+ ccUpdatePyStatus(d.id,'Đang dựng biểu đồ Python theo dữ liệu đã được mở…');
+ const ac=new AbortController(); const timeout=setTimeout(()=>ac.abort(),90000);
+ const task=fetch(CC_REPORT_PY_URL+'/api/charts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(ccPyReportData(d)),signal:ac.signal})
+  .then(async response=>{if(!response.ok)throw Error('Dịch vụ biểu đồ chưa sẵn sàng');return response.json();})
+  .then(data=>{let charts=Array.isArray(data.charts)?data.charts:[];ccPyCache.set(d.id,charts);if(page==='reports')ccPyChartLoad(d);})
+  .catch(()=>ccUpdatePyStatus(d.id,'Báo cáo dạng bảng vẫn dùng được. Dịch vụ Python đang tạm thời chưa sẵn sàng; chọn “Tạo lại biểu đồ” để thử lại.'))
+  .finally(()=>{clearTimeout(timeout);ccPyJobs.delete(d.id);});
+ ccPyJobs.set(d.id,task);
+}
+function ccPythonReportSection(d){
+ if(d.kind!=='report')return '';
+ return `<section class="x-report-section cc-py-panel" data-cc-python-report="${esc(d.id)}">
+   <div class="cc-py-head"><div><h3>Biểu đồ phân tích bằng Python</h3><p>Matplotlib · dữ liệu đã được mở, không có dữ liệu tương lai</p></div><div class="cc-py-actions"><button type="button" class="btn minimal" data-cc-python-retry="${esc(d.id)}">Tạo lại biểu đồ</button><button type="button" class="btn dark" data-cc-python-pdf="${esc(d.id)}">Xuất PDF biểu đồ</button></div></div>
+   <div class="cc-py-status" role="status" aria-live="polite">Đang chuẩn bị biểu đồ…</div><div class="cc-py-gallery" hidden></div>
+   <p class="x-note">Đơn vị tài chính: triệu tín dụng giả lập. Mỗi biểu đồ chỉ dùng chỉ tiêu có nguồn và kỳ so sánh rõ ràng.</p>
+ </section>`;
+}
+function ccPyFindReport(id){const c=activeEngagement(w);return c?initializeExpertNetwork(w).deliverables.find(d=>d.caseId===c.id&&d.id===id):null;}
+document.addEventListener('click',async event=>{
+ const retry=event.target.closest('[data-cc-python-retry]');
+ if(retry){const d=ccPyFindReport(retry.dataset.ccPythonRetry);if(!d)return;ccPyCache.delete(d.id);ccPyChartLoad(d);return;}
+ const pdf=event.target.closest('[data-cc-python-pdf]');
+ if(!pdf)return;
+ const d=ccPyFindReport(pdf.dataset.ccPythonPdf);if(!d)return;
+ pdf.disabled=true;const original=pdf.textContent;pdf.textContent='Đang tạo PDF…';
+ try{
+  const ac=new AbortController(),timeout=setTimeout(()=>ac.abort(),90000);
+  let r;try{r=await fetch(CC_REPORT_PY_URL+'/api/report.pdf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(ccPyReportData(d)),signal:ac.signal});}finally{clearTimeout(timeout);}
+  if(!r.ok)throw Error('Dịch vụ chưa sẵn sàng');
+  const url=URL.createObjectURL(await r.blob()),anchor=document.createElement('a');anchor.href=url;anchor.download=`casecraft-${d.id}-matplotlib.pdf`;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),15000);
+ }catch(_e){toast('Không thể tạo PDF bằng Python. Có thể xem báo cáo HTML hoặc thử lại.');}
+ finally{pdf.disabled=false;pdf.textContent=original;}
+});
 </script>
 </body></html>
