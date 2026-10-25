@@ -2743,6 +2743,7 @@ document.addEventListener('input',e=>{const input=e.target;if(input.matches('inp
 const CC_REPORT_PY_URL='https://casecraft-report-engine.onrender.com';
 const ccPyCache=new Map();
 const ccPyJobs=new Map();
+function ccPyKey(d){return JSON.stringify(ccPyReportData(d));}
 
 function ccPyReportData(d){
  const keys=['id','title','kind','quality','asOfDay','deliveredDay','coverage','required'];
@@ -2760,23 +2761,24 @@ function ccPyChartLoad(d){
  if(!d||d.kind!=='report')return;
  const panel=document.querySelector(`[data-cc-python-report="${d.id}"]`);
  if(!panel)return;
- if(ccPyCache.has(d.id)){
-   const charts=ccPyCache.get(d.id);
+ const key=ccPyKey(d);
+ if(ccPyCache.has(key)){
+   const charts=ccPyCache.get(key);
    const list=panel.querySelector('.cc-py-gallery');
    if(list){list.innerHTML=ccReportChartsMarkup(charts);list.hidden=!charts.length;}
    const status=panel.querySelector('.cc-py-status');if(status)status.textContent=charts.length?`${charts.length} biểu đồ được tạo bằng Python · Matplotlib`:'Chưa đủ chỉ tiêu đồng đơn vị để vẽ biểu đồ.';
    const fallback=document.getElementById('cc-py-bridge-fallback');if(fallback&&charts.some(c=>c.id==='bridge'))fallback.hidden=true;
    return;
  }
- if(ccPyJobs.has(d.id))return;
+ if(ccPyJobs.has(key))return;
  ccUpdatePyStatus(d.id,'Đang dựng biểu đồ Python theo dữ liệu đã được mở…');
  const ac=new AbortController(); const timeout=setTimeout(()=>ac.abort(),90000);
  const task=fetch(CC_REPORT_PY_URL+'/api/charts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(ccPyReportData(d)),signal:ac.signal})
   .then(async response=>{if(!response.ok)throw Error('Dịch vụ biểu đồ chưa sẵn sàng');return response.json();})
-  .then(data=>{let charts=Array.isArray(data.charts)?data.charts:[];ccPyCache.set(d.id,charts);if(page==='reports')ccPyChartLoad(d);})
+  .then(data=>{let charts=Array.isArray(data.charts)?data.charts:[];ccPyCache.set(key,charts);if(page==='reports')ccPyChartLoad(d);})
   .catch(()=>ccUpdatePyStatus(d.id,'Báo cáo dạng bảng vẫn dùng được. Dịch vụ Python đang tạm thời chưa sẵn sàng; chọn “Tạo lại biểu đồ” để thử lại.'))
-  .finally(()=>{clearTimeout(timeout);ccPyJobs.delete(d.id);});
- ccPyJobs.set(d.id,task);
+  .finally(()=>{clearTimeout(timeout);ccPyJobs.delete(key);});
+ ccPyJobs.set(key,task);
 }
 function ccPythonReportSection(d){
  if(d.kind!=='report')return '';
@@ -2789,7 +2791,7 @@ function ccPythonReportSection(d){
 function ccPyFindReport(id){const c=activeEngagement(w);return c?initializeExpertNetwork(w).deliverables.find(d=>d.caseId===c.id&&d.id===id):null;}
 document.addEventListener('click',async event=>{
  const retry=event.target.closest('[data-cc-python-retry]');
- if(retry){const d=ccPyFindReport(retry.dataset.ccPythonRetry);if(!d)return;ccPyCache.delete(d.id);ccPyChartLoad(d);return;}
+ if(retry){const d=ccPyFindReport(retry.dataset.ccPythonRetry);if(!d)return;ccPyCache.delete(ccPyKey(d));ccPyChartLoad(d);return;}
  const pdf=event.target.closest('[data-cc-python-pdf]');
  if(!pdf)return;
  const d=ccPyFindReport(pdf.dataset.ccPythonPdf);if(!d)return;
