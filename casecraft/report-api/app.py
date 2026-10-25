@@ -69,8 +69,10 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
     def do_OPTIONS(self):
         self._headers(204)
+    def do_HEAD(self):
+        self._headers(200 if urlparse(self.path).path in ('/','/health') else 404)
     def do_GET(self):
-        if urlparse(self.path).path=='/health':
+        if urlparse(self.path).path in ('/','/health'):
             self._json(200,{'ok':True,'renderer':'matplotlib','storesData':False})
         else:self._json(404,{'error':'Not found'})
     def do_POST(self):
