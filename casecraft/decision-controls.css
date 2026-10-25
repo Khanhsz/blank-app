@@ -1,0 +1,18 @@
+/* Additive decision-only interface; reuse CaseCraft navy/white theme. */
+.ccnt-play{display:grid;gap:14px;min-width:0;padding:2px 0 8px}
+.ccnt-note{font-size:13px;line-height:1.55;color:#47606a;background:#e9f4f8;border:1px solid #c4dce5;border-radius:10px;padding:10px 12px;margin:0}
+.ccnt-preview{font-size:13px;line-height:1.6;background:#f5f9fb;padding:12px;border-left:3px solid #234b5c;border-radius:8px;margin:0}
+.ccnt-field,.ccnt-slider{display:grid;gap:8px;font-weight:650;color:#183743;font-size:13px;min-width:0}
+.ccnt-field select{min-height:40px;padding:8px 10px;background:#fff;border:1px solid #acc4cf;border-radius:8px;color:#122b38;font:inherit;max-width:100%}
+.ccnt-field select:focus-visible,.ccnt-adjust:focus-visible,.ccnt-slider input:focus-visible{outline:3px solid #5096c3;outline-offset:3px}
+.ccnt-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.ccnt-slider{padding:12px;border:1px solid #d4e1e7;border-radius:10px;background:#fff}
+.ccnt-slider>span{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.ccnt-slider output{font-weight:800;color:#103644;white-space:nowrap}
+.ccnt-slider-row{display:flex;align-items:center;gap:10px}
+.ccnt-slider-row input{min-width:40px;flex:1;accent-color:#143f56}
+.ccnt-adjust{height:32px;width:32px;flex:none;border:1px solid #9cbbc9;background:#f0f8fc;border-radius:8px;color:#123e55;font-weight:800;cursor:pointer}
+.ccnt-slider small{font-size:12px;color:#465d68;font-weight:450}
+.ccnt-smalltitle{font-weight:700;font-size:13px;color:#244655}
+@media(max-width:880px){.ccnt-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.ccnt-play *{scroll-behavior:auto;transition:none!important}}
