@@ -1662,14 +1662,25 @@ function createLiveWorld(input={}){
 const lagByType={price:2,marketing:4,capacity:35,sourcing:14,efficiency:20,pivot:25};
 function actionCost(f,action){const ref=f.baselineMonthRevenueM;switch(action.type){case 'price':return 0;case 'marketing':return 0;case 'capacity':return ref*.22*(action.value/20);case 'sourcing':return ref*.035;case 'efficiency':return ref*.065;case 'pivot':return ref*.12;default:return 0;}}
 function submitDecision(s,action){
- const f=s.firms[s.playerFirmId];if(!f)throw Error('No active client');if(f.locked)throw Error('Client is insolvent. New investments are unavailable.');
+ const f=s.firms[s.playerFirmId];if(!f)throw Error('No active client');
+ // Stage 02 standalone simulations may not have Case Desk initialized.
+ // Once Case Desk exists, all gameplay execution requires an active matching contract.
+ if(s.cases && (!s.cases.engagement || s.cases.engagement.status!=='active' || s.cases.engagement.firmId!==f.id || !s.cases.candidates.some(c=>c.id===s.cases.engagement.caseId&&c.firmId===f.id&&c.status==='active')))throw Error('Nhận hợp đồng tư vấn hợp lệ trước khi thực thi quyết định.');
+ if(f.locked)throw Error('Client is insolvent. New investments are unavailable.');
  const type=action?.type;const val=Number(action?.value);const choices={price:[-20,25],marketing:[.4,2.5],capacity:[10,35],sourcing:[.04,.15],efficiency:[.05,.2]};
  if(!lagByType[type])throw Error('Unsupported decision');
  if(type==='pivot'?!['premium','value','balanced'].includes(action.value):(!Number.isFinite(val)||val<choices[type][0]||val>choices[type][1]))throw Error('Value outside permitted decision range');
  const pending=s.queue.filter(e=>e.type==='action-apply'&&e.firmId===f.id);
  if(pending.some(e=>e.payload.type===type))throw Error('An initiative of this type is already pending');
  const cost=actionCost(f,action);const reserved=sum(pending.map(e=>e.payload.cost));if(cost>Math.max(0,f.cashM-reserved)+1e-8)throw Error('Insufficient uncommitted cash for project cost');
- const start=s.day+lagByType[type];const decision={id:`D-${s.decisions.length+1}`,firmId:f.id,type,value:action.value,submittedDay:s.day,effectiveDay:start,costM:cost,status:'scheduled',rationale:String(action.rationale||'').slice(0,400)};s.decisions.push(decision);
+ const start=s.day+lagByType[type];
+ const c=s.cases?.engagement;
+ const ws=c&&s.consulting?.workspaces?.[c.caseId];
+ const recommendation=ws?.recommendations?.at(-1);
+ const selected=ws?.options?.find(o=>o.id===recommendation?.selectedOptionId);
+ // Only link known strategy types.  Existing saves/options without a type are not guessed by the engine.
+ const declaredLever=selected?.actionType||null;
+ const decision={id:`D-${s.decisions.length+1}`,firmId:f.id,type,value:action.value,submittedDay:s.day,effectiveDay:start,costM:cost,status:'scheduled',rationale:String(action.rationale||'').slice(0,400),caseId:c?.caseId||null,sourceRecommendationId:recommendation?.id||null,sourceOptionId:recommendation?.selectedOptionId||null,plannedLever:declaredLever,deviatesFromRecommendation:!!declaredLever&&declaredLever!==type};s.decisions.push(decision);
  pushEvent(s,{day:start,priority:3,type:'action-apply',firmId:f.id,payload:{...decision,cost}});
  notify(s,'DECISION',`Initiative approved · ${type}`,`Effective on simulation day ${start}. ${cost.toFixed(1)}M credits committed.`,{firmId:f.id});
  return decision;
@@ -1697,7 +1708,7 @@ function eventApply(s,e,oneTime){
  }
  if(e.type==='competitor-review'){
   const f=s.firms[e.firmId];if(!f||f.locked)return;
-  if(f.id!==s.playerFirmId){
+  if(f.id!==s.playerFirmId || (s.cases && (!s.cases.engagement || s.cases.engagement.firmId!==f.id))){
    const rivals=Object.values(s.firms).filter(x=>x.sectorId===f.sectorId&&x.id!==f.id);
    const meanRivalPrice=sum(rivals.map(x=>x.price))/rivals.length;
    const target=f.referencePrice/(sum(rivals.map(x=>x.referencePrice))/rivals.length);
@@ -1735,7 +1746,9 @@ function settleDay(s){
    const fixedLabor=f.locked?0:f.baseDailyFixedLabor*wageScale*f.efficiency;
    const rent=f.locked?f.baseDailyRent*.25:f.baseDailyRent*cpiScale;
    const marketing=f.locked?0:f.baseDailyMarketing*cpiScale*f.marketingMultiplier;
-   const depreciation=f.baseDailyDep;
+   // Cap the EXPENSE at the available net book value (including same-day CapEx).
+   // This preserves EBIT, equity, cash reconciliation and a zero PP&E floor together.
+   const depreciation=Math.min(Math.max(0,f.baseDailyDep),Math.max(0,f.fixedAssetsM+extra.capexM));
    const transitionCosts=extra.transitionCostsM;
    const ebit=revenue-inputCost-directLabor-fixedLabor-rent-marketing-depreciation-transitionCosts;
    const interest=f.debtM*(s.macro.rate+.025)/360;const tax=Math.max(0,ebit-interest)*.2;const netIncome=ebit-interest-tax;
@@ -1785,6 +1798,7 @@ function validateLiveWorld(s){const tests=[];const add=(name,ok,details='')=>tes
  add('Profit after interest and taxes reconciles',records.every(d=>near(d.netIncomeM,d.ebitM-d.interestM-d.taxM)));
  add('Cash movements reconcile with working capital',records.every(d=>near(d.cashChangeM,d.expectedCashM)));
  add('No negative cash or inventory',Object.values(s.firms).every(f=>f.cashM>=-1e-7&&f.inventoryUnitsM>=-1e-7&&f.inventoryCostM>=-1e-7));
+ add('Net property plant and equipment never drops below zero',Object.values(s.firms).every(f=>Number.isFinite(f.fixedAssetsM)&&f.fixedAssetsM>=-1e-7));
  add('Assets equal liabilities + equity',Object.values(s.firms).every(f=>near(f.cashM+f.arM+f.inventoryCostM+f.fixedAssetsM,f.debtM+f.apM+f.overdueM+f.equityM,.0001)));
  add('Actual sales are within demand, stock and capacity',records.every(d=>d.unitsM>=-1e-8&&d.unitsM<=d.demandUnitsM+1e-8&&d.unitsM<=d.capacityUnitsM+1e-8));
  add('Market spending allocated between tracked and residual',SECTOR_IDS.every(id=>s.sectorHistory[id].every(r=>near(r.marketM,r.trackedM+r.residualM,.0005))));
@@ -1941,11 +1955,11 @@ function calculateWhatIf(w,assumptions){const fin=historicalFinancials(w),b=fin.
  const delta=ebit-b.ebitM,contribution=(b.revenueM-b.inputCostsM-b.directLaborM)/Math.max(1,b.revenueM);
  return {assumptions:a,baselineRevenueM:fixed(b.revenueM),baselineEbitM:fixed(b.ebitM),modeledRevenueM:fixed(revenue),modeledEbitM:fixed(ebit),ebitDeltaM:fixed(delta),upfrontCapexM:a.capexM,yearOneSimpleNetBenefitM:fixed(delta-a.capexM),contributionMargin:fixed(contribution,4),period:'Illustrative one-year static sensitivity; NOT a forecast of the live simulator.',limitations:['Price and volume are independent user assumptions, not econometrically estimated.','No competitor, customer cohort, financing, taxes, capacity or working-capital feedback.','CapEx is deducted in simple year-one net benefit, not EBIT; new depreciation is not modeled.']};}
 function saveScenario(w,assumptions,label){const ws=activeWorkspace(w),title=validText(label,3,70,'Scenario title');const m=calculateWhatIf(w,assumptions);const scenario={id:`S-${ws.nextScenario++}`,day:w.day,label:title,...m};ws.scenarios.push(scenario);return scenario;}
-function addStrategyOption(w,input){const c=caseFor(w),ws=activeWorkspace(w);if(ws.options.length>=12)throw Error('Maximum 12 alternatives.');const option={id:`O-${ws.nextOption++}`,title:validText(input.title,4,80,'Option title'),thesis:validText(input.thesis,15,700,'Strategic thesis'),risk:validText(input.risk,8,350,'Risk description'),implementation:validText(input.implementation,8,350,'Implementation plan'),evidenceIds:ensureRefs(w,c,input.evidenceIds||[]),expectedAnnualEbitDeltaM:num(input.expectedAnnualEbitDeltaM,'Annual EBIT impact',-1e6,1e6),upfrontCostM:num(input.upfrontCostM,'Upfront cost',0,1e7),leadDays:num(input.leadDays,'Lead time',0,1440),createdDay:w.day};ws.options.push(option);return option;}
+function addStrategyOption(w,input){const c=caseFor(w),ws=activeWorkspace(w);if(ws.options.length>=12)throw Error('Maximum 12 alternatives.');const option={id:`O-${ws.nextOption++}`,actionType:['price','marketing','capacity','sourcing','efficiency','pivot'].includes(input.actionType)?input.actionType:null,title:validText(input.title,4,80,'Option title'),thesis:validText(input.thesis,15,700,'Strategic thesis'),risk:validText(input.risk,8,350,'Risk description'),implementation:validText(input.implementation,8,350,'Implementation plan'),evidenceIds:ensureRefs(w,c,input.evidenceIds||[]),expectedAnnualEbitDeltaM:num(input.expectedAnnualEbitDeltaM,'Annual EBIT impact',-1e6,1e6),upfrontCostM:num(input.upfrontCostM,'Upfront cost',0,1e7),leadDays:num(input.leadDays,'Lead time',0,1440),createdDay:w.day};ws.options.push(option);return option;}
 function selectStrategy(w,id){const ws=activeWorkspace(w);if(!ws.options.some(o=>o.id===id))throw Error('Option does not exist.');ws.selectedOptionId=id;return id;}
 function removeStrategyOption(w,id){const ws=activeWorkspace(w);ws.options=ws.options.filter(x=>x.id!==id);if(ws.selectedOptionId===id)ws.selectedOptionId=null;}
 function addDecisionJournal(w,entry){const c=caseFor(w),ws=activeWorkspace(w);const obj={id:`DJ-${ws.nextJournal++}`,caseId:c.id,day:w.day,decision:validText(entry.decision,8,300,'Decision'),reasoning:validText(entry.reasoning,15,700,'Reasoning'),expected:validText(entry.expected,8,300,'Expected outcome'),evidenceIds:ensureRefs(w,c,entry.evidenceIds||[])};ws.decisionJournal.push(obj);return obj;}
-function readiness(w){const ws=activeWorkspace(w);const reasons=[];if(ws.nodes.filter(n=>n.kind==='hypothesis'||n.kind==='driver').length<1)reasons.push('Create at least one diagnosis hypothesis.');if(!ws.nodes.some(n=>n.parentId&&n.evidenceIds.length))reasons.push('Link at least one hypothesis to accessible evidence.');if(ws.options.length<2)reasons.push('Compare at least two strategy alternatives.');if(!ws.selectedOptionId)reasons.push('Select a preferred strategy.');if(!ws.scenarios.length)reasons.push('Save at least one transparent financial sensitivity scenario.');return {ready:reasons.length===0,reasons};}
+function readiness(w){const ws=activeWorkspace(w);const reasons=[];const extra=w.cases.evidence.filter(e=>e.caseId===ws.caseId&&e.type!=='kickoff'&&e.receivedDay<=w.day);const distinct=new Set(extra.map(e=>e.id));if(distinct.size<2)reasons.push('Cần ít nhất hai nguồn bằng chứng ngoài tài liệu ban đầu trước khi nộp khuyến nghị.');if(!ws.nodes.some(n=>n.parentId&&n.evidenceIds.some(id=>distinct.has(id))))reasons.push('Gắn ít nhất một nguồn nghiên cứu vào nhánh giả thuyết trước khi khuyến nghị.');if(ws.nodes.filter(n=>n.kind==='hypothesis'||n.kind==='driver').length<1)reasons.push('Create at least one diagnosis hypothesis.');if(!ws.nodes.some(n=>n.parentId&&n.evidenceIds.length))reasons.push('Link at least one hypothesis to accessible evidence.');if(ws.options.length<2)reasons.push('Compare at least two strategy alternatives.');if(!ws.selectedOptionId)reasons.push('Select a preferred strategy.');if(!ws.scenarios.length)reasons.push('Save at least one transparent financial sensitivity scenario.');return {ready:reasons.length===0,reasons};}
 function submitRecommendation(w,{executiveSummary,tradeoffs,risks,successMetrics}){const ws=activeWorkspace(w),check=readiness(w),c=caseFor(w);if(!check.ready)throw Error(check.reasons.join(' '));const selected=ws.options.find(o=>o.id===ws.selectedOptionId);const rec={id:`REC-${ws.nextRecommendation++}`,caseId:c.id,submittedDay:w.day,executiveSummary:validText(executiveSummary,60,2500,'Executive summary'),tradeoffs:validText(tradeoffs,25,1200,'Trade-off analysis'),risks:validText(risks,20,1000,'Risk mitigation'),successMetrics:validText(successMetrics,20,800,'Success metrics'),selectedOptionId:selected.id,optionSnapshot:structuredClone(selected),scenarioIds:ws.scenarios.map(s=>s.id),evidenceIds:Array.from(new Set([...ws.nodes.flatMap(n=>n.evidenceIds),...selected.evidenceIds])),status:'submitted'};ws.recommendations.push(rec);return rec;}
 const COACH_MODES=['framing','structuring','evidence','quant','strategy','execution'];
 function getCoachGuidance(w,mode='framing'){const c=caseFor(w),ws=activeWorkspace(w);if(!COACH_MODES.includes(mode))throw Error('Unknown coaching topic.');const evidence=getAccessibleEvidence(w),nodes=ws.nodes.filter(n=>n.parentId),linked=nodes.filter(n=>n.evidenceIds.length);let question,check;
@@ -2102,6 +2116,43 @@ function validateExpertNetwork(w){const st=initializeExpertNetwork(w),checks=[];
 
 return {initializeExpertNetwork,expertsForWorld,matchingExperts,bookExpert,commissionDeepReport,observeExpertDay,validateExpertNetwork,REPORT_TYPES};
 })(initializeCases,activeEngagement);
+const {compactAutosaveState,validateImportedRun}=((validateLiveWorld,validateCases,validateConsulting,validateExpertNetwork)=>{
+/** Safe automatic snapshots and full-save validation. No business-state changes. */
+
+
+
+
+
+function compactAutosaveState(world,keepDaily=90){
+ const out=structuredClone(world);
+ for(const firm of Object.values(out.firms||{})){
+  if(Array.isArray(firm.daily)&&firm.daily.length>keepDaily)firm.daily=firm.daily.slice(-keepDaily);
+ }
+ return out;
+}
+
+function validateImportedRun(state){
+ // Validators can initialize absent optional metadata from older formats. Work on a copy only.
+ const candidate=structuredClone(state);
+ if(candidate.cases && candidate.cases.schema!=='casecraft-cases-v3.0')throw Error('Định dạng dữ liệu nghiên cứu không được hỗ trợ.');
+ if(candidate.consulting && candidate.consulting.schema!=='casecraft-consulting-v4.0')throw Error('Định dạng bàn phân tích không được hỗ trợ.');
+ if(candidate.intelligence && candidate.intelligence.schema!=='casecraft-expert-v5.0')throw Error('Định dạng chuyên gia không được hỗ trợ.');
+ const audits=[validateLiveWorld(candidate),validateCases(candidate),validateConsulting(candidate),validateExpertNetwork(candidate)];
+ for(const audit of audits){
+  if(!audit.ok){
+   const failures=(audit.tests||audit.checks||[]).filter(x=>!x.ok).map(x=>x.name||x.label).join('; ');
+   throw new Error('Bản lưu không đạt kiểm định: '+failures);
+  }
+ }
+ const e=candidate.cases.engagement;
+ if(e&&!candidate.cases.candidates.some(c=>c.id===e.caseId&&c.firmId===e.firmId&&c.status==='active'))throw Error('Hợp đồng tư vấn trong bản lưu không hợp lệ.');
+ if(candidate.decisions.some(d=>d.firmId&&!candidate.firms[d.firmId]))throw Error('Có quyết định liên kết đến doanh nghiệp không tồn tại.');
+ if(!Number.isInteger(candidate.day)||candidate.day<0)throw Error('Đồng hồ mô phỏng trong bản lưu không hợp lệ.');
+ return candidate;
+}
+
+return {compactAutosaveState,validateImportedRun};
+})(validateLiveWorld,validateCases,validateConsulting,validateExpertNetwork);
 /** Presentation controller. No UI code mutates economic values directly. */
 
 
@@ -2117,7 +2168,19 @@ let draft={type:'price',value:-10,rationale:''};let messageTimer=0;
 let onboardingCompleted=false,firstRun=true;
 try{const saved=localStorage.getItem(STORAGE);if(saved){const data=JSON.parse(saved);w=importRun(JSON.stringify(data.state));firstRun=false;onboardingCompleted=data.onboardingCompleted!==false;running=data.running??false;speed=data.clockVersion===2&&SPEED_LEVELS.includes(data.speed)?data.speed:1;accum=data.clockVersion===2&&Number.isFinite(data.accum)?Math.max(0,Math.min(.999999,data.accum)):0;inspectedFirm=data.inspectedFirm||w.playerFirmId;}}catch(e){console.warn('Old save skipped',e)}
 if(!w)w=createLiveWorld();
-function save(){try{localStorage.setItem(STORAGE,JSON.stringify({state:w,running,speed,clockVersion:2,accum,inspectedFirm,onboardingCompleted}));}catch(e){console.warn('Local save unavailable',e)}}
+let saveErrorShown=false;
+function showStorageWarning(message){
+ let warning=document.getElementById('cc-storage-warning');
+ if(!warning){warning=document.createElement('div');warning.id='cc-storage-warning';warning.setAttribute('role','alert');warning.style.cssText='padding:10px 15px;background:#fff1ce;color:#4b3513;border-bottom:2px solid #b88b35;font-size:13px';document.querySelector('.workspace')?.prepend(warning);}
+ warning.textContent=message;
+}
+function save(){try{
+ const snapshot=compactAutosaveState(w);
+ localStorage.setItem(STORAGE,JSON.stringify({state:snapshot,running,speed,clockVersion:2,accum,inspectedFirm,onboardingCompleted}));
+ saveErrorShown=false;document.getElementById('cc-storage-warning')?.remove();return true;
+ }catch(e){console.warn('Local save unavailable',e);
+ if(!saveErrorShown){showStorageWarning('Không thể lưu trên trình duyệt. Hãy bấm Xuất để giữ bản sao JSON trước khi đóng game.');toast('Lưu thất bại — hãy Xuất dữ liệu ngay.');saveErrorShown=true;}return false;
+ }}
 function toast(message){const t=$('toast');t.textContent=message;t.classList.add('show');clearTimeout(messageTimer);messageTimer=setTimeout(()=>t.classList.remove('show'),3500)}
 function download(filename,text){const blob=new Blob([text],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),500);}
 function component(title,body,tag='',note=''){return `<section class="panel"><div class="panel-header"><div><h2>${ccLocalizeString(title)}</h2>${note?`<p>${ccLocalizeString(note)}</p>`:''}</div>${tag?`<span class="section-tag">${ccLocalizeString(tag)}</span>`:''}</div><div class="panel-body">${body}</div></section>`;}
@@ -2175,11 +2238,16 @@ function render(){initializeCases(w);const fn=pages[page]||pages.overview;$('mai
 function restart(input){const previous=w.seed;const guidePrefs=structuredClone(ccJourneyEnsure(w).prefs);w=createLiveWorld(input);ccJourneyEnsure(w).prefs=guidePrefs;inspectedFirm=w.playerFirmId;draft={type:'price',value:-10,rationale:''};compare=null;baselineCache=null;historyMonth=36;accum=0;running=false;save();render();toast(`World reset. Seed ${w.seed} · 36 historical months retained as baseline.`);}
 function valuesForType(type){return ({price:-10,marketing:1.4,capacity:15,sourcing:.08,efficiency:.10,pivot:'premium'})[type];}
 function doCompare(){const b=createLiveWorld({...w.config,playerFirmId:w.playerFirmId});advanceDays(b,w.day);const af=w.firms[w.playerFirmId],bf=b.firms[b.playerFirmId];const eb=a=>a.history.reduce((v,r)=>v+r.ebitM,0)+a.period.ebitM;compare={actualCash:af.cashM,baselineCash:bf.cashM,deltaCash:af.cashM-bf.cashM,actualEBIT:eb(af),baseEBIT:eb(bf),deltaEBIT:eb(af)-eb(bf)};render();toast('Matched-seed comparison completed.');}
-document.addEventListener('click',e=>{const tab=e.target.closest('[data-page]');if(tab){page=tab.dataset.page;render();return;}const of=e.target.closest('[data-open-firm]');if(of){inspectedFirm=of.dataset.openFirm;page='firms';render();return;}const sp=e.target.closest('[data-speed]');if(sp){const nextSpeed=Number(sp.dataset.speed);if(!SPEED_LEVELS.includes(nextSpeed))return;speed=nextSpeed;lastTick=performance.now();refreshClock();save();return;}if(e.target.closest('#pause')||e.target.closest('[data-cc-resume]')){running=e.target.closest('[data-cc-resume]')?true:!running;lastTick=performance.now();refreshClock();save();return;}if(e.target.closest('#save')){save();toast('Đã lưu tiến độ trên trình duyệt.');return;}if(e.target.closest('#export')){download(`casecraft-stage2-${w.seed.toLowerCase().replace(/[^a-z0-9-]/g,'-')}-day${w.day}.json`,exportRun(w));toast('Đã xuất dữ liệu trò chơi.');return;}if(e.target.closest('#compare')){doCompare();return;}});
+document.addEventListener('click',e=>{const tab=e.target.closest('[data-page]');if(tab){page=tab.dataset.page;render();return;}const of=e.target.closest('[data-open-firm]');if(of){inspectedFirm=of.dataset.openFirm;page='firms';render();return;}const sp=e.target.closest('[data-speed]');if(sp){const nextSpeed=Number(sp.dataset.speed);if(!SPEED_LEVELS.includes(nextSpeed))return;speed=nextSpeed;lastTick=performance.now();refreshClock();save();return;}if(e.target.closest('#pause')||e.target.closest('[data-cc-resume]')){running=e.target.closest('[data-cc-resume]')?true:!running;lastTick=performance.now();refreshClock();save();return;}if(e.target.closest('#save')){if(save())toast('Đã lưu tiến độ trên trình duyệt.');return;}if(e.target.closest('#export')){download(`casecraft-stage2-${w.seed.toLowerCase().replace(/[^a-z0-9-]/g,'-')}-day${w.day}.json`,exportRun(w));toast('Đã xuất dữ liệu trò chơi.');return;}if(e.target.closest('#compare')){doCompare();return;}});
 document.addEventListener('change',e=>{if(e.target.id==='company-choice'){inspectedFirm=e.target.value;render();}else if(e.target.id==='action-type'){draft.type=e.target.value;draft.value=valuesForType(draft.type);render();}else if(e.target.id==='value-input'){draft.value=e.target.value;const preview=$('preview');if(preview)preview.innerHTML=previewHTML();}});
 document.addEventListener('input',e=>{if(e.target.id==='value-input'){draft.value=e.target.value;const preview=$('preview');if(preview)preview.innerHTML=previewHTML();}else if(e.target.id==='rationale'){draft.rationale=e.target.value;}else if(e.target.id==='historic-month'){historyMonth=Number(e.target.value);render();}});
-document.addEventListener('submit',e=>{if(e.target.id==='decision-form'){e.preventDefault();if(!activeEngagement(w)){toast('Nhận engagement trước khi thực thi quyết định.');page='cases';render();return;}ccRiskyAction('Xác nhận quyết định thực thi? Chi phí và phản ứng thị trường sẽ được xử lý theo lịch game.',()=>{try{submitDecision(w,{type:draft.type,value:draft.type==='pivot'?draft.value:Number(draft.value),rationale:draft.rationale});compare=null;save();render();toast('Đã lên lịch sáng kiến trong thế giới mô phỏng.');}catch(err){toast('Không thể lên lịch: '+err.message)}});return;}if(e.target.id==='world-form'){e.preventDefault();const form=e.target;const seed=form.querySelector('#new-seed').value.trim();if(!seed){toast('Provide a world seed.');return;}ccRiskyAction('Đặt lại thế giới sẽ thay thế dữ liệu mô phỏng và tiến độ hiện tại. Bạn có muốn tiếp tục?',()=>restart({name:form.querySelector('#new-name').value,seed,profile:form.querySelector('#new-profile').value,volatility:Number(form.querySelector('#new-volatility').value),playerFirmId:form.querySelector('#new-client').value}));return;}});
-$('import').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const raw=await file.text();const state=importRun(raw);const v=validateLiveWorld(state);if(!v.ok)throw Error('Save failed economic validation');ccRiskyAction('Nhập bản lưu sẽ ghi đè toàn bộ tiến độ hiện tại trên trình duyệt. Bạn có muốn tiếp tục?',()=>{w=state;inspectedFirm=w.playerFirmId;running=false;compare=null;baselineCache=null;accum=0;page='overview';onboardingCompleted=true;save();render();toast('Đã nhập bản lưu. Trò chơi tạm dừng để kiểm tra.');});}catch(err){toast('Không thể nhập dữ liệu: '+err.message)}e.target.value='';});
+document.addEventListener('submit',e=>{if(e.target.id==='decision-form'){e.preventDefault();if(!activeEngagement(w)){toast('Nhận engagement trước khi thực thi quyết định.');page='cases';render();return;}const currentCase=w.cases?.engagement?.caseId;
+ const lastRec=currentCase?w.consulting?.workspaces?.[currentCase]?.recommendations?.at(-1):null;
+ const chosen=w.consulting?.workspaces?.[currentCase]?.options?.find(o=>o.id===lastRec?.selectedOptionId);
+ const mismatched=chosen?.actionType&&chosen.actionType!==draft.type;
+ const promptText=(mismatched?'Quyết định này khác đòn bẩy trong khuyến nghị đã nộp. Game sẽ ghi lại sai lệch; bạn vẫn có thể thử nghiệm.\n\n':'')+'Xác nhận quyết định thực thi? Chi phí và phản ứng thị trường sẽ được xử lý theo lịch game.';
+ ccRiskyAction(promptText,()=>{try{submitDecision(w,{type:draft.type,value:draft.type==='pivot'?draft.value:Number(draft.value),rationale:draft.rationale});compare=null;save();render();toast('Đã lên lịch sáng kiến trong thế giới mô phỏng.');}catch(err){toast('Không thể lên lịch: '+err.message)}});return;}if(e.target.id==='world-form'){e.preventDefault();const form=e.target;const seed=form.querySelector('#new-seed').value.trim();if(!seed){toast('Provide a world seed.');return;}ccRiskyAction('Đặt lại thế giới sẽ thay thế dữ liệu mô phỏng và tiến độ hiện tại. Bạn có muốn tiếp tục?',()=>restart({name:form.querySelector('#new-name').value,seed,profile:form.querySelector('#new-profile').value,volatility:Number(form.querySelector('#new-volatility').value),playerFirmId:form.querySelector('#new-client').value}));return;}});
+$('import').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const raw=await file.text();const state=importRun(raw);const candidate=validateImportedRun(state);ccRiskyAction('Nhập bản lưu sẽ ghi đè toàn bộ tiến độ hiện tại trên trình duyệt. Bạn có muốn tiếp tục?',()=>{w=candidate;inspectedFirm=w.playerFirmId;running=false;compare=null;baselineCache=null;accum=0;page='overview';onboardingCompleted=true;save();render();toast('Đã nhập bản lưu. Trò chơi tạm dừng để kiểm tra.');});}catch(err){toast('Không thể nhập dữ liệu: '+err.message)}e.target.value='';});
 function tick(now){
  const elapsed=Math.max(0,Math.min(3000,now-lastTick));
  lastTick=now;
@@ -2283,7 +2351,7 @@ pages.validation=()=>{const v=validateConsulting(w);return originalStage4Validat
 document.addEventListener('click',e=>{try{
  const tab=e.target.closest('[data-cw-tab]');if(tab){workbenchTab=tab.dataset.cwTab;render();return;}
  const rem=e.target.closest('[data-cw-remove-node]');if(rem){ccRiskyAction('Xóa nhánh này và tất cả nhánh con? Không thể hoàn tác.',()=>{deleteIssueNode(w,rem.dataset.cwRemoveNode);save();render();});return;}
- const edit=e.target.closest('[data-cw-edit-node]');if(edit){const node=cwActive().nodes.find(n=>n.id===edit.dataset.cwEditNode),changed=prompt('Update hypothesis or issue text:',node.text);if(changed!==null){updateIssueNode(w,node.id,{text:changed});save();render();}return;}
+ const edit=e.target.closest('[data-cw-edit-node]');if(edit){toast('Dùng nút Đổi giả thuyết để chọn một hướng mới, không cần gõ chữ.');return;}
  const coach=e.target.closest('[data-cw-coach]');if(coach){getCoachGuidance(w,coach.dataset.cwCoach);save();render();return;}
  const select=e.target.closest('[data-cw-select-option]');if(select){selectStrategy(w,select.dataset.cwSelectOption);save();render();return;}
  const remOpt=e.target.closest('[data-cw-remove-option]');if(remOpt){ccRiskyAction('Xóa phương án chiến lược này? Không thể hoàn tác.',()=>{removeStrategyOption(w,remOpt.dataset.cwRemoveOption);save();render();});return;}
@@ -2297,7 +2365,7 @@ document.addEventListener('input',e=>{const form=e.target.closest('#cw-scenario-
 document.addEventListener('submit',e=>{const form=e.target;if(!['cw-issue-form','cw-scenario-form','cw-option-form','cw-journal-form','cw-recommend-form'].includes(form.id))return;e.preventDefault();const fd=new FormData(form);const get=k=>fd.get(k);try{
  if(form.id==='cw-issue-form'){addIssueNode(w,{parentId:get('parentId'),kind:get('kind'),text:get('text'),evidenceIds:cwSelectRefs(form)});toast('Issue added. You can now link evidence and test the hypothesis.');}
  else if(form.id==='cw-scenario-form'){const a=Object.fromEntries(Object.keys(exampleScenario).map(k=>[k,get(k)]));financialDraft={...a};financialPreview=calculateWhatIf(w,a);saveScenario(w,a,get('label'));toast('Scenario saved. Live world not modified.');}
- else if(form.id==='cw-option-form'){addStrategyOption(w,{title:get('title'),thesis:get('thesis'),risk:get('risk'),implementation:get('implementation'),expectedAnnualEbitDeltaM:get('expectedAnnualEbitDeltaM'),upfrontCostM:get('upfrontCostM'),leadDays:get('leadDays'),evidenceIds:cwSelectRefs(form)});toast('Alternative added for comparison.');}
+ else if(form.id==='cw-option-form'){addStrategyOption(w,{actionType:get('nt-strategy'),title:get('title'),thesis:get('thesis'),risk:get('risk'),implementation:get('implementation'),expectedAnnualEbitDeltaM:get('expectedAnnualEbitDeltaM'),upfrontCostM:get('upfrontCostM'),leadDays:get('leadDays'),evidenceIds:cwSelectRefs(form)});toast('Alternative added for comparison.');}
  else if(form.id==='cw-journal-form'){addDecisionJournal(w,{decision:get('decision'),reasoning:get('reasoning'),expected:get('expected'),evidenceIds:cwSelectRefs(form)});toast('Reasoning recorded at the current world day.');}
  else if(form.id==='cw-recommend-form'){submitRecommendation(w,{executiveSummary:get('executiveSummary'),tradeoffs:get('tradeoffs'),risks:get('risks'),successMetrics:get('successMetrics')});toast('Recommendation submitted and versioned. Live implementation requires a separate decision.');}
  save();render();
