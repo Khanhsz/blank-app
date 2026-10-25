@@ -163,6 +163,18 @@ body{font-size:14px;color:var(--cc-text)}.tiny,.note,.metric .caption,.panel-hea
 .ccw-menu button{text-align:left;background:transparent;border:0;border-radius:6px;padding:10px;color:#142d35;cursor:pointer;font:inherit;font-size:13px}.ccw-menu button:hover{background:#edf3f6}
 @media(max-width:880px){.ccw-help{right:12px;bottom:76px}.ccw-invite,.ccw-menu{right:12px;bottom:132px}.ccw-card{width:calc(100vw - 24px);max-height:min(62vh,470px);border-radius:14px 14px 8px 8px;padding:15px}.ccw-card.ccw-fallback{bottom:12px;top:auto;left:12px;transform:none}}
 @media(prefers-reduced-motion:reduce){.ccw-card,.ccw-help,.ccw-target{transition:none!important;animation:none!important}}
+.ccw-lesson-progress{height:5px;background:#e3edf1;border-radius:5px;margin:10px 0}.ccw-lesson-progress>span{height:100%;display:block;background:#274e61;border-radius:5px}
+.ccw-detailed{border-radius:9px;background:#eaf4fa;border:1px solid #c9dce8;padding:9px 11px;margin:9px 0}
+.ccw-detailed p{margin:5px 0}.ccw-detailed strong{color:#163d54}
+.ccw-case-fact{font-size:12px!important;border-left:3px solid #9dbec9;padding-left:9px}
+.ccw-hint summary{cursor:pointer;color:#284a61;font-size:12px;font-weight:700}.ccw-hint p{font-size:12px}
+.ccw-ready{font-size:12px!important;background:#e9f5f0;color:#1a5846!important;border-left:3px solid #287b5d;padding:8px}
+.ccw-first-case{width:min(405px,calc(100vw - 24px));padding:15px}.ccw-first-case h2{margin:6px 0}.ccw-first-case p{font-size:12.5px;line-height:1.38;margin:7px 0}
+.ccw-reflection-section{margin-top:18px}.ccw-reflection-form{display:grid;gap:12px;max-width:780px}.ccw-reflection-form label{font-size:13px;display:grid;gap:5px;font-weight:600}.ccw-reflection-form textarea{width:100%;font:inherit;min-height:60px;padding:10px;border-radius:8px;border:1px solid #b8cbd3;background:#fff;color:#142d35}
+.ccw-reflection-form button{justify-self:start}
+@media(max-width:880px){.ccw-first-case{width:calc(100vw - 24px);max-height: min(64vh,520px);padding:12px}.ccw-first-case p{font-size:12px;margin:5px 0}.ccw-detailed{padding:8px}}
+
+.ccw-finished{display:grid;gap:8px;margin-bottom:15px;background:#eaf4fa;border:1px solid #a8cddc;border-radius:10px;padding:15px;color:#173949}.ccw-finished strong{font-size:16px}.ccw-finished span{font-size:13px}.ccw-finished button{justify-self:start}
 </style></head>
 <body>
 <div class="app-shell">
@@ -1040,6 +1052,69 @@ const CC_WALKTHROUGH_TEXT=Object.freeze({
   }
 });
 
+/** Short, action-oriented explanations for the complete first engagement. */
+const CC_FIRST_CASE_TEXT=Object.freeze({
+ ui:{try:'Cách thực hiện',check:'Đủ để tiếp tục khi',hint:'Nếu bị kẹt',example:'Ví dụ cách nghĩ',progress:'Tiến độ hoàn thành case đầu tiên',saved:'Đã lưu tiến độ',finish:'Hoàn tất case đầu tiên',ready:'Đã hoàn thành nhiệm vụ',wait:'Chưa xong nhiệm vụ — bạn có thể thoát, tiến thời gian và quay lại',reflection:'Tổng kết case đầu tiên',notScore:'Kết quả tốt/xấu không quyết định việc bạn có hoàn thành bài học hay không.'},
+ steps:{
+ clock:{try:'Nhìn ngày mô phỏng, nút Tạm dừng/Tiếp tục và thanh tốc độ. Ở 1×, 60 giây thực tương đương một ngày.',check:'Đã biết xem ngày game và cách dừng đồng hồ.',hint:'Bạn có thể tạm dừng để đọc số liệu; nghiên cứu chỉ hoàn thành khi ngày game tiến lên.'},
+ opportunity:{try:'Xem thẻ cơ hội tư vấn, doanh thu, EBIT và ngành. Nếu có Drift Tea House, chọn đó làm bài đầu tiên.',check:'Biết phân biệt cơ hội tư vấn với khách hàng đã ký hợp đồng.',hint:'Không có “đáp án” ở đây. Con số bất thường chỉ là dấu hiệu cần điều tra.',example:'Nếu doanh thu chỉ biến động nhẹ mà EBIT biến động mạnh, hãy nghĩ đến cả doanh thu lẫn chi phí.'},
+ accept:{try:'Bấm Nhận hợp đồng ở thẻ chi tiết; đây là hành động thật, không phải nút giả của tutorial.',check:'Có hợp đồng tư vấn đang hoạt động.',hint:'Nếu đang có khách hàng khác, tiếp tục hợp đồng đó hoặc lưu trữ theo quy trình hiện có.'},
+ brief:{try:'Đọc bối cảnh, vấn đề và lời đề nghị của lãnh đạo. Tự ghi lại câu hỏi lớn bằng một câu.',check:'Nắm rõ doanh nghiệp đang yêu cầu quyết định gì.',hint:'Đừng diễn giải một chỉ số thành nguyên nhân khi chưa có dữ liệu.'},
+ baseline:{try:'So sánh doanh thu và EBIT qua các kỳ; chú ý đơn vị triệu tín dụng giả lập và kỳ so sánh.',check:'Biết chỉ tiêu nào tăng/giảm và giai đoạn đo lường.',hint:'EBIT là lợi nhuận hoạt động trước lãi và thuế; không đồng nghĩa với tiền mặt.'},
+ mission:{try:'Đọc câu hỏi lãnh đạo cần trả lời. Tưởng tượng bạn cần đưa ra hai hướng giải quyết khác nhau.',check:'Xác định mục tiêu, ràng buộc và loại bằng chứng sẽ cần.',hint:'Giải pháp tốt phải khả thi với ngân sách, công suất và thời gian triển khai.'},
+ researchCatalog:{try:'Xem tên từng báo cáo, mức phí và số ngày hoàn thành. Ngân sách nghiên cứu có hạn.',check:'Biết thông tin nào giúp kiểm chứng giả thuyết ban đầu.',hint:'Không nhất thiết mua mọi báo cáo; ưu tiên nguồn trực tiếp kiểm tra một nghi vấn.'},
+ research:{try:'Bấm Đặt nghiên cứu báo cáo tài chính. Báo cáo sẽ cần ngày game để hoàn thành.',check:'Hệ thống ghi nhận ít nhất một đơn nghiên cứu.',hint:'Nếu báo cáo tài chính đã được đặt, nhiệm vụ coi như đã đạt.'},
+ researchSecond:{try:'Bấm đặt báo cáo vận hành để đối chiếu số liệu tài chính với công suất, sản lượng và thiếu hụt.',check:'Có ít nhất hai đơn nghiên cứu khác nhau.',hint:'Nếu đã đặt hai báo cáo khác, bạn vẫn đủ điều kiện; không mua trùng.'},
+ worldWait:{try:'Bấm Tiếp tục đồng hồ và chờ các đơn đến ngày hẹn. Có thể chọn tăng tốc để rút ngắn thời gian thực.',check:'Có ít nhất hai nguồn báo cáo ngoài thông tin khởi động đã được nhận.',hint:'Bật 48× thì một ngày game khoảng 1,25 giây. Khi báo cáo giao xong hãy tạm dừng để đọc.'},
+ evidenceReader:{try:'Mở lần lượt các báo cáo đã giao; phân biệt số liệu thực tế, nhận định và giới hạn phương pháp.',check:'Biết tìm nguồn và ngày chụp dữ liệu để trích dẫn.',hint:'Một báo cáo có thể mô tả hiện tượng nhưng chưa chứng minh nguyên nhân.'},
+ issue:{try:'Đặt giả thuyết có thể kiểm chứng: đối tượng nào, biến số nào, thay đổi theo chiều nào?',check:'Đã tạo ít nhất một nhánh giả thuyết trong cây vấn đề.',hint:'Ví dụ cách viết: “Có thể chi phí trên đơn vị tăng”; không viết “Chi phí chắc chắn là nguyên nhân”.'},
+ linkEvidence:{try:'Ở nhánh vừa tạo, dùng “Liên kết bằng chứng” chọn một báo cáo đã được mở.',check:'Có ít nhất một nhánh được liên kết với bằng chứng hợp lệ.',hint:'Nếu danh sách trống, quay lại Bằng chứng và chờ báo cáo giao đủ.'},
+ coach:{try:'Chọn một chủ đề gợi ý để nhận câu hỏi phản biện. Đây không phải chuyên gia tiết lộ đáp án.',check:'Đã tham khảo một câu hỏi gợi ý; bước này có thể bỏ qua.',hint:'Hỏi mình: Có lời giải thích cạnh tranh nào cũng phù hợp số liệu không?'},
+ financeIntro:{try:'Đọc số liệu nền trước khi đặt giả định; xác định đâu là doanh thu và đâu là EBIT.',check:'Hiểu mô hình là thử nghiệm giả định, chưa phải thực tế.',hint:'Tránh lấy lợi nhuận 12 tháng so trực tiếp với một tháng.'},
+ finance:{try:'Đổi một giả định về giá, lượng bán hoặc chi phí; đặt tên cho kịch bản rồi nhấn Chạy và lưu.',check:'Ít nhất một kịch bản được lưu.',hint:'Thử thay đổi từng biến một để biết tác động đến từ đâu; không cần mô hình phải có lãi.'},
+ financeReview:{try:'Đọc chênh lệch EBIT mô hình so với nền; kiểm tra chi phí đầu tư và rủi ro giả định.',check:'Đã hiểu forecast chỉ là ước tính, không phải dự báo chính xác.',hint:'Nếu kịch bản quá lạc quan, quay lại thay đổi biến và lưu một kịch bản khác.'},
+ optionsIntro:{try:'Đọc trường thông tin của phương án: tác động dự kiến, chi phí trả trước, thời gian, cách làm và rủi ro.',check:'Hiểu rằng cần so sánh ít nhất hai phương án khả thi.',hint:'Hai phương án phải khác nhau về cơ chế tạo tác động, không chỉ đổi tên.'},
+ optionOne:{try:'Điền phương án thứ nhất dựa trên điều bạn đang nghi ngờ; nêu điều kiện thành công và rủi ro.',check:'Có ít nhất một phương án được lưu.',hint:'Không sao nếu đây chỉ là phương án giả định; cần nói rõ điều chưa chắc chắn.'},
+ options:{try:'Tạo thêm một phương án theo hướng khác: thương mại, vận hành hoặc phân bổ chi phí.',check:'Có ít nhất hai phương án.',hint:'So sánh bằng EBIT dự kiến, tiền cần dùng, thời gian và rủi ro.'},
+ choose:{try:'Bấm Chọn phương án đối với lựa chọn bạn muốn bảo vệ trước lãnh đạo.',check:'Đã chọn một phương án ưu tiên.',hint:'Nếu chưa chọn được, thử bảng chi phí và thời gian ở từng phương án.'},
+ journal:{try:'Ghi lý do chọn, dữ liệu hỗ trợ và dấu hiệu khiến bạn phải đổi ý.',check:'Có bản ghi lập luận; bước tùy chọn để luyện cách tư duy.',hint:'Đừng ghi chắc chắn một nguyên nhân ẩn; hãy nêu giả định cần theo dõi.'},
+ preflight:{try:'Đọc danh sách kiểm tra trước khi nộp. Nếu thiếu bằng chứng liên kết, trở lại Chẩn đoán.',check:'Hiểu những yêu cầu tối thiểu của đề xuất.',hint:'Form đề xuất sẽ bị khóa khi thiếu hypothesis, evidence, scenario hoặc hai phương án.'},
+ recommend:{try:'Viết bốn phần: khuyến nghị, lý do tốt hơn phương án khác, rủi ro và chỉ số theo dõi.',check:'Bản khuyến nghị đã được nộp và lưu phiên bản.',hint:'Không cần đoán đúng nguyên nhân ẩn; cần lập luận có kiểm chứng và rủi ro cụ thể.'},
+ decisionPlan:{try:'Xem loại quyết định, chi phí triển khai, ngày có hiệu lực và tiền mặt khả dụng.',check:'Phân biệt nộp khuyến nghị với thực thi ngoài thị trường.',hint:'Chọn quyết định nhỏ, khả thi với tài chính hiện tại; không bắt buộc quyết định phải thắng.'},
+ execute:{try:'Chọn một đòn bẩy phù hợp với khuyến nghị, rà giá trị và bấm Phê duyệt, lên lịch.',check:'Quyết định đã được World Engine lên lịch.',hint:'Nếu công ty không đủ tiền, cần chọn giá trị khả thi hoặc quay lại phương án; không được cấp tiền miễn phí.'},
+ waitEffective:{try:'Cho đồng hồ chạy tới ngày sáng kiến có hiệu lực, sau đó tạm dừng để kiểm tra.',check:'Quyết định đã chuyển từ chờ thực hiện sang có hiệu lực.',hint:'Thời gian triển khai phụ thuộc loại quyết định; game có thể phản ứng bất lợi.'},
+ outcomes:{try:'Cho qua ít nhất một ngày kể từ khi có hiệu lực rồi đọc dòng sự kiện. Kết quả sớm chưa đủ để khẳng định dài hạn.',check:'Hệ thống ghi nhận có số liệu sau triển khai.',hint:'Khi không thấy tác động như mong đợi, thử xem lại điều kiện thị trường, giới hạn và độ trễ.'},
+ reflect:{try:'Ngay dưới dòng sự kiện, điền ba ý: bạn quan sát gì, khác dự báo chỗ nào, bước sau sẽ kiểm tra gì.',check:'Đã gửi phần tổng kết 3 câu trả lời (mỗi mục tối thiểu 18 ký tự).',hint:'Kết luận “chiến lược chưa đạt” cũng là một bài học hợp lệ.'},
+ finish:{try:'Xem lại hành trình đã hoàn thành và nhấn Hoàn thành. Các case sau sẽ được chơi tự do.',check:'Đã điều tra, khuyến nghị, thực thi và rút ra bài học.',hint:'Bạn có thể chạy lại walkthrough mà không xóa kết quả kinh doanh.'}
+ }
+});
+
+// Display vocabulary for all 30 real-screen tasks. The lesson details above
+// are the single source for actions and pass conditions.
+Object.assign(CC_WALKTHROUGH_TEXT.steps,{
+ baseline:{name:'Đọc điểm xuất phát',what:'Các KPI tóm tắt hoạt động của khách hàng.',why:'Phải biết kỳ đo và đơn vị trước khi phân tích.',do:'Đọc doanh thu và EBIT, so với kỳ trước.'},
+ mission:{name:'Hiểu câu hỏi của lãnh đạo',what:'Đây là kết quả cần bàn giao cho khách hàng.',why:'Một câu hỏi rõ sẽ giúp chọn đúng loại dữ liệu.',do:'Xác định câu hỏi cần trả lời và ràng buộc.'},
+ researchCatalog:{name:'Lập kế hoạch nghiên cứu',what:'Các báo cáo có phí và ngày bàn giao khác nhau.',why:'Ngân sách nghiên cứu không vô hạn.',do:'So sánh các gói và chọn dữ liệu phù hợp.'},
+ researchSecond:{name:'Đặt nguồn đối chiếu',what:'Báo cáo vận hành bổ sung thông tin tài chính.',why:'Đối chiếu hai nguồn giúp tránh kết luận sớm.',do:'Đặt báo cáo thứ hai để kiểm tra giả thuyết.'},
+ worldWait:{name:'Nhận kết quả nghiên cứu',what:'Báo cáo không được giao ngay.',why:'Thời gian là một nguồn lực trong thế giới mô phỏng.',do:'Chạy World Clock đến khi có hai báo cáo được giao.'},
+ evidenceReader:{name:'Đọc và kiểm tra nguồn',what:'Dữ liệu đã được mở sẽ nằm trong Thư viện bằng chứng.',why:'Bằng chứng phải có nguồn và thời điểm quan sát.',do:'Mở báo cáo, đọc số liệu và giới hạn của chúng.'},
+ linkEvidence:{name:'Liên kết giả thuyết với dữ liệu',what:'Mỗi nhánh phân tích có thể đính kèm báo cáo.',why:'Lập luận không thể chỉ dựa vào trực giác.',do:'Chọn báo cáo để liên kết với một nhánh.'},
+ financeIntro:{name:'Xem cấu trúc tài chính',what:'Bảng báo cáo giúp hiểu doanh thu, chi phí và EBIT.',why:'Phải có baseline trước khi thử dự báo.',do:'Đọc các khoản thu, chi và kỳ đo lường.'},
+ financeReview:{name:'Đọc độ nhạy của kịch bản',what:'Kịch bản cho thấy kết quả khi thay các giả định.',why:'Giá trị dự kiến có thể sai khi đi vào thị trường thật.',do:'Kiểm tra tác động EBIT và giới hạn của giả định.'},
+ optionsIntro:{name:'Thiết kế lựa chọn chiến lược',what:'Mỗi lựa chọn có chi phí, tác động, rủi ro.',why:'Không nên chọn giải pháp khi chỉ có một phương án.',do:'Xác định hai cách giải quyết khác nhau.'},
+ optionOne:{name:'Lưu phương án thứ nhất',what:'Bạn đưa ra một giả thuyết can thiệp cụ thể.',why:'Một hướng có số liệu mới có thể so sánh được.',do:'Điền đầy đủ phương án đầu tiên và lưu.'},
+ choose:{name:'Chọn phương án ưu tiên',what:'Chọn một trong hai phương án đã ghi.',why:'Cần bảo vệ quyết định, không chỉ liệt kê lựa chọn.',do:'Bấm chọn phương án bạn cho là tốt nhất.'},
+ journal:{name:'Ghi lại lý do quyết định',what:'Nhật ký lưu giả định và điều cần theo dõi.',why:'Ghi lý do giúp đánh giá khi kết quả khác dự báo.',do:'Viết ngắn lý do chọn và dấu hiệu cảnh báo.'},
+ preflight:{name:'Kiểm tra trước khi trình bày',what:'Danh sách điều kiện trước khi nộp đề xuất.',why:'Một kết luận cần dẫn nguồn và mô hình nhất quán.',do:'Đọc các điều kiện và xử lý những phần thiếu.'},
+ decisionPlan:{name:'Kiểm tra tính khả thi khi triển khai',what:'Quyết định làm thay đổi hoạt động thực của doanh nghiệp.',why:'Nguồn lực và thời gian khiến tác động không xuất hiện ngay.',do:'Xem chi phí, ngày có hiệu lực và rủi ro.'},
+ waitEffective:{name:'Chờ sáng kiến có hiệu lực',what:'Hàng đợi thực thi phản ánh độ trễ của quyết định.',why:'Đánh giá trước khi có hiệu lực sẽ không công bằng.',do:'Chạy đồng hồ tới ngày bắt đầu tác động.'},
+ reflect:{name:'Viết tổng kết bài học',what:'Bản tổng kết tách dự báo và thực tế bạn quan sát.',why:'Một case hoàn chỉnh cần nhìn lại quyết định.',do:'Điền ba câu về kết quả, chênh lệch, bài học.'},
+ finish:{name:'Hoàn thành case study đầu tiên',what:'Bạn đã trải qua nghiên cứu, phân tích, quyết định và quan sát.',why:'Giá trị của bài học là lập luận minh bạch, không phải đoán đúng.',do:'Bấm Hoàn thành để ghi nhận kết thúc hành trình.'}
+});
+Object.assign(CC_WALKTHROUGH_TEXT.need,{
+ twoOrders:'Cần đặt hai báo cáo nghiên cứu khác nhau.',twoEvidence:'Hãy chạy thời gian tới khi nhận đủ hai báo cáo ngoài phần giới thiệu.',hypothesisLinked:'Cần gắn một bằng chứng đã mở với nhánh cây vấn đề.',coachConsulted:'Bạn có thể thử một chủ đề hướng dẫn hoặc bấm Bỏ qua.',oneOption:'Hãy lưu ít nhất một phương án chiến lược.',twoOptions:'Hãy lưu thêm một phương án khác để so sánh.',optionSelected:'Bấm chọn một phương án làm đề xuất ưu tiên.',journalWritten:'Có thể viết nhật ký quyết định hoặc bỏ qua.',initiativeActive:'Chạy World Clock đến khi quyết định có hiệu lực.',resultObserved:'Chạy thêm ít nhất một ngày sau thời điểm có hiệu lực.',reflectionWritten:'Cần điền và lưu ba phần tổng kết ở dưới dòng sự kiện.'
+});
+
 /* Shared UI presentation. No changes to simulation state, saved schema, or route IDs. */
 const ccSectionForPage=id=>Object.keys(ccNavigationSpec()).find(key=>ccNavigationSpec()[key].pages.includes(id))||'home';
 function ccLocalizeString(value){
@@ -1175,49 +1250,75 @@ function ccJourneyMark(world,caseId,id,field,enabled=true){
 }
 function ccJourneySetMode(world,mode){if(!['new','compact','off'].includes(mode))return false;const g=ccJourneyEnsure(world);if(g.prefs.mode===mode)return false;g.prefs.mode=mode;ccJourneyLog(world,'mode_changed',null,'',{mode});return true;}
 
-/** Cấu hình Guided Walkthrough. Chỉ metadata; không thay đổi state nghiệp vụ. */
-const CC_WALKTHROUGH_STEPS=Object.freeze([
- {id:'clock',order:1,phase:'discover',page:'overview',tab:null,target:'#clock-date',kind:'read',required:false,condition:null,placement:'auto'},
- {id:'opportunity',order:2,phase:'discover',page:'cases',tab:null,target:'.case-card',kind:'read',required:false,condition:null,placement:'auto'},
- {id:'accept',order:3,phase:'discover',page:'cases',tab:null,target:'[data-accept-case]',kind:'action',required:true,condition:'accepted',placement:'auto'},
- {id:'brief',order:4,phase:'case',page:'engagement',tab:null,target:'.eng-layout',kind:'read',required:false,condition:null,placement:'auto'},
- {id:'research',order:5,phase:'research',page:'evidence',tab:null,target:'[data-order]',kind:'action',required:true,condition:'researchOrdered',placement:'auto'},
- {id:'issue',order:6,phase:'analysis',page:'workspace',tab:'diagnosis',target:'#cw-issue-form',kind:'action',required:true,condition:'hypothesisWritten',placement:'auto'},
- {id:'finance',order:7,phase:'analysis',page:'workspace',tab:'analysis',target:'#cw-scenario-form',kind:'action',required:true,condition:'scenarioSaved',placement:'auto'},
- {id:'coach',order:8,phase:'analysis',page:'workspace',tab:'diagnosis',target:'[data-cw-coach]',kind:'read',required:false,condition:null,placement:'auto'},
- {id:'options',order:9,phase:'strategy',page:'workspace',tab:'strategy',target:'#cw-option-form',kind:'action',required:true,condition:'twoOptionsSelected',placement:'auto'},
- {id:'recommend',order:10,phase:'delivery',page:'workspace',tab:'boardroom',target:'#cw-recommend-form',kind:'action',required:true,condition:'recommendSubmitted',placement:'auto'},
- {id:'execute',order:11,phase:'execution',page:'decisions',tab:null,target:'#decision-form',kind:'action',required:true,condition:'decisionScheduled',placement:'auto'},
- {id:'outcomes',order:12,phase:'review',page:'events',tab:null,target:'#main .activity, #main .panel',kind:'read',required:false,condition:null,placement:'auto'},
-]);
+/** First Case: exact existing page ids and real controls. No economic state writes. */
+const firstCaseSteps = [
+ // id,phase,page,tab,target,kind,condition,required
+ ['clock','discover','overview',null,'#clock-date','read',null,false],
+ ['opportunity','discover','cases',null,'[data-tour-id="opportunity-card"]','read',null,false],
+ ['accept','discover','cases',null,'[data-tour-id="accept-contract"]','action','accepted',true],
+ ['brief','case','engagement',null,'.eng-layout .brief-cover','read',null,false],
+ ['baseline','case','engagement',null,'.eng-layout .fact-grid','read',null,false],
+ ['mission','case','engagement',null,'.eng-layout blockquote','read',null,false],
+ ['researchCatalog','research','evidence',null,'.research-choice','read',null,false],
+ ['research','research','evidence',null,'[data-order="financial"]','action','researchOrdered',true],
+ ['researchSecond','research','evidence',null,'[data-order="operations"]','action','twoOrders',true],
+ ['worldWait','research','evidence',null,'#pause','action','twoEvidence',true],
+ ['evidenceReader','research','evidence',null,'.report-page','read',null,false],
+ ['issue','analysis','workspace','diagnosis','#cw-issue-form','action','hypothesisWritten',true],
+ ['linkEvidence','analysis','workspace','diagnosis','[data-cw-link]','action','hypothesisLinked',true],
+ ['coach','analysis','workspace','diagnosis','[data-cw-coach]','action','coachConsulted',false],
+ ['financeIntro','analysis','workspace','analysis','.cw-dual .panel:first-child','read',null,false],
+ ['finance','analysis','workspace','analysis','#cw-scenario-form','action','scenarioSaved',true],
+ ['financeReview','analysis','workspace','analysis','.cw-result-grid, .cw-saved','read',null,false],
+ ['optionsIntro','strategy','workspace','strategy','#cw-option-form','read',null,false],
+ ['optionOne','strategy','workspace','strategy','#cw-option-form','action','oneOption',true],
+ ['options','strategy','workspace','strategy','#cw-option-form','action','twoOptions',true],
+ ['choose','strategy','workspace','strategy','[data-cw-select-option]','action','optionSelected',true],
+ ['journal','strategy','workspace','strategy','#cw-journal-form','action','journalWritten',false],
+ ['preflight','delivery','workspace','boardroom','.cw-preflight','read',null,false],
+ ['recommend','delivery','workspace','boardroom','#cw-recommend-form','action','recommendSubmitted',true],
+ ['decisionPlan','execution','decisions',null,'#decision-form .preview','read',null,false],
+ ['execute','execution','decisions',null,'#decision-form','action','decisionScheduled',true],
+ ['waitEffective','review','decisions',null,'#pause','action','initiativeActive',true],
+ ['outcomes','review','events',null,'.activity, .panel','action','resultObserved',true],
+ ['reflect','review','events',null,'#ccw-case-reflection','action','reflectionWritten',true],
+ ['finish','review','events',null,'#ccw-case-reflection','read',null,false]
+];
+const CC_WALKTHROUGH_STEPS=Object.freeze(firstCaseSteps.map(([id,phase,page,tab,target,kind,condition,required],i)=>Object.freeze({id,order:i+1,phase,page,tab,target,kind,condition,required,placement:'auto'})));
 const ccWalkStep=id=>CC_WALKTHROUGH_STEPS.find(s=>s.id===id)||null;
 
 
-/** Serializable walkthrough metadata: saved as part of the existing world object. */
-const CC_WALK_SCHEMA='casecraft-walkthrough-v1';
+/** Versioned teaching metadata; never modifies simulation finances or firms. */
+const CC_WALK_SCHEMA='casecraft-walkthrough-v2';
+const oldIds=['clock','opportunity','accept','brief','research','issue','finance','coach','options','recommend','execute','outcomes'];
+function record(){return {index:0,status:'idle',seen:[],invited:[],reflection:null,completedAt:null};}
 function ccWalkEnsure(world){
- const valid=world?.walkthrough?.schema===CC_WALK_SCHEMA;
- if(!valid) world.walkthrough={schema:CC_WALK_SCHEMA,prefs:{off:false},intro:{index:0,status:'idle',seen:[]},cases:{},history:[]};
- const s=world.walkthrough;s.prefs??={off:false};s.intro??={index:0,status:'idle',seen:[]};s.cases??={};s.history??=[];
- return s;
+ if(!world||typeof world!=='object')throw Error('Save không hợp lệ.');
+ if(!world.walkthrough){world.walkthrough={schema:CC_WALK_SCHEMA,prefs:{off:false},intro:record(),cases:{},history:[]};}
+ const s=world.walkthrough;
+ if(s.schema!==CC_WALK_SCHEMA){
+  // Migrate an existing V0.5.5 tour cursor, preserving the engagement and research.
+  const mapRec=r=>{if(!r)return record();const old=oldIds[Math.max(0,Math.min(oldIds.length-1,r.index||0))]; const mapped=({clock:0,opportunity:1,accept:2,brief:3,research:7,issue:11,finance:15,coach:13,options:19,recommend:23,execute:25,outcomes:27})[old]??0;return {...record(),...r,index:mapped,seen:[...(r.seen||[])],status:r.status==='complete'?'paused':r.status};};
+  s.intro=mapRec(s.intro);s.cases=Object.fromEntries(Object.entries(s.cases||{}).map(([k,v])=>[k,mapRec(v)]));s.schema=CC_WALK_SCHEMA;
+ }
+ s.prefs??={off:false};s.intro??=record();s.cases??={};s.history??=[];return s;
 }
-function ccWalkRecord(world,caseId){
- const s=ccWalkEnsure(world);if(!caseId)return s.intro;
- if(!s.cases[caseId])s.cases[caseId]={index:0,status:'idle',seen:[],invited:[]};
- return s.cases[caseId];
+function ccWalkRecord(world,caseId){const s=ccWalkEnsure(world);if(!caseId)return s.intro;return s.cases[caseId]??=(record());}
+function ccWalkLog(world,event,caseId,id){const s=ccWalkEnsure(world);s.history.push({event,caseId:caseId||null,stepId:id||null,at:Date.now(),day:world.day});if(s.history.length>240)s.history.splice(0,s.history.length-240);}
+function ccWalkFlags(world){
+ const c=world?.cases?.engagement,caseId=c?.caseId,flags=caseId?ccJourneyChecklist(world,caseId):{};
+ const orders=(world?.cases?.orders||[]).filter(x=>x.caseId===caseId&&x.status!=='cancelled');
+ const ws=world?.consulting?.workspaces?.[caseId]||{};
+ const rec=caseId?ccWalkRecord(world,caseId):null;
+ return {...flags,twoOrders:orders.length>=2,oneOption:(ws.options||[]).length>=1,twoOptions:(ws.options||[]).length>=2,reflectionWritten:!!rec?.reflection?.submittedAt,caseComplete:!!rec?.completedAt};
 }
-function ccWalkLog(world,event,caseId,id){
- const s=ccWalkEnsure(world);s.history.push({event,caseId:caseId||null,stepId:id||null,at:Date.now(),day:world.day});
- if(s.history.length>240)s.history.splice(0,s.history.length-240);
-}
-function ccWalkSatisfied(world,step){
- if(step.kind!=='action')return true;
- const caseRec=world?.cases?.engagement;const cid=caseRec?.caseId;
- if(!cid)return false;
- if(step.condition==='accepted')return true;
- const flags=ccJourneyChecklist(world,cid);
- if(step.condition==='twoOptionsSelected')return Boolean(flags.twoOptions&&flags.optionSelected);
- return Boolean(flags[step.condition]);
+function ccWalkSatisfied(world,step){if(step.kind!=='action')return true;const flags=ccWalkFlags(world);return !!flags[step.condition];}
+function ccWalkSubmitReflection(world,caseId,{observed,variance,learning}){
+ if(!caseId||world.cases?.engagement?.caseId!==caseId)throw Error('Cần có hợp đồng đang tư vấn.');
+ const flags=ccWalkFlags(world);if(!flags.resultObserved)throw Error('Cần theo dõi ít nhất một ngày sau khi quyết định có hiệu lực.');
+ const fields={observed:String(observed||'').trim(),variance:String(variance||'').trim(),learning:String(learning||'').trim()};
+ if(Object.values(fields).some(s=>s.length<18||s.length>800))throw Error('Mỗi phần tổng kết cần 18–800 ký tự.');
+ const rec=ccWalkRecord(world,caseId);rec.reflection={...fields,submittedAt:Date.now(),worldDay:world.day};ccWalkLog(world,'reflection_submitted',caseId,'reflect');return rec.reflection;
 }
 
 const {generateWorld}=(()=>{
@@ -2263,7 +2364,7 @@ function ccNavigationSpec(){return {
 function ccSyncNavigation(){const spec=ccNavigationSpec(),section=ccSectionForPage(page),s=spec[section];document.querySelectorAll('[data-nav-section]').forEach(button=>{let selected=button.dataset.navSection===section;button.classList.toggle('active',selected);if(selected)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')});const host=$('section-navigation');if(!host)return;const mainPages=s.pages.filter(id=>!['history','validation'].includes(id));const advanced=s.pages.filter(id=>['history','validation'].includes(id));if(mainPages.length===1&&!advanced.length){host.hidden=true;host.innerHTML='';return;}host.hidden=false;host.innerHTML=`<div class="cc-section-heading"><strong>${s.title}</strong><span>${s.subtitle}</span></div><div class="cc-section-actions">${mainPages.map(id=>`<button class="cc-section-tab ${id===page?'active':''}" data-page="${id}" ${id===page?'aria-current="page"':''}>${ccT('pages.'+id)}</button>`).join('')}${advanced.length?`<details class="cc-section-advanced" ${advanced.includes(page)?'open':''}><summary>Nâng cao ▾</summary><div class="cc-advanced-list">${advanced.map(id=>`<button class="cc-section-tab ${id===page?'active':''}" data-page="${id}">${ccT('pages.'+id)}</button>`).join('')}</div></details>`:''}</div>`;}
 
 /* CaseCraft guided walkthrough — presentation-only; uses existing page and workbenchTab routing. */
-const ccwText=CC_WALKTHROUGH_TEXT,ccwRoot=()=>document.getElementById('cc-walk-root');
+const ccwText=CC_WALKTHROUGH_TEXT,ccwLesson=CC_FIRST_CASE_TEXT,ccwRoot=()=>document.getElementById('cc-walk-root');
 let ccwNavigate=false,ccwTarget=null,ccwRaf=0,ccwSearchTimer=0,ccwFocus=null,ccwNotice='',ccwActiveCase=null,ccwLastPhase='',ccwSuppressPrompts=false;
 const ccwCaseId=()=>w?.cases?.engagement?.caseId||null;
 const ccwRecord=()=>ccWalkRecord(w,ccwCaseId());
@@ -2275,7 +2376,7 @@ function ccwPause(reason='exit'){
 }
 function ccwNavigateTo(step){
  ccwNavigate=true;
- try{if(step.page==='cases'&&!selectedCaseId){initializeCases(w);selectedCaseId=listCaseOpportunities(w)[0]?.id||null;}
+ try{if(step.page==='cases'&&!selectedCaseId){initializeCases(w);const pool=listCaseOpportunities(w);selectedCaseId=(pool.find(c=>c.firmId==='fnb-3'&&c.status==='available')||pool.find(c=>c.status==='available')||pool[0])?.id||null;}
    page=step.page;if(step.tab)workbenchTab=step.tab;
    render();}
  finally{ccwNavigate=false;}
@@ -2287,9 +2388,9 @@ function ccwGo(index,{restart=false}={}){
  ccWalkLog(w,'view',ccwCaseId(),step.id);ccwSave();ccwNavigateTo(step);
 }
 function ccwStart(index){const store=ccWalkEnsure(w);store.prefs.off=false;ccwFocus=document.activeElement;ccwGo(index??ccwRecord().index??0);}
-function ccwNext(){
- const rec=ccwRecord(),step=ccwStep();if(step.required&&!ccWalkSatisfied(w,step)){ccwPaint();return;}
- const next=rec.index+1;if(next>=CC_WALKTHROUGH_STEPS.length){rec.status='complete';ccWalkLog(w,'finished',ccwCaseId(),step.id);ccwClear();ccwSave();toast(ccwText.ui.done);if(ccwFocus?.isConnected)ccwFocus.focus();else document.getElementById('cc-walk-help')?.focus();return;}
+function ccwNext({skip=false}={}){
+ const rec=ccwRecord(),step=ccwStep();if(step.required&&!ccWalkSatisfied(w,step)&&!skip){ccwPaint();return;}if(skip&&step.required){ccwPaint();return;}
+ const next=rec.index+1;if(next>=CC_WALKTHROUGH_STEPS.length){rec.status='complete';rec.completedAt=Date.now();ccWalkLog(w,'finished',ccwCaseId(),step.id);ccwClear();ccwSave();toast(ccwText.ui.done);if(ccwFocus?.isConnected)ccwFocus.focus();else document.getElementById('cc-walk-help')?.focus();return;}
  ccWalkLog(w,'next',ccwCaseId(),step.id);const nextStep=CC_WALKTHROUGH_STEPS[next];
  if(step.phase!==nextStep.phase)toast(ccwText.ui.completed+': '+ccwText.phases[step.phase]);
  ccwGo(next);
@@ -2310,23 +2411,31 @@ function ccwPosition(){
  const cw=card.offsetWidth,ch=card.offsetHeight,spaceRight=innerWidth-rect.right,spaceLeft=rect.left;
  let left=spaceRight>=cw+20?rect.right+14:spaceLeft>=cw+20?rect.left-cw-14:Math.max(12,Math.min(rect.left,innerWidth-cw-12));
  let top=Math.max(12,Math.min(rect.top,innerHeight-ch-12));
- if(innerWidth<880){left=12;top=(rect.top>innerHeight*.56&&rect.top>ch+34)?12:Math.max(12,innerHeight-ch-12)}
+ if(innerWidth<880){left=12;top=(rect.top>innerHeight*.59&&rect.top>ch+24)?12:Math.max(12,innerHeight-ch-12)}
  Object.assign(card.style,{left:left+'px',top:top+'px'});
 }
 function ccwGlossary(step){const terms={finance:['EBIT','MTD'],issue:['issue tree','MECE','giả thuyết'],coach:['giả thuyết'],brief:['EBIT'],options:['EBIT']};return (terms[step.id]||[]).map(term=>`<button type="button" class="ccw-term" data-ccw-term="${esc(term)}" aria-label="${esc(ccwText.ui.termExplain)} ${esc(term)}">${esc(term)} ⓘ</button>`).join('');}
 function ccwCard(step,{fallback=false,loading=false}={}){
- const text=ccwText.steps[step.id],ui=ccwText.ui,ok=ccWalkSatisfied(w,step);
+ const text=ccwText.steps[step.id]||{},lesson=ccwLesson.steps[step.id]||{},ui=ccwText.ui,extra=ccwLesson.ui,ok=ccWalkSatisfied(w,step);
  const explain=!ok?ccwText.need[step.condition]||ccwText.need.notReady:'';
- const canSkip=!step.required;
- return `<section class="ccw-card" role="dialog" aria-modal="false" aria-label="${esc(ui.help)}: ${esc(text.name)}" tabindex="-1">
- <div class="ccw-head"><span>${esc(ui.step)} ${step.order}/${CC_WALKTHROUGH_STEPS.length} · ${esc(ccwText.phases[step.phase])}</span><button type="button" data-ccw-exit aria-label="${esc(ui.exit)}">✕</button></div>
- <h2>${esc(text.name)}</h2>
- ${loading?`<p role="status">${esc(ui.wait)}</p>`:fallback?`<p role="status">${esc(ui.fallback)}</p>`:`<p><strong>${esc(ui.what)}</strong> ${esc(text.what)}</p><p><strong>${esc(ui.why)}</strong> ${esc(text.why)}</p><p><strong>${esc(ui.do)}</strong> ${esc(text.do)}</p>`}
+ const optional=step.kind==='action'&&!step.required;
+ const firstCase=ccwCaseId()?w.cases.candidates.find(c=>c.id===ccwCaseId()):null;
+ const label=firstCase?.firmId&&w?.firms?.[firstCase.firmId]?.name||'doanh nghiệp đang xem';
+ const count=ccwRecord().index+1,total=CC_WALKTHROUGH_STEPS.length;
+ const dynamic=firstCase&&['baseline','brief','mission','financeIntro'].includes(step.id)?`<p class="ccw-case-fact"><strong>Ví dụ đang xem:</strong> ${esc(label)} · EBIT tham chiếu ${esc(Number(firstCase.baseline.ebitM).toLocaleString('vi-VN',{maximumFractionDigits:1}))} triệu tín dụng. Đây là số liệu mô tả, chưa phải nguyên nhân.</p>`:'';
+ return `<section class="ccw-card ccw-first-case" role="dialog" aria-modal="false" aria-label="${esc(ui.help)}: ${esc(text.name||step.id)}" tabindex="-1">
+ <div class="ccw-head"><span>${esc(ui.step)} ${count}/${total} · ${esc(ccwText.phases[step.phase])}</span><button type="button" data-ccw-exit aria-label="${esc(ui.exit)}">✕</button></div>
+ <div class="ccw-lesson-progress" role="progressbar" aria-label="${esc(extra.progress)}" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${count}"><span style="width:${Math.round(count/total*100)}%"></span></div>
+ <h2>${esc(text.name||step.id)}</h2>
+ ${loading?`<p role="status">${esc(ui.wait)}</p>`:fallback?`<p role="status">${esc(ui.fallback)}</p>`:`<p><strong>${esc(ui.what)}</strong> ${esc(text.what||'')}</p><p><strong>${esc(ui.why)}</strong> ${esc(text.why||'')}</p><p><strong>${esc(ui.do)}</strong> ${esc(text.do||'')}</p>
+ <div class="ccw-detailed"><p><strong>${esc(extra.try)}:</strong> ${esc(lesson.try||text.do||'')}</p><p><strong>${esc(extra.check)}:</strong> ${esc(lesson.check||'Bạn đã hiểu bước này.')}</p></div>${dynamic}
+ <details class="ccw-hint"><summary>${esc(extra.hint)}</summary><p>${esc(lesson.hint||'Bạn có thể thoát và tiếp tục từ bước đã lưu.')}</p>${lesson.example?`<p>${esc(lesson.example)}</p>`:''}</details>`}
  ${!fallback&&!loading&&ccwGlossary(step)?`<div class="ccw-terms">${ccwGlossary(step)}</div>`:''}
  ${!ok&&!fallback&&!loading?`<p class="ccw-gate" role="status">○ ${esc(explain)}</p>`:''}
+ ${ok&&step.kind==='action'&&!fallback&&!loading?`<p class="ccw-ready" role="status">✓ ${esc(extra.ready)}</p>`:''}
  ${fallback?`<button type="button" class="btn" data-ccw-retry>${esc(ui.retry)}</button>`:''}
- <div class="ccw-actions"><button type="button" class="btn" data-ccw-prev ${step.order===1?'disabled':''}>${esc(ui.back)}</button><button type="button" class="btn dark" data-ccw-next ${!ok||fallback||loading?'disabled':''} aria-disabled="${!ok||fallback||loading}">${esc(step.order===CC_WALKTHROUGH_STEPS.length?ui.finish:step.kind==='read'?ui.continue:ui.next)} →</button></div>
- <div class="ccw-footer"><button type="button" data-ccw-exit>${esc(ui.exit)}</button>${canSkip&&step.kind==='action'?`<button type="button" data-ccw-skip>${esc(ui.skip)}</button>`:''}</div>
+ <div class="ccw-actions"><button type="button" class="btn" data-ccw-prev ${step.order===1?'disabled':''}>${esc(ui.back)}</button><button type="button" class="btn dark" data-ccw-next ${(!ok&&!optional)||loading?'disabled':''} aria-disabled="${(!ok&&!optional)||loading}">${esc(step.order===total?extra.finish:step.kind==='read'?ui.continue:ui.next)} →</button></div>
+ <div class="ccw-footer"><button type="button" data-ccw-exit>${esc(ui.exit)}</button>${optional&&!ok?`<button type="button" data-ccw-skip>${esc(ui.skip)}</button>`:''}</div>
  </section>`;
 }
 function ccwPaint(fallback=false,loading=false){
@@ -2335,7 +2444,7 @@ function ccwPaint(fallback=false,loading=false){
  if(!fallback&&!loading)ccwTarget=ccwTargetElement(step);
  if(ccwTarget){ccwTarget.classList.add('ccw-target');root.innerHTML=`<div class="ccw-veil" aria-hidden="true">${['top','left','right','bottom'].map(k=>`<div data-ccw-pane="${k}" class="ccw-pane"></div>`).join('')}</div>`+ccwCard(step);ccwPosition();}
  else {root.innerHTML=ccwCard(step,{fallback,loading});root.querySelector('.ccw-card').classList.add('ccw-fallback');}
- root.querySelector('.ccw-card')?.focus({preventScroll:true});
+ if(!root.querySelector('.ccw-card')?.contains(document.activeElement))root.querySelector('.ccw-card')?.focus({preventScroll:true});
 }
 function ccwLocate(){
  const step=ccwStep(),target=ccwTargetElement(step);if(!target){ccwPaint(false,true);ccwSearchTimer=setTimeout(()=>{if(ccwRecord().status==='running'&&ccwStep().id===step.id){const resolved=ccwTargetElement(step);resolved?ccwLocate():ccwPaint(true,false)}},2200);return;}
@@ -2390,7 +2499,7 @@ document.addEventListener('click',e=>{
    else if(key==='data-ccw-off'){const state=ccWalkEnsure(w);state.prefs.off=true;ccwPause('disabled');ccwClear();ccwSave();}
    else if(key==='data-ccw-replay-step')ccwStart(ccwRecord().index);
    else if(key==='data-ccw-replay-phase'){const phase=ccwStep().phase;ccwStart(CC_WALKTHROUGH_STEPS.findIndex(s=>s.phase===phase));}
-   else if(key==='data-ccw-skip')ccwNext();
+   else if(key==='data-ccw-skip')ccwNext({skip:true});
    else if(key==='data-ccw-term'){const msg=ccwText.glossary[b.dataset.ccwTerm]||'';if(msg){b.title=msg;const pop=root.querySelector('.ccw-term-note');pop?.remove();b.insertAdjacentHTML('afterend',`<span class="ccw-term-note" role="status">${esc(msg)}</span>`);}}
    return;
   }
@@ -2417,5 +2526,22 @@ if(!ccwBegin.prefs.off){if(!ccwInitial.seen.length&&!firstRun){ccwRenderInvite('
 
 /* Existing Hướng dẫn chơi route is a reference library only, never a compulsory tour page. */
 pages.welcome=()=>`<div class="cols two"><section class="panel"><div class="panel-header"><h2>${esc(ccwText.ui.helpLibraryTitle)}</h2></div><div class="panel-body"><p>${esc(ccwText.ui.helpLibraryDescription)}</p><button class="btn dark" data-ccw-start>▶ ${esc(ccwText.ui.help)}</button></div></section><section class="panel"><div class="panel-header"><h2>${esc(ccwText.ui.helpTermsTitle)}</h2></div><div class="panel-body">${Object.entries(ccwText.glossary).map(([term,meaning])=>`<p><strong>${esc(term)}</strong>: ${esc(meaning)}</p>`).join('')}</div></section></div>`;
+
+// Action gates refresh independently of navigation/time: never auto-advance.
+setInterval(()=>{
+ if(!w||ccwRecord().status!=='running')return;
+ const card=ccwRoot()?.querySelector('.ccw-card');if(!card)return;
+ const step=ccwStep(),ok=ccWalkSatisfied(w,step);
+ const b=card.querySelector('[data-ccw-next]');if(b){b.disabled=!ok&&step.required;b.setAttribute('aria-disabled',String(!ok&&step.required));}
+ const gate=card.querySelector('.ccw-gate');if(gate&&ok){gate.textContent='✓ '+ccwLesson.ui.ready;gate.className='ccw-ready';}
+},700);
+
+// Learning-only reflection is embedded in the existing event timeline, not a tutorial route.
+const ccwEventsCore=pages.events;
+pages.events=function(){const base=ccwEventsCore();const cid=ccwCaseId();if(!cid)return base;
+ const done=ccWalkFlags(w).resultObserved,record=ccWalkRecord(w,cid),reflection=record.reflection;
+ return base+`<section class="panel ccw-reflection-section" id="ccw-case-reflection" data-tour-id="case-reflection"><div class="panel-header"><div><h2>${esc(ccwLesson.ui.reflection)}</h2><p>Ghi bài học của bạn sau khi thực thi; không tự đánh giá đúng/sai theo nguyên nhân ẩn.</p></div></div><div class="panel-body">${record.completedAt?`<div class="ccw-finished" role="status"><strong>✓ Đã hoàn thành case study đầu tiên</strong><span>Bạn đã nộp đề xuất, triển khai quyết định và ghi lại điều học được. Các bài toán tiếp theo có thể giải độc lập.</span><button type="button" class="btn" data-page="cases">Khám phá cơ hội tiếp theo →</button></div>`:''}${reflection?`<p class="ccw-ready">✓ Đã lưu tổng kết vào bản save, ngày game ${reflection.worldDay}.</p><p><strong>Quan sát:</strong> ${esc(reflection.observed)}</p><p><strong>So với dự báo:</strong> ${esc(reflection.variance)}</p><p><strong>Bước tiếp:</strong> ${esc(reflection.learning)}</p>`:
+ `<p class="note">${esc(ccwLesson.ui.notScore)}</p><form id="ccw-reflection-form" class="ccw-reflection-form"><label>Bạn quan sát thấy gì sau quyết định?<textarea name="observed" minlength="18" maxlength="800" rows="2" required placeholder="Nêu hiện tượng và ngày game, không đoán nguyên nhân ẩn."></textarea></label><label>Thực tế khác với điều bạn dự kiến ra sao?<textarea name="variance" minlength="18" maxlength="800" rows="2" required placeholder="Phân biệt dự báo và số liệu quan sát được."></textarea></label><label>Bạn sẽ kiểm chứng hoặc điều chỉnh điều gì tiếp theo?<textarea name="learning" minlength="18" maxlength="800" rows="2" required placeholder="Ghi một bài học hoặc câu hỏi để điều tra thêm."></textarea></label><button type="submit" class="btn dark" ${done?'':'disabled'}>Lưu tổng kết case đầu tiên</button>${done?'':'<p class="note">Cần có kết quả sau ít nhất một ngày kể từ khi quyết định có hiệu lực.</p>'}</form>`}</div></section>`;};
+document.addEventListener('submit',e=>{if(e.target.id!=='ccw-reflection-form')return;e.preventDefault();const fd=new FormData(e.target);try{ccWalkSubmitReflection(w,ccwCaseId(),Object.fromEntries(['observed','variance','learning'].map(k=>[k,fd.get(k)])));save();render();toast('Đã lưu bài học của case đầu tiên. Hãy quay lại hướng dẫn để hoàn thành.');}catch(err){toast(err.message);}});
 </script>
 </body></html>
