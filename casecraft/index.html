@@ -68,34 +68,71 @@
 .cc-guide{background:white;border:1px solid var(--line);border-radius:13px;overflow:hidden}.cc-guide-top{padding:22px 29px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:15px;align-items:center}.cc-guide-top b{letter-spacing:1.5px;font-size:11px;color:#456b75}.cc-guide-top span{font-size:11px;color:#78929a}.cc-guide-progress{height:4px;background:#e8eeef}.cc-guide-progress>div{height:100%;background:#376c76;transition:width .2s}.cc-guide-body{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(270px,.75fr);min-height:390px}.cc-guide-content{padding:36px 35px 32px}.cc-guide-content>.eyebrow{color:#578490}.cc-guide-content h2{font-size:35px;line-height:1.14;letter-spacing:-1.3px;max-width:580px;margin:11px 0 16px}.cc-guide-content>p{color:#637b83;line-height:1.95;font-size:14px;max-width:560px}.cc-guide-points{display:grid;gap:13px;margin-top:24px}.cc-guide-points>div{display:flex;align-items:flex-start;gap:11px;font-size:13px;line-height:1.65;color:#344f59}.cc-guide-points .cc-check{flex:none;width:20px;height:20px;background:#ebf3f2;border-radius:6px;display:grid;place-items:center;color:#397366;font-size:12px}.cc-guide-visual{background:#f0f5f5;padding:29px 25px;display:flex;flex-direction:column;justify-content:center;gap:13px;border-left:1px solid var(--line)}.cc-visual-card{background:#fff;border:1px solid #dce7e8;border-radius:11px;padding:16px;box-shadow:0 8px 25px #153a4310}.cc-visual-card>small{display:block;color:#789096;font-size:10px;letter-spacing:.9px;font-weight:800}.cc-visual-card>strong{display:block;font-size:18px;line-height:1.3;margin:8px 0}.cc-visual-card>p{color:#617981;font-size:12px;line-height:1.6;margin:6px 0 0}.cc-visual-link{padding:9px 13px;border:1px solid #9bc4b5;border-radius:7px;background:#e8f4ed;color:#2c7556;font-size:11px;font-weight:800;width:max-content}.cc-visual-muted{opacity:.65}.cc-visual-connector{height:16px;border-left:1px dashed #89a8ae;margin-left:28px}.cc-guide-foot{border-top:1px solid var(--border);padding:19px 29px;display:flex;gap:10px;justify-content:space-between;align-items:center}.cc-guide-foot .cc-guide-right{display:flex;gap:9px}.cc-guide-hint{font-size:11px;color:#83999e}.cc-guide-pills{display:flex;gap:6px;margin-bottom:22px}.cc-guide-pills span{height:5px;width:30px;background:#dce7e9;border-radius:20px}.cc-guide-pills span.active{background:#3e777c}.cc-guide-tour{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 17px;padding:10px 13px;background:#edf4f4;border:1px solid #d5e4e5;border-radius:8px;color:#476c74;font-size:11px}.cc-guide-tour button{border:0;background:transparent;color:#316575;text-decoration:underline;font-weight:800;cursor:pointer}
 @media(max-width:950px){.cc-guide-body,.hq-hero{grid-template-columns:1fr}.cc-guide-visual{border-left:0;border-top:1px solid var(--line)}.cc-guide-content{padding:28px 24px}.cc-guide-content h2{font-size:30px}}
 @media(max-width:740px){.cc-guide-top,.cc-guide-foot{padding:16px}.cc-guide-content h2{font-size:25px}.cc-guide-foot{flex-wrap:wrap}.hq-hero{padding:20px}.hq-hero h2{font-size:23px}}
+
+/* CaseCraft 05.2 — task-led navigation system */
+.app-shell{grid-template-columns:258px minmax(0,1fr)}
+.rail{padding:23px 13px 15px;gap:8px;overflow-y:auto;overscroll-behavior:contain}
+.branding{padding:0 10px 22px;margin-bottom:7px;border-bottom:1px solid #3b525b}
+.branding small{letter-spacing:1.5px;font-size:9px}
+.cc-rail-section{font-size:10px;font-weight:750;letter-spacing:1.45px;color:#85a7ad;padding:11px 12px 7px}
+.cc-primary-nav,.cc-support-nav{display:grid;gap:5px}
+.rail .navitem{height:auto;min-height:61px;padding:9px 11px;gap:12px;border-radius:9px;text-align:left;align-items:center}
+.rail .navitem .ni{flex:none;display:grid;place-items:center;width:32px;height:32px;background:#ffffff0b;border:1px solid #ffffff18;border-radius:8px;color:#a8c7cc;font-size:19px}
+.rail .navitem:hover{background:#284b55}
+.rail .navitem.active{background:#315b65;color:#fff;box-shadow:inset 3px 0 0 #b2d9cf}
+.rail .navitem.active .ni{color:white;background:#ffffff18}
+.cc-nav-copy{min-width:0;display:flex;flex-direction:column;gap:3px}
+.cc-nav-copy strong{font-size:13px;line-height:1.2;font-weight:675;color:#e8eff0}
+.cc-nav-copy small{font-size:10px;line-height:1.4;color:#a4bdc1;white-space:normal;font-weight:450}
+.rail .navitem.active .cc-nav-copy small{color:#d5e8e9}
+.cc-rail-spacer{margin-top:auto;min-height:16px}
+.cc-support-nav{border-top:1px solid #3b525b;padding-top:9px}
+.rail-foot{margin-top:0;padding:9px 12px 2px;border:0}
+.cc-section-navigation{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 17px;padding:12px 13px;border:1px solid #dce6e8;border-radius:10px;background:#fff}
+.cc-section-navigation[hidden]{display:none}
+.cc-section-heading{margin-right:auto;min-width:160px}
+.cc-section-heading strong{display:block;font-size:12px;color:#253f47}
+.cc-section-heading span{display:block;font-size:11px;color:#72888f;margin-top:3px}
+.cc-section-actions{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.cc-section-tab{border:1px solid transparent;border-radius:7px;padding:9px 11px;min-height:36px;font-size:12px;font-weight:650;color:#657b83;background:transparent}
+.cc-section-tab:hover{background:#eef4f4;color:#214d57}
+.cc-section-tab.active{background:#e9f1f2;border-color:#cfdee1;color:#174751}
+.cc-section-advanced{position:relative}
+.cc-section-advanced summary{list-style:none;cursor:pointer;border:1px solid #e4e9eb;border-radius:7px;color:#637981;padding:9px 11px;font-size:12px;font-weight:650}
+.cc-section-advanced summary::-webkit-details-marker{display:none}
+.cc-section-advanced[open] summary{background:#f3f7f7}
+.cc-advanced-list{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.rail .navitem:focus-visible,.cc-section-tab:focus-visible,.cc-section-advanced summary:focus-visible{outline:2px solid #78b5bd;outline-offset:2px}
+@media(max-width:1100px){.app-shell{grid-template-columns:228px minmax(0,1fr)}.rail{padding:16px 9px}.branding{padding:0 8px 15px}.branding strong{font-size:18px}.branding small{display:block;font-size:8px}.rail .navitem{justify-content:flex-start;padding:8px;min-height:57px}.rail .navitem .ni{font-size:17px;width:28px;height:28px}.cc-nav-copy strong{font-size:12px}.cc-nav-copy small{font-size:9px}.rail-foot{display:block}.cc-rail-section{font-size:10px}.content{padding:22px 20px}}
+@media(max-width:740px){.app-shell{display:block}.rail{height:auto;position:relative;padding:10px 10px 8px;overflow-x:auto;white-space:normal;display:flex;flex-direction:row;align-items:center}.rail .branding,.rail .cc-rail-section,.rail .cc-rail-spacer,.rail .rail-foot{display:none}.cc-primary-nav,.cc-support-nav{display:flex;gap:5px;flex-shrink:0}.cc-support-nav{padding:0;border:0}.rail .navitem{min-height:42px;min-width:auto;width:auto;padding:5px 9px;gap:5px;border-radius:7px}.rail .navitem .ni{width:22px;height:22px;font-size:15px;border:0;background:transparent}.cc-nav-copy strong{font-size:11px;white-space:nowrap}.cc-nav-copy small{display:none}.cc-section-navigation{padding:10px;align-items:flex-start}.cc-section-heading{flex-basis:100%;margin-right:0}.cc-section-tab{font-size:11px;padding:7px 8px}.cc-advanced-list{display:grid}}
 </style></head>
 <body>
 <div class="app-shell">
-  <aside class="rail">
-    <div class="branding"><span class="logo">◇</span><span><strong>CaseCraft</strong><small>EXPERT INTELLIGENCE</small></span></div>
-    <div class="rail-label">GETTING STARTED</div><nav aria-label="New player guidance"><button class="navitem" data-page="welcome"><span class="ni">✦</span> Hướng dẫn chơi</button></nav><div class="rail-label">CONSULTING</div>
-    <nav aria-label="Consulting navigation"><button class="navitem" data-page="cases"><span class="ni">◧</span>Opportunity Desk</button><button class="navitem" data-page="engagement"><span class="ni">▤</span>Engagement Brief</button><button class="navitem" data-page="evidence"><span class="ni">⌕</span>Evidence Lab</button></nav>
-    <div class="rail-label">EXPERT INTELLIGENCE</div><nav aria-label="Expert research"><button class="navitem" data-page="experts"><span class="ni">♙</span> Expert Network</button><button class="navitem" data-page="reports"><span class="ni">▥</span> Deep Reports</button></nav><div class="rail-label">CASE WORKBENCH</div><nav aria-label="Consulting tools"><button class="navitem" data-page="workspace"><span class="ni">◇</span>Consulting Workspace</button></nav><div class="rail-label">LIVING WORLD</div>
-    <nav id="navigation" aria-label="Game sections">
-      <button class="navitem active" data-page="overview"><span class="ni">◫</span>Command Center</button>
-      <button class="navitem" data-page="market"><span class="ni">◎</span>World Intelligence</button>
-      <button class="navitem" data-page="firms"><span class="ni">▣</span>Firm Explorer</button>
-      <button class="navitem" data-page="decisions"><span class="ni">⌘</span>Decision Lab</button>
-      <button class="navitem" data-page="events"><span class="ni">⌁</span>Event Timeline</button>
+  <aside class="rail" aria-label="Điều hướng CaseCraft">
+    <div class="branding"><span class="logo" aria-hidden="true">◇</span><span><strong>CaseCraft</strong><small>CONSULTING SIMULATOR</small></span></div>
+    <div class="cc-rail-section">CHƠI GAME</div>
+    <nav class="cc-primary-nav" id="navigation" aria-label="Các khu vực chính">
+      <button class="navitem active" data-page="overview" data-nav-section="home" title="Tổng quan về sự nghiệp và engagement đang hoạt động"><span class="ni" aria-hidden="true">⌂</span><span class="cc-nav-copy"><strong>Tổng quan</strong><small>Trạng thái công ty tư vấn</small></span></button>
+      <button class="navitem" data-page="cases" data-nav-section="clients" title="Tìm doanh nghiệp đang cần tư vấn và ký hợp đồng"><span class="ni" aria-hidden="true">▣</span><span class="cc-nav-copy"><strong>Tìm khách hàng</strong><small>Chọn case và nhận hợp đồng</small></span></button>
+      <button class="navitem" data-page="workspace" data-nav-section="case" title="Đọc brief, dựng issue tree, phân tích và đề xuất"><span class="ni" aria-hidden="true">▤</span><span class="cc-nav-copy"><strong>Làm case</strong><small>Brief · Phân tích · Chiến lược</small></span></button>
+      <button class="navitem" data-page="evidence" data-nav-section="research" title="Mua dữ liệu, phỏng vấn chuyên gia và đọc báo cáo"><span class="ni" aria-hidden="true">⌕</span><span class="cc-nav-copy"><strong>Nghiên cứu</strong><small>Dữ liệu · Chuyên gia · Báo cáo</small></span></button>
+      <button class="navitem" data-page="market" data-nav-section="world" title="Theo dõi thị trường, công ty và các diễn biến kinh tế"><span class="ni" aria-hidden="true">◎</span><span class="cc-nav-copy"><strong>Thế giới</strong><small>Thị trường · Doanh nghiệp</small></span></button>
+      <button class="navitem" data-page="decisions" data-nav-section="execute" title="Triển khai chiến lược và theo dõi kết quả thực tế"><span class="ni" aria-hidden="true">↗</span><span class="cc-nav-copy"><strong>Thực thi</strong><small>Quyết định · Kết quả · Pivot</small></span></button>
     </nav>
-    <div class="rail-label">WORLD FOUNDRY</div>
-    <nav><button class="navitem" data-page="history"><span class="ni">◷</span>Historic Baseline</button><button class="navitem" data-page="validation"><span class="ni">✓</span>World Validation</button></nav>
-    <div class="rail-foot"><div class="mini-mark"><span class="dot online"></span> LOCAL SIMULATION</div><div>Stage 05 · Guided consulting<br>All values are fictional credits.</div></div>
+    <div class="cc-rail-spacer"></div>
+    <nav class="cc-support-nav" aria-label="Trợ giúp"><button class="navitem" data-page="welcome" data-nav-section="help" title="Xem lại hướng dẫn chơi 6 bước"><span class="ni" aria-hidden="true">?</span><span class="cc-nav-copy"><strong>Hướng dẫn chơi</strong><small>6 bước để bắt đầu</small></span></button></nav>
+    <div class="rail-foot"><div class="mini-mark"><span class="dot online"></span> WORLD SIMULATION</div><div>1× = 60 giây / ngày game</div></div>
   </aside>
   <div class="workspace">
     <header class="topbar">
-      <div class="breadcrumb">WORLD FOUNDRY <span>/</span> STAGE 05 <span>/</span> <b id="breadcrumb-page">Command Center</b></div>
+      <div class="breadcrumb">CASECRAFT <span>/</span> <span id="breadcrumb-section">TỔNG QUAN</span> <span>/</span> <b id="breadcrumb-page">Command Center</b></div>
       <div class="top-actions"><span class="pill live"><span class="dot"></span> EXPERT NETWORK + SIM 5.0</span><button id="save" class="btn minimal">Save</button><button id="export" class="btn minimal">↓ Export</button><label for="import" class="btn minimal upload">↑ Import</label><input id="import" type="file" accept=".json,application/json" hidden></div>
     </header>
     <main class="content">
-      <section class="hero"><div><div class="eyebrow">CASECRAFT / EXPERT INTELLIGENCE SIMULATION</div><h1 id="title">Asteria — Living World</h1><p>Nghiên cứu business case bằng chuyên gia, báo cáo có nguồn, issue tree, mô hình tài chính và các quyết định trong nền kinh tế giả lập.</p></div><div class="hero-side"><div class="hero-pill">12 COMPANIES · 4 SECTORS</div><div id="notice-small" class="tiny">Historical baseline: 36 months</div></div></section>
+      <section class="hero"><div><div class="eyebrow">CASECRAFT / EXPERT INTELLIGENCE SIMULATION</div><h1 id="title">Tổng quan</h1><p id="hero-description">Theo dõi sự nghiệp consulting và chọn bước tiếp theo.</p></div><div class="hero-side"><div class="hero-pill">12 COMPANIES · 4 SECTORS</div><div id="notice-small" class="tiny">Historical baseline: 36 months</div></div></section>
       <section class="world-clock" aria-label="Continuous world clock"><div class="clock-info"><span class="clock-label">WORLD CLOCK <span class="dot" id="clock-dot"></span></span><strong id="clock-date">Y4 · M01 · D01</strong><small id="clock-state">RUNNING</small></div><div class="clock-middle"><div class="day-track"><div id="day-progress" role="progressbar" aria-label="Tiến độ trong ngày game" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div><div class="clock-hint" id="clock-hint">1× = 60 giây thực / ngày game</div></div><div class="clock-controls"><button id="pause" class="btn dark" aria-label="Pause simulation">Ⅱ Pause</button><div class="speed-control" role="group" aria-label="Simulation speed"><button data-speed="1" class="selected">1×</button><button data-speed="2">2×</button><button data-speed="4">4×</button><button data-speed="12">12×</button><button data-speed="48">48×</button></div></div></section>
       <div class="surface-alert" id="alertbar" hidden></div>
+      <div id="section-navigation" class="cc-section-navigation" hidden></div>
       <div id="main"></div>
       <footer><span>CASECRAFT · STAGE 05 · DETERMINISTIC EVENT ENGINE</span><span>Fictional training simulation · Not a real economic forecast</span></footer>
     </main>
@@ -915,7 +952,7 @@ function refreshClock(){
  $('clock-hint').textContent=`1× = 60 giây thực / ngày game · hiện tại ${speed}× = ${Number.isInteger(seconds)?seconds:seconds.toFixed(2)}s / ngày`;
  document.querySelectorAll('[data-speed]').forEach(btn=>{const active=Number(btn.dataset.speed)===speed;btn.classList.toggle('selected',active);btn.setAttribute('aria-pressed',String(active));});
 }
-function render(){initializeCases(w);const fn=pages[page]||pages.overview;$('main').innerHTML=fn();$('title').textContent=`${w.config.name} — Living World`;$('breadcrumb-page').textContent=labels[page];document.querySelectorAll('[data-page]').forEach(btn=>btn.classList.toggle('active',btn.dataset.page===page));let client=w.firms[w.playerFirmId];let last=w.log.at(-1);let a=$('alertbar');if(!activeEngagement(w)){a.hidden=true;}else if(client.status!=='active'){a.hidden=false;a.innerHTML=`<strong>${esc(cap(client.status))} · ${esc(client.name)}.</strong> Cash ${money(client.cashM)}M · overdue obligations ${money(client.overdueM)}M. Avoid assuming automatic financing.`;}else if(last?.severity==='critical'){a.hidden=false;a.textContent=last.title;}else a.hidden=true;refreshClock();}
+function render(){initializeCases(w);const fn=pages[page]||pages.overview;$('main').innerHTML=fn();$('title').textContent=`${w.config.name} — Living World`;$('breadcrumb-page').textContent=labels[page];document.querySelectorAll('[data-page]').forEach(btn=>btn.classList.toggle('active',btn.dataset.page===page));let client=w.firms[w.playerFirmId];let last=w.log.at(-1);let a=$('alertbar');if(!activeEngagement(w)){a.hidden=true;}else if(client.status!=='active'){a.hidden=false;a.innerHTML=`<strong>${esc(cap(client.status))} · ${esc(client.name)}.</strong> Cash ${money(client.cashM)}M · overdue obligations ${money(client.overdueM)}M. Avoid assuming automatic financing.`;}else if(last?.severity==='critical'){a.hidden=false;a.textContent=last.title;}else a.hidden=true;ccSyncNavigation();refreshClock();}
 function restart(input){const previous=w.seed;w=createLiveWorld(input);inspectedFirm=w.playerFirmId;draft={type:'price',value:-10,rationale:''};compare=null;baselineCache=null;historyMonth=36;accum=0;running=false;save();render();toast(`World reset. Seed ${w.seed} · 36 historical months retained as baseline.`);}
 function valuesForType(type){return ({price:-10,marketing:1.4,capacity:15,sourcing:.08,efficiency:.10,pivot:'premium'})[type];}
 function doCompare(){const b=createLiveWorld({...w.config,playerFirmId:w.playerFirmId});advanceDays(b,w.day);const af=w.firms[w.playerFirmId],bf=b.firms[b.playerFirmId];const eb=a=>a.history.reduce((v,r)=>v+r.ebitM,0)+a.period.ebitM;compare={actualCash:af.cashM,baselineCash:bf.cashM,deltaCash:af.cashM-bf.cashM,actualEBIT:eb(af),baseEBIT:eb(bf),deltaEBIT:eb(af)-eb(bf)};render();toast('Matched-seed comparison completed.');}
@@ -1126,5 +1163,37 @@ document.addEventListener('click',e=>{
 // The first game begins without a client and with the simulation paused.
 // Legacy saves have no onboardingCompleted field and must not be reset or forced through a tour.
 if(!onboardingCompleted){page='welcome';running=false;accum=0;save();render();}
+
+/* Task-first primary navigation. Keeps all existing page ids and world logic intact. */
+function ccNavigationSpec(){return {
+ home:{title:'Tổng quan',subtitle:'Theo dõi khách hàng và việc cần làm',description:'Quản lý công việc tư vấn và chọn hành động tiếp theo.',pages:['overview'],label:'TỔNG QUAN'},
+ clients:{title:'Tìm khách hàng',subtitle:'Chọn cơ hội tư vấn',description:'Xem các doanh nghiệp đang cần tư vấn. Chỉ khi nhận engagement, bạn mới có khách hàng.',pages:['cases'],label:'KHÁCH HÀNG'},
+ case:{title:'Làm case',subtitle:'Từ client brief đến đề xuất',description:'Đọc yêu cầu của khách hàng, xây giả thuyết, phân tích tài chính và bảo vệ chiến lược.',pages:['workspace','engagement'],label:'LÀM CASE'},
+ research:{title:'Nghiên cứu',subtitle:'Thu thập bằng chứng',description:'Đặt nghiên cứu, phỏng vấn chuyên gia và đọc báo cáo; mọi công việc cần credits và thời gian game.',pages:['evidence','experts','reports'],label:'NGHIÊN CỨU'},
+ world:{title:'Thế giới',subtitle:'Bối cảnh kinh doanh đang vận hành',description:'Khám phá ngành, doanh nghiệp và các sự kiện để hiểu thị trường mà khách hàng hoạt động.',pages:['market','firms','events','history','validation'],label:'THẾ GIỚI'},
+ execute:{title:'Thực thi',subtitle:'Biến đề xuất thành kết quả',description:'Lập sáng kiến, theo dõi phản ứng thị trường, so sánh dự báo với kết quả thực tế.',pages:['decisions'],label:'THỰC THI'},
+ help:{title:'Hướng dẫn chơi',subtitle:'Làm quen với CaseCraft',description:'Học cách nhận khách hàng, điều tra, tư vấn và thực thi chiến lược.',pages:['welcome'],label:'HƯỚNG DẪN'}
+};}
+function ccSyncNavigation(){
+ const spec=ccNavigationSpec();
+ const section=Object.keys(spec).find(key=>spec[key].pages.includes(page))||'home';
+ const s=spec[section];
+ const sub={overview:'Tổng quan',cases:'Cơ hội tư vấn',workspace:'Bàn phân tích',engagement:'Client brief',evidence:'Dữ liệu & bằng chứng',experts:'Chuyên gia',reports:'Báo cáo',market:'Thị trường',firms:'Doanh nghiệp',events:'Sự kiện',history:'Lịch sử kinh tế',validation:'Kiểm định',decisions:'Quyết định',welcome:'Hướng dẫn'};
+ const title=document.getElementById('title');if(title)title.textContent=s.title;
+ const desc=document.getElementById('hero-description');if(desc)desc.textContent=s.description;
+ const bc=document.getElementById('breadcrumb-section');if(bc)bc.textContent=s.label;
+ const p=document.getElementById('breadcrumb-page');if(p)p.textContent=sub[page]||s.title;
+ document.querySelectorAll('[data-nav-section]').forEach(button=>{
+  const selected=button.dataset.navSection===section;
+  button.classList.toggle('active',selected);
+  if(selected)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
+ });
+ const host=document.getElementById('section-navigation');if(!host)return;
+ const mainPages=s.pages.filter(id=>!['history','validation'].includes(id));
+ const advanced=s.pages.filter(id=>['history','validation'].includes(id));
+ if(mainPages.length===1&&!advanced.length){host.hidden=true;host.innerHTML='';return;}
+ host.hidden=false;
+ host.innerHTML=`<div class="cc-section-heading"><strong>${s.title}</strong><span>${s.subtitle}</span></div><div class="cc-section-actions">${mainPages.map(id=>`<button class="cc-section-tab ${id===page?'active':''}" data-page="${id}" ${id===page?'aria-current="page"':''}>${sub[id]}</button>`).join('')}${advanced.length?`<details class="cc-section-advanced" ${advanced.includes(page)?'open':''}><summary title="Các công cụ dành cho người dùng nâng cao">Nâng cao ▾</summary><div class="cc-advanced-list">${advanced.map(id=>`<button class="cc-section-tab ${id===page?'active':''}" data-page="${id}">${sub[id]}</button>`).join('')}</div></details>`:''}</div>`;
+}
 </script>
 </body></html>
