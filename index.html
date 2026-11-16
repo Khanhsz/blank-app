@@ -29,7 +29,7 @@ body{
   -webkit-font-smoothing:antialiased;min-height:100vh;
 }
 body.no-select{user-select:none;-webkit-user-select:none}
-button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter-spacing:inherit}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter-spacing:inherit;touch-action:manipulation}
 input,textarea{font:inherit;color:inherit;letter-spacing:inherit}
 button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--forest);outline-offset:2px}
 .app{max-width:440px;margin:0 auto;min-height:100vh;padding:0 20px 150px;position:relative}
@@ -67,7 +67,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .sec-h h2{font-size:15px;font-weight:600;letter-spacing:-.005em}
 .sec-h span{font-size:12.5px;color:var(--ink2)}
 .view{display:none}
-.view.on{display:block;animation:viewIn .6s var(--spring)}
+.view.on{display:block;animation:viewIn .35s var(--spring)}
 @keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
 /* ---------- Smart stack ---------- */
@@ -85,9 +85,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .card:not(.top){pointer-events:none}
 .card[data-hide="1"]{visibility:hidden}
 .card.top{cursor:grab;z-index:5}
-.card.top.enter{animation:cardIn .7s var(--spring)}
+.card.top.enter{animation:cardIn .4s var(--spring)}
 .card.dragging{transition:none;cursor:grabbing}
-@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
 .card .shine{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:inherit}
 .card .shine::after{content:"";position:absolute;top:-10%;bottom:-10%;left:0;width:55%;transform:translateX(-130%) skewX(-18deg);
   background:linear-gradient(100deg,transparent 0%,rgba(255,255,255,.0) 20%,rgba(255,255,255,.85) 50%,rgba(255,255,255,0) 80%,transparent 100%);opacity:0}
@@ -346,6 +346,7 @@ textarea.inp{min-height:110px;resize:vertical;line-height:1.55;font-size:14px}
 .prog button.on::after{transform:scaleX(1)}
 .ob h2:focus{outline:none}
 .ob-step.back{animation-name:stepInL}
+.ob-step.still,.ob-step.still .hbk-b{animation:none}
 @keyframes stepInL{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
 .ob-skip{text-align:center;margin-top:10px;min-height:34px}
 .tsel{display:flex;align-items:center;gap:3px}
@@ -972,7 +973,7 @@ function generateCards() {
    ===================================================================== */
 let undoSnap = null;
 function snapshot() { undoSnap = JSON.stringify(S); }
-function changed(shimmer = true) { save(); renderAll(shimmer); }
+function changed(shimmer = false) { save(); renderAll(shimmer); }
 
 function insertTask(taskId, start, quiet) {
   const t = S.tasks.find(x => x.id === taskId); if (!t) return false;
@@ -1105,7 +1106,7 @@ function renderPill() {
   setHTML(pill, `<span class="dot"></span><span class="txt">${html}</span><span class="rescan">${ICON.refresh}</span>`);
 }
 /* ---------- Stack ---------- */
-let stackSig = '';
+let stackSig = '', lastTop = '';
 function renderStack(shimmer) {
   const ordered = generateCards();
   curCards = ordered;
@@ -1126,8 +1127,12 @@ function renderStack(shimmer) {
   const sig = ordered.map(c => c.id + '|' + c.eyebrow + '|' + c.body + '|' + c.primary).join('§');
   const el = $('#stack');
   if (sig !== stackSig) {
+    const h0 = el.offsetHeight; if (h0) el.style.minHeight = h0 + 'px';   // giữ chiều cao để trang không giật
     stackSig = sig; el.innerHTML = html;
-    const top = $('.card.top', el); if (top) top.classList.add('enter');
+    const top = $('.card.top', el), topId = ordered[0].id;
+    if (top && topId !== lastTop) top.classList.add('enter');
+    lastTop = topId;
+    requestAnimationFrame(() => { el.style.minHeight = ''; });
   }
   const idle = ordered.length === 1 && ordered[0].type === 'idle';
   $('#stackCnt').textContent = idle ? 'Đang theo dõi' : `${ordered.length} đề xuất`;
@@ -1294,7 +1299,9 @@ function renderCal() {
 }
 
 function renderAll(shimmer = false) {
-  renderHeader(); renderPill(); renderStack(shimmer); renderHabits(); renderTimeline(); renderBacklog(); renderCal();
+  renderHeader(); renderPill();
+  if (tab === 'ai') { renderStack(shimmer); renderHabits(); renderTimeline(); renderBacklog(); }   // không vẽ lại view đang ẩn
+  else renderCal();
 }
 
 /* =====================================================================
@@ -1568,7 +1575,7 @@ function habitBlock(key, title, d, inner) {
     ${open ? `<div class="hbk-b">${inner}</div>` : ''}</div>`;
 }
 
-function renderOb() {
+function renderOb(anim = true) {
   const d = ob.d, onb = S.profile.onboarded;
   let body = '';
   if (ob.step === 1) body = `
@@ -1624,12 +1631,13 @@ function renderOb() {
       ? `<button type="button" class="${i + 1 <= ob.step ? 'on' : ''}" data-goto="${i + 1}" aria-label="Bước ${i + 1}: ${OB_NAMES[i]}"></button>`
       : `<i class="${i + 1 <= ob.step ? 'on' : ''}"></i>`).join('')}</div>
     <div class="ob-cap" aria-live="polite">Bước ${ob.step}/${OB_STEPS} · ${OB_NAMES[ob.step - 1]}</div>
-    <div class="ob-step ${ob.dir < 0 ? 'back' : ''}" id="obStep">${body}</div>
+    <div class="ob-step ${anim ? (ob.dir < 0 ? 'back' : '') : 'still'}" id="obStep">${body}</div>
     <div class="ob-foot">${ob.step > 1 ? '<button type="button" class="btn btn-ghost" id="obBack">Quay lại</button>' : ''}<button type="button" class="btn btn-pri" id="obNext">${ob.step === OB_STEPS ? (onb ? 'Lưu hồ sơ' : 'Bắt đầu cùng Aura') : 'Tiếp tục'}</button></div>
     <div class="ob-skip">${skip}</div>`;
   if (ob.step === 4) renderObPv();
   requestAnimationFrame(() => {
     placeGliders();
+    if (!anim) return;
     const f = (ob.step === 1 && !onb && !('ontouchstart' in window)) ? $('#obName') : $('#obStep h2');
     if (f) f.focus({ preventScroll: true });
   });
@@ -1672,9 +1680,9 @@ function readObStep(validate) {
     const w = pm(ob.d.wake), sl = pm(ob.d.sleep);
     const okOrder = ts.every((v, i) => i === 0 || v > ts[i - 1] + 59);
     const okRange = ts.every(v => v >= w && (sl <= w || v < sl));
-    if (!ts.length) { toast('Hãy chọn ít nhất một bữa, hoặc tắt mục Bữa ăn'); ob.open = 'meals'; renderOb(); return false; }
-    if (!okOrder) { toast('Các bữa ăn cần cách nhau ít nhất 1 giờ và theo thứ tự sáng → trưa → tối'); ob.open = 'meals'; renderOb(); return false; }
-    if (!okRange) { toast('Giờ ăn cần nằm trong khoảng từ lúc thức dậy đến lúc đi ngủ'); ob.open = 'meals'; renderOb(); return false; }
+    if (!ts.length) { toast('Hãy chọn ít nhất một bữa, hoặc tắt mục Bữa ăn'); ob.open = 'meals'; renderOb(false); return false; }
+    if (!okOrder) { toast('Các bữa ăn cần cách nhau ít nhất 1 giờ và theo thứ tự sáng → trưa → tối'); ob.open = 'meals'; renderOb(false); return false; }
+    if (!okRange) { toast('Giờ ăn cần nằm trong khoảng từ lúc thức dậy đến lúc đi ngủ'); ob.open = 'meals'; renderOb(false); return false; }
   }
   return true;
 }
@@ -1708,9 +1716,9 @@ $('#obIn').addEventListener('click', e => {
     return;
   }
   const sw = t.closest('[data-sw]');
-  if (sw) { readObStep(false); const k = sw.dataset.sw; ob.d[k].on = !ob.d[k].on; if (ob.d[k].on) ob.open = k; const y = $('#ob').scrollTop; renderOb(); $('#ob').scrollTop = y; return; }
+  if (sw) { readObStep(false); const k = sw.dataset.sw; ob.d[k].on = !ob.d[k].on; if (ob.d[k].on) ob.open = k; const y = $('#ob').scrollTop; renderOb(false); $('#ob').scrollTop = y; return; }
   const op = t.closest('[data-open]');
-  if (op) { readObStep(false); ob.open = ob.open === op.dataset.open ? '' : op.dataset.open; const y = $('#ob').scrollTop; renderOb(); $('#ob').scrollTop = y; return; }
+  if (op) { readObStep(false); ob.open = ob.open === op.dataset.open ? '' : op.dataset.open; const y = $('#ob').scrollTop; renderOb(false); $('#ob').scrollTop = y; return; }
   const pk = t.closest('[data-peak]'); if (pk) { ob.d.peak = pk.dataset.peak; $$('[data-peak]').forEach(b => { b.classList.toggle('on', b === pk); b.setAttribute('aria-checked', b === pk); }); return; }
   const gl = t.closest('[data-goal]'); if (gl) { ob.d.goal = gl.dataset.goal; $$('[data-goal]').forEach(b => { b.classList.toggle('on', b === gl); b.setAttribute('aria-checked', b === gl); }); return; }
   const gt = t.closest('[data-goto]'); if (gt) { if (readObStep(false)) goStep(+gt.dataset.goto, +gt.dataset.goto >= ob.step ? 1 : -1); return; }
@@ -1757,6 +1765,7 @@ function switchTab(t) {
   tab = t;
   $('#v-ai').classList.toggle('on', t === 'ai'); $('#v-cal').classList.toggle('on', t === 'cal');
   setActive($('#tabSeg'), 'data-tab', t);
+  if (t === 'ai') renderAll(false);
   if (t === 'cal') {
     renderCal();
     const now = nowMin(), y = clamp(now, DAY0, DAY1) - DAY0 + $('#cal').getBoundingClientRect().top + window.scrollY - window.innerHeight * 0.4;
