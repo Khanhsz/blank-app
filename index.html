@@ -327,8 +327,7 @@ textarea.inp{min-height:110px;resize:vertical;line-height:1.55;font-size:14px}
 .seg.sm>button{font-size:12.5px;padding:7px 4px}
 .three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .three>div{min-width:0}
-.three .inp{padding:10px 6px;font-size:13px;min-width:0}
-.three input[type=time]::-webkit-calendar-picker-indicator{display:none}
+.three .tsel select{font-size:14px;padding:11px 0}
 .hint-line{font-size:12.5px;margin-top:10px;line-height:1.55}
 .hint-line .ok{color:var(--sage)}.hint-line .warn{color:var(--clay)}
 .hbks{display:flex;flex-direction:column;gap:10px;margin-top:20px}
@@ -339,6 +338,29 @@ textarea.inp{min-height:110px;resize:vertical;line-height:1.55;font-size:14px}
 .swc{width:44px;height:26px;border-radius:99px;background:rgba(26,25,23,.15);position:relative;flex:none;transition:background .4s var(--spring)}
 .swc::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .5s var(--spring)}
 .swc.on{background:var(--forest)}.swc.on::after{transform:translateX(18px)}
+/* ---------- Onboarding v2 ---------- */
+.ob-cap{font-size:12.5px;font-weight:500;color:var(--ink2);margin:-12px 0 18px;letter-spacing:.02em}
+.prog button{flex:1;height:18px;margin:-8px 0;position:relative;background:none}
+.prog button::before{content:"";position:absolute;left:0;right:0;top:8px;height:3px;border-radius:3px;background:rgba(26,25,23,.1)}
+.prog button::after{content:"";position:absolute;left:0;right:0;top:8px;height:3px;border-radius:3px;background:var(--forest);transform:scaleX(0);transform-origin:left;transition:transform .7s var(--spring)}
+.prog button.on::after{transform:scaleX(1)}
+.ob h2:focus{outline:none}
+.ob-step.back{animation-name:stepInL}
+@keyframes stepInL{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
+.ob-skip{text-align:center;margin-top:10px;min-height:34px}
+.tsel{display:flex;align-items:center;gap:3px}
+.tsel b{color:var(--ink3);font-weight:500}
+.tsel select{flex:1;min-width:0;appearance:none;-webkit-appearance:none;background:var(--card);border:var(--line);border-radius:14px;padding:12px 2px;font-size:15px;text-align:center;text-align-last:center;color:var(--ink);cursor:pointer;font-variant-numeric:tabular-nums;transition:border-color .3s,box-shadow .3s}
+.tsel select:focus{outline:none;border-color:rgba(40,65,51,.5);box-shadow:0 0 0 3px rgba(40,65,51,.1)}
+.hbk-t{flex:1;min-width:0;text-align:left;position:relative;padding-right:22px}
+.hbk-t::after{content:"";position:absolute;right:6px;top:50%;width:7px;height:7px;border-right:1.6px solid var(--ink3);border-bottom:1.6px solid var(--ink3);transform:translateY(-70%) rotate(45deg);transition:transform .5s var(--spring)}
+.hbk.open .hbk-t::after{transform:translateY(-30%) rotate(-135deg)}
+.hbk-t[disabled]{cursor:default;opacity:.6}.hbk-t[disabled]::after{display:none}
+.hbk:not(.on) .hbk-h b{color:var(--ink2)}
+.hbk-t small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drop.over{border-color:var(--forest);background:var(--forest-t);color:var(--forest)}
+.pv.warn{color:var(--clay);border-color:rgba(217,107,67,.35)}
+.skip:hover{color:var(--ink)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
@@ -427,7 +449,7 @@ textarea.inp{min-height:110px;resize:vertical;line-height:1.55;font-size:14px}
 </div>
 
 <!-- Onboarding -->
-<div class="ob" id="ob"><div class="ob-in" id="obIn"></div></div>
+<div class="ob" id="ob" role="dialog" aria-modal="true" aria-label="Thiết lập Aura"><div class="ob-in" id="obIn"></div></div>
 
 <script>
 (() => {
@@ -1485,14 +1507,45 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && sh.open) c
 /* =====================================================================
    Onboarding (3 bước)
    ===================================================================== */
-const ob = { step: 1, d: null, staged: null, replace: true, sample: false };
+const ob = { step: 1, d: null, staged: null, replace: true, sample: false, open: 'meals', dir: 1, err: '' };
 const OB_STEPS = 4;
+const OB_NAMES = ['Nhịp sinh học', 'Thói quen thiết yếu', 'Phong cách gợi ý', 'Nạp lịch'];
+const WHEN_LBL = { morning: 'Sáng', afternoon: 'Chiều', evening: 'Tối' };
+const clone = o => JSON.parse(JSON.stringify(o));
+
 function openOnboarding() {
-  ob.step = 1; ob.d = JSON.parse(JSON.stringify(S.profile)); ob.staged = null; ob.sample = false; ob.replace = !S.events.length;
-  renderOb(); $('#ob').classList.add('open'); $('#ob').scrollTop = 0;
+  ob.step = S.profile.onboarded ? 1 : clamp(+S.obStep || 1, 1, OB_STEPS);
+  ob.d = clone(S.profile); ob.staged = null; ob.sample = false; ob.err = ''; ob.dir = 1;
+  ob.replace = !S.events.length; ob.open = 'meals';
+  renderOb();
+  const el = $('#ob'); el.classList.add('open'); el.scrollTop = 0; document.body.style.overflow = 'hidden';
 }
-function segHTML(path, opts, cur) {
-  return `<div class="seg sm"><span class="glider"></span>${opts.map(([v, l]) => `<button data-set="${path}" data-val="${v}" class="${String(cur) === String(v) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+function closeOb() { $('#ob').classList.remove('open'); document.body.style.overflow = ''; }
+// Lưu nháp sau mỗi bước để tải lại trang không mất dữ liệu đã nhập
+function persistDraft() {
+  S.profile = { ...clone(ob.d), onboarded: S.profile.onboarded }; S.obStep = ob.step; save();
+}
+
+/* ----- thành phần giao diện ----- */
+function timeSel(id, val, optional) {
+  const m = pm(val), hh = m == null ? '' : Math.floor(m / 60), mm = m == null ? '' : Math.floor((m % 60) / 5) * 5;
+  const opt = (v, cur, txt) => `<option value="${v}" ${String(cur) === String(v) ? 'selected' : ''}>${txt}</option>`;
+  let H_ = optional ? opt('', hh, '--') : '', M_ = optional ? opt('', mm, '--') : '';
+  for (let i = 0; i < 24; i++) H_ += opt(i, hh, pad(i));
+  for (let i = 0; i < 60; i += 5) M_ += opt(i, mm, pad(i));
+  return `<div class="tsel" id="${id}"><select aria-label="Giờ">${H_}</select><b>:</b><select aria-label="Phút">${M_}</select></div>`;
+}
+function readTime(id) {
+  const el = $('#' + id); if (!el) return null;
+  const [h, m] = $$('select', el).map(x => x.value);
+  return h === '' ? '' : `${pad(+h)}:${pad(+(m || 0))}`;
+}
+function segHTML(path, opts, cur, label) {
+  return `<div class="seg sm" role="group" aria-label="${esc(label || '')}"><span class="glider"></span>${opts.map(([v, l]) =>
+    `<button type="button" data-set="${path}" data-val="${v}" aria-pressed="${String(cur) === String(v)}" class="${String(cur) === String(v) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+}
+function optHTML(attr, key, cur, title, sub) {
+  return `<button type="button" class="opt ${cur === key ? 'on' : ''}" role="radio" aria-checked="${cur === key}" data-${attr}="${key}"><span class="rd"></span><span><b>${title}</b><small>${sub}</small></span></button>`;
 }
 function sleepHint(d) {
   const w = pm(d.wake), sl = pm(d.sleep); if (w == null || sl == null) return '';
@@ -1500,137 +1553,200 @@ function sleepHint(d) {
   const need = +d.sleepNeed || 7.5, short = hrs < need - 0.25;
   return `<span class="${short ? 'warn' : 'ok'}">Bạn ngủ khoảng <b>${fmtH(hrs)}</b> mỗi đêm${short ? ` — thiếu ${fmtH(+(need - hrs).toFixed(2))} so với nhu cầu. Aura sẽ nhắc đi ngủ sớm hơn.` : ' — đủ giấc.'}</span>`;
 }
-function habitBlock(key, title, sub, on, inner) {
-  return `<div class="hbk ${on ? 'on' : ''}"><div class="hbk-h"><div><b>${title}</b><small>${sub}</small></div>
-    <button class="swc ${on ? 'on' : ''}" data-sw="${key}" role="switch" aria-checked="${on}" aria-label="${title}"></button></div>${on ? `<div class="hbk-b">${inner}</div>` : ''}</div>`;
+function habitSummary(k, d) {
+  const x = d[k]; if (!x.on) return 'Đã tắt';
+  if (k === 'meals') return [x.breakfast, x.lunch, x.dinner].map(t => t || '—').join(' · ') + ` · ${x.dur}p/bữa`;
+  if (k === 'exercise') return `${WHEN_LBL[x.when]} · ${x.dur}p · ${x.perWeek == 7 ? 'mỗi ngày' : x.perWeek + ' buổi/tuần'}`;
+  if (k === 'study') return `${x.goal} phút mỗi ngày`;
+  return `${x.cups} cốc mỗi ngày`;
 }
+function habitBlock(key, title, d, inner) {
+  const on = d[key].on, open = on && ob.open === key;
+  return `<div class="hbk ${on ? 'on' : ''} ${open ? 'open' : ''}">
+    <div class="hbk-h"><button type="button" class="hbk-t" data-open="${key}" aria-expanded="${open}" ${on ? '' : 'disabled'}><b>${title}</b><small>${esc(habitSummary(key, d))}</small></button>
+    <button type="button" class="swc ${on ? 'on' : ''}" data-sw="${key}" role="switch" aria-checked="${on}" aria-label="Bật ${title}"></button></div>
+    ${open ? `<div class="hbk-b">${inner}</div>` : ''}</div>`;
+}
+
 function renderOb() {
   const d = ob.d, onb = S.profile.onboarded;
   let body = '';
   if (ob.step === 1) body = `
-    <h2>Chào bạn, mình là Aura.</h2>
-    <p class="lead">Vài thông tin về nhịp sinh học để Aura biết khi nào nên lên tiếng — và khi nào nên im lặng.</p>
+    <h2 tabindex="-1">Chào bạn, mình là Aura.</h2>
+    <p class="lead">Vài thông tin về nhịp sinh học để Aura biết khi nào nên lên tiếng — và khi nào nên im lặng. Dữ liệu chỉ lưu trên thiết bị này.</p>
     <div class="fld"><label for="obName">Tên gọi của bạn</label><input class="inp" id="obName" placeholder="VD: Minh" maxlength="24" autocomplete="given-name" value="${esc(d.name)}"></div>
-    <div class="two fld"><div><label for="obWake">Giờ thức dậy</label><input class="inp" type="time" id="obWake" value="${esc(d.wake)}"></div>
-    <div><label for="obSleep">Giờ đi ngủ</label><input class="inp" type="time" id="obSleep" value="${esc(d.sleep)}"></div></div>
-    <div class="fld"><span class="lbl">Bạn cần ngủ bao lâu mỗi đêm</span>${segHTML('sleepNeed', [[6, '6g'], [7, '7g'], [7.5, '7,5g'], [8, '8g'], [9, '9g']], d.sleepNeed)}
-      <div class="hint-line" id="obHint">${sleepHint(d)}</div></div>
-    <div class="fld"><span class="lbl">Khung giờ bạn tỉnh táo nhất</span><div class="opts">
-      ${Object.entries(PEAKS).map(([k, p]) => `<button class="opt ${d.peak === k ? 'on' : ''}" data-peak="${k}"><span class="rd"></span><span><b>${p.label}</b><small>${p.range}</small></span></button>`).join('')}
+    <div class="two fld"><div><span class="lbl" id="lbWake">Giờ thức dậy</span>${timeSel('obWake', d.wake)}</div>
+    <div><span class="lbl" id="lbSleep">Giờ đi ngủ</span>${timeSel('obSleep', d.sleep)}</div></div>
+    <div class="fld"><span class="lbl">Bạn cần ngủ bao lâu mỗi đêm</span>${segHTML('sleepNeed', [[6, '6g'], [7, '7g'], [7.5, '7,5g'], [8, '8g'], [9, '9g']], d.sleepNeed, 'Nhu cầu ngủ')}
+      <div class="hint-line" id="obHint" aria-live="polite">${sleepHint(d)}</div></div>
+    <div class="fld"><span class="lbl">Khung giờ bạn tỉnh táo nhất</span><div class="opts" role="radiogroup" aria-label="Khung giờ tỉnh táo nhất">
+      ${Object.entries(PEAKS).map(([k, p]) => optHTML('peak', k, d.peak, p.label, p.range)).join('')}
     </div></div>`;
   if (ob.step === 2) body = `
-    <h2>Những điều cơ thể cần mỗi ngày</h2>
-    <p class="lead">Aura sẽ giữ chỗ và nhắc đúng lúc để việc ăn, vận động, học tập không bị lịch dày đè mất. Tắt mục nào bạn không cần.</p>
+    <h2 tabindex="-1">Những điều cơ thể cần mỗi ngày</h2>
+    <p class="lead">Aura giữ chỗ và nhắc đúng lúc để ăn, vận động, học tập không bị lịch dày đè mất. Mở từng mục để chỉnh, tắt mục bạn không cần.</p>
     <div class="hbks">
-    ${habitBlock('meals', 'Bữa ăn', 'Giữ chỗ và nhắc khi sắp lỡ bữa', d.meals.on, `
-      <div class="three"><div><label for="mBf">Sáng</label><input class="inp" type="time" id="mBf" value="${esc(d.meals.breakfast)}"></div>
-      <div><label for="mLn">Trưa</label><input class="inp" type="time" id="mLn" value="${esc(d.meals.lunch)}"></div>
-      <div><label for="mDn">Tối</label><input class="inp" type="time" id="mDn" value="${esc(d.meals.dinner)}"></div></div>
-      <span class="lbl" style="margin-top:12px">Thời lượng mỗi bữa</span>${segHTML('meals.dur', [[20, '20p'], [30, '30p'], [45, '45p']], d.meals.dur)}`)}
-    ${habitBlock('exercise', 'Vận động', 'Tìm khe tập cách xa bữa ăn và giờ ngủ', d.exercise.on, `
-      <span class="lbl">Thời điểm ưa thích</span>${segHTML('exercise.when', [['morning', 'Sáng'], ['afternoon', 'Chiều'], ['evening', 'Tối']], d.exercise.when)}
-      <span class="lbl" style="margin-top:12px">Mỗi buổi</span>${segHTML('exercise.dur', [[20, '20p'], [30, '30p'], [45, '45p'], [60, '60p']], d.exercise.dur)}
-      <span class="lbl" style="margin-top:12px">Số buổi mỗi tuần</span>${segHTML('exercise.perWeek', [[3, '3'], [4, '4'], [5, '5'], [7, 'Mỗi ngày']], d.exercise.perWeek)}`)}
-    ${habitBlock('study', 'Học tập & phát triển', 'Đặt mục tiêu phút học mỗi ngày', d.study.on, `
-      <span class="lbl">Mục tiêu mỗi ngày</span>${segHTML('study.goal', [[30, '30p'], [60, '1 giờ'], [90, '1,5 giờ'], [120, '2 giờ']], d.study.goal)}`)}
-    ${habitBlock('water', 'Uống nước', 'Nhắc khi bạn tụt khỏi nhịp trong ngày', d.water.on, `
-      <span class="lbl">Số cốc (250 ml) mỗi ngày</span>${segHTML('water.cups', [[6, '6'], [8, '8'], [10, '10']], d.water.cups)}`)}
+    ${habitBlock('meals', 'Bữa ăn', d, `
+      <div class="three"><div><span class="lbl">Sáng</span>${timeSel('mBf', d.meals.breakfast, true)}</div>
+      <div><span class="lbl">Trưa</span>${timeSel('mLn', d.meals.lunch, true)}</div>
+      <div><span class="lbl">Tối</span>${timeSel('mDn', d.meals.dinner, true)}</div></div>
+      <span class="lbl" style="margin-top:12px">Thời lượng mỗi bữa</span>${segHTML('meals.dur', [[20, '20p'], [30, '30p'], [45, '45p']], d.meals.dur, 'Thời lượng bữa ăn')}`)}
+    ${habitBlock('exercise', 'Vận động', d, `
+      <span class="lbl">Thời điểm ưa thích</span>${segHTML('exercise.when', [['morning', 'Sáng'], ['afternoon', 'Chiều'], ['evening', 'Tối']], d.exercise.when, 'Thời điểm vận động')}
+      <span class="lbl" style="margin-top:12px">Mỗi buổi</span>${segHTML('exercise.dur', [[20, '20p'], [30, '30p'], [45, '45p'], [60, '60p']], d.exercise.dur, 'Thời lượng buổi tập')}
+      <span class="lbl" style="margin-top:12px">Số buổi mỗi tuần</span>${segHTML('exercise.perWeek', [[3, '3'], [4, '4'], [5, '5'], [7, 'Mỗi ngày']], d.exercise.perWeek, 'Số buổi mỗi tuần')}`)}
+    ${habitBlock('study', 'Học tập & phát triển', d, `
+      <span class="lbl">Mục tiêu mỗi ngày</span>${segHTML('study.goal', [[30, '30p'], [60, '1 giờ'], [90, '1,5 giờ'], [120, '2 giờ']], d.study.goal, 'Mục tiêu học tập')}`)}
+    ${habitBlock('water', 'Uống nước', d, `
+      <span class="lbl">Số cốc (250 ml) mỗi ngày</span>${segHTML('water.cups', [[6, '6'], [8, '8'], [10, '10']], d.water.cups, 'Số cốc nước')}`)}
     </div>`;
   if (ob.step === 3) body = `
-    <h2>Aura nên gợi ý theo cách nào?</h2>
+    <h2 tabindex="-1">Aura nên gợi ý theo cách nào?</h2>
     <p class="lead">Chọn mục tiêu ưu tiên — bạn có thể đổi lại bất cứ lúc nào qua nút hồ sơ.</p>
-    <div class="opts" style="margin-top:20px">
-      ${Object.entries(GOALS).map(([k, g]) => `<button class="opt ${d.goal === k ? 'on' : ''}" data-goal="${k}"><span class="rd"></span><span><b>${g.t}</b><small>${g.d}</small></span></button>`).join('')}
+    <div class="opts" style="margin-top:20px" role="radiogroup" aria-label="Mục tiêu ưu tiên">
+      ${Object.entries(GOALS).map(([k, g]) => optHTML('goal', k, d.goal, g.t, g.d)).join('')}
     </div>
-    <div class="fld" style="margin-top:22px"><span class="lbl">Nhắc chuẩn bị trước sự kiện</span>${segHTML('lead', [[45, '45 phút'], [20, '20 phút']], d.lead)}</div>`;
+    <div class="fld" style="margin-top:22px"><span class="lbl">Nhắc chuẩn bị trước sự kiện</span>${segHTML('lead', [[45, '45 phút'], [20, '20 phút']], d.lead, 'Ngưỡng nhắc')}</div>`;
   if (ob.step === 4) body = `
-    <h2>Nạp lịch ban đầu</h2>
-    <p class="lead">Cho Aura biết lịch cố định của bạn để tìm ra các khe trống. Bạn có thể bỏ qua và thêm sau.</p>
-    <label class="drop" for="obFile" style="margin-top:20px">${ICON.file}<span>Tải file .ics</span><input type="file" id="obFile" accept=".ics,text/calendar"></label>
+    <h2 tabindex="-1">Nạp lịch ban đầu</h2>
+    <p class="lead">Cho Aura biết lịch cố định để tìm ra các khe trống. Dữ liệu được đọc ngay trên thiết bị, không tải lên đâu cả. Bạn có thể bỏ qua và thêm sau.</p>
+    <label class="drop" id="obDrop" for="obFile" style="margin-top:20px">${ICON.file}<span>Tải hoặc kéo thả file .ics</span><input type="file" id="obFile" accept=".ics,text/calendar"></label>
     <div class="fld"><label for="obTxt">Hoặc dán thời khóa biểu</label><textarea class="inp" id="obTxt" placeholder="08:00 - 09:45 Họp nhóm\n10:30 - 11:30 Học Toán @ Phòng 204"></textarea></div>
-    <div style="display:flex;gap:10px;margin-top:10px"><button class="btn btn-line" id="obParse" style="flex:1">Phân tích văn bản</button><button class="btn btn-line" id="obSample" style="flex:1">Dùng lịch mẫu</button></div>
-    <div id="obPv"></div>`;
+    <div style="display:flex;gap:10px;margin-top:10px"><button type="button" class="btn btn-line" id="obParse" style="flex:1">Phân tích văn bản</button><button type="button" class="btn btn-line" id="obSample" style="flex:1">Dùng lịch mẫu</button></div>
+    <div class="note">Lịch mẫu gồm 5 sự kiện và 6 đầu việc để bạn thử ngay.</div>
+    <div id="obPv" aria-live="polite"></div>`;
+  const skip = onb ? '<button type="button" class="skip" data-skip="save">Lưu & đóng</button>'
+    : ob.step === 4 ? '<button type="button" class="skip" data-skip="finish">Bỏ qua, thêm lịch sau</button>'
+    : ob.step > 1 ? '<button type="button" class="skip" data-skip="next">Dùng mặc định</button>' : '';
   $('#obIn').innerHTML = `
-    <div class="ob-top"><span class="logo"><i></i>Aura</span>${onb ? `<button class="icon-btn" id="obClose" aria-label="Đóng">${ICON.x}</button>` : ''}</div>
-    <div class="prog">${Array.from({ length: OB_STEPS }, (_, i) => `<i class="${i + 1 <= ob.step ? 'on' : ''}"></i>`).join('')}</div>
-    <div class="ob-step" id="obStep">${body}</div>
-    <div class="ob-foot">${ob.step > 1 ? '<button class="btn btn-ghost" id="obBack">Quay lại</button>' : ''}<button class="btn btn-pri" id="obNext">${ob.step === OB_STEPS ? (onb ? 'Lưu hồ sơ' : 'Bắt đầu cùng Aura') : 'Tiếp tục'}</button></div>`;
+    <div class="ob-top"><span class="logo"><i></i>Aura</span>${onb ? `<button type="button" class="icon-btn" id="obClose" aria-label="Đóng">${ICON.x}</button>` : ''}</div>
+    <div class="prog" role="group" aria-label="Tiến độ">${Array.from({ length: OB_STEPS }, (_, i) => onb
+      ? `<button type="button" class="${i + 1 <= ob.step ? 'on' : ''}" data-goto="${i + 1}" aria-label="Bước ${i + 1}: ${OB_NAMES[i]}"></button>`
+      : `<i class="${i + 1 <= ob.step ? 'on' : ''}"></i>`).join('')}</div>
+    <div class="ob-cap" aria-live="polite">Bước ${ob.step}/${OB_STEPS} · ${OB_NAMES[ob.step - 1]}</div>
+    <div class="ob-step ${ob.dir < 0 ? 'back' : ''}" id="obStep">${body}</div>
+    <div class="ob-foot">${ob.step > 1 ? '<button type="button" class="btn btn-ghost" id="obBack">Quay lại</button>' : ''}<button type="button" class="btn btn-pri" id="obNext">${ob.step === OB_STEPS ? (onb ? 'Lưu hồ sơ' : 'Bắt đầu cùng Aura') : 'Tiếp tục'}</button></div>
+    <div class="ob-skip">${skip}</div>`;
   if (ob.step === 4) renderObPv();
-  requestAnimationFrame(placeGliders);
+  requestAnimationFrame(() => {
+    placeGliders();
+    const f = (ob.step === 1 && !onb && !('ontouchstart' in window)) ? $('#obName') : $('#obStep h2');
+    if (f) f.focus({ preventScroll: true });
+  });
 }
 function renderObPv() {
   const pv = $('#obPv'); if (!pv) return;
+  if (ob.err) { pv.innerHTML = `<div class="pv warn">${esc(ob.err)}</div>`; return; }
   if (!ob.staged) { pv.innerHTML = ''; return; }
   const ev = ob.staged.events;
-  pv.innerHTML = ev.length ? `<div class="pv"><b style="font-size:12.5px">${ob.sample ? 'Lịch mẫu' : 'Tìm thấy'}: ${ev.length} sự kiện${ob.staged.label ? ' (' + ob.staged.label + ')' : ''}${ob.sample ? ' + 6 đầu việc chờ' : ''}</b>${ev.slice(0, 5).map(e => `<div><span>${hm(e.start)}–${hm(e.end)}</span><span>${esc(e.title)}</span></div>`).join('')}${ev.length > 5 ? `<div><span></span><span>… và ${ev.length - 5} sự kiện khác</span></div>` : ''}</div>
+  pv.innerHTML = ev.length ? `<div class="pv"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:12.5px">${ob.sample ? 'Lịch mẫu' : 'Tìm thấy'}: ${ev.length} sự kiện${ob.staged.label ? ' (' + ob.staged.label + ')' : ''}${ob.sample ? ' + 6 đầu việc chờ' : ''}</b><button type="button" class="mini" id="obClear">Xóa</button></div>${ev.slice(0, 5).map(e => `<div><span>${hm(e.start)}–${hm(e.end)}</span><span>${esc(e.title)}</span></div>`).join('')}${ev.length > 5 ? `<div><span></span><span>… và ${ev.length - 5} sự kiện khác</span></div>` : ''}</div>
     ${S.events.length ? `<label class="chk"><input type="checkbox" id="obRep" ${ob.replace ? 'checked' : ''}>Thay thế lịch cố định hiện có (${S.events.filter(e => e.kind === 'fixed').length} sự kiện)</label>` : ''}`
     : `<div class="pv">Không nhận diện được sự kiện nào. Hãy kiểm tra định dạng <b>08:00 - 09:45 Tên sự kiện</b>.</div>`;
 }
-function readObStep() {
-  const v = id => { const el = $(id); return el ? el.value : null; };
-  if (ob.step === 1) {
-    ob.d.name = (v('#obName') ?? ob.d.name).trim();
-    ob.d.wake = v('#obWake') || ob.d.wake; ob.d.sleep = v('#obSleep') || ob.d.sleep;
-  }
-  if (ob.step === 2 && ob.d.meals.on) {
-    const m = ob.d.meals;
-    if ($('#mBf')) { m.breakfast = v('#mBf') || ''; m.lunch = v('#mLn') || ''; m.dinner = v('#mDn') || ''; }
-  }
+async function obLoadFile(f) {
+  ob.sample = false; ob.err = '';
+  if (!f) return;
+  if (f.size > 2 * 1024 * 1024) { ob.err = 'File quá lớn (tối đa 2 MB). Hãy xuất một khoảng thời gian ngắn hơn.'; ob.staged = null; renderObPv(); return; }
+  try { ob.staged = parseICS(await f.text()); } catch (err) { ob.staged = null; ob.err = 'Không đọc được file này. Hãy thử xuất lại file .ics.'; }
+  renderObPv();
 }
+
+// Đọc dữ liệu của bước hiện tại và kiểm tra hợp lệ. Trả về false nếu cần dừng.
+function readObStep(validate) {
+  const g = id => { const el = $(id); return el ? el.value : null; };
+  if (ob.step === 1) {
+    ob.d.name = (g('#obName') ?? ob.d.name).trim();
+    ob.d.wake = readTime('obWake') || ob.d.wake; ob.d.sleep = readTime('obSleep') || ob.d.sleep;
+    if (validate) {
+      const w = pm(ob.d.wake), sl = pm(ob.d.sleep);
+      if (w == null || sl == null) { toast('Hãy chọn giờ thức dậy và giờ đi ngủ'); return false; }
+      if (w === sl) { toast('Giờ thức dậy và giờ đi ngủ không được trùng nhau'); return false; }
+    }
+  }
+  if (ob.step === 2 && $('#mLn') !== null) {
+    const m = ob.d.meals;
+    m.breakfast = readTime('mBf') || ''; m.lunch = readTime('mLn') || ''; m.dinner = readTime('mDn') || '';
+  }
+  if (ob.step === 2 && validate && ob.d.meals.on) {
+    const ts = ['breakfast', 'lunch', 'dinner'].map(k => pm(ob.d.meals[k])).filter(v => v != null);
+    const w = pm(ob.d.wake), sl = pm(ob.d.sleep);
+    const okOrder = ts.every((v, i) => i === 0 || v > ts[i - 1] + 59);
+    const okRange = ts.every(v => v >= w && (sl <= w || v < sl));
+    if (!ts.length) { toast('Hãy chọn ít nhất một bữa, hoặc tắt mục Bữa ăn'); ob.open = 'meals'; renderOb(); return false; }
+    if (!okOrder) { toast('Các bữa ăn cần cách nhau ít nhất 1 giờ và theo thứ tự sáng → trưa → tối'); ob.open = 'meals'; renderOb(); return false; }
+    if (!okRange) { toast('Giờ ăn cần nằm trong khoảng từ lúc thức dậy đến lúc đi ngủ'); ob.open = 'meals'; renderOb(); return false; }
+  }
+  return true;
+}
+function goStep(n, dir) {
+  ob.dir = dir; ob.step = n; persistDraft(); renderOb(); $('#ob').scrollTop = 0;
+}
+function advanceOb() {
+  if (!readObStep(true)) return;
+  if (ob.step < OB_STEPS) goStep(ob.step + 1, 1); else finishOb();
+}
+
 $('#obIn').addEventListener('input', e => {
-  if (e.target.id === 'obWake' || e.target.id === 'obSleep') {
-    ob.d.wake = $('#obWake').value || ob.d.wake; ob.d.sleep = $('#obSleep').value || ob.d.sleep;
+  if (e.target.closest('#obWake') || e.target.closest('#obSleep')) {
+    ob.d.wake = readTime('obWake') || ob.d.wake; ob.d.sleep = readTime('obSleep') || ob.d.sleep;
     $('#obHint').innerHTML = sleepHint(ob.d);
   }
 });
+$('#obIn').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'file' && e.target.type !== 'checkbox') { e.preventDefault(); advanceOb(); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#ob').classList.contains('open') && S.profile.onboarded) closeOb(); });
 $('#obIn').addEventListener('click', e => {
   const t = e.target;
   const set = t.closest('[data-set]');
   if (set) {
     const path = set.dataset.set.split('.'), raw = set.dataset.val, val = raw !== '' && !isNaN(raw) ? +raw : raw;
     if (path.length === 2) ob.d[path[0]][path[1]] = val; else ob.d[path[0]] = val;
-    const seg = set.closest('.seg'); $$('button', seg).forEach(b => b.classList.toggle('on', b === set)); placeGlider(seg);
+    const seg = set.closest('.seg'); $$('button', seg).forEach(b => { b.classList.toggle('on', b === set); b.setAttribute('aria-pressed', b === set); }); placeGlider(seg);
     if (path[0] === 'sleepNeed') $('#obHint').innerHTML = sleepHint(ob.d);
+    if (path.length === 2) { const sm = set.closest('.hbk')?.querySelector('.hbk-t small'); if (sm) sm.textContent = habitSummary(path[0], ob.d); }
     return;
   }
   const sw = t.closest('[data-sw]');
-  if (sw) { readObStep(); const k = sw.dataset.sw; ob.d[k].on = !ob.d[k].on; const y = $('#ob').scrollTop; renderOb(); $('#ob').scrollTop = y; return; }
-  const pk = t.closest('[data-peak]'); if (pk) { readObStep(); ob.d.peak = pk.dataset.peak; $$('[data-peak]').forEach(b => b.classList.toggle('on', b === pk)); return; }
-  const gl = t.closest('[data-goal]'); if (gl) { ob.d.goal = gl.dataset.goal; $$('[data-goal]').forEach(b => b.classList.toggle('on', b === gl)); return; }
-  if (t.closest('#obClose')) { $('#ob').classList.remove('open'); return; }
-  if (t.closest('#obBack')) { readObStep(); ob.step--; renderOb(); return; }
-  if (t.closest('#obParse')) { ob.sample = false; ob.staged = parseText($('#obTxt').value); renderObPv(); return; }
-  if (t.closest('#obSample')) { ob.sample = true; ob.staged = { events: sampleData().events, label: '' }; renderObPv(); return; }
-  if (t.closest('#obNext')) {
-    readObStep();
-    if (ob.step === 1) {
-      const w = pm(ob.d.wake), sl = pm(ob.d.sleep);
-      if (w == null || sl == null) { toast('Hãy chọn giờ thức dậy và giờ đi ngủ'); return; }
-      if (w === sl) { toast('Giờ thức dậy và giờ đi ngủ không được trùng nhau'); return; }
-    }
-    if (ob.step < OB_STEPS) { ob.step++; renderOb(); $('#ob').scrollTop = 0; return; }
-    finishOb();
+  if (sw) { readObStep(false); const k = sw.dataset.sw; ob.d[k].on = !ob.d[k].on; if (ob.d[k].on) ob.open = k; const y = $('#ob').scrollTop; renderOb(); $('#ob').scrollTop = y; return; }
+  const op = t.closest('[data-open]');
+  if (op) { readObStep(false); ob.open = ob.open === op.dataset.open ? '' : op.dataset.open; const y = $('#ob').scrollTop; renderOb(); $('#ob').scrollTop = y; return; }
+  const pk = t.closest('[data-peak]'); if (pk) { ob.d.peak = pk.dataset.peak; $$('[data-peak]').forEach(b => { b.classList.toggle('on', b === pk); b.setAttribute('aria-checked', b === pk); }); return; }
+  const gl = t.closest('[data-goal]'); if (gl) { ob.d.goal = gl.dataset.goal; $$('[data-goal]').forEach(b => { b.classList.toggle('on', b === gl); b.setAttribute('aria-checked', b === gl); }); return; }
+  const gt = t.closest('[data-goto]'); if (gt) { if (readObStep(false)) goStep(+gt.dataset.goto, +gt.dataset.goto >= ob.step ? 1 : -1); return; }
+  const sk = t.closest('[data-skip]');
+  if (sk) {
+    if (sk.dataset.skip === 'save') { if (readObStep(true)) { persistDraft(); finishOb(true); } }
+    else if (sk.dataset.skip === 'next') goStep(ob.step + 1, 1);
+    else { ob.staged = null; finishOb(); }
+    return;
   }
+  if (t.closest('#obClose')) { closeOb(); return; }
+  if (t.closest('#obBack')) { readObStep(false); goStep(ob.step - 1, -1); return; }
+  if (t.closest('#obClear')) { ob.staged = null; ob.sample = false; ob.err = ''; renderObPv(); return; }
+  if (t.closest('#obParse')) { ob.sample = false; ob.err = ''; ob.staged = parseText($('#obTxt').value); renderObPv(); return; }
+  if (t.closest('#obSample')) { ob.sample = true; ob.err = ''; ob.staged = { events: sampleData().events, label: '' }; renderObPv(); return; }
+  if (t.closest('#obNext')) advanceOb();
 });
-$('#obIn').addEventListener('change', async e => {
-  if (e.target.id === 'obFile' && e.target.files[0]) {
-    ob.sample = false;
-    try { ob.staged = parseICS(await e.target.files[0].text()); } catch (err) { ob.staged = { events: [], label: '' }; }
-    renderObPv();
-  }
+$('#obIn').addEventListener('change', e => {
+  if (e.target.id === 'obFile') obLoadFile(e.target.files[0]);
   if (e.target.id === 'obRep') ob.replace = e.target.checked;
 });
-function finishOb() {
+$('#obIn').addEventListener('dragover', e => { const d = e.target.closest('#obDrop'); if (d) { e.preventDefault(); d.classList.add('over'); } });
+$('#obIn').addEventListener('dragleave', e => { const d = e.target.closest('#obDrop'); if (d) d.classList.remove('over'); });
+$('#obIn').addEventListener('drop', e => { const d = e.target.closest('#obDrop'); if (d) { e.preventDefault(); d.classList.remove('over'); obLoadFile(e.dataTransfer.files[0]); } });
+
+function finishOb(keepStaged) {
   snapshot();
-  S.profile = { ...ob.d, name: ob.d.name || '', onboarded: true };
-  S.snz = {};
-  if (ob.staged && ob.staged.events.length) {
-    commitEvents(ob.staged.events, ob.replace);
-    if (ob.sample && !S.tasks.length) sampleData().tasks.forEach(t => S.tasks.push({ id: uid(), ...t }));
+  S.profile = { ...clone(ob.d), name: ob.d.name || '', onboarded: true };
+  delete S.obStep; S.snz = {};
+  if (ob.step === OB_STEPS || keepStaged) {
+    if (ob.staged && ob.staged.events.length) {
+      commitEvents(ob.staged.events, ob.replace);
+      if (ob.sample && !S.tasks.length) sampleData().tasks.forEach(t => S.tasks.push({ id: uid(), ...t }));
+    }
   }
-  rot = 0; sim = null;
-  $('#ob').classList.remove('open');
-  changed(); toast('Aura đã sẵn sàng đồng hành cùng bạn');
+  closeOb(); changed(); toast(ob.sample && ob.staged ? 'Aura đã sẵn sàng — đã nạp lịch mẫu' : 'Aura đã sẵn sàng đồng hành cùng bạn');
 }
 
 /* =====================================================================
