@@ -60,11 +60,6 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .seg>button{position:relative;z-index:1;flex:1;padding:8px 4px;font-size:13px;font-weight:500;color:var(--ink2);border-radius:11px;transition:color .4s var(--spring);white-space:nowrap}
 .seg>button.on{color:var(--ink);font-weight:600}
 .glider{position:absolute;top:3px;bottom:3px;left:0;width:0;border-radius:11px;background:var(--card);box-shadow:0 1px 2px rgba(26,25,23,.08),0 4px 10px -4px rgba(26,25,23,.12);transition:transform .55s var(--spring),width .55s var(--spring),opacity .3s;z-index:0}
-.sim{margin:14px 0 4px}
-.sim-cap{font-size:11.5px;color:var(--ink3);margin:0 2px 6px;letter-spacing:.03em}
-.sim .seg>button{font-variant-numeric:tabular-nums;font-size:12.5px;padding:8px 2px}
-.sim .seg>button.now{display:flex;align-items:center;justify-content:center;gap:5px}
-.sim .seg>button.now i{width:6px;height:6px;border-radius:50%;background:var(--clay);display:block}
 
 /* ---------- Sections ---------- */
 .sec{margin-top:30px}
@@ -358,18 +353,6 @@ textarea.inp{min-height:110px;resize:vertical;line-height:1.55;font-size:14px}
   <!-- ================= VIEW 1: TRỢ LÝ CHỦ ĐỘNG ================= -->
   <section class="view on" id="v-ai">
     <button class="pill" id="pill" aria-label="Quét lại ngữ cảnh"></button>
-
-    <div class="sim">
-      <div class="sim-cap">Giả lập mốc giờ trong ngày</div>
-      <div class="seg" id="simSeg"><span class="glider"></span>
-        <button data-sim="465">07:45</button>
-        <button data-sim="620">10:20</button>
-        <button data-sim="720">12:00</button>
-        <button data-sim="940">15:40</button>
-        <button data-sim="1335">22:15</button>
-        <button data-sim="now" class="now"><i></i>Bây giờ</button>
-      </div>
-    </div>
 
     <div class="sec">
       <div class="sec-h"><h2>Đề xuất dành cho bạn</h2><span id="stackCnt"></span></div>
@@ -1099,16 +1082,6 @@ function renderPill() {
   pill.classList.toggle('warn', warn);
   setHTML(pill, `<span class="dot"></span><span class="txt">${html}</span><span class="rescan">${ICON.refresh}</span>`);
 }
-function renderSim() {
-  const seg = $('#simSeg'), now = realNow();
-  $$('button', seg).forEach(b => {
-    const v = b.dataset.sim;
-    b.classList.toggle('on', sim == null ? v === 'now' : String(sim) === v);
-  });
-  $('.now', seg).title = `Giờ thực tế: ${hm(now)}`;
-  placeGlider(seg);
-}
-
 /* ---------- Stack ---------- */
 let stackSig = '';
 function renderStack(shimmer) {
@@ -1299,7 +1272,7 @@ function renderCal() {
 }
 
 function renderAll(shimmer = false) {
-  renderHeader(); renderPill(); renderSim(); renderStack(shimmer); renderHabits(); renderTimeline(); renderBacklog(); renderCal();
+  renderHeader(); renderPill(); renderStack(shimmer); renderHabits(); renderTimeline(); renderBacklog(); renderCal();
 }
 
 /* =====================================================================
@@ -1698,10 +1671,6 @@ document.addEventListener('click', e => {
 });
 $('#drawerBtn').addEventListener('click', () => { drawerOpen = !drawerOpen; syncDrawer(); });
 $('#tabSeg').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) switchTab(b.dataset.tab); });
-$('#simSeg').addEventListener('click', e => {
-  const b = e.target.closest('[data-sim]'); if (!b) return;
-  sim = b.dataset.sim === 'now' ? null : +b.dataset.sim; S.snz = {}; renderAll(true);
-});
 $('#pill').addEventListener('click', () => { rot = 0; renderAll(true); toast('Aura vừa quét lại ngữ cảnh của bạn'); });
 $('#fab').addEventListener('click', () => openSheet(tab === 'cal' ? 'event' : 'task'));
 $('#btnProfile').addEventListener('click', openOnboarding);
