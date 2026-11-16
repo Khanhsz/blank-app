@@ -213,6 +213,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .grip::after{content:"";width:28px;height:4px;border-radius:4px;background:rgba(26,25,23,.28);transition:background .3s}
 .blk:hover .grip::after,.blk.dragging .grip::after{background:var(--forest)}
 .blk.dragging{z-index:20;box-shadow:var(--shadow-lg);transform:scale(1.015);cursor:grabbing;transition:top .16s var(--spring),height .16s var(--spring),box-shadow .3s,border-color .3s}
+.blk.ghost{background:rgba(40,65,51,.14);border:1.5px solid var(--forest);border-left-width:4px;box-shadow:var(--shadow);z-index:15;pointer-events:none;transition:top .12s var(--spring),height .12s var(--spring)}
 .blk.conflict{border-color:var(--clay);border-left-color:var(--clay);box-shadow:0 0 0 2px rgba(217,107,67,.28),var(--shadow-lg)}
 .badge{position:absolute;left:0;top:-34px;background:var(--ink);color:#fff;font-size:12px;font-weight:600;padding:5px 11px;border-radius:99px;white-space:nowrap;font-variant-numeric:tabular-nums;pointer-events:none;box-shadow:var(--shadow);z-index:30;max-width:300px;overflow:hidden;text-overflow:ellipsis}
 .badge.warn{background:var(--clay)}
@@ -1313,6 +1314,7 @@ const calArea = $('#calArea');
 function conflictOf(id, s, e) { return S.events.find(x => x.id !== id && x.start < e && x.end > s) || null; }
 function beginDrag() {
   const p = drag.pending; if (!p) return;
+  if (p.mode === 'create') return beginCreate(p);
   const ev = S.events.find(x => x.id === p.id); if (!ev) { drag.pending = null; return; }
   drag.active = true; drag.id = p.id; drag.mode = p.mode; drag.y0 = p.pageY0; drag.lastY = p.clientY;
   drag.o = { s: ev.start, e: ev.end }; drag.cur = { s: ev.start, e: ev.end };
@@ -1320,6 +1322,20 @@ function beginDrag() {
   if (!drag.el) { drag.active = false; return; }
   drag.el.classList.add('dragging');
   const b = document.createElement('div'); b.className = 'badge'; drag.el.appendChild(b); drag.badge = b;
+  document.body.classList.add('no-select');
+  if (navigator.vibrate) try { navigator.vibrate(12); } catch (e) { /* bỏ qua */ }
+  updateDrag();
+  cancelAnimationFrame(drag.raf); drag.raf = requestAnimationFrame(dragTick);
+}
+function beginCreate(p) {
+  const top = calArea.getBoundingClientRect().top + window.scrollY;
+  drag.active = true; drag.mode = 'create'; drag.id = null; drag.lastY = p.clientY; drag.areaTop = top;
+  drag.anchor = clamp(DAY0 + Math.floor((p.pageY0 - top) / SNAP) * SNAP, DAY0, DAY1 - SNAP);
+  drag.cur = { s: drag.anchor, e: drag.anchor + SNAP };
+  const g = document.createElement('div'); g.className = 'blk ghost';
+  g.innerHTML = '<div class="bd"><span class="t">(Sự kiện mới)</span></div>';
+  const b = document.createElement('div'); b.className = 'badge'; g.appendChild(b);
+  calArea.appendChild(g); drag.el = g; drag.badge = b;
   document.body.classList.add('no-select');
   if (navigator.vibrate) try { navigator.vibrate(12); } catch (e) { /* bỏ qua */ }
   updateDrag();
@@ -1333,6 +1349,16 @@ function dragTick() {
   drag.raf = requestAnimationFrame(dragTick);
 }
 function updateDrag() {
+  if (drag.mode === 'create') {
+    const c = clamp(DAY0 + Math.floor((drag.lastY + window.scrollY - drag.areaTop) / SNAP) * SNAP, DAY0, DAY1 - SNAP);
+    const s = Math.min(drag.anchor, c), e = Math.max(drag.anchor, c) + SNAP;
+    drag.cur = { s, e };
+    const el = drag.el, hit = conflictOf(null, s, e);
+    el.style.top = (s - DAY0) + 'px'; el.style.height = (e - s - 1) + 'px';
+    el.classList.toggle('conflict', !!hit); drag.badge.classList.toggle('warn', !!hit);
+    drag.badge.textContent = `${hm(s)} – ${hm(e)} · ${fmtDur(e - s)}`;
+    return;
+  }
   const dy = drag.lastY + window.scrollY - drag.y0;
   const delta = Math.round(dy / SNAP) * SNAP, o = drag.o, len = o.e - o.s;
   let s, e;
@@ -1349,7 +1375,14 @@ function updateDrag() {
 function endDrag(commit) {
   clearTimeout(drag.timer); drag.timer = 0;
   const was = drag.active;
-  if (was) {
+  if (was && drag.mode === 'create') {
+    cancelAnimationFrame(drag.raf);
+    const c = drag.cur;
+    drag.active = false; document.body.classList.remove('no-select'); drag.suppress = Date.now();
+    if (drag.el) drag.el.remove();
+    drag.el = null; drag.mode = null;
+    if (commit) openSheet('event', { start: c.s, end: c.e });
+  } else if (was) {
     cancelAnimationFrame(drag.raf);
     const ev = S.events.find(x => x.id === drag.id), c = drag.cur;
     drag.active = false; document.body.classList.remove('no-select'); drag.suppress = Date.now();
@@ -1366,8 +1399,13 @@ function endDrag(commit) {
 function pressStart(e, touch) {
   const t = e.target;
   if (t.closest('.x')) return;
-  const blk = t.closest('.blk'); if (!blk) return;
+  const blk = t.closest('.blk');
   const pt = touch ? e.touches[0] : e;
+  if (!blk) {
+    drag.pending = { id: null, mode: 'create', x0: pt.clientX, y0: pt.clientY, pageY0: pt.clientY + window.scrollY, clientY: pt.clientY, touch };
+    if (touch) drag.timer = setTimeout(beginDrag, 280);
+    return;
+  }
   const grip = !!t.closest('[data-grip]');
   drag.pending = { id: blk.dataset.id, mode: grip ? 'resize' : 'move', x0: pt.clientX, y0: pt.clientY, pageY0: pt.clientY + window.scrollY, clientY: pt.clientY, touch };
   if (touch) {
@@ -1376,7 +1414,7 @@ function pressStart(e, touch) {
   } else if (grip) { e.preventDefault(); beginDrag(); }
 }
 calArea.addEventListener('touchstart', e => pressStart(e, true), { passive: false });
-calArea.addEventListener('mousedown', e => { if (e.button === 0) pressStart(e, false); });
+calArea.addEventListener('mousedown', e => { if (e.button === 0 && !e.target.closest('.x')) pressStart(e, false); });
 calArea.addEventListener('contextmenu', e => { if (e.target.closest('.blk')) e.preventDefault(); });
 
 function moveGeneric(x, y, e) {
