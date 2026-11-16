@@ -294,6 +294,56 @@ textarea.inp{min-height:110px;resize:vertical;line-height:1.55;font-size:14px}
 .ob-foot .btn-pri{flex:1;padding:15px}
 .skip{font-size:13px;color:var(--ink2);padding:6px 4px}
 
+/* ---------- Nhịp ngày ---------- */
+.habits{background:var(--card);border:var(--line);border-radius:22px;box-shadow:var(--shadow);padding:6px 16px}
+.hab{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:var(--line)}
+.hab:first-child{border-top:0}
+.hi{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:none}
+.hi svg{width:17px;height:17px}
+.hb{flex:1;min-width:0}
+.hn{font-size:14px;font-weight:600;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.hn small{font-size:12px;font-weight:500;color:var(--ink2);font-variant-numeric:tabular-nums}
+.hc{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.hmeta{font-size:12px;color:var(--ink2)}
+.st{font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:99px}
+.st.ok{background:var(--sage-t);color:var(--sage)} .st.warn{background:var(--clay-t);color:var(--clay)}
+.pbar{flex:1;min-width:60px;height:6px;border-radius:6px;background:var(--surface);overflow:hidden}
+.pbar i{display:block;height:100%;border-radius:6px;transition:width .7s var(--spring)}
+.mealrow{gap:6px}
+.mc{font-size:12px;font-weight:600;padding:6px 10px;border-radius:10px;background:var(--surface);color:var(--ink2);border:1px solid transparent;font-variant-numeric:tabular-nums;transition:all .45s var(--spring)}
+.mc:active{transform:scale(.94)}
+.mc.done{background:var(--sage);color:#fff}
+.mc.planned{background:var(--sage-t);color:var(--sage);border-color:rgba(56,142,104,.35)}
+.mc.soon,.mc.due{background:var(--clay-t);color:var(--clay);border-color:rgba(217,107,67,.4)}
+.mc.missed{background:var(--clay);color:#fff}
+.mc.over{opacity:.5}
+.cups{display:flex;gap:5px;flex:1;flex-wrap:wrap;min-width:80px}
+.cups i{width:14px;height:18px;border-radius:3px 3px 7px 7px;background:var(--surface);transition:background .5s var(--spring)}
+.cups i.on{background:var(--blue)} .cups i.due{background:rgba(217,107,67,.28)}
+.k-habit .bar{background:var(--clay)}
+.blk.k-habit{background:var(--clay-t);border-color:rgba(217,107,67,.25);border-left-color:var(--clay)}
+.rsv{flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:1.5px dashed rgba(217,107,67,.45);background:rgba(217,107,67,.05);border-radius:16px;padding:11px 14px}
+.rsv .gi{color:var(--clay);flex:none;display:grid}.rsv .gi svg{width:18px;height:18px}
+.rsv .body{flex:1;min-width:0}.rsv .nm{font-size:13px;font-weight:600;color:var(--clay)}
+.rsv .sub{font-size:12.5px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rsv .btn{padding:7px 12px;font-size:12.5px;border-radius:11px;flex:none}
+.tag.cat{background:var(--surface);color:var(--ink2)}
+.c-foot.two{flex-wrap:wrap}.c-foot.two .btn-pri{flex:1 1 100%}.c-foot.two .btn-line,.c-foot.two .btn-ghost{flex:1}
+.seg.sm>button{font-size:12.5px;padding:7px 4px}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.three>div{min-width:0}
+.three .inp{padding:10px 6px;font-size:13px;min-width:0}
+.three input[type=time]::-webkit-calendar-picker-indicator{display:none}
+.hint-line{font-size:12.5px;margin-top:10px;line-height:1.55}
+.hint-line .ok{color:var(--sage)}.hint-line .warn{color:var(--clay)}
+.hbks{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+.hbk{background:var(--card);border:var(--line);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow);transition:all .5s var(--spring)}
+.hbk-h{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.hbk-h b{display:block;font-size:14.5px;font-weight:600}.hbk-h small{display:block;font-size:12.5px;color:var(--ink2)}
+.hbk-b{margin-top:14px;display:flex;flex-direction:column;gap:2px;animation:viewIn .5s var(--spring)}
+.swc{width:44px;height:26px;border-radius:99px;background:rgba(26,25,23,.15);position:relative;flex:none;transition:background .4s var(--spring)}
+.swc::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .5s var(--spring)}
+.swc.on{background:var(--forest)}.swc.on::after{transform:translateX(18px)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
@@ -329,6 +379,11 @@ textarea.inp{min-height:110px;resize:vertical;line-height:1.55;font-size:14px}
     </div>
 
     <div class="sec">
+      <div class="sec-h"><h2>Nhịp ngày</h2><span id="habCnt"></span></div>
+      <div class="habits" id="habits"></div>
+    </div>
+
+    <div class="sec">
       <div class="sec-h"><h2>Dòng thời gian hôm nay</h2><span id="tlCnt"></span></div>
       <div class="tl" id="tl"></div>
     </div>
@@ -352,6 +407,7 @@ textarea.inp{min-height:110px;resize:vertical;line-height:1.55;font-size:14px}
         <span><i style="background:var(--forest)"></i>Lịch cố định</span>
         <span><i style="background:var(--blue)"></i>Deep Work</span>
         <span><i style="background:var(--sage)"></i>Nhẹ nhàng</span>
+        <span><i style="background:var(--clay)"></i>Ăn · tập · học</span>
         <span><i style="border:1.5px dashed var(--sage);background:rgba(56,142,104,.1)"></i>Khe trống AI</span>
       </div>
       <div class="cal" id="cal">
@@ -433,6 +489,9 @@ const ICON = {
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
   refresh: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.5-4M4 4v4h4M4 13a8 8 0 0 0 14.5 4M20 20v-4h-4"/></svg>',
   x: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  run: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="4.5" r="1.8"/><path d="m8 21 3-6-3-2 2-5 4 2 3 3M11 15l3 2 1 4M10 8 7 10"/></svg>',
+  book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20M9 8h6"/></svg>',
+  drop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.2 6 10.5a6 6 0 0 1-12 0C6 9.2 12 3 12 3z"/></svg>',
   file: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14h6M9 17h4"/></svg>'
 };
 
@@ -440,14 +499,20 @@ const ICON = {
    State + persistence
    ===================================================================== */
 const defaults = () => ({
-  v: 1, day: todayKey(),
-  profile: { name: '', wake: '06:30', sleep: '23:00', peak: 'morning', goal: 'balance', lead: 45, onboarded: false },
-  events: [], tasks: [], ack: {}, plan: [], planFor: null
+  v: 2, day: todayKey(),
+  profile: {
+    name: '', wake: '06:30', sleep: '23:00', sleepNeed: 7.5, peak: 'morning', goal: 'balance', lead: 45, onboarded: false,
+    meals: { on: true, breakfast: '07:00', lunch: '12:00', dinner: '19:00', dur: 30 },
+    exercise: { on: true, when: 'evening', dur: 30, perWeek: 4 },
+    study: { on: true, goal: 60 },
+    water: { on: true, cups: 8 }
+  },
+  events: [], tasks: [], ack: {}, snz: {}, hist: {}, plan: [], planFor: null
 });
 let S = defaults();
 let sim = null;           // minutes | null  (giả lập mốc giờ)
 let tab = 'ai';
-let rot = 0;              // xoay thẻ khi vuốt trái
+let rot = 0;
 let drawerOpen = false;
 let curCards = [];
 
@@ -455,36 +520,130 @@ function load() {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
-      const o = JSON.parse(raw), d = defaults();
-      S = { ...d, ...o, profile: { ...d.profile, ...(o.profile || {}) } };
+      const o = JSON.parse(raw), d = defaults(), op = o.profile || {};
+      S = { ...d, ...o, profile: { ...d.profile, ...op } };
+      for (const k of ['meals', 'exercise', 'study', 'water']) S.profile[k] = { ...d.profile[k], ...(op[k] || {}) };
+      S.hist = S.hist || {}; S.snz = S.snz || {}; S.ack = S.ack || {};
     }
   } catch (e) { S = defaults(); }
   rollover();
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* bộ nhớ bị chặn: bỏ qua */ } }
 
+function hist(key) {
+  const h = S.hist[key] || (S.hist[key] = {});
+  h.m = h.m || {}; h.st = h.st || []; h.w = h.w || []; if (h.ex === undefined) h.ex = null;
+  return h;
+}
+const H = () => hist(todayKey());
+
 function rollover() {
   const t = todayKey();
   if (S.day === t) return;
+  const old = hist(S.day);
+  if (old.ex == null && S.events.some(e => catOf(e) === 'exercise')) old.ex = 1439;   // ghi nhận buổi tập của ngày cũ
   const keep = [];
   for (const e of S.events) {
     if (e.kind === 'fixed' || !e.kind) { e.kind = 'fixed'; e.done = false; keep.push(e); }
-    else if (e.kind === 'task' && !e.done) S.tasks.push({ id: uid(), title: e.title, dur: e.end - e.start, level: e.level || 'light' });
+    else if (e.kind === 'task' && !e.done) S.tasks.push({ id: uid(), title: e.title, dur: e.end - e.start, level: e.level || 'light', cat: e.cat });
   }
   S.events = keep;
   if (S.planFor === t) {
-    for (const p of S.plan) S.events.push({ id: uid(), title: p.title, start: p.start, end: p.start + p.dur, location: '', kind: 'task', level: p.level, done: false });
+    for (const p of S.plan) S.events.push({ id: uid(), title: p.title, start: p.start, end: p.start + p.dur, location: '', kind: 'task', level: p.level, cat: p.cat, done: false });
   }
-  S.plan = []; S.planFor = null; S.ack = {}; S.day = t;
+  S.plan = []; S.planFor = null; S.ack = {}; S.snz = {}; S.day = t;
+  const keys = Object.keys(S.hist).sort(); while (keys.length > 21) delete S.hist[keys.shift()];
   save();
 }
 
 const nowMin = () => sim ?? realNow();
+function sleepInfo() {
+  const w = pm(S.profile.wake) ?? 390, sl = pm(S.profile.sleep) ?? 1380;
+  let hrs = ((w - sl + 1440) % 1440) / 60; if (hrs === 0) hrs = 24;
+  return { w, sl, hrs };
+}
 function awake() {
-  const w = pm(S.profile.wake) ?? 390;
-  let s = pm(S.profile.sleep) ?? 1380;
-  if (s <= w) s = 1440;
-  return { w, s: Math.min(s, 1440) };
+  const { w, sl } = sleepInfo();
+  return { w, s: sl > w ? Math.min(sl, 1440) : 1440 };   // ngủ sau 00:00 → lưới ngày kết thúc lúc 24:00
+}
+const fmtH = h => (h % 1 ? `${Math.floor(h)}g ${Math.round((h % 1) * 60)}p` : `${h}g`);
+
+/* ---------- Hoạt động thiết yếu: ăn · ngủ · vận động · học · nước ---------- */
+const MEALS = [['breakfast', 'bữa sáng', 'Bữa sáng', 'Sáng'], ['lunch', 'bữa trưa', 'Bữa trưa', 'Trưa'], ['dinner', 'bữa tối', 'Bữa tối', 'Tối']];
+const RX = {
+  meal: /(^|\s)ăn(\s|$)|bữa|cơm|lunch|dinner|breakfast|brunch|phở|bún/i,
+  study: /học|lớp|ôn |ôn$|bài tập|study|lecture|class|đọc sách|ielts|toeic|tiếng anh|course|seminar/i,
+  exercise: /gym|tập |tập$|chạy bộ|yoga|bơi|thể dục|thể thao|workout|đạp xe|running|cardio|pilates|vận động/i
+};
+const catLabel = { study: 'Học tập', exercise: 'Vận động', meal: 'Ăn uống', rest: 'Nghỉ ngơi', work: 'Công việc', life: 'Cá nhân' };
+function catOf(e) {
+  if (e.cat) return e.cat;
+  const t = e.title || '';
+  if (RX.meal.test(t)) return 'meal';
+  if (RX.study.test(t)) return 'study';
+  if (RX.exercise.test(t)) return 'exercise';
+  return '';
+}
+function mealStates(now) {
+  const M = S.profile.meals; if (!M.on) return [];
+  const h = H();
+  return MEALS.map(([key, lc, cap, short]) => {
+    const t = pm(M[key]); if (t == null) return null;
+    const win = [t - 45, t + 75]; let state;
+    if (h.m[key] != null && h.m[key] <= now) state = 'done';
+    else {
+      const ev = S.events.find(e => catOf(e) === 'meal' && e.start < win[1] && e.end > win[0]);
+      if (ev) state = (ev.done || ev.end <= now) ? 'done' : 'planned';
+      else state = now < t - 30 ? 'later' : now < t ? 'soon' : now <= t + 75 ? 'due' : now <= t + 180 ? 'missed' : 'over';
+    }
+    return { key, lc, cap, short, t, win, state };
+  }).filter(Boolean);
+}
+// Giữ chỗ cho bữa ăn chưa được xếp để việc khác không "nuốt" mất khung giờ ăn
+function virtualMeals(now) {
+  const d = +S.profile.meals.dur || 30;
+  return mealStates(now).filter(m => ['later', 'soon', 'due'].includes(m.state) && m.t + d > now)
+    .map(m => ({ start: m.t, end: m.t + d, key: m.key, cap: m.cap, lc: m.lc, virtual: true }));
+}
+function exDone(now) {
+  const x = H().ex; if (x != null && x <= now) return true;
+  return S.events.some(e => catOf(e) === 'exercise' && (e.done || e.end <= now));
+}
+const exPlanned = now => S.events.some(e => catOf(e) === 'exercise' && !e.done && e.end > now);
+function weekEx() {
+  const d = new Date(), dow = (d.getDay() + 6) % 7; let n = 0;
+  for (let i = 1; i <= dow; i++) { const x = new Date(d); x.setDate(d.getDate() - i); const h = S.hist[keyOf(x)]; if (h && h.ex != null) n++; }
+  return n;
+}
+function exYesterday() { const x = new Date(); x.setDate(x.getDate() - 1); const h = S.hist[keyOf(x)]; return !!(h && h.ex != null); }
+function exWindow(when) {
+  const { w } = awake();
+  return when === 'morning' ? [w + 20, w + 200] : when === 'afternoon' ? [810, 1050] : [1050, 1260];
+}
+function studyMin(now) {
+  let m = 0;
+  for (const e of S.events) if (catOf(e) === 'study' && (e.done || e.end <= now)) m += e.end - e.start;
+  for (const x of H().st) if (x.t <= now) m += x.min;
+  return m;
+}
+function studyPlanned(now) { return S.events.filter(e => catOf(e) === 'study' && !e.done && e.end > now).reduce((a, e) => a + (e.end - Math.max(e.start, now)), 0); }
+function waterInfo(now) {
+  const W = S.profile.water; if (!W.on) return null;
+  const { w, s } = awake(), span = Math.max(60, s - 120 - w);
+  return { cups: W.cups, exp: Math.floor(W.cups * clamp((now - w) / span, 0, 1)), c: H().w.filter(t => t <= now).length };
+}
+function bestSlot(gaps, dur, a, b, pref) {
+  let best = null;
+  for (const g of gaps) {
+    const s0 = Math.max(g.start, a), e0 = Math.min(g.end, b);
+    if (e0 - s0 < dur) continue;
+    let st = Math.round(clamp(pref, s0, e0 - dur) / 5) * 5;
+    if (st < s0) st = Math.ceil(s0 / 5) * 5;
+    if (st + dur > e0) continue;
+    const sc = Math.abs(st - pref);
+    if (!best || sc < best.sc) best = { start: st, sc };
+  }
+  return best;
 }
 
 /* =====================================================================
@@ -522,6 +681,7 @@ function scoreTask(task, gap) {
     if (goal === 'deep' && gap.len >= 60) s -= 12;
   }
   if (goal === 'balance' && gap.len >= 30 && gap.len - task.dur < 5) s -= 15;
+  if (S.profile.study.on && (task.cat || catOf(task)) === 'study' && studyMin(nowMin()) < S.profile.study.goal) s += 14;
   return { s, inPeak };
 }
 
@@ -551,8 +711,8 @@ function gapReason(m) {
 }
 
 function gapPlan() {
-  const { w, s } = awake();
-  const gaps = detectTimeGaps(S.events, w, s, nowMin(), 15);
+  const now = nowMin(), { w, s } = awake();
+  const gaps = detectTimeGaps(S.events.concat(virtualMeals(now)), w, Math.max(w, s - 30), now, 15);   // chừa 30p đệm trước giờ ngủ
   const pool = S.tasks.slice(), out = [];
   for (const g of gaps) {
     const m = matchBestTaskForGap(g, pool);
@@ -573,15 +733,17 @@ function findSlot(cursor, dur, busy, limit) {
 
 function pendingItems() {
   const items = [];
-  S.events.filter(e => e.kind === 'task' && !e.done).forEach(e => items.push({ title: e.title, dur: e.end - e.start, level: e.level || 'light', evId: e.id }));
-  S.tasks.forEach(t => items.push({ title: t.title, dur: t.dur, level: t.level, taskId: t.id }));
+  S.events.filter(e => e.kind === 'task' && !e.done).forEach(e => items.push({ title: e.title, dur: e.end - e.start, level: e.level || 'light', cat: e.cat, evId: e.id }));
+  S.tasks.forEach(t => items.push({ title: t.title, dur: t.dur, level: t.level, cat: t.cat, taskId: t.id }));
   return items;
 }
 
 function buildTomorrowPlan() {
-  const pk = PEAKS[S.profile.peak], { s: limit } = awake();
+  const pk = PEAKS[S.profile.peak], limit = awake().s - 30;
   const items = pendingItems().sort((a, b) => (a.level === b.level ? b.dur - a.dur : a.level === 'deep' ? -1 : 1));
   const busy = S.events.filter(e => e.kind === 'fixed').map(e => ({ start: e.start, end: e.end })).sort((a, b) => a.start - b.start);
+  if (S.profile.meals.on) for (const [key] of MEALS) { const t = pm(S.profile.meals[key]); if (t != null) busy.push({ start: t - 10, end: t + (+S.profile.meals.dur || 30) }); }   // tránh khung giờ ăn
+  busy.sort((a, b) => a.start - b.start);
   let cursor = pk.s; const planned = [];
   for (const it of items) {
     const st = findSlot(cursor, it.dur, busy, limit);
@@ -594,95 +756,210 @@ function buildTomorrowPlan() {
 }
 
 function generateCards() {
-  const now = nowMin(), { w, s } = awake(), lead = +S.profile.lead || 45;
-  const cards = [];
-  const evs = S.events.slice().sort((a, b) => a.start - b.start);
+  const now = nowMin(), { w, s } = awake(), lead = +S.profile.lead || 45, P = S.profile, pk = PEAKS[P.peak];
+  const cards = [], evs = S.events.slice().sort((a, b) => a.start - b.start);
+  const add = (c, prio) => { c.prio = prio; c.n = cards.length; cards.push(c); };
+  const live = evs.find(e => !e.done && e.start <= now && now < e.end);
+  const nxt = evs.find(e => !e.done && e.start > now && e.kind !== 'break');
+  const mealDur = +P.meals.dur || 30;
 
   // 1. Chuẩn bị trước sự kiện
-  const nxt = evs.find(e => !e.done && e.start > now && e.kind !== 'break');
   if (nxt && nxt.start - now <= lead && !S.ack['prep:' + nxt.id]) {
-    const diff = nxt.start - now;
-    cards.push({
+    add({
       id: 'prep:' + nxt.id, type: 'prep', tone: 'clay', icon: 'clock',
-      eyebrow: `Chuẩn bị · còn ${fmtDur(diff)}`, title: `Sắp tới: ${nxt.title}`,
+      eyebrow: `Chuẩn bị · còn ${fmtDur(nxt.start - now)}`, title: `Sắp tới: ${nxt.title}`,
       body: `Bắt đầu lúc ${hm(nxt.start)}${nxt.location ? ' tại ' + nxt.location : ''}. Hãy khép lại việc đang làm, chuẩn bị tài liệu và thu xếp trước khi sự kiện bắt đầu.`,
       chips: [`${hm(nxt.start)}–${hm(nxt.end)}`, fmtDur(nxt.end - nxt.start)].concat(nxt.location ? [nxt.location] : []),
       primary: 'Đã sẵn sàng', ev: nxt.id
-    });
+    }, 0);
   }
 
-  // 2. Sự kiện đang diễn ra
-  const live = evs.find(e => !e.done && e.start <= now && now < e.end);
-  if (live) cards.push({
+  // 2. Đang diễn ra
+  if (live) add({
     id: 'live:' + live.id, type: 'live', tone: 'forest', icon: 'play',
     eyebrow: `Đang diễn ra · còn ${fmtDur(live.end - now)}`, title: live.title,
     body: `Kết thúc lúc ${hm(live.end)}. Hoàn thành sớm để dành thêm khoảng trống cho việc khác.`,
     chips: [`${hm(live.start)}–${hm(live.end)}`].concat(live.location ? [live.location] : []),
     primary: 'Đánh dấu hoàn thành', ev: live.id
-  });
+  }, 1);
 
-  // 3. Khe trống
+  // 3. Bản tin buổi sáng cá nhân hóa
+  if (now >= w && now <= w + 150 && !S.ack.brief) {
+    const gaps = detectTimeGaps(S.events.concat(virtualMeals(now)), w, Math.max(w, s - 30), now, 15);
+    const total = gaps.reduce((a, g) => a + g.len, 0);
+    const gold = gaps.map(g => ({ g, o: overlapMin(g.start, g.end, pk.s, pk.e) })).sort((a, b) => b.o - a.o)[0];
+    const pend = evs.filter(e => !e.done && e.end > now && e.kind !== 'break').length;
+    const keep = [];
+    if (P.meals.on) keep.push(`${mealStates(now).length} bữa ăn`);
+    if (P.exercise.on) keep.push(`vận động ${P.exercise.dur}p`);
+    if (P.study.on && P.study.goal) keep.push(`học ${P.study.goal}p`);
+    if (P.water.on) keep.push(`${P.water.cups} cốc nước`);
+    add({
+      id: 'brief', type: 'brief', tone: 'forest', icon: 'cal', eyebrow: 'Bản tin buổi sáng',
+      title: `Chào ${P.name || 'bạn'}, đây là ngày của bạn`,
+      body: `${pend} lịch cố định và ${fmtDur(total)} thời gian trống đang chờ.${gold && gold.o >= 30 ? ` Khe vàng tốt nhất: ${hm(Math.max(gold.g.start, pk.s))}–${hm(Math.min(gold.g.end, pk.e))} (${pk.label.toLowerCase()}), hợp để làm việc sâu.` : ''}${keep.length ? ' Aura sẽ canh giúp: ' + keep.join(', ') + '.' : ''}`,
+      chips: [`Dậy ${hm(w)}`, `Ngủ ${hm(s === 1440 ? sleepInfo().sl : s)}`, `Giờ vàng ${pk.range}`], primary: 'Bắt đầu ngày mới'
+    }, 1.5);
+  }
+
+  // 4. Bữa ăn
+  if (P.meals.on) {
+    const rank = { due: 0, soon: 1, missed: 2 };
+    const m = mealStates(now).filter(x => x.state in rank).sort((a, b) => rank[a.state] - rank[b.state] || a.t - b.t)[0];
+    if (m) {
+      const d = m.state === 'missed' ? 15 : mealDur;
+      const a = m.state === 'soon' ? Math.max(m.win[0], ceil5(now)) : ceil5(now);
+      const b = m.state === 'missed' ? now + 120 : m.win[1] + 15;
+      const slot = bestSlot(detectTimeGaps(S.events, w, s, now, d), d, a, b, Math.max(a, m.t));
+      const squeeze = nxt && nxt.start - now < d + 10 ? ` Lịch “${nxt.title}” bắt đầu lúc ${hm(nxt.start)}, nên ăn gọn trước đó.` : '';
+      const late = m.key === 'dinner' && now > s - 180 ? ' Ăn sát giờ ngủ khiến khó ngủ sâu — hãy chọn món nhẹ.' : '';
+      add({
+        id: 'meal:' + m.key, type: 'meal', key: m.key, tone: 'clay', icon: 'cup',
+        eyebrow: `Ăn uống · ${hm(m.t)}`,
+        title: m.state === 'soon' ? `Sắp đến giờ ${m.lc}` : m.state === 'due' ? `Đã đến giờ ${m.lc}` : `Bạn có thể đã lỡ ${m.lc}`,
+        body: (m.state === 'missed' ? 'Chưa thấy bữa ăn nào được ghi nhận. Một bữa nhẹ giúp giữ năng lượng và tập trung.' : '') +
+          (slot ? ` Khe ${hm(slot.start)}–${hm(slot.start + d)} còn trống — Aura đề nghị giữ chỗ để bữa ăn không bị lịch khác nuốt mất.` : ` Không còn khe ${d} phút nào trong khung giờ ăn. Hãy ăn nhẹ ngay khi có thể.`) + squeeze + late,
+        chips: [`${d} phút`, `Khung ${hm(m.win[0])}–${hm(m.win[1])}`],
+        primary: slot ? `Chèn ${m.lc} ${hm(slot.start)}` : 'Đã ăn rồi',
+        alt: slot ? 'Đã ăn rồi' : null, start: slot ? slot.start : null, dur: d
+      }, m.state === 'soon' ? 3 : 2);
+    }
+  }
+
+  // 5. Vận động
+  if (P.exercise.on && !exDone(now) && !exPlanned(now)) {
+    const X = P.exercise, win = exWindow(X.when), wk = weekEx();
+    const rest = X.perWeek <= 4 && exYesterday();
+    if (wk < X.perWeek && !rest && now >= win[0] - 60 && now <= win[1] - X.dur && now <= s - 120) {
+      const padded = S.events.map(e => catOf(e) === 'meal' ? { ...e, end: e.end + 45 } : e).concat(virtualMeals(now).map(v => ({ ...v, end: v.end + 45 })));
+      const gaps = detectTimeGaps(padded, w, s - 120, now, X.dur);
+      let slot = bestSlot(gaps, X.dur, Math.max(win[0], ceil5(now)), win[1], win[0] + 30), fb = false;
+      if (!slot) { slot = bestSlot(gaps, X.dur, ceil5(now), s - 120, ceil5(now) + 30); fb = !!slot; }
+      if (slot) add({
+        id: 'ex', type: 'ex', tone: 'sage', icon: 'run',
+        eyebrow: `Vận động · tuần này ${wk}/${X.perWeek} buổi`, title: `Vận động ${X.dur} phút`,
+        body: fb ? 'Khung giờ bạn thích đã kín, Aura tìm được khe này, cách xa bữa ăn và giờ ngủ.' : 'Khe này nằm trong khung giờ vận động bạn chọn, cách bữa ăn ít nhất 45 phút. Vận động đều giúp ngủ sâu và tỉnh táo hơn.',
+        chips: [`${hm(slot.start)}–${hm(slot.start + X.dur)}`, `${X.dur} phút`], primary: `Chèn buổi tập ${hm(slot.start)}`, alt: 'Đã tập rồi', start: slot.start, dur: X.dur
+      }, 4);
+    }
+  }
+
+  // 6. Học tập / phát triển bản thân
+  if (P.study.on && P.study.goal > 0 && !(live && catOf(live) === 'study')) {
+    const m = studyMin(now), r = P.study.goal - m - studyPlanned(now);
+    if (r > 0 && now >= w + 45 && now <= s - 90) {
+      const d = Math.max(15, Math.min(r, 60));
+      const gaps = detectTimeGaps(S.events.concat(virtualMeals(now)), w, s - 90, now, Math.min(d, 25));
+      let slot = bestSlot(gaps, d, Math.max(pk.s, ceil5(now)), pk.e, Math.max(pk.s, ceil5(now))), inPeak = !!slot, dd = d;
+      if (!slot) slot = bestSlot(gaps, d, ceil5(now), s - 90, ceil5(now) + 30);
+      if (!slot && d > 25) { slot = bestSlot(gaps, 25, ceil5(now), s - 90, ceil5(now) + 30); dd = 25; }
+      if (slot) add({
+        id: 'study', type: 'study', tone: 'blue', icon: 'book',
+        eyebrow: `Học tập · còn ${r} phút mục tiêu`, title: `Học tập ${dd} phút`,
+        body: `Mục tiêu hôm nay ${P.study.goal} phút, bạn mới học ${m}. ${inPeak ? 'Khe này nằm trong khung giờ tỉnh táo nhất của bạn.' : 'Khe này đủ yên tĩnh để tập trung một mạch.'}`,
+        chips: [`${hm(slot.start)}–${hm(slot.start + (inPeak ? d : dd))}`, `${m}/${P.study.goal} phút`], primary: `Chèn học ${hm(slot.start)}`, alt: 'Đã học 25 phút', start: slot.start, dur: inPeak ? d : dd
+      }, 4);
+    }
+  }
+
+  // 7. Uống nước
+  const wi = waterInfo(now);
+  if (wi && wi.c < wi.exp - 1 && now >= w + 120 && now <= s - 90) add({
+    id: 'water', type: 'water', tone: 'blue', icon: 'drop', eyebrow: 'Giữ nước',
+    title: 'Uống một cốc nước nhé', body: `Bạn đã uống ${wi.c}/${wi.cups} cốc, theo nhịp trong ngày thì lúc này nên khoảng ${wi.exp} cốc. Thiếu nước làm giảm tập trung rõ rệt.`,
+    chips: [`${wi.c}/${wi.cups} cốc`], primary: 'Đã uống 1 cốc', alt: 'Đã uống 2 cốc'
+  }, 6);
+
+  // 8. Khe trống ↔ đầu việc
   const plan = gapPlan(); let gapCards = 0, restShown = false;
   for (const p of plan) {
-    if (gapCards >= 3) break;
+    if (gapCards >= 2) break;
     if (p.match) {
-      const m = p.match, t = m.task;
-      cards.push({
-        id: `gap:${t.id}:${m.start}`, type: 'gap', tone: 'forest', icon: 'spark',
-        eyebrow: `Khe trống · ${hm(p.gap.start)}–${hm(p.gap.end)}`, title: t.title, body: gapReason(m),
-        chips: [fmtDur(t.dur), t.level === 'deep' ? 'Deep Work' : 'Nhẹ nhàng', `Bắt đầu ${hm(m.start)}`],
-        primary: `Chèn vào ${hm(m.start)}`, task: t.id, start: m.start
-      });
+      const mm = p.match, t = mm.task;
+      add({
+        id: `gap:${t.id}:${p.gap.end}`, type: 'gap', tone: 'forest', icon: 'spark',
+        eyebrow: `Khe trống · ${hm(p.gap.start)}–${hm(p.gap.end)}`, title: t.title, body: gapReason(mm),
+        chips: [fmtDur(t.dur), t.level === 'deep' ? 'Deep Work' : 'Nhẹ nhàng', `Bắt đầu ${hm(mm.start)}`],
+        primary: `Chèn vào ${hm(mm.start)}`, task: t.id, start: mm.start
+      }, 5);
       gapCards++;
     } else if (!restShown && p.gap.len >= 30) {
       restShown = true; gapCards++;
-      if (S.profile.goal === 'balance') cards.push({
-        id: `rest:${p.gap.start}`, type: 'rest', tone: 'sage', icon: 'cup',
+      if (P.goal === 'balance') add({
+        id: `rest:${p.gap.end}`, type: 'rest', tone: 'sage', icon: 'cup',
         eyebrow: `Khe trống · ${hm(p.gap.start)}–${hm(p.gap.end)}`, title: 'Nghỉ ngơi một chút',
-        body: `Khe ${fmtDur(p.gap.len)} chưa có việc nào vừa vặn. Aura gợi ý dành 15 phút để đứng dậy, uống nước và hít thở sâu.`,
+        body: `Khe ${fmtDur(p.gap.len)} chưa có việc nào vừa vặn. Aura gợi ý dành 15 phút để đứng dậy, vươn vai và hít thở sâu.`,
         chips: ['15 phút', 'Nghỉ ngơi'], primary: 'Chèn 15 phút nghỉ', start: p.gap.start
-      });
-      else cards.push({
-        id: `empty:${p.gap.start}`, type: 'empty', tone: 'sage', icon: 'spark',
+      }, 5);
+      else add({
+        id: `empty:${p.gap.end}`, type: 'empty', tone: 'sage', icon: 'spark',
         eyebrow: `Khe trống · ${hm(p.gap.start)}–${hm(p.gap.end)}`, title: 'Khe trống chưa có việc',
         body: `Thêm một đầu việc ${p.gap.len <= 30 ? 'ngắn' : 'cần tập trung'} vào kho để Aura xếp vào khoảng ${fmtDur(p.gap.len)} này.`,
         chips: [fmtDur(p.gap.len)], primary: 'Thêm đầu việc', start: p.gap.start
-      });
+      }, 5);
     }
   }
 
-  // 4. Dời lịch cuối ngày
+  // 9. Dời lịch cuối ngày
   if (now >= 1200) {
     const items = pendingItems();
     if (items.length) {
-      const planned = buildTomorrowPlan(), pk = PEAKS[S.profile.peak];
-      if (planned.length) cards.push({
+      const planned = buildTomorrowPlan();
+      if (planned.length) add({
         id: 'resched:' + planned.length + ':' + items.length, type: 'resched', tone: 'blue', icon: 'cal',
         eyebrow: `Cuối ngày · ${items.length} việc chưa xong`, title: 'Dời sang khung giờ vàng ngày mai',
-        body: `Aura sẽ xếp ${planned.length} việc vào khung ${pk.label.toLowerCase()} ${pk.range} — lúc bạn tỉnh táo nhất, ưu tiên Deep Work trước.`,
+        body: `Aura sẽ xếp ${planned.length} việc vào khung ${pk.label.toLowerCase()} ${pk.range} — lúc bạn tỉnh táo nhất, tránh giờ ăn và ưu tiên Deep Work trước.`,
         chips: planned.slice(0, 2).map(p => `${hm(p.start)} ${p.title.length > 16 ? p.title.slice(0, 15) + '…' : p.title}`).concat(planned.length > 2 ? [`+${planned.length - 2} việc`] : []),
         primary: 'Dời sang ngày mai'
-      });
+      }, 3);
     }
   }
 
-  // 5. Nhịp sinh học
-  if (now >= s - 60 && now < s && !S.ack['wind']) cards.push({
-    id: 'wind', type: 'wind', tone: 'blue', icon: 'moon', eyebrow: 'Nhịp sinh học', title: 'Sắp đến giờ đi ngủ',
-    body: `Bạn đi ngủ lúc ${hm(s)}. Giảm ánh sáng màn hình và gác lại việc còn dở — ngày mai Aura đã sắp sẵn.`,
-    chips: [`Ngủ lúc ${hm(s)}`, `Còn ${fmtDur(s - now)}`], primary: 'Đã rõ'
-  });
-  if (now < w && !S.ack['early']) cards.push({
-    id: 'early', type: 'early', tone: 'sage', icon: 'moon', eyebrow: 'Buổi sớm', title: `Bạn thức dậy lúc ${hm(w)}`,
+  // 10. Giấc ngủ: caffeine → lịch muộn → thư giãn
+  const sl = sleepInfo().sl, cutoff = sl - 480;
+  if (cutoff > w + 120 && now >= cutoff - 30 && now < cutoff + 60 && !S.ack.caff) add({
+    id: 'caff', type: 'caff', tone: 'clay', icon: 'cup', eyebrow: 'Nhịp sinh học', title: 'Giờ cà phê cuối trong ngày',
+    body: `Caffeine còn trong cơ thể nhiều giờ. Dừng sau ${hm(cutoff)} (8 giờ trước giờ ngủ ${hm(sl)}) để ngủ sâu hơn.`,
+    chips: [`Mốc ${hm(cutoff)}`], primary: 'Đã rõ'
+  }, 5);
+  const lateEv = evs.find(e => !e.done && e.kind !== 'break' && e.kind !== 'habit' && e.end > s - 30 && e.end <= 1440 && s < 1440 && now >= 1020 && !S.ack['late:' + e.id]);
+  if (lateEv) add({
+    id: 'late:' + lateEv.id, type: 'ack', tone: 'blue', icon: 'moon', eyebrow: 'Giữ giấc ngủ', title: `“${lateEv.title}” kết thúc sát giờ ngủ`,
+    body: `Kết thúc lúc ${hm(lateEv.end)}, giờ ngủ của bạn là ${hm(sl)}. Cân nhắc rút ngắn, dời sớm hơn hoặc để sang ngày mai.`,
+    chips: [`${hm(lateEv.start)}–${hm(lateEv.end)}`], primary: 'Đã rõ', ackId: 'late:' + lateEv.id
+  }, 3);
+  if (now >= s - 90 && now < s && !S.ack.wind) {
+    const si = sleepInfo(), need = +P.sleepNeed || 7.5, short = si.hrs < need - 0.25;
+    const st = Math.max(ceil5(now), s - 45), clash = S.events.some(e => e.start < st + 30 && e.end > st);
+    const mealsDone = mealStates(now).filter(x => x.state === 'done').length, mealsTot = mealStates(now).length;
+    const wi2 = waterInfo(now), chips = [];
+    if (mealsTot) chips.push(`Bữa ăn ${mealsDone}/${mealsTot}`);
+    if (wi2) chips.push(`Nước ${wi2.c}/${wi2.cups}`);
+    if (P.study.on && P.study.goal) chips.push(`Học ${Math.min(studyMin(now), 999)}/${P.study.goal}p`);
+    if (P.exercise.on) chips.push(exDone(now) ? 'Vận động ✓' : 'Chưa vận động');
+    add({
+      id: 'wind', type: st + 30 <= s && !clash ? 'relax' : 'ack', ackId: 'wind', start: st, tone: 'blue', icon: 'moon', eyebrow: 'Nhịp sinh học',
+      title: `Còn ${fmtDur(s - now)} nữa là đến giờ ngủ`,
+      body: (short ? `Lịch ngủ hiện tại chỉ ${fmtH(si.hrs)}, thấp hơn nhu cầu ${fmtH(need)} của bạn — hãy đi ngủ đúng giờ. ` : 'Giảm ánh sáng màn hình, gác việc còn dở. ') + 'Ngày mai Aura đã sắp sẵn.',
+      chips: chips.length ? chips : [`Ngủ lúc ${hm(s)}`], primary: st + 30 <= s && !clash ? `Chèn 30 phút thư giãn (${hm(st)})` : 'Đã rõ'
+    }, 2);
+  }
+  if (now < w && !S.ack.early) add({
+    id: 'early', type: 'ack', ackId: 'early', tone: 'sage', icon: 'moon', eyebrow: 'Buổi sớm', title: `Bạn thức dậy lúc ${hm(w)}`,
     body: 'Aura sẽ bắt đầu theo dõi ngày của bạn từ lúc đó. Ngủ thêm chút nữa nhé.', chips: [`Còn ${fmtDur(w - now)}`], primary: 'Đã rõ'
-  });
+  }, 0);
 
-  if (!cards.length) cards.push({
-    id: 'idle', type: 'idle', tone: 'sage', icon: 'check', eyebrow: 'Mọi thứ đang ổn', title: 'Không có gì cần làm ngay',
-    body: 'Aura đang theo dõi lịch trình và nhịp sinh học của bạn, sẽ lên tiếng khi có khe trống hoặc sự kiện sắp tới.',
-    chips: [`${S.events.length} lịch`, `${S.tasks.length} việc chờ`], primary: 'Quét lại'
-  });
-  return cards;
+  // Ẩn tạm các thẻ đã "Để sau"
+  const hidden = cards.filter(c => (S.snz[c.id] || 0) > now);
+  let vis = cards.filter(c => !((S.snz[c.id] || 0) > now));
+  vis.sort((a, b) => a.prio - b.prio || a.n - b.n);
+  if (!vis.length) vis = [{
+    id: 'idle', type: 'idle', tone: 'sage', icon: 'check', eyebrow: hidden.length ? 'Đã ẩn tạm' : 'Mọi thứ đang ổn',
+    title: hidden.length ? `${hidden.length} đề xuất sẽ quay lại sau` : 'Không có gì cần làm ngay',
+    body: 'Aura đang theo dõi lịch trình, bữa ăn, giấc ngủ và nhịp sinh học của bạn, sẽ lên tiếng khi có điều đáng chú ý.',
+    chips: [`${S.events.length} lịch`, `${S.tasks.length} việc chờ`], primary: hidden.length ? 'Hiện lại ngay' : 'Quét lại', hiddenN: hidden.length
+  }];
+  return vis;
 }
 
 /* =====================================================================
@@ -696,7 +973,7 @@ function insertTask(taskId, start, quiet) {
   const t = S.tasks.find(x => x.id === taskId); if (!t) return false;
   snapshot();
   S.tasks = S.tasks.filter(x => x.id !== taskId);
-  S.events.push({ id: uid(), title: t.title, start, end: start + t.dur, location: '', kind: 'task', level: t.level, done: false });
+  S.events.push({ id: uid(), title: t.title, start, end: start + t.dur, location: '', kind: 'task', level: t.level, cat: t.cat, done: false });
   changed();
   if (!quiet) toast(`Đã chèn “${t.title}” vào ${hm(start)}`, true);
   return true;
@@ -717,27 +994,74 @@ function deleteEvent(id) {
   snapshot(); S.events = S.events.filter(x => x.id !== id); changed(); toast(`Đã xóa “${e.title}”`, true);
 }
 
+function addHabit(title, start, dur, cat, msg) {
+  snapshot();
+  S.events.push({ id: uid(), title, start, end: start + dur, location: '', kind: 'habit', cat, done: false });
+  changed(); toast(msg || `Đã chèn “${title}” vào ${hm(start)}`, true);
+}
+function toggleMeal(key) {
+  const h = H(), now = nowMin(), st = mealStates(now).find(m => m.key === key); if (!st) return;
+  if (h.m[key] != null && h.m[key] <= now) { delete h.m[key]; changed(false); return; }
+  if (st.state === 'done') { toast('Bữa ăn này đã được tính từ lịch của bạn'); return; }
+  snapshot(); h.m[key] = now; changed(false); toast(`Đã ghi nhận ${st.lc}`, true);
+}
+function toggleEx() {
+  const h = H(), now = nowMin();
+  if (h.ex != null && h.ex <= now) { h.ex = null; changed(false); return; }
+  if (exDone(now)) { toast('Buổi tập đã được tính từ lịch của bạn'); return; }
+  snapshot(); h.ex = now; changed(false); toast('Đã ghi nhận buổi vận động hôm nay', true);
+}
+function logWater(n) {
+  const h = H(), now = nowMin();
+  if (n > 0) { snapshot(); for (let i = 0; i < n; i++) h.w.push(now); }
+  else { const i = h.w.map(t => t <= now).lastIndexOf(true); if (i >= 0) h.w.splice(i, 1); }
+  changed(false);
+}
+function logStudy(min) {
+  const h = H(), now = nowMin();
+  if (min > 0) { snapshot(); h.st.push({ t: now, min }); } else h.st.pop();
+  changed(false);
+}
+
 function runCard(c) {
   if (!c) return;
   switch (c.type) {
     case 'prep': S.ack[c.id] = true; changed(); toast('Đã ghi nhận — chúc bạn thuận lợi'); break;
     case 'live': { const e = S.events.find(x => x.id === c.ev); if (e) { snapshot(); e.done = true; changed(); toast(`Hoàn thành “${e.title}”`, true); } break; }
     case 'gap': insertTask(c.task, c.start); break;
-    case 'rest': addEvent({ title: 'Nghỉ ngơi', start: c.start, end: c.start + 15, kind: 'break' }); toast('Đã chèn 15 phút nghỉ', true); break;
+    case 'rest': addHabit('Nghỉ ngơi', c.start, 15, 'rest', 'Đã chèn 15 phút nghỉ'); break;
     case 'empty': openSheet('task'); break;
+    case 'meal': if (c.start != null) addHabit(MEALS.find(m => m[0] === c.key)[2], c.start, c.dur, 'meal'); else toggleMeal(c.key); break;
+    case 'ex': addHabit('Vận động', c.start, c.dur, 'exercise'); break;
+    case 'study': addHabit('Học tập', c.start, c.dur, 'study'); break;
+    case 'water': logWater(1); toast('Đã ghi nhận 1 cốc nước'); break;
+    case 'relax': addHabit('Thư giãn trước khi ngủ', c.start, 30, 'rest', `Đã chèn 30 phút thư giãn lúc ${hm(c.start)}`); S.ack.wind = true; save(); break;
     case 'resched': {
       snapshot();
       const planned = buildTomorrowPlan();
       const evIds = planned.filter(p => p.evId).map(p => p.evId), tIds = planned.filter(p => p.taskId).map(p => p.taskId);
       S.events = S.events.filter(e => !evIds.includes(e.id));
       S.tasks = S.tasks.filter(t => !tIds.includes(t.id));
-      S.plan = (S.planFor === tomorrowKey() ? S.plan : []).concat(planned.map(p => ({ title: p.title, dur: p.dur, level: p.level, start: p.start })));
+      S.plan = (S.planFor === tomorrowKey() ? S.plan : []).concat(planned.map(p => ({ title: p.title, dur: p.dur, level: p.level, cat: p.cat, start: p.start })));
       S.planFor = tomorrowKey();
       changed(); toast(`Đã dời ${planned.length} việc sang ngày mai`, true); break;
     }
-    case 'wind': case 'early': S.ack[c.id] = true; changed(false); break;
-    default: renderAll(true);
+    case 'idle': if (c.hiddenN) { S.snz = {}; changed(); } else { stackSig = ''; renderAll(true); } break;
+    default: S.ack[c.ackId || c.id] = true; changed(false);   // brief · caff · ack · early · wind
   }
+}
+function runAlt(c) {
+  if (!c) return;
+  if (c.type === 'meal') toggleMeal(c.key);
+  else if (c.type === 'ex') toggleEx();
+  else if (c.type === 'study') { logStudy(25); toast('Đã ghi nhận 25 phút học', true); }
+  else if (c.type === 'water') { logWater(2); toast('Đã ghi nhận 2 cốc nước'); }
+}
+function skipCard() {
+  const c = curCards[0];
+  if (!c || c.type === 'idle') { stackSig = ''; renderAll(false); return; }
+  snapshot(); S.snz[c.id] = nowMin() + 45; changed();
+  toast('Đã ẩn đề xuất 45 phút', true);
 }
 
 /* =====================================================================
@@ -788,33 +1112,32 @@ function renderSim() {
 /* ---------- Stack ---------- */
 let stackSig = '';
 function renderStack(shimmer) {
-  const cards = generateCards();
-  if (rot >= cards.length) rot = 0;
-  const ordered = cards.slice(rot).concat(cards.slice(0, rot));
+  const ordered = generateCards();
   curCards = ordered;
   const html = ordered.map((c, i) => `
     <article class="card t-${c.tone}${i === 0 ? ' top' : ''}" data-id="${esc(c.id)}" style="--i:${Math.min(i, 3)}" ${i > 2 ? 'data-hide="1"' : ''}>
       <span class="shine"></span>
-      <span class="hint hint-go">Thực hiện ✓</span><span class="hint hint-skip">Bỏ qua</span>
+      <span class="hint hint-go">Thực hiện ✓</span><span class="hint hint-skip">Để sau</span>
       <div class="c-head"><span class="c-ico">${ICON[c.icon]}</span><span class="c-eye">${esc(c.eyebrow)}</span></div>
       <h3>${esc(c.title)}</h3>
       <p>${esc(c.body)}</p>
       <div class="chips">${c.chips.map(x => `<span class="chip">${esc(x)}</span>`).join('')}</div>
-      <div class="c-foot">
+      <div class="c-foot ${c.alt ? 'two' : ''}">
         <button class="btn btn-pri" data-act="cardGo">${esc(c.primary)}</button>
-        ${ordered.length > 1 ? '<button class="btn btn-ghost" data-act="cardSkip">Bỏ qua</button>' : ''}
+        ${c.alt ? `<button class="btn btn-line" data-act="cardAlt">${esc(c.alt)}</button>` : ''}
+        ${c.type !== 'idle' ? '<button class="btn btn-ghost" data-act="cardSkip">Để sau</button>' : ''}
       </div>
     </article>`).join('');
-  const sig = ordered.map(c => c.id + '|' + c.eyebrow + '|' + c.body).join('§');
+  const sig = ordered.map(c => c.id + '|' + c.eyebrow + '|' + c.body + '|' + c.primary).join('§');
   const el = $('#stack');
-  const diff = sig !== stackSig;
-  if (diff) {
+  if (sig !== stackSig) {
     stackSig = sig; el.innerHTML = html;
     const top = $('.card.top', el); if (top) top.classList.add('enter');
   }
-  $('#stackCnt').textContent = cards.length === 1 && cards[0].type === 'idle' ? 'Đang theo dõi' : `${cards.length} đề xuất`;
-  setHTML($('#dots'), cards.length > 1 ? cards.map((_, i) => `<i class="${i === rot ? 'on' : ''}"></i>`).join('') : '');
-  $('#swipeTip').style.display = cards.length ? '' : 'none';
+  const idle = ordered.length === 1 && ordered[0].type === 'idle';
+  $('#stackCnt').textContent = idle ? 'Đang theo dõi' : `${ordered.length} đề xuất`;
+  setHTML($('#dots'), ordered.length > 1 ? ordered.map((_, i) => `<i class="${i === 0 ? 'on' : ''}"></i>`).join('') : '');
+  $('#swipeTip').style.display = idle ? 'none' : '';
   if (shimmer) runShimmer();
 }
 function runShimmer() {
@@ -826,21 +1149,32 @@ function runShimmer() {
 /* ---------- Timeline ---------- */
 function renderTimeline() {
   const now = nowMin(), plan = gapPlan();
-  const items = S.events.map(e => ({ s: e.start, t: 'ev', e })).concat(plan.map(p => ({ s: p.gap.start, t: 'gap', p })));
+  const items = S.events.map(e => ({ s: e.start, t: 'ev', e }))
+    .concat(plan.map(p => ({ s: p.gap.start, t: 'gap', p })))
+    .concat(virtualMeals(now).map(v => ({ s: v.start, t: 'rsv', v })));
   items.sort((a, b) => a.s - b.s || (a.t === 'ev' ? -1 : 1));
   const evCount = S.events.length;
   $('#tlCnt').textContent = evCount ? `${S.events.filter(e => e.done || e.end <= now).length}/${evCount} đã qua` : '';
   if (!items.length) { setHTML($('#tl'), `<div class="empty">Chưa có lịch nào hôm nay.<br>Bấm dấu + để thêm lịch hoặc nhập từ file .ics.</div>`); return; }
   setHTML($('#tl'), items.map(it => {
     if (it.t === 'ev') {
-      const e = it.e, live = !e.done && e.start <= now && now < e.end, past = e.done || e.end <= now;
-      const sub = e.kind === 'task' ? (e.level === 'deep' ? 'Deep Work' : 'Nhẹ nhàng') + (e.location ? ' · ' + e.location : '') : (e.kind === 'break' ? 'Nghỉ ngơi' : e.location || fmtDur(e.end - e.start));
+      const e = it.e, live = !e.done && e.start <= now && now < e.end, past = e.done || e.end <= now, c = catOf(e);
+      const sub = e.kind === 'task' ? (e.level === 'deep' ? 'Deep Work' : 'Nhẹ nhàng') + (e.location ? ' · ' + e.location : '')
+        : e.kind === 'habit' ? (catLabel[c] || 'Thói quen') + ' · ' + fmtDur(e.end - e.start)
+        : e.kind === 'break' ? 'Nghỉ ngơi' : (e.location || (c ? catLabel[c] + ' · ' : '') + fmtDur(e.end - e.start));
       return `<div class="row"><div class="tm">${hm(e.start)}<small>${hm(e.end)}</small></div>
         <div class="ev k-${e.kind || 'fixed'} ${e.level || ''} ${live ? 'live' : ''} ${past && !live ? 'past' : ''} ${e.done ? 'done' : ''}">
           <span class="bar"></span>
           <div class="body"><div class="nm">${esc(e.title)}</div><div class="sub">${esc(sub)}</div></div>
           <button class="tick" data-act="toggleEv" data-id="${e.id}" aria-label="Đánh dấu hoàn thành">${ICON.check}</button>
         </div></div>`;
+    }
+    if (it.t === 'rsv') {
+      const v = it.v;
+      return `<div class="row"><div class="tm">${hm(v.start)}<small>${hm(v.end)}</small></div>
+        <div class="rsv"><span class="gi">${ICON.cup}</span>
+          <div class="body"><div class="nm">Giữ chỗ · ${esc(v.cap)}</div><div class="sub">Aura không xếp việc khác đè lên khung này</div></div>
+          <button class="btn btn-line" data-act="insertMeal" data-key="${v.key}" data-start="${v.start}">Chèn</button></div></div>`;
     }
     const { gap: g, match: m } = it.p;
     return `<div class="row"><div class="tm">${hm(g.start)}<small>${hm(g.end)}</small></div>
@@ -853,6 +1187,50 @@ function renderTimeline() {
   }).join(''));
 }
 
+/* ---------- Nhịp ngày: ăn · ngủ · vận động · học · nước ---------- */
+function renderHabits() {
+  const P = S.profile, now = nowMin(), h = H(), rows = [];
+  let tot = 0, got = 0;
+  const si = sleepInfo(), need = +P.sleepNeed || 7.5, enough = si.hrs >= need - 0.25;
+  rows.push(`<div class="hab"><span class="hi t-blue">${ICON.moon}</span><div class="hb">
+    <div class="hn">Giấc ngủ<small>${fmtH(si.hrs)} / cần ${fmtH(need)}</small></div>
+    <div class="hc"><span class="st ${enough ? 'ok' : 'warn'}">${enough ? 'Đủ giấc' : 'Thiếu ' + fmtH(+(need - si.hrs).toFixed(2))}</span><span class="hmeta">Ngủ ${hm(si.sl)} · dậy ${hm(si.w)}</span></div></div></div>`);
+  if (P.meals.on) {
+    const ms = mealStates(now);
+    if (ms.length) {
+      const done = ms.filter(m => m.state === 'done').length; tot += ms.length; got += done;
+      rows.push(`<div class="hab"><span class="hi t-clay">${ICON.cup}</span><div class="hb">
+        <div class="hn">Bữa ăn<small>${done}/${ms.length}</small></div>
+        <div class="hc mealrow">${ms.map(m => `<button class="mc ${m.state}" data-act="logMeal" data-key="${m.key}" aria-label="${m.cap}">${m.short} ${hm(m.t)}</button>`).join('')}</div></div></div>`);
+    }
+  }
+  if (P.exercise.on) {
+    const X = P.exercise, d = exDone(now), pl = exPlanned(now), wk = weekEx() + (d ? 1 : 0);
+    tot++; got += d ? 1 : 0;
+    rows.push(`<div class="hab"><span class="hi t-sage">${ICON.run}</span><div class="hb">
+      <div class="hn">Vận động<small>Tuần này ${wk}/${X.perWeek} buổi</small></div>
+      <div class="hc"><div class="pbar"><i style="width:${Math.min(100, wk / X.perWeek * 100)}%;background:var(--sage)"></i></div>
+      <button class="mini" data-act="logEx">${d ? 'Đã tập ✓' : pl ? 'Đã lên lịch' : 'Đánh dấu đã tập'}</button></div></div></div>`);
+  }
+  if (P.study.on && P.study.goal > 0) {
+    const m = studyMin(now), g = P.study.goal; tot++; got += Math.min(1, m / g);
+    rows.push(`<div class="hab"><span class="hi t-blue">${ICON.book}</span><div class="hb">
+      <div class="hn">Học tập<small>${m}/${g} phút</small></div>
+      <div class="hc"><div class="pbar"><i style="width:${Math.min(100, m / g * 100)}%;background:var(--blue)"></i></div>
+      <button class="mini" data-act="studyPlus">+15p</button></div></div></div>`);
+  }
+  const wi = waterInfo(now);
+  if (wi) {
+    tot++; got += Math.min(1, wi.c / wi.cups);
+    rows.push(`<div class="hab"><span class="hi t-blue">${ICON.drop}</span><div class="hb">
+      <div class="hn">Nước<small>${wi.c}/${wi.cups} cốc</small></div>
+      <div class="hc"><div class="cups">${Array.from({ length: wi.cups }, (_, i) => `<i class="${i < wi.c ? 'on' : i < wi.exp ? 'due' : ''}"></i>`).join('')}</div>
+      <button class="icon-btn" data-act="waterMinus" aria-label="Bớt 1 cốc">−</button><button class="mini" data-act="waterPlus">+1</button></div></div></div>`);
+  }
+  $('#habCnt').textContent = tot ? `${Math.round(got / tot * 100)}% hôm nay` : '';
+  setHTML($('#habits'), rows.join(''));
+}
+
 /* ---------- Backlog ---------- */
 function renderBacklog() {
   $('#bkCnt').textContent = S.tasks.length;
@@ -860,7 +1238,7 @@ function renderBacklog() {
   if (!S.tasks.length) h += `<div class="note" style="padding:4px 0 8px">Kho đang trống. Thêm các việc chưa có giờ cố định, Aura sẽ tự tìm khe phù hợp.</div>`;
   h += S.tasks.map(t => `<div class="task">
     <button class="tick" data-act="doneTask" data-id="${t.id}" aria-label="Hoàn thành">${ICON.check}</button>
-    <div class="body"><div class="nm">${esc(t.title)}</div><div class="sub"><span>${fmtDur(t.dur)}</span><span class="tag ${t.level}">${t.level === 'deep' ? 'Deep Work' : 'Nhẹ nhàng'}</span></div></div>
+    <div class="body"><div class="nm">${esc(t.title)}</div><div class="sub"><span>${fmtDur(t.dur)}</span><span class="tag ${t.level}">${t.level === 'deep' ? 'Deep Work' : 'Nhẹ nhàng'}</span>${(t.cat || catOf(t)) ? `<span class="tag cat">${catLabel[t.cat || catOf(t)]}</span>` : ''}</div></div>
     <button class="mini" data-act="placeTask" data-id="${t.id}">Xếp lịch</button>
     <button class="icon-btn" data-act="delTask" data-id="${t.id}" aria-label="Xóa">${ICON.x}</button></div>`).join('');
   if (S.planFor === tomorrowKey() && S.plan.length) {
@@ -921,7 +1299,7 @@ function renderCal() {
 }
 
 function renderAll(shimmer = false) {
-  renderHeader(); renderPill(); renderSim(); renderStack(shimmer); renderTimeline(); renderBacklog(); renderCal();
+  renderHeader(); renderPill(); renderSim(); renderStack(shimmer); renderHabits(); renderTimeline(); renderBacklog(); renderCal();
 }
 
 /* =====================================================================
@@ -1035,10 +1413,10 @@ function commitEvents(list, replace) {
 /* =====================================================================
    Bottom sheet
    ===================================================================== */
-const sh = { open: false, tab: 'task', edit: null, start: 540, end: 600, dur: 30, level: 'deep', staged: null, replace: false };
+const sh = { open: false, tab: 'task', edit: null, start: 540, end: 600, dur: 30, level: 'deep', cat: null, staged: null, replace: false };
 function openSheet(tabName = 'task', opts = {}) {
   Object.assign(sh, { open: true, tab: tabName, edit: opts.edit || null, start: opts.start ?? 540, end: opts.end ?? ((opts.start ?? 540) + 60), staged: null, replace: false });
-  if (tabName === 'task') { sh.dur = 30; sh.level = 'deep'; }
+  if (tabName === 'task') { sh.dur = 30; sh.level = 'deep'; sh.cat = null; }
   renderSheet();
   const w = $('#sheetWrap'); w.classList.add('open'); w.setAttribute('aria-hidden', 'false');
   requestAnimationFrame(placeGliders);
@@ -1057,6 +1435,8 @@ function renderSheet() {
       <div class="cg" id="tkDur">${[15, 25, 30, 45, 60, 90, 120].map(d => `<button data-dur="${d}" class="${d === sh.dur ? 'on' : ''}">${fmtDur(d)}</button>`).join('')}</div></div>
     <div class="fld"><span class="lbl">Mức độ</span>
       <div class="seg" id="tkLvl"><span class="glider"></span><button data-lvl="deep" class="${sh.level === 'deep' ? 'on' : ''}">Deep Work</button><button data-lvl="light" class="${sh.level === 'light' ? 'on' : ''}">Nhẹ nhàng</button></div></div>
+    <div class="fld"><span class="lbl">Loại (tự nhận diện nếu bỏ trống)</span>
+      <div class="cg" id="tkCat">${[['work', 'Công việc'], ['study', 'Học tập'], ['life', 'Cá nhân']].map(([k, l]) => `<button data-cat="${k}" class="${sh.cat === k ? 'on' : ''}">${l}</button>`).join('')}</div></div>
     <div class="actions"><button class="btn btn-ghost" data-act="closeSheet">Hủy</button><button class="btn btn-pri" id="tkSave">Thêm vào kho</button></div>`;
   } else if (sh.tab === 'event') {
     const e = sh.edit ? S.events.find(x => x.id === sh.edit) : null;
@@ -1096,12 +1476,14 @@ $('#shBody').addEventListener('click', e => {
   const t = e.target;
   const dur = t.closest('[data-dur]');
   if (dur) { sh.dur = +dur.dataset.dur; $$('#tkDur button').forEach(b => b.classList.toggle('on', b === dur)); return; }
+  const cat = t.closest('[data-cat]');
+  if (cat) { sh.cat = sh.cat === cat.dataset.cat ? null : cat.dataset.cat; $$('#tkCat button').forEach(b => b.classList.toggle('on', b.dataset.cat === sh.cat)); return; }
   const lvl = t.closest('[data-lvl]');
   if (lvl) { sh.level = lvl.dataset.lvl; setActive($('#tkLvl'), 'data-lvl', sh.level); return; }
   if (t.closest('#tkSave')) {
     const title = $('#tkTitle').value.trim();
     if (!title) { $('#tkTitle').focus(); toast('Hãy nhập tên đầu việc'); return; }
-    snapshot(); S.tasks.push({ id: uid(), title, dur: sh.dur, level: sh.level });
+    snapshot(); S.tasks.push({ id: uid(), title, dur: sh.dur, level: sh.level, cat: sh.cat || catOf({ title }) || 'work' });
     closeSheet(); drawerOpen = true; syncDrawer(); changed(); toast(`Đã thêm “${title}” vào kho`, true); return;
   }
   if (t.closest('#evSave')) {
@@ -1131,9 +1513,23 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && sh.open) c
    Onboarding (3 bước)
    ===================================================================== */
 const ob = { step: 1, d: null, staged: null, replace: true, sample: false };
+const OB_STEPS = 4;
 function openOnboarding() {
-  ob.step = 1; ob.d = { ...S.profile }; ob.staged = null; ob.sample = false; ob.replace = !S.events.length;
+  ob.step = 1; ob.d = JSON.parse(JSON.stringify(S.profile)); ob.staged = null; ob.sample = false; ob.replace = !S.events.length;
   renderOb(); $('#ob').classList.add('open'); $('#ob').scrollTop = 0;
+}
+function segHTML(path, opts, cur) {
+  return `<div class="seg sm"><span class="glider"></span>${opts.map(([v, l]) => `<button data-set="${path}" data-val="${v}" class="${String(cur) === String(v) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+}
+function sleepHint(d) {
+  const w = pm(d.wake), sl = pm(d.sleep); if (w == null || sl == null) return '';
+  let hrs = ((w - sl + 1440) % 1440) / 60; if (hrs === 0) hrs = 24;
+  const need = +d.sleepNeed || 7.5, short = hrs < need - 0.25;
+  return `<span class="${short ? 'warn' : 'ok'}">Bạn ngủ khoảng <b>${fmtH(hrs)}</b> mỗi đêm${short ? ` — thiếu ${fmtH(+(need - hrs).toFixed(2))} so với nhu cầu. Aura sẽ nhắc đi ngủ sớm hơn.` : ' — đủ giấc.'}</span>`;
+}
+function habitBlock(key, title, sub, on, inner) {
+  return `<div class="hbk ${on ? 'on' : ''}"><div class="hbk-h"><div><b>${title}</b><small>${sub}</small></div>
+    <button class="swc ${on ? 'on' : ''}" data-sw="${key}" role="switch" aria-checked="${on}" aria-label="${title}"></button></div>${on ? `<div class="hbk-b">${inner}</div>` : ''}</div>`;
 }
 function renderOb() {
   const d = ob.d, onb = S.profile.onboarded;
@@ -1144,18 +1540,37 @@ function renderOb() {
     <div class="fld"><label for="obName">Tên gọi của bạn</label><input class="inp" id="obName" placeholder="VD: Minh" maxlength="24" autocomplete="given-name" value="${esc(d.name)}"></div>
     <div class="two fld"><div><label for="obWake">Giờ thức dậy</label><input class="inp" type="time" id="obWake" value="${esc(d.wake)}"></div>
     <div><label for="obSleep">Giờ đi ngủ</label><input class="inp" type="time" id="obSleep" value="${esc(d.sleep)}"></div></div>
+    <div class="fld"><span class="lbl">Bạn cần ngủ bao lâu mỗi đêm</span>${segHTML('sleepNeed', [[6, '6g'], [7, '7g'], [7.5, '7,5g'], [8, '8g'], [9, '9g']], d.sleepNeed)}
+      <div class="hint-line" id="obHint">${sleepHint(d)}</div></div>
     <div class="fld"><span class="lbl">Khung giờ bạn tỉnh táo nhất</span><div class="opts">
       ${Object.entries(PEAKS).map(([k, p]) => `<button class="opt ${d.peak === k ? 'on' : ''}" data-peak="${k}"><span class="rd"></span><span><b>${p.label}</b><small>${p.range}</small></span></button>`).join('')}
     </div></div>`;
   if (ob.step === 2) body = `
+    <h2>Những điều cơ thể cần mỗi ngày</h2>
+    <p class="lead">Aura sẽ giữ chỗ và nhắc đúng lúc để việc ăn, vận động, học tập không bị lịch dày đè mất. Tắt mục nào bạn không cần.</p>
+    <div class="hbks">
+    ${habitBlock('meals', 'Bữa ăn', 'Giữ chỗ và nhắc khi sắp lỡ bữa', d.meals.on, `
+      <div class="three"><div><label for="mBf">Sáng</label><input class="inp" type="time" id="mBf" value="${esc(d.meals.breakfast)}"></div>
+      <div><label for="mLn">Trưa</label><input class="inp" type="time" id="mLn" value="${esc(d.meals.lunch)}"></div>
+      <div><label for="mDn">Tối</label><input class="inp" type="time" id="mDn" value="${esc(d.meals.dinner)}"></div></div>
+      <span class="lbl" style="margin-top:12px">Thời lượng mỗi bữa</span>${segHTML('meals.dur', [[20, '20p'], [30, '30p'], [45, '45p']], d.meals.dur)}`)}
+    ${habitBlock('exercise', 'Vận động', 'Tìm khe tập cách xa bữa ăn và giờ ngủ', d.exercise.on, `
+      <span class="lbl">Thời điểm ưa thích</span>${segHTML('exercise.when', [['morning', 'Sáng'], ['afternoon', 'Chiều'], ['evening', 'Tối']], d.exercise.when)}
+      <span class="lbl" style="margin-top:12px">Mỗi buổi</span>${segHTML('exercise.dur', [[20, '20p'], [30, '30p'], [45, '45p'], [60, '60p']], d.exercise.dur)}
+      <span class="lbl" style="margin-top:12px">Số buổi mỗi tuần</span>${segHTML('exercise.perWeek', [[3, '3'], [4, '4'], [5, '5'], [7, 'Mỗi ngày']], d.exercise.perWeek)}`)}
+    ${habitBlock('study', 'Học tập & phát triển', 'Đặt mục tiêu phút học mỗi ngày', d.study.on, `
+      <span class="lbl">Mục tiêu mỗi ngày</span>${segHTML('study.goal', [[30, '30p'], [60, '1 giờ'], [90, '1,5 giờ'], [120, '2 giờ']], d.study.goal)}`)}
+    ${habitBlock('water', 'Uống nước', 'Nhắc khi bạn tụt khỏi nhịp trong ngày', d.water.on, `
+      <span class="lbl">Số cốc (250 ml) mỗi ngày</span>${segHTML('water.cups', [[6, '6'], [8, '8'], [10, '10']], d.water.cups)}`)}
+    </div>`;
+  if (ob.step === 3) body = `
     <h2>Aura nên gợi ý theo cách nào?</h2>
     <p class="lead">Chọn mục tiêu ưu tiên — bạn có thể đổi lại bất cứ lúc nào qua nút hồ sơ.</p>
     <div class="opts" style="margin-top:20px">
       ${Object.entries(GOALS).map(([k, g]) => `<button class="opt ${d.goal === k ? 'on' : ''}" data-goal="${k}"><span class="rd"></span><span><b>${g.t}</b><small>${g.d}</small></span></button>`).join('')}
     </div>
-    <div class="fld" style="margin-top:22px"><span class="lbl">Nhắc chuẩn bị trước sự kiện</span>
-      <div class="seg" id="obLead"><span class="glider"></span><button data-lead="45" class="${+d.lead === 45 ? 'on' : ''}">45 phút</button><button data-lead="20" class="${+d.lead === 20 ? 'on' : ''}">20 phút</button></div></div>`;
-  if (ob.step === 3) body = `
+    <div class="fld" style="margin-top:22px"><span class="lbl">Nhắc chuẩn bị trước sự kiện</span>${segHTML('lead', [[45, '45 phút'], [20, '20 phút']], d.lead)}</div>`;
+  if (ob.step === 4) body = `
     <h2>Nạp lịch ban đầu</h2>
     <p class="lead">Cho Aura biết lịch cố định của bạn để tìm ra các khe trống. Bạn có thể bỏ qua và thêm sau.</p>
     <label class="drop" for="obFile" style="margin-top:20px">${ICON.file}<span>Tải file .ics</span><input type="file" id="obFile" accept=".ics,text/calendar"></label>
@@ -1164,10 +1579,10 @@ function renderOb() {
     <div id="obPv"></div>`;
   $('#obIn').innerHTML = `
     <div class="ob-top"><span class="logo"><i></i>Aura</span>${onb ? `<button class="icon-btn" id="obClose" aria-label="Đóng">${ICON.x}</button>` : ''}</div>
-    <div class="prog">${[1, 2, 3].map(i => `<i class="${i <= ob.step ? 'on' : ''}"></i>`).join('')}</div>
+    <div class="prog">${Array.from({ length: OB_STEPS }, (_, i) => `<i class="${i + 1 <= ob.step ? 'on' : ''}"></i>`).join('')}</div>
     <div class="ob-step" id="obStep">${body}</div>
-    <div class="ob-foot">${ob.step > 1 ? '<button class="btn btn-ghost" id="obBack">Quay lại</button>' : ''}<button class="btn btn-pri" id="obNext">${ob.step === 3 ? (onb ? 'Lưu hồ sơ' : 'Bắt đầu cùng Aura') : 'Tiếp tục'}</button></div>`;
-  if (ob.step === 3) renderObPv();
+    <div class="ob-foot">${ob.step > 1 ? '<button class="btn btn-ghost" id="obBack">Quay lại</button>' : ''}<button class="btn btn-pri" id="obNext">${ob.step === OB_STEPS ? (onb ? 'Lưu hồ sơ' : 'Bắt đầu cùng Aura') : 'Tiếp tục'}</button></div>`;
+  if (ob.step === 4) renderObPv();
   requestAnimationFrame(placeGliders);
 }
 function renderObPv() {
@@ -1179,17 +1594,36 @@ function renderObPv() {
     : `<div class="pv">Không nhận diện được sự kiện nào. Hãy kiểm tra định dạng <b>08:00 - 09:45 Tên sự kiện</b>.</div>`;
 }
 function readObStep() {
+  const v = id => { const el = $(id); return el ? el.value : null; };
   if (ob.step === 1) {
-    const g = id => { const el = $(id); return el ? el.value : null; };
-    ob.d.name = (g('#obName') ?? ob.d.name).trim();
-    ob.d.wake = g('#obWake') || ob.d.wake; ob.d.sleep = g('#obSleep') || ob.d.sleep;
+    ob.d.name = (v('#obName') ?? ob.d.name).trim();
+    ob.d.wake = v('#obWake') || ob.d.wake; ob.d.sleep = v('#obSleep') || ob.d.sleep;
+  }
+  if (ob.step === 2 && ob.d.meals.on) {
+    const m = ob.d.meals;
+    if ($('#mBf')) { m.breakfast = v('#mBf') || ''; m.lunch = v('#mLn') || ''; m.dinner = v('#mDn') || ''; }
   }
 }
+$('#obIn').addEventListener('input', e => {
+  if (e.target.id === 'obWake' || e.target.id === 'obSleep') {
+    ob.d.wake = $('#obWake').value || ob.d.wake; ob.d.sleep = $('#obSleep').value || ob.d.sleep;
+    $('#obHint').innerHTML = sleepHint(ob.d);
+  }
+});
 $('#obIn').addEventListener('click', e => {
   const t = e.target;
+  const set = t.closest('[data-set]');
+  if (set) {
+    const path = set.dataset.set.split('.'), raw = set.dataset.val, val = raw !== '' && !isNaN(raw) ? +raw : raw;
+    if (path.length === 2) ob.d[path[0]][path[1]] = val; else ob.d[path[0]] = val;
+    const seg = set.closest('.seg'); $$('button', seg).forEach(b => b.classList.toggle('on', b === set)); placeGlider(seg);
+    if (path[0] === 'sleepNeed') $('#obHint').innerHTML = sleepHint(ob.d);
+    return;
+  }
+  const sw = t.closest('[data-sw]');
+  if (sw) { readObStep(); const k = sw.dataset.sw; ob.d[k].on = !ob.d[k].on; const y = $('#ob').scrollTop; renderOb(); $('#ob').scrollTop = y; return; }
   const pk = t.closest('[data-peak]'); if (pk) { readObStep(); ob.d.peak = pk.dataset.peak; $$('[data-peak]').forEach(b => b.classList.toggle('on', b === pk)); return; }
   const gl = t.closest('[data-goal]'); if (gl) { ob.d.goal = gl.dataset.goal; $$('[data-goal]').forEach(b => b.classList.toggle('on', b === gl)); return; }
-  const ld = t.closest('[data-lead]'); if (ld) { ob.d.lead = +ld.dataset.lead; setActive($('#obLead'), 'data-lead', ob.d.lead); return; }
   if (t.closest('#obClose')) { $('#ob').classList.remove('open'); return; }
   if (t.closest('#obBack')) { readObStep(); ob.step--; renderOb(); return; }
   if (t.closest('#obParse')) { ob.sample = false; ob.staged = parseText($('#obTxt').value); renderObPv(); return; }
@@ -1197,11 +1631,11 @@ $('#obIn').addEventListener('click', e => {
   if (t.closest('#obNext')) {
     readObStep();
     if (ob.step === 1) {
-      const w = pm(ob.d.wake), s = pm(ob.d.sleep);
-      if (w == null || s == null) { toast('Hãy chọn giờ thức dậy và giờ đi ngủ'); return; }
-      if (s <= w) { toast('Giờ đi ngủ cần sau giờ thức dậy trong cùng ngày'); return; }
+      const w = pm(ob.d.wake), sl = pm(ob.d.sleep);
+      if (w == null || sl == null) { toast('Hãy chọn giờ thức dậy và giờ đi ngủ'); return; }
+      if (w === sl) { toast('Giờ thức dậy và giờ đi ngủ không được trùng nhau'); return; }
     }
-    if (ob.step < 3) { ob.step++; renderOb(); $('#ob').scrollTop = 0; return; }
+    if (ob.step < OB_STEPS) { ob.step++; renderOb(); $('#ob').scrollTop = 0; return; }
     finishOb();
   }
 });
@@ -1216,6 +1650,7 @@ $('#obIn').addEventListener('change', async e => {
 function finishOb() {
   snapshot();
   S.profile = { ...ob.d, name: ob.d.name || '', onboarded: true };
+  S.snz = {};
   if (ob.staged && ob.staged.events.length) {
     commitEvents(ob.staged.events, ob.replace);
     if (ob.sample && !S.tasks.length) sampleData().tasks.forEach(t => S.tasks.push({ id: uid(), ...t }));
@@ -1252,13 +1687,20 @@ document.addEventListener('click', e => {
     case 'closeSheet': closeSheet(); break;
     case 'cardGo': runCard((curCards || [])[0]); break;
     case 'cardSkip': skipCard(); break;
+    case 'cardAlt': runAlt(curCards[0]); break;
+    case 'logMeal': toggleMeal(a.dataset.key); break;
+    case 'logEx': toggleEx(); break;
+    case 'studyPlus': logStudy(15); break;
+    case 'waterPlus': logWater(1); break;
+    case 'waterMinus': logWater(-1); break;
+    case 'insertMeal': { const m = MEALS.find(x => x[0] === a.dataset.key); addHabit(m[2], +a.dataset.start, +S.profile.meals.dur || 30, 'meal'); break; }
   }
 });
 $('#drawerBtn').addEventListener('click', () => { drawerOpen = !drawerOpen; syncDrawer(); });
 $('#tabSeg').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) switchTab(b.dataset.tab); });
 $('#simSeg').addEventListener('click', e => {
   const b = e.target.closest('[data-sim]'); if (!b) return;
-  sim = b.dataset.sim === 'now' ? null : +b.dataset.sim; rot = 0; renderAll(true);
+  sim = b.dataset.sim === 'now' ? null : +b.dataset.sim; S.snz = {}; renderAll(true);
 });
 $('#pill').addEventListener('click', () => { rot = 0; renderAll(true); toast('Aura vừa quét lại ngữ cảnh của bạn'); });
 $('#fab').addEventListener('click', () => openSheet(tab === 'cal' ? 'event' : 'task'));
@@ -1267,7 +1709,6 @@ $('#btnProfile').addEventListener('click', openOnboarding);
 /* =====================================================================
    Swipe on proactive card (touch + mouse)
    ===================================================================== */
-function skipCard() { if ((curCards || []).length > 1) { rot++; renderAll(true); } }
 const sw = { el: null, x0: 0, y0: 0, dx: 0, lock: null };
 function swStart(card, x, y) { sw.el = card; sw.x0 = x; sw.y0 = y; sw.dx = 0; sw.lock = null; }
 function swMove(x, y, ev) {
@@ -1295,7 +1736,7 @@ function swEnd() {
   if (Math.abs(dx) > 100) {
     const dir = dx > 0 ? 1 : -1;
     el.style.transform = `translateX(${dir * 130}%) rotate(${dir * 14}deg)`; el.style.opacity = 0;
-    setTimeout(() => { if (dir > 0) runCard(card); else if ((curCards || []).length > 1) { rot++; renderAll(true); } else { el.style.transform = ''; el.style.opacity = ''; el.style.transition = ''; $$('.hint', el).forEach(h => h.style.opacity = 0); } }, 260);
+    setTimeout(() => { if (dir > 0) runCard(card); else skipCard(); if (el.isConnected) { el.style.transition = ''; el.style.transform = ''; el.style.opacity = ''; $$('.hint', el).forEach(h => h.style.opacity = 0); } }, 260);
   } else {
     el.style.transform = ''; $$('.hint', el).forEach(h => h.style.opacity = 0);
     setTimeout(() => { el.style.transition = ''; }, 600);
