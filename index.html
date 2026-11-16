@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FAF9F6">
+<title>Aura — Trợ lý cá nhân chủ động</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FAF9F6; --card:#FFFFFF; --surface:#F2F0EB;
+  --ink:#1A1917; --ink2:#68645E; --ink3:#97928A;
+  --forest:#284133; --clay:#D96B43; --blue:#2B6CB0; --sage:#388E68;
+  --forest-t:#E8EEEA; --clay-t:#FBEEE8; --blue-t:#E8F0F9; --sage-t:#E6F2EC;
+  --line:1px solid rgba(26,25,23,.07);
+  --line-c:rgba(26,25,23,.07);
+  --shadow:0 1px 2px rgba(26,25,23,.04),0 10px 30px -12px rgba(26,25,23,.14);
+  --shadow-lg:0 2px 4px rgba(26,25,23,.05),0 24px 48px -16px rgba(26,25,23,.22);
+  --spring:cubic-bezier(0.22,1,0.36,1);
+  --r:20px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--paper)}
+body{
+  font-family:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.5;letter-spacing:.005em;
+  -webkit-font-smoothing:antialiased;min-height:100vh;
+}
+body.no-select{user-select:none;-webkit-user-select:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter-spacing:inherit}
+input,textarea{font:inherit;color:inherit;letter-spacing:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--forest);outline-offset:2px}
+.app{max-width:440px;margin:0 auto;min-height:100vh;padding:0 20px 150px;position:relative}
+@media(min-width:441px){.app{border-left:var(--line);border-right:var(--line);background:var(--paper)}body{background:#F1EFEA}}
+
+/* ---------- Header ---------- */
+.top{padding:calc(env(safe-area-inset-top,0px) + 28px) 0 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.hello small{display:block;font-size:12.5px;color:var(--ink2);font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+.hello h1{font-size:25px;line-height:1.25;font-weight:600;letter-spacing:-.015em;margin-top:4px}
+.avatar{width:42px;height:42px;border-radius:50%;background:var(--forest);color:#fff;font-weight:600;font-size:16px;display:grid;place-items:center;flex:none;transition:transform .5s var(--spring)}
+.avatar:active{transform:scale(.92)}
+
+/* ---------- Status pill ---------- */
+.pill{
+  width:100%;display:flex;align-items:center;gap:10px;text-align:left;
+  background:var(--card);border:var(--line);border-radius:999px;padding:11px 16px;box-shadow:var(--shadow);
+  font-size:13.5px;color:var(--ink2);transition:transform .5s var(--spring);
+}
+.pill:active{transform:scale(.985)}
+.pill b{color:var(--ink);font-weight:600}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:var(--sage);flex:none;box-shadow:0 0 0 4px rgba(56,142,104,.14)}
+.pill.warn .dot{background:var(--clay);box-shadow:0 0 0 4px rgba(217,107,67,.16)}
+.pill .txt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill .rescan{flex:none;color:var(--ink3);display:grid}
+
+/* ---------- Segmented + glider ---------- */
+.seg{position:relative;display:flex;background:var(--surface);border-radius:14px;padding:3px}
+.seg>button{position:relative;z-index:1;flex:1;padding:8px 4px;font-size:13px;font-weight:500;color:var(--ink2);border-radius:11px;transition:color .4s var(--spring);white-space:nowrap}
+.seg>button.on{color:var(--ink);font-weight:600}
+.glider{position:absolute;top:3px;bottom:3px;left:0;width:0;border-radius:11px;background:var(--card);box-shadow:0 1px 2px rgba(26,25,23,.08),0 4px 10px -4px rgba(26,25,23,.12);transition:transform .55s var(--spring),width .55s var(--spring),opacity .3s;z-index:0}
+.sim{margin:14px 0 4px}
+.sim-cap{font-size:11.5px;color:var(--ink3);margin:0 2px 6px;letter-spacing:.03em}
+.sim .seg>button{font-variant-numeric:tabular-nums;font-size:12.5px;padding:8px 2px}
+.sim .seg>button.now{display:flex;align-items:center;justify-content:center;gap:5px}
+.sim .seg>button.now i{width:6px;height:6px;border-radius:50%;background:var(--clay);display:block}
+
+/* ---------- Sections ---------- */
+.sec{margin-top:30px}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;margin:0 2px 12px}
+.sec-h h2{font-size:15px;font-weight:600;letter-spacing:-.005em}
+.sec-h span{font-size:12.5px;color:var(--ink2)}
+.view{display:none}
+.view.on{display:block;animation:viewIn .6s var(--spring)}
+@keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ---------- Smart stack ---------- */
+.stack{display:grid;padding-bottom:26px;position:relative;touch-action:pan-y}
+.card{
+  grid-area:1/1;position:relative;overflow:hidden;
+  background:var(--card);border:var(--line);border-radius:26px;padding:22px 22px 20px;box-shadow:var(--shadow-lg);
+  display:flex;flex-direction:column;gap:12px;
+  transform-origin:50% 100%;
+  transform:translateY(calc(var(--i)*11px)) scale(calc(1 - var(--i)*.045));
+  opacity:calc(1 - var(--i)*.3);
+  transition:transform .6s var(--spring),opacity .5s var(--spring);
+  user-select:none;-webkit-user-select:none;
+}
+.card:not(.top){pointer-events:none}
+.card[data-hide="1"]{visibility:hidden}
+.card.top{cursor:grab;z-index:5}
+.card.top.enter{animation:cardIn .7s var(--spring)}
+.card.dragging{transition:none;cursor:grabbing}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+.card .shine{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:inherit}
+.card .shine::after{content:"";position:absolute;top:-10%;bottom:-10%;left:0;width:55%;transform:translateX(-130%) skewX(-18deg);
+  background:linear-gradient(100deg,transparent 0%,rgba(255,255,255,.0) 20%,rgba(255,255,255,.85) 50%,rgba(255,255,255,0) 80%,transparent 100%);opacity:0}
+.card .shine.run::after{animation:shimmer-sweep 1.3s var(--spring)}
+@keyframes shimmer-sweep{0%{transform:translateX(-130%) skewX(-18deg);opacity:1}100%{transform:translateX(330%) skewX(-18deg);opacity:1}}
+.card .shine.run{background:linear-gradient(100deg,transparent 30%,rgba(40,65,51,.03) 50%,transparent 70%)}
+.c-head{display:flex;align-items:center;gap:10px}
+.c-ico{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none}
+.c-ico svg{width:18px;height:18px}
+.c-eye{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2)}
+.t-clay .c-ico{background:var(--clay-t);color:var(--clay)}
+.t-forest .c-ico{background:var(--forest-t);color:var(--forest)}
+.t-blue .c-ico{background:var(--blue-t);color:var(--blue)}
+.t-sage .c-ico{background:var(--sage-t);color:var(--sage)}
+.t-clay .c-eye{color:var(--clay)} .t-blue .c-eye{color:var(--blue)} .t-sage .c-eye{color:var(--sage)} .t-forest .c-eye{color:var(--forest)}
+.card h3{font-size:21px;line-height:1.3;font-weight:600;letter-spacing:-.015em}
+.card p{font-size:14px;line-height:1.6;color:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;font-weight:500;background:var(--surface);color:var(--ink2);padding:4px 10px;border-radius:999px;white-space:nowrap}
+.c-foot{display:flex;gap:8px;margin-top:4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:600;padding:12px 18px;border-radius:14px;transition:transform .45s var(--spring),background .3s,opacity .3s}
+.btn:active{transform:scale(.96)}
+.btn-pri{background:var(--forest);color:#fff;flex:1}
+.t-clay .btn-pri{background:var(--clay)} .t-blue .btn-pri{background:var(--blue)} .t-sage .btn-pri{background:var(--sage)}
+.btn-ghost{background:var(--surface);color:var(--ink2)}
+.btn-line{border:var(--line);background:var(--card);color:var(--ink)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.hint{position:absolute;top:18px;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600;opacity:0;pointer-events:none;letter-spacing:.03em}
+.hint-go{right:18px;background:var(--forest);color:#fff}
+.hint-skip{left:18px;background:var(--surface);color:var(--ink2)}
+.dots{display:flex;justify-content:center;gap:6px;margin-top:-6px;align-items:center}
+.dots i{width:6px;height:6px;border-radius:99px;background:rgba(26,25,23,.14);transition:all .5s var(--spring)}
+.dots i.on{width:18px;background:var(--forest)}
+.swipe-tip{text-align:center;font-size:11.5px;color:var(--ink3);margin-top:8px;letter-spacing:.02em}
+
+/* ---------- Timeline ---------- */
+.tl{position:relative;display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:12px;align-items:stretch}
+.row .tm{width:44px;flex:none;font-size:12.5px;color:var(--ink2);font-variant-numeric:tabular-nums;padding-top:14px;line-height:1.3}
+.row .tm small{display:block;color:var(--ink3);font-size:11.5px}
+.ev{flex:1;min-width:0;display:flex;align-items:center;gap:12px;background:var(--card);border:var(--line);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow);transition:opacity .5s var(--spring),transform .5s var(--spring),border-color .4s}
+.ev .bar{width:3px;align-self:stretch;border-radius:3px;background:var(--forest);flex:none}
+.ev.k-task.deep .bar{background:var(--blue)} .ev.k-task.light .bar{background:var(--sage)} .ev.k-break .bar{background:var(--ink3)}
+.ev .body{flex:1;min-width:0}
+.ev .nm{font-size:14.5px;font-weight:600;letter-spacing:-.005em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev .sub{font-size:12.5px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev.live{border-color:rgba(40,65,51,.4);box-shadow:0 0 0 3px rgba(40,65,51,.07),var(--shadow);transform:scale(1.012)}
+.ev.live .nm::after{content:"Đang diễn ra";margin-left:8px;font-size:10.5px;font-weight:600;color:var(--forest);background:var(--forest-t);padding:2px 8px;border-radius:99px;vertical-align:1px;letter-spacing:.02em}
+.ev.past{opacity:.5}
+.ev.done .nm{text-decoration:line-through;text-decoration-color:var(--ink3)}
+.tick{width:26px;height:26px;border-radius:50%;border:1.5px solid rgba(26,25,23,.22);display:grid;place-items:center;flex:none;color:transparent;transition:all .45s var(--spring)}
+.tick svg{width:14px;height:14px}
+.tick:active{transform:scale(.88)}
+.ev.done .tick,.tick.on{background:var(--sage);border-color:var(--sage);color:#fff}
+.gap{flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:1.5px dashed rgba(56,142,104,.38);background:rgba(56,142,104,.045);border-radius:16px;padding:11px 14px}
+.gap .gi{color:var(--sage);flex:none;display:grid}
+.gap .gi svg{width:18px;height:18px}
+.gap .body{flex:1;min-width:0}
+.gap .nm{font-size:13px;font-weight:600;color:var(--sage)}
+.gap .sub{font-size:12.5px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gap .btn{padding:7px 12px;font-size:12.5px;border-radius:11px;flex:none}
+.empty{font-size:13.5px;color:var(--ink2);text-align:center;padding:26px 10px;background:var(--card);border:var(--line);border-radius:18px}
+
+/* ---------- Backlog drawer ---------- */
+.drawer{background:var(--card);border:var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+.drawer-h{width:100%;display:flex;align-items:center;gap:10px;padding:16px 18px;text-align:left}
+.drawer-h b{font-size:15px;font-weight:600;flex:1}
+.drawer-h .cnt{font-size:12px;background:var(--surface);color:var(--ink2);padding:2px 10px;border-radius:99px;font-weight:600}
+.drawer-h .chev{transition:transform .55s var(--spring);color:var(--ink3);display:grid}
+.drawer.open .chev{transform:rotate(180deg)}
+.drawer-b{display:grid;grid-template-rows:0fr;transition:grid-template-rows .6s var(--spring)}
+.drawer.open .drawer-b{grid-template-rows:1fr}
+.drawer-in{overflow:hidden;min-height:0}
+.drawer-pad{padding:0 18px 16px;display:flex;flex-direction:column;gap:2px}
+.task{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:var(--line)}
+.task .body{flex:1;min-width:0}
+.task .nm{font-size:14px;font-weight:500}
+.task .sub{font-size:12px;color:var(--ink2);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tag{font-size:11px;font-weight:600;padding:1px 8px;border-radius:99px}
+.tag.deep{background:var(--blue-t);color:var(--blue)} .tag.light{background:var(--sage-t);color:var(--sage)}
+.mini{font-size:12px;font-weight:600;color:var(--forest);padding:6px 10px;border-radius:10px;background:var(--forest-t);transition:transform .4s var(--spring)}
+.mini:active{transform:scale(.94)}
+.icon-btn{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;color:var(--ink3);flex:none;transition:all .3s}
+.icon-btn:hover{background:var(--surface);color:var(--ink)}
+.plan-h{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--blue);margin:12px 0 4px}
+.drawer-add{margin-top:8px;width:100%}
+
+/* ---------- Calendar view ---------- */
+.cal-wrap{margin-top:6px}
+.cal-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--ink2);margin:0 2px 12px}
+.cal-legend span{display:flex;align-items:center;gap:6px}
+.cal-legend i{width:9px;height:9px;border-radius:3px;display:block}
+.cal{position:relative;height:1050px;margin:0 -4px}
+.cal-lines{position:absolute;left:0;right:0;top:15px;height:1020px}
+.hr{position:absolute;left:0;right:0;height:0;border-top:var(--line)}
+.hr span{position:absolute;left:0;top:-8px;width:44px;font-size:11px;color:var(--ink3);font-variant-numeric:tabular-nums;background:var(--paper);padding-right:4px}
+.cal-area{position:absolute;left:50px;right:4px;top:15px;height:1020px;touch-action:pan-y;cursor:cell}
+.gz{position:absolute;left:0;right:0;border-radius:12px;pointer-events:none;
+  background:repeating-linear-gradient(135deg,rgba(56,142,104,.07) 0 8px,rgba(56,142,104,.03) 8px 16px);border:1.5px dashed rgba(56,142,104,.3);
+  display:flex;align-items:flex-start;justify-content:flex-end;padding:5px 9px;font-size:11px;font-weight:600;color:var(--sage);opacity:.95}
+.gz.past{opacity:.35}
+.blk{position:absolute;border-radius:12px;background:var(--forest-t);border:1px solid rgba(40,65,51,.18);border-left:4px solid var(--forest);padding:3px 26px 3px 9px;overflow:visible;cursor:grab;
+  transition:top .22s var(--spring),height .22s var(--spring),box-shadow .3s,transform .3s var(--spring),border-color .3s;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;z-index:2}
+.blk.k-task.deep{background:var(--blue-t);border-color:rgba(43,108,176,.2);border-left-color:var(--blue)}
+.blk.k-task.light{background:var(--sage-t);border-color:rgba(56,142,104,.22);border-left-color:var(--sage)}
+.blk.k-break{background:var(--surface);border-color:rgba(26,25,23,.1);border-left-color:var(--ink3)}
+.blk .bd{height:100%;overflow:hidden;pointer-events:none}
+.blk .t{display:block;font-size:12.5px;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.blk .m{display:block;font-size:11px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blk.short .bd{display:flex;gap:8px;align-items:center}
+.blk.short .t{margin-top:0;font-size:11.5px} .blk.short .m{font-size:10.5px}
+.blk.done{opacity:.55} .blk.done .t{text-decoration:line-through}
+.blk.live{box-shadow:0 0 0 2px rgba(40,65,51,.18)}
+.blk .x{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:7px;font-size:11px;line-height:1;color:var(--ink2);display:grid;place-items:center;background:rgba(255,255,255,.7);z-index:3}
+.blk .x:hover{background:#fff;color:var(--clay)}
+.blk.short .x{top:0;height:100%;max-height:20px}
+.grip{position:absolute;left:0;right:0;bottom:-7px;height:16px;cursor:ns-resize;touch-action:none;display:flex;justify-content:center;align-items:center;z-index:4}
+.grip::after{content:"";width:28px;height:4px;border-radius:4px;background:rgba(26,25,23,.28);transition:background .3s}
+.blk:hover .grip::after,.blk.dragging .grip::after{background:var(--forest)}
+.blk.dragging{z-index:20;box-shadow:var(--shadow-lg);transform:scale(1.015);cursor:grabbing;transition:top .16s var(--spring),height .16s var(--spring),box-shadow .3s,border-color .3s}
+.blk.conflict{border-color:var(--clay);border-left-color:var(--clay);box-shadow:0 0 0 2px rgba(217,107,67,.28),var(--shadow-lg)}
+.badge{position:absolute;left:0;top:-34px;background:var(--ink);color:#fff;font-size:12px;font-weight:600;padding:5px 11px;border-radius:99px;white-space:nowrap;font-variant-numeric:tabular-nums;pointer-events:none;box-shadow:var(--shadow);z-index:30;max-width:300px;overflow:hidden;text-overflow:ellipsis}
+.badge.warn{background:var(--clay)}
+.nowline{position:absolute;left:-6px;right:0;height:0;border-top:1.5px solid var(--clay);z-index:6;pointer-events:none}
+.nowline::before{content:"";position:absolute;left:-1px;top:-5px;width:9px;height:9px;border-radius:50%;background:var(--clay)}
+.nowline span{position:absolute;right:0;top:-18px;font-size:10.5px;font-weight:600;color:#fff;background:var(--clay);padding:1px 7px;border-radius:99px;font-variant-numeric:tabular-nums}
+
+/* ---------- Dock ---------- */
+.dock{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;pointer-events:none;z-index:40;padding:0 20px calc(env(safe-area-inset-bottom,0px) + 16px)}
+.dock-in{width:100%;max-width:400px;display:flex;gap:10px;align-items:center;pointer-events:none}
+.dock .seg{flex:1;pointer-events:auto;background:rgba(242,240,235,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:var(--line);box-shadow:var(--shadow-lg);border-radius:18px;padding:4px}
+.dock .seg>button{padding:12px 6px;font-size:13.5px}
+.dock .glider{top:4px;bottom:4px;border-radius:14px}
+.fab{pointer-events:auto;width:50px;height:50px;border-radius:50%;background:var(--forest);color:#fff;display:grid;place-items:center;box-shadow:var(--shadow-lg);transition:transform .5s var(--spring);flex:none}
+.fab:active{transform:scale(.9) rotate(90deg)}
+.fab svg{width:22px;height:22px}
+
+/* ---------- Toast ---------- */
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:11px 14px 11px 18px;border-radius:16px;font-size:13.5px;display:flex;gap:14px;align-items:center;max-width:min(400px,calc(100vw - 32px));opacity:0;pointer-events:none;transition:all .55s var(--spring);z-index:90;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast button{color:#F4B79F;font-weight:600;font-size:13px;white-space:nowrap}
+
+/* ---------- Bottom sheet ---------- */
+.sheet-wrap{position:fixed;inset:0;z-index:70;pointer-events:none;display:flex;align-items:flex-end;justify-content:center;visibility:hidden;transition:visibility 0s .65s}
+.backdrop{position:absolute;inset:0;background:rgba(26,25,23,.32);opacity:0;transition:opacity .5s var(--spring)}
+.sheet{position:relative;width:100%;max-width:440px;max-height:92vh;overflow:auto;background:var(--paper);border-radius:28px 28px 0 0;padding:10px 22px calc(env(safe-area-inset-bottom,0px) + 26px);transform:translateY(105%);transition:transform .65s var(--spring);box-shadow:0 -20px 50px -20px rgba(26,25,23,.25)}
+.sheet-wrap.open{pointer-events:auto;visibility:visible;transition:visibility 0s}
+.sheet-wrap.open .backdrop{opacity:1}
+.sheet-wrap.open .sheet{transform:none}
+.grab{width:38px;height:4px;border-radius:4px;background:rgba(26,25,23,.15);margin:0 auto 16px}
+.sheet h3{font-size:18px;font-weight:600;letter-spacing:-.01em;margin-bottom:14px}
+.fld{margin-top:14px}
+.fld label,.lbl{display:block;font-size:12px;font-weight:600;color:var(--ink2);letter-spacing:.03em;text-transform:uppercase;margin-bottom:7px}
+.inp{width:100%;background:var(--card);border:var(--line);border-radius:14px;padding:13px 14px;font-size:15px;box-shadow:0 1px 2px rgba(26,25,23,.03) inset;transition:border-color .3s,box-shadow .3s}
+.inp:focus{outline:none;border-color:rgba(40,65,51,.5);box-shadow:0 0 0 3px rgba(40,65,51,.1)}
+textarea.inp{min-height:110px;resize:vertical;line-height:1.55;font-size:14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cg{display:flex;flex-wrap:wrap;gap:8px}
+.cg button{padding:8px 14px;border-radius:12px;background:var(--surface);font-size:13px;font-weight:500;color:var(--ink2);transition:all .4s var(--spring)}
+.cg button.on{background:var(--forest);color:#fff}
+.sheet .actions{display:flex;gap:10px;margin-top:20px}
+.sheet .btn-pri{flex:1}
+.drop{display:flex;align-items:center;justify-content:center;gap:10px;padding:18px;border:1.5px dashed rgba(26,25,23,.2);border-radius:16px;color:var(--ink2);font-size:14px;font-weight:500;cursor:pointer;transition:all .4s var(--spring);text-align:center}
+.drop:hover{border-color:var(--forest);color:var(--forest);background:var(--forest-t)}
+.drop input{display:none}
+.note{font-size:12.5px;color:var(--ink2);margin-top:8px;line-height:1.55}
+.note b{color:var(--ink)}
+.pv{margin-top:12px;background:var(--card);border:var(--line);border-radius:14px;padding:10px 14px;font-size:13px}
+.pv div{display:flex;gap:10px;padding:3px 0;color:var(--ink2)}
+.pv div span:first-child{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:500;flex:none}
+.chk{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink2);margin-top:12px;cursor:pointer}
+.chk input{accent-color:var(--forest);width:16px;height:16px}
+
+/* ---------- Onboarding ---------- */
+.ob{position:fixed;inset:0;z-index:100;background:var(--paper);overflow:auto;display:none}
+.ob.open{display:block;animation:viewIn .7s var(--spring)}
+.ob-in{max-width:440px;margin:0 auto;min-height:100%;padding:calc(env(safe-area-inset-top,0px) + 28px) 24px 36px;display:flex;flex-direction:column}
+.ob-top{display:flex;align-items:center;justify-content:space-between;height:34px}
+.logo{font-weight:700;letter-spacing:-.02em;font-size:18px;display:flex;align-items:center;gap:8px}
+.logo i{width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7BB596,var(--forest));display:block}
+.prog{display:flex;gap:6px;margin:22px 0 26px}
+.prog i{flex:1;height:3px;border-radius:3px;background:rgba(26,25,23,.1);overflow:hidden;position:relative}
+.prog i::after{content:"";position:absolute;inset:0;background:var(--forest);transform:scaleX(0);transform-origin:left;transition:transform .7s var(--spring)}
+.prog i.on::after{transform:scaleX(1)}
+.ob-step{flex:1;animation:stepIn .7s var(--spring)}
+@keyframes stepIn{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+.ob h2{font-size:26px;line-height:1.25;font-weight:600;letter-spacing:-.02em}
+.ob .lead{font-size:14.5px;color:var(--ink2);margin-top:8px;line-height:1.6}
+.opts{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.opt{display:flex;gap:14px;align-items:center;text-align:left;background:var(--card);border:var(--line);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow);transition:all .5s var(--spring)}
+.opt b{display:block;font-size:14.5px;font-weight:600}
+.opt small{display:block;font-size:12.5px;color:var(--ink2);margin-top:1px}
+.opt .rd{width:20px;height:20px;border-radius:50%;border:1.5px solid rgba(26,25,23,.25);flex:none;display:grid;place-items:center;transition:all .4s var(--spring)}
+.opt.on{border-color:var(--forest);background:var(--forest-t);box-shadow:0 0 0 3px rgba(40,65,51,.08)}
+.opt.on .rd{border-color:var(--forest);background:var(--forest)}
+.opt.on .rd::after{content:"";width:7px;height:7px;border-radius:50%;background:#fff}
+.ob-foot{display:flex;gap:10px;margin-top:28px}
+.ob-foot .btn-pri{flex:1;padding:15px}
+.skip{font-size:13px;color:var(--ink2);padding:6px 4px}
+
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="top">
+    <div class="hello"><small id="hDate"></small><h1 id="hGreet"></h1></div>
+    <button class="avatar" id="btnProfile" aria-label="Hồ sơ cá nhân"></button>
+  </header>
+
+  <!-- ================= VIEW 1: TRỢ LÝ CHỦ ĐỘNG ================= -->
+  <section class="view on" id="v-ai">
+    <button class="pill" id="pill" aria-label="Quét lại ngữ cảnh"></button>
+
+    <div class="sim">
+      <div class="sim-cap">Giả lập mốc giờ trong ngày</div>
+      <div class="seg" id="simSeg"><span class="glider"></span>
+        <button data-sim="465">07:45</button>
+        <button data-sim="620">10:20</button>
+        <button data-sim="720">12:00</button>
+        <button data-sim="940">15:40</button>
+        <button data-sim="1335">22:15</button>
+        <button data-sim="now" class="now"><i></i>Bây giờ</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><h2>Đề xuất dành cho bạn</h2><span id="stackCnt"></span></div>
+      <div class="stack" id="stack"></div>
+      <div class="dots" id="dots"></div>
+      <div class="swipe-tip" id="swipeTip">Vuốt phải để thực hiện · vuốt trái để bỏ qua</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><h2>Dòng thời gian hôm nay</h2><span id="tlCnt"></span></div>
+      <div class="tl" id="tl"></div>
+    </div>
+
+    <div class="sec">
+      <div class="drawer" id="drawer">
+        <button class="drawer-h" id="drawerBtn" aria-expanded="false">
+          <b>Kho việc chờ xếp lịch</b><span class="cnt" id="bkCnt">0</span>
+          <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+        </button>
+        <div class="drawer-b"><div class="drawer-in"><div class="drawer-pad" id="backlog"></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= VIEW 2: LỊCH NGÀY ================= -->
+  <section class="view" id="v-cal">
+    <div class="sec" style="margin-top:6px">
+      <div class="sec-h"><h2>Lịch ngày</h2><span id="calCap">Chạm vào khoảng trống để tạo lịch</span></div>
+      <div class="cal-legend">
+        <span><i style="background:var(--forest)"></i>Lịch cố định</span>
+        <span><i style="background:var(--blue)"></i>Deep Work</span>
+        <span><i style="background:var(--sage)"></i>Nhẹ nhàng</span>
+        <span><i style="border:1.5px dashed var(--sage);background:rgba(56,142,104,.1)"></i>Khe trống AI</span>
+      </div>
+      <div class="cal" id="cal">
+        <div class="cal-lines" id="calLines"></div>
+        <div class="cal-area" id="calArea"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Dock -->
+<div class="dock"><div class="dock-in">
+  <div class="seg" id="tabSeg"><span class="glider"></span>
+    <button data-tab="ai" class="on">Trợ lý AI</button>
+    <button data-tab="cal">Lịch ngày</button>
+  </div>
+  <button class="fab" id="fab" aria-label="Thêm mới"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+</div></div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastTxt"></span><button id="toastAct" hidden>Hoàn tác</button></div>
+
+<!-- Bottom sheet -->
+<div class="sheet-wrap" id="sheetWrap" aria-hidden="true">
+  <div class="backdrop" id="sheetBd"></div>
+  <div class="sheet" role="dialog" aria-modal="true" id="sheet">
+    <div class="grab"></div>
+    <div class="seg" id="shSeg"><span class="glider"></span>
+      <button data-shtab="task">+ Đầu việc</button>
+      <button data-shtab="event">+ Lịch cố định</button>
+      <button data-shtab="import">Nhập (.ics)</button>
+    </div>
+    <div id="shBody" style="margin-top:6px"></div>
+  </div>
+</div>
+
+<!-- Onboarding -->
+<div class="ob" id="ob"><div class="ob-in" id="obIn"></div></div>
+
+<script>
+(() => {
+'use strict';
+
+/* =====================================================================
+   Helpers
+   ===================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const KEY = 'aura.v1';
+const DAY0 = 360, DAY1 = 1380, SNAP = 15;
+const pad = n => String(n).padStart(2, '0');
+const hm = m => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
+const pm = s => { const m = /^(\d{1,2}):(\d{2})$/.exec(s || ''); return m ? (+m[1]) * 60 + (+m[2]) : null; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-3);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const keyOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const todayKey = () => keyOf(new Date());
+const tomorrowKey = () => { const d = new Date(); d.setDate(d.getDate() + 1); return keyOf(d); };
+const realNow = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+const ceil5 = m => Math.ceil(m / 5) * 5;
+const fmtDur = m => m < 60 ? `${m} phút` : (m % 60 ? `${Math.floor(m / 60)}g ${m % 60}p` : `${m / 60} giờ`);
+const PEAKS = {
+  morning:   { s: 450,  e: 690,  label: 'Sáng',  range: '07:30–11:30' },
+  afternoon: { s: 840,  e: 1050, label: 'Chiều', range: '14:00–17:30' },
+  evening:   { s: 1200, e: 1380, label: 'Tối',   range: '20:00–23:00' }
+};
+const GOALS = {
+  deep:    { t: 'Bảo vệ tập trung sâu', d: 'Ưu tiên khe dài, giữ việc cần Deep Work cho giờ vàng.' },
+  gaps:    { t: 'Tận dụng khe trống ngắn 15–30p', d: 'Lấp những khoảng ngắn bằng việc nhẹ để dọn kho việc chờ.' },
+  balance: { t: 'Cân bằng & nhắc nghỉ ngơi', d: 'Chừa thời gian thở giữa các việc, gợi ý nghỉ khi cần.' }
+};
+const ICON = {
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  spark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></svg>',
+  moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg>',
+  cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/><path d="m9 15 2 2 4-4"/></svg>',
+  cup: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5V9z"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16M8 3v2M12 3v2"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5 3.5-5 3.5z"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+  refresh: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.5-4M4 4v4h4M4 13a8 8 0 0 0 14.5 4M20 20v-4h-4"/></svg>',
+  x: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  file: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14h6M9 17h4"/></svg>'
+};
+
+/* =====================================================================
+   State + persistence
+   ===================================================================== */
+const defaults = () => ({
+  v: 1, day: todayKey(),
+  profile: { name: '', wake: '06:30', sleep: '23:00', peak: 'morning', goal: 'balance', lead: 45, onboarded: false },
+  events: [], tasks: [], ack: {}, plan: [], planFor: null
+});
+let S = defaults();
+let sim = null;           // minutes | null  (giả lập mốc giờ)
+let tab = 'ai';
+let rot = 0;              // xoay thẻ khi vuốt trái
+let drawerOpen = false;
+let curCards = [];
+
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const o = JSON.parse(raw), d = defaults();
+      S = { ...d, ...o, profile: { ...d.profile, ...(o.profile || {}) } };
+    }
+  } catch (e) { S = defaults(); }
+  rollover();
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* bộ nhớ bị chặn: bỏ qua */ } }
+
+function rollover() {
+  const t = todayKey();
+  if (S.day === t) return;
+  const keep = [];
+  for (const e of S.events) {
+    if (e.kind === 'fixed' || !e.kind) { e.kind = 'fixed'; e.done = false; keep.push(e); }
+    else if (e.kind === 'task' && !e.done) S.tasks.push({ id: uid(), title: e.title, dur: e.end - e.start, level: e.level || 'light' });
+  }
+  S.events = keep;
+  if (S.planFor === t) {
+    for (const p of S.plan) S.events.push({ id: uid(), title: p.title, start: p.start, end: p.start + p.dur, location: '', kind: 'task', level: p.level, done: false });
+  }
+  S.plan = []; S.planFor = null; S.ack = {}; S.day = t;
+  save();
+}
+
+const nowMin = () => sim ?? realNow();
+function awake() {
+  const w = pm(S.profile.wake) ?? 390;
+  let s = pm(S.profile.sleep) ?? 1380;
+  if (s <= w) s = 1440;
+  return { w, s: Math.min(s, 1440) };
+}
+
+/* =====================================================================
+   Proactive engine
+   ===================================================================== */
+function detectTimeGaps(events, wake, sleep, from = 0, minLen = 15) {
+  const lo = from > wake ? ceil5(from) : wake;
+  const hi = Math.min(sleep, 1440);
+  if (hi - lo < minLen) return [];
+  const iv = events.map(e => ({ s: Math.max(e.start, lo), e: Math.min(e.end, hi) }))
+    .filter(x => x.e > x.s).sort((a, b) => a.s - b.s);
+  const gaps = []; let cur = lo;
+  for (const x of iv) {
+    if (x.s - cur >= minLen) gaps.push({ start: cur, end: x.s, len: x.s - cur });
+    cur = Math.max(cur, x.e);
+  }
+  if (hi - cur >= minLen) gaps.push({ start: cur, end: hi, len: hi - cur });
+  return gaps;
+}
+
+function overlapMin(a1, a2, b1, b2) { return Math.max(0, Math.min(a2, b2) - Math.max(a1, b1)); }
+
+function scoreTask(task, gap) {
+  const pk = PEAKS[S.profile.peak], goal = S.profile.goal;
+  const inPeak = overlapMin(gap.start, gap.start + task.dur, pk.s, pk.e) >= task.dur / 2;
+  let s = (task.dur / gap.len) * 40;
+  if (task.level === 'deep') {
+    s += inPeak ? 30 : -5;
+    if (goal === 'deep') s += gap.len >= 45 ? 20 : -40;
+    if (goal === 'gaps') s -= 10;
+    if (gap.len < 40) s -= 25;
+  } else {
+    s += inPeak ? -5 : 15;
+    if (goal === 'gaps') s += gap.len <= 30 ? 25 : 5;
+    if (goal === 'deep' && gap.len >= 60) s -= 12;
+  }
+  if (goal === 'balance' && gap.len >= 30 && gap.len - task.dur < 5) s -= 15;
+  return { s, inPeak };
+}
+
+function matchBestTaskForGap(gap, tasks) {
+  let best = null;
+  for (const t of tasks) {
+    if (t.dur > gap.len) continue;
+    if (t.level === 'deep' && gap.len < 30) continue;
+    const { s, inPeak } = scoreTask(t, gap);
+    if (!best || s > best.score) best = { task: t, score: s, inPeak, gap, start: gap.start };
+  }
+  return best;
+}
+
+function gapReason(m) {
+  const { task: t, gap: g, inPeak } = m, goal = S.profile.goal;
+  let r;
+  if (t.level === 'deep') r = inPeak
+    ? `Khe ${fmtDur(g.len)} này nằm trong khung giờ tỉnh táo nhất của bạn — lý tưởng để làm sâu một việc quan trọng.`
+    : `Khe ${fmtDur(g.len)} đủ dài và liền mạch để tập trung sâu mà không bị ngắt quãng.`;
+  else r = (goal === 'gaps' || g.len <= 30)
+    ? `Một khe ngắn ${fmtDur(g.len)} — vừa khít cho một việc nhẹ, giúp dọn bớt kho việc chờ.`
+    : `Việc nhẹ nhàng này hợp để xen giữa các cuộc hẹn, giữ năng lượng cho việc quan trọng hơn.`;
+  const left = g.len - t.dur;
+  if (goal === 'balance' && left >= 10) r += ` Còn dư ${left} phút để thở.`;
+  return r;
+}
+
+function gapPlan() {
+  const { w, s } = awake();
+  const gaps = detectTimeGaps(S.events, w, s, nowMin(), 15);
+  const pool = S.tasks.slice(), out = [];
+  for (const g of gaps) {
+    const m = matchBestTaskForGap(g, pool);
+    if (m) pool.splice(pool.indexOf(m.task), 1);
+    out.push({ gap: g, match: m });
+  }
+  return out;
+}
+
+function findSlot(cursor, dur, busy, limit) {
+  let s = cursor, changed = true;
+  while (changed) {
+    changed = false;
+    for (const b of busy) if (s < b.end && s + dur > b.start) { s = b.end; changed = true; }
+  }
+  return s + dur <= limit ? s : null;
+}
+
+function pendingItems() {
+  const items = [];
+  S.events.filter(e => e.kind === 'task' && !e.done).forEach(e => items.push({ title: e.title, dur: e.end - e.start, level: e.level || 'light', evId: e.id }));
+  S.tasks.forEach(t => items.push({ title: t.title, dur: t.dur, level: t.level, taskId: t.id }));
+  return items;
+}
+
+function buildTomorrowPlan() {
+  const pk = PEAKS[S.profile.peak], { s: limit } = awake();
+  const items = pendingItems().sort((a, b) => (a.level === b.level ? b.dur - a.dur : a.level === 'deep' ? -1 : 1));
+  const busy = S.events.filter(e => e.kind === 'fixed').map(e => ({ start: e.start, end: e.end })).sort((a, b) => a.start - b.start);
+  let cursor = pk.s; const planned = [];
+  for (const it of items) {
+    const st = findSlot(cursor, it.dur, busy, limit);
+    if (st == null) continue;
+    planned.push({ ...it, start: st });
+    busy.push({ start: st, end: st + it.dur });
+    cursor = st + it.dur + 10;
+  }
+  return planned;
+}
+
+function generateCards() {
+  const now = nowMin(), { w, s } = awake(), lead = +S.profile.lead || 45;
+  const cards = [];
+  const evs = S.events.slice().sort((a, b) => a.start - b.start);
+
+  // 1. Chuẩn bị trước sự kiện
+  const nxt = evs.find(e => !e.done && e.start > now && e.kind !== 'break');
+  if (nxt && nxt.start - now <= lead && !S.ack['prep:' + nxt.id]) {
+    const diff = nxt.start - now;
+    cards.push({
+      id: 'prep:' + nxt.id, type: 'prep', tone: 'clay', icon: 'clock',
+      eyebrow: `Chuẩn bị · còn ${fmtDur(diff)}`, title: `Sắp tới: ${nxt.title}`,
+      body: `Bắt đầu lúc ${hm(nxt.start)}${nxt.location ? ' tại ' + nxt.location : ''}. Hãy khép lại việc đang làm, chuẩn bị tài liệu và thu xếp trước khi sự kiện bắt đầu.`,
+      chips: [`${hm(nxt.start)}–${hm(nxt.end)}`, fmtDur(nxt.end - nxt.start)].concat(nxt.location ? [nxt.location] : []),
+      primary: 'Đã sẵn sàng', ev: nxt.id
+    });
+  }
+
+  // 2. Sự kiện đang diễn ra
+  const live = evs.find(e => !e.done && e.start <= now && now < e.end);
+  if (live) cards.push({
+    id: 'live:' + live.id, type: 'live', tone: 'forest', icon: 'play',
+    eyebrow: `Đang diễn ra · còn ${fmtDur(live.end - now)}`, title: live.title,
+    body: `Kết thúc lúc ${hm(live.end)}. Hoàn thành sớm để dành thêm khoảng trống cho việc khác.`,
+    chips: [`${hm(live.start)}–${hm(live.end)}`].concat(live.location ? [live.location] : []),
+    primary: 'Đánh dấu hoàn thành', ev: live.id
+  });
+
+  // 3. Khe trống
+  const plan = gapPlan(); let gapCards = 0, restShown = false;
+  for (const p of plan) {
+    if (gapCards >= 3) break;
+    if (p.match) {
+      const m = p.match, t = m.task;
+      cards.push({
+        id: `gap:${t.id}:${m.start}`, type: 'gap', tone: 'forest', icon: 'spark',
+        eyebrow: `Khe trống · ${hm(p.gap.start)}–${hm(p.gap.end)}`, title: t.title, body: gapReason(m),
+        chips: [fmtDur(t.dur), t.level === 'deep' ? 'Deep Work' : 'Nhẹ nhàng', `Bắt đầu ${hm(m.start)}`],
+        primary: `Chèn vào ${hm(m.start)}`, task: t.id, start: m.start
+      });
+      gapCards++;
+    } else if (!restShown && p.gap.len >= 30) {
+      restShown = true; gapCards++;
+      if (S.profile.goal === 'balance') cards.push({
+        id: `rest:${p.gap.start}`, type: 'rest', tone: 'sage', icon: 'cup',
+        eyebrow: `Khe trống · ${hm(p.gap.start)}–${hm(p.gap.end)}`, title: 'Nghỉ ngơi một chút',
+        body: `Khe ${fmtDur(p.gap.len)} chưa có việc nào vừa vặn. Aura gợi ý dành 15 phút để đứng dậy, uống nước và hít thở sâu.`,
+        chips: ['15 phút', 'Nghỉ ngơi'], primary: 'Chèn 15 phút nghỉ', start: p.gap.start
+      });
+      else cards.push({
+        id: `empty:${p.gap.start}`, type: 'empty', tone: 'sage', icon: 'spark',
+        eyebrow: `Khe trống · ${hm(p.gap.start)}–${hm(p.gap.end)}`, title: 'Khe trống chưa có việc',
+        body: `Thêm một đầu việc ${p.gap.len <= 30 ? 'ngắn' : 'cần tập trung'} vào kho để Aura xếp vào khoảng ${fmtDur(p.gap.len)} này.`,
+        chips: [fmtDur(p.gap.len)], primary: 'Thêm đầu việc', start: p.gap.start
+      });
+    }
+  }
+
+  // 4. Dời lịch cuối ngày
+  if (now >= 1200) {
+    const items = pendingItems();
+    if (items.length) {
+      const planned = buildTomorrowPlan(), pk = PEAKS[S.profile.peak];
+      if (planned.length) cards.push({
+        id: 'resched:' + planned.length + ':' + items.length, type: 'resched', tone: 'blue', icon: 'cal',
+        eyebrow: `Cuối ngày · ${items.length} việc chưa xong`, title: 'Dời sang khung giờ vàng ngày mai',
+        body: `Aura sẽ xếp ${planned.length} việc vào khung ${pk.label.toLowerCase()} ${pk.range} — lúc bạn tỉnh táo nhất, ưu tiên Deep Work trước.`,
+        chips: planned.slice(0, 2).map(p => `${hm(p.start)} ${p.title.length > 16 ? p.title.slice(0, 15) + '…' : p.title}`).concat(planned.length > 2 ? [`+${planned.length - 2} việc`] : []),
+        primary: 'Dời sang ngày mai'
+      });
+    }
+  }
+
+  // 5. Nhịp sinh học
+  if (now >= s - 60 && now < s && !S.ack['wind']) cards.push({
+    id: 'wind', type: 'wind', tone: 'blue', icon: 'moon', eyebrow: 'Nhịp sinh học', title: 'Sắp đến giờ đi ngủ',
+    body: `Bạn đi ngủ lúc ${hm(s)}. Giảm ánh sáng màn hình và gác lại việc còn dở — ngày mai Aura đã sắp sẵn.`,
+    chips: [`Ngủ lúc ${hm(s)}`, `Còn ${fmtDur(s - now)}`], primary: 'Đã rõ'
+  });
+  if (now < w && !S.ack['early']) cards.push({
+    id: 'early', type: 'early', tone: 'sage', icon: 'moon', eyebrow: 'Buổi sớm', title: `Bạn thức dậy lúc ${hm(w)}`,
+    body: 'Aura sẽ bắt đầu theo dõi ngày của bạn từ lúc đó. Ngủ thêm chút nữa nhé.', chips: [`Còn ${fmtDur(w - now)}`], primary: 'Đã rõ'
+  });
+
+  if (!cards.length) cards.push({
+    id: 'idle', type: 'idle', tone: 'sage', icon: 'check', eyebrow: 'Mọi thứ đang ổn', title: 'Không có gì cần làm ngay',
+    body: 'Aura đang theo dõi lịch trình và nhịp sinh học của bạn, sẽ lên tiếng khi có khe trống hoặc sự kiện sắp tới.',
+    chips: [`${S.events.length} lịch`, `${S.tasks.length} việc chờ`], primary: 'Quét lại'
+  });
+  return cards;
+}
+
+/* =====================================================================
+   Mutations
+   ===================================================================== */
+let undoSnap = null;
+function snapshot() { undoSnap = JSON.stringify(S); }
+function changed(shimmer = true) { save(); renderAll(shimmer); }
+
+function insertTask(taskId, start, quiet) {
+  const t = S.tasks.find(x => x.id === taskId); if (!t) return false;
+  snapshot();
+  S.tasks = S.tasks.filter(x => x.id !== taskId);
+  S.events.push({ id: uid(), title: t.title, start, end: start + t.dur, location: '', kind: 'task', level: t.level, done: false });
+  changed();
+  if (!quiet) toast(`Đã chèn “${t.title}” vào ${hm(start)}`, true);
+  return true;
+}
+function placeBestGap(taskId) {
+  const t = S.tasks.find(x => x.id === taskId); if (!t) return;
+  const { w, s } = awake();
+  let best = null;
+  for (const g of detectTimeGaps(S.events, w, s, nowMin(), 15)) {
+    const m = matchBestTaskForGap(g, [t]);
+    if (m && (!best || m.score > best.score)) best = m;
+  }
+  if (best) insertTask(taskId, best.start); else toast('Hôm nay chưa có khe trống đủ dài cho việc này');
+}
+function addEvent(ev) { snapshot(); S.events.push({ id: uid(), location: '', kind: 'fixed', done: false, ...ev }); changed(); }
+function deleteEvent(id) {
+  const e = S.events.find(x => x.id === id); if (!e) return;
+  snapshot(); S.events = S.events.filter(x => x.id !== id); changed(); toast(`Đã xóa “${e.title}”`, true);
+}
+
+function runCard(c) {
+  if (!c) return;
+  switch (c.type) {
+    case 'prep': S.ack[c.id] = true; changed(); toast('Đã ghi nhận — chúc bạn thuận lợi'); break;
+    case 'live': { const e = S.events.find(x => x.id === c.ev); if (e) { snapshot(); e.done = true; changed(); toast(`Hoàn thành “${e.title}”`, true); } break; }
+    case 'gap': insertTask(c.task, c.start); break;
+    case 'rest': addEvent({ title: 'Nghỉ ngơi', start: c.start, end: c.start + 15, kind: 'break' }); toast('Đã chèn 15 phút nghỉ', true); break;
+    case 'empty': openSheet('task'); break;
+    case 'resched': {
+      snapshot();
+      const planned = buildTomorrowPlan();
+      const evIds = planned.filter(p => p.evId).map(p => p.evId), tIds = planned.filter(p => p.taskId).map(p => p.taskId);
+      S.events = S.events.filter(e => !evIds.includes(e.id));
+      S.tasks = S.tasks.filter(t => !tIds.includes(t.id));
+      S.plan = (S.planFor === tomorrowKey() ? S.plan : []).concat(planned.map(p => ({ title: p.title, dur: p.dur, level: p.level, start: p.start })));
+      S.planFor = tomorrowKey();
+      changed(); toast(`Đã dời ${planned.length} việc sang ngày mai`, true); break;
+    }
+    case 'wind': case 'early': S.ack[c.id] = true; changed(false); break;
+    default: renderAll(true);
+  }
+}
+
+/* =====================================================================
+   Rendering helpers
+   ===================================================================== */
+function setHTML(el, html) { if (el._h === html) return false; el._h = html; el.innerHTML = html; return true; }
+function placeGlider(seg) {
+  const g = $('.glider', seg), a = $('button.on', seg);
+  if (!g) return;
+  if (!a || !a.offsetWidth) { g.style.opacity = 0; return; }
+  g.style.opacity = 1; g.style.width = a.offsetWidth + 'px'; g.style.transform = `translateX(${a.offsetLeft}px)`;
+}
+const placeGliders = () => $$('.seg').forEach(placeGlider);
+function setActive(seg, attr, val) { $$('button', seg).forEach(b => b.classList.toggle('on', b.getAttribute(attr) === String(val))); placeGlider(seg); }
+
+/* ---------- Header / pill / sim ---------- */
+function renderHeader() {
+  const now = nowMin(), d = new Date();
+  const days = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+  $('#hDate').textContent = `${days[d.getDay()]}, ${d.getDate()} tháng ${d.getMonth() + 1}`;
+  const part = now < 660 ? 'buổi sáng' : now < 840 ? 'buổi trưa' : now < 1080 ? 'buổi chiều' : 'buổi tối';
+  const name = S.profile.name || 'bạn';
+  $('#hGreet').textContent = `Chào ${part}, ${name}`;
+  $('#btnProfile').textContent = (name[0] || 'A').toUpperCase();
+}
+function renderPill() {
+  const now = nowMin(), pill = $('#pill');
+  const evs = S.events.slice().sort((a, b) => a.start - b.start);
+  const live = evs.find(e => !e.done && e.start <= now && now < e.end);
+  const nxt = evs.find(e => !e.done && e.start > now);
+  let html, warn = false;
+  if (live) html = `Đang diễn ra · <b>${esc(live.title)}</b> · còn ${fmtDur(live.end - now)}`;
+  else if (nxt) { warn = nxt.start - now <= (+S.profile.lead || 45); html = `Tiếp theo · <b>${esc(nxt.title)}</b> · sau ${fmtDur(nxt.start - now)}`; }
+  else html = `<b>Hôm nay đã hết lịch</b> · Aura vẫn đang theo dõi`;
+  pill.classList.toggle('warn', warn);
+  setHTML(pill, `<span class="dot"></span><span class="txt">${html}</span><span class="rescan">${ICON.refresh}</span>`);
+}
+function renderSim() {
+  const seg = $('#simSeg'), now = realNow();
+  $$('button', seg).forEach(b => {
+    const v = b.dataset.sim;
+    b.classList.toggle('on', sim == null ? v === 'now' : String(sim) === v);
+  });
+  $('.now', seg).title = `Giờ thực tế: ${hm(now)}`;
+  placeGlider(seg);
+}
+
+/* ---------- Stack ---------- */
+let stackSig = '';
+function renderStack(shimmer) {
+  const cards = generateCards();
+  if (rot >= cards.length) rot = 0;
+  const ordered = cards.slice(rot).concat(cards.slice(0, rot));
+  curCards = ordered;
+  const html = ordered.map((c, i) => `
+    <article class="card t-${c.tone}${i === 0 ? ' top' : ''}" data-id="${esc(c.id)}" style="--i:${Math.min(i, 3)}" ${i > 2 ? 'data-hide="1"' : ''}>
+      <span class="shine"></span>
+      <span class="hint hint-go">Thực hiện ✓</span><span class="hint hint-skip">Bỏ qua</span>
+      <div class="c-head"><span class="c-ico">${ICON[c.icon]}</span><span class="c-eye">${esc(c.eyebrow)}</span></div>
+      <h3>${esc(c.title)}</h3>
+      <p>${esc(c.body)}</p>
+      <div class="chips">${c.chips.map(x => `<span class="chip">${esc(x)}</span>`).join('')}</div>
+      <div class="c-foot">
+        <button class="btn btn-pri" data-act="cardGo">${esc(c.primary)}</button>
+        ${ordered.length > 1 ? '<button class="btn btn-ghost" data-act="cardSkip">Bỏ qua</button>' : ''}
+      </div>
+    </article>`).join('');
+  const sig = ordered.map(c => c.id + '|' + c.eyebrow + '|' + c.body).join('§');
+  const el = $('#stack');
+  const diff = sig !== stackSig;
+  if (diff) {
+    stackSig = sig; el.innerHTML = html;
+    const top = $('.card.top', el); if (top) top.classList.add('enter');
+  }
+  $('#stackCnt').textContent = cards.length === 1 && cards[0].type === 'idle' ? 'Đang theo dõi' : `${cards.length} đề xuất`;
+  setHTML($('#dots'), cards.length > 1 ? cards.map((_, i) => `<i class="${i === rot ? 'on' : ''}"></i>`).join('') : '');
+  $('#swipeTip').style.display = cards.length ? '' : 'none';
+  if (shimmer) runShimmer();
+}
+function runShimmer() {
+  const sh = $('#stack .card.top .shine'); if (!sh) return;
+  sh.classList.remove('run'); void sh.offsetWidth; sh.classList.add('run');
+  sh.addEventListener('animationend', () => sh.classList.remove('run'), { once: true });
+}
+
+/* ---------- Timeline ---------- */
+function renderTimeline() {
+  const now = nowMin(), plan = gapPlan();
+  const items = S.events.map(e => ({ s: e.start, t: 'ev', e })).concat(plan.map(p => ({ s: p.gap.start, t: 'gap', p })));
+  items.sort((a, b) => a.s - b.s || (a.t === 'ev' ? -1 : 1));
+  const evCount = S.events.length;
+  $('#tlCnt').textContent = evCount ? `${S.events.filter(e => e.done || e.end <= now).length}/${evCount} đã qua` : '';
+  if (!items.length) { setHTML($('#tl'), `<div class="empty">Chưa có lịch nào hôm nay.<br>Bấm dấu + để thêm lịch hoặc nhập từ file .ics.</div>`); return; }
+  setHTML($('#tl'), items.map(it => {
+    if (it.t === 'ev') {
+      const e = it.e, live = !e.done && e.start <= now && now < e.end, past = e.done || e.end <= now;
+      const sub = e.kind === 'task' ? (e.level === 'deep' ? 'Deep Work' : 'Nhẹ nhàng') + (e.location ? ' · ' + e.location : '') : (e.kind === 'break' ? 'Nghỉ ngơi' : e.location || fmtDur(e.end - e.start));
+      return `<div class="row"><div class="tm">${hm(e.start)}<small>${hm(e.end)}</small></div>
+        <div class="ev k-${e.kind || 'fixed'} ${e.level || ''} ${live ? 'live' : ''} ${past && !live ? 'past' : ''} ${e.done ? 'done' : ''}">
+          <span class="bar"></span>
+          <div class="body"><div class="nm">${esc(e.title)}</div><div class="sub">${esc(sub)}</div></div>
+          <button class="tick" data-act="toggleEv" data-id="${e.id}" aria-label="Đánh dấu hoàn thành">${ICON.check}</button>
+        </div></div>`;
+    }
+    const { gap: g, match: m } = it.p;
+    return `<div class="row"><div class="tm">${hm(g.start)}<small>${hm(g.end)}</small></div>
+      <div class="gap"><span class="gi">${ICON.spark}</span>
+        <div class="body"><div class="nm">Khe trống ${fmtDur(g.len)}</div>
+        <div class="sub">${m ? `Gợi ý: ${esc(m.task.title)} (${fmtDur(m.task.dur)})` : 'Chưa có việc phù hợp trong kho'}</div></div>
+        ${m ? `<button class="btn btn-line" data-act="insertGap" data-task="${m.task.id}" data-start="${m.start}">Chèn</button>`
+            : `<button class="btn btn-line" data-act="addTask">Thêm</button>`}
+      </div></div>`;
+  }).join(''));
+}
+
+/* ---------- Backlog ---------- */
+function renderBacklog() {
+  $('#bkCnt').textContent = S.tasks.length;
+  let h = '';
+  if (!S.tasks.length) h += `<div class="note" style="padding:4px 0 8px">Kho đang trống. Thêm các việc chưa có giờ cố định, Aura sẽ tự tìm khe phù hợp.</div>`;
+  h += S.tasks.map(t => `<div class="task">
+    <button class="tick" data-act="doneTask" data-id="${t.id}" aria-label="Hoàn thành">${ICON.check}</button>
+    <div class="body"><div class="nm">${esc(t.title)}</div><div class="sub"><span>${fmtDur(t.dur)}</span><span class="tag ${t.level}">${t.level === 'deep' ? 'Deep Work' : 'Nhẹ nhàng'}</span></div></div>
+    <button class="mini" data-act="placeTask" data-id="${t.id}">Xếp lịch</button>
+    <button class="icon-btn" data-act="delTask" data-id="${t.id}" aria-label="Xóa">${ICON.x}</button></div>`).join('');
+  if (S.planFor === tomorrowKey() && S.plan.length) {
+    h += `<div class="plan-h">Đã dời sang ngày mai</div>` + S.plan.map(p => `<div class="task"><div class="body"><div class="nm">${esc(p.title)}</div><div class="sub"><span>${hm(p.start)} · ${fmtDur(p.dur)}</span><span class="tag ${p.level}">${p.level === 'deep' ? 'Deep Work' : 'Nhẹ nhàng'}</span></div></div></div>`).join('');
+  }
+  h += `<button class="btn btn-line drawer-add" data-act="addTask">+ Thêm đầu việc</button>`;
+  setHTML($('#backlog'), h);
+}
+
+/* ---------- Calendar ---------- */
+function layoutCols(list) {
+  const res = {}; let cluster = [], cEnd = -1;
+  const flush = () => {
+    const cols = [];
+    cluster.forEach(e => {
+      let c = cols.findIndex(end => end <= e.start);
+      if (c < 0) { c = cols.length; cols.push(0); }
+      cols[c] = e.end; res[e.id] = { c };
+    });
+    cluster.forEach(e => res[e.id].n = cols.length);
+  };
+  list.slice().sort((a, b) => a.start - b.start).forEach(e => {
+    if (cluster.length && e.start >= cEnd) { flush(); cluster = []; cEnd = -1; }
+    cluster.push(e); cEnd = Math.max(cEnd, e.end);
+  });
+  if (cluster.length) flush();
+  return res;
+}
+let linesBuilt = false;
+function buildLines() {
+  if (linesBuilt) return; linesBuilt = true;
+  let h = '';
+  for (let m = DAY0; m <= DAY1; m += 60) h += `<div class="hr" style="top:${m - DAY0}px"><span>${hm(m)}</span></div>`;
+  $('#calLines').innerHTML = h;
+}
+function renderCal() {
+  buildLines();
+  if (drag.active) return;
+  const now = nowMin(), { w, s } = awake();
+  const vis = S.events.filter(e => e.end > DAY0 && e.start < DAY1);
+  const cols = layoutCols(vis);
+  let h = '';
+  for (const g of detectTimeGaps(S.events, Math.max(w, DAY0), Math.min(s, DAY1), 0, 15)) {
+    h += `<div class="gz ${g.end <= now ? 'past' : ''}" style="top:${g.start - DAY0}px;height:${g.len}px">${g.len >= 30 ? 'Khe trống ' + fmtDur(g.len) : ''}</div>`;
+  }
+  for (const e of vis) {
+    const st = Math.max(e.start, DAY0), en = Math.min(e.end, DAY1), len = en - st;
+    const c = cols[e.id], short = len < 40;
+    const live = !e.done && e.start <= now && now < e.end;
+    h += `<div class="blk k-${e.kind || 'fixed'} ${e.level || ''} ${short ? 'short' : ''} ${e.done ? 'done' : ''} ${live ? 'live' : ''}" data-id="${e.id}"
+      style="top:${st - DAY0}px;height:${Math.max(len - 1, 18)}px;left:calc(${c.c} * 100% / ${c.n});width:calc(100% / ${c.n} - 3px)">
+      <div class="bd"><span class="t">${esc(e.title)}</span><span class="m">${hm(e.start)}–${hm(e.end)}${e.location ? ' · ' + esc(e.location) : ''}</span></div>
+      <button class="x" data-act="delEv" data-id="${e.id}" aria-label="Xóa">✕</button>
+      <div class="grip" data-grip></div></div>`;
+  }
+  if (now >= DAY0 && now <= DAY1) h += `<div class="nowline" style="top:${now - DAY0}px"><span>${hm(now)}</span></div>`;
+  setHTML($('#calArea'), h);
+}
+
+function renderAll(shimmer = false) {
+  renderHeader(); renderPill(); renderSim(); renderStack(shimmer); renderTimeline(); renderBacklog(); renderCal();
+}
+
+/* =====================================================================
+   Toast
+   ===================================================================== */
+let toastTimer;
+function toast(msg, undo = false) {
+  const t = $('#toast'); $('#toastTxt').textContent = msg;
+  $('#toastAct').hidden = !undo;
+  t.classList.add('show'); clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), undo ? 5200 : 2800);
+}
+$('#toastAct').addEventListener('click', () => {
+  if (!undoSnap) return;
+  try { S = JSON.parse(undoSnap); } catch (e) { return; }
+  undoSnap = null; $('#toast').classList.remove('show'); changed();
+});
+
+/* =====================================================================
+   Parsers: .ics + text
+   ===================================================================== */
+function unesc(s) { return String(s || '').replace(/\\n/gi, ' ').replace(/\\([,;\\])/g, '$1').trim(); }
+function icsDate(p) {
+  if (!p) return null;
+  const m = /^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})?(Z)?)?$/.exec(p.val.trim());
+  if (!m) return null;
+  if (m[4] === undefined) return { allDay: true };
+  if (m[7]) {
+    const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]));
+    return { key: keyOf(d), min: d.getHours() * 60 + d.getMinutes(), dow: d.getDay() };
+  }
+  const d = new Date(+m[1], +m[2] - 1, +m[3]);
+  return { key: keyOf(d), min: +m[4] * 60 + +m[5], dow: d.getDay() };
+}
+function parseICS(text) {
+  const lines = String(text).replace(/\r\n?/g, '\n').replace(/\n[ \t]/g, '').split('\n');
+  const raw = []; let cur = null;
+  for (const ln of lines) {
+    if (/^BEGIN:VEVENT/i.test(ln)) { cur = {}; continue; }
+    if (/^END:VEVENT/i.test(ln)) { if (cur) raw.push(cur); cur = null; continue; }
+    if (!cur) continue;
+    const i = ln.indexOf(':'); if (i < 0) continue;
+    const [name, ...params] = ln.slice(0, i).split(';');
+    cur[name.toUpperCase()] = { val: ln.slice(i + 1), params: params.join(';').toUpperCase() };
+  }
+  const DOW = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'], today = todayKey(), tdow = new Date().getDay();
+  const occ = [];
+  for (const r of raw) {
+    const a = icsDate(r.DTSTART); if (!a || a.allDay) continue;
+    let b = icsDate(r.DTEND), end;
+    if (b && !b.allDay) end = b.key === a.key ? b.min : (b.key > a.key ? 1440 : a.min + 60);
+    else {
+      const dm = r.DURATION && /^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?/.exec(r.DURATION.val);
+      end = dm ? a.min + (+dm[2] || 0) * 60 + (+dm[3] || 0) : a.min + 60;
+    }
+    if (end <= a.min) end = Math.min(1440, a.min + 60);
+    let dateKey = a.key;
+    const rr = r.RRULE && r.RRULE.val.toUpperCase();
+    if (rr && a.key <= today) {
+      const freq = (/FREQ=(\w+)/.exec(rr) || [])[1], by = (/BYDAY=([^;]+)/.exec(rr) || [])[1];
+      if (freq === 'DAILY') dateKey = today;
+      else if (freq === 'WEEKLY' && (by ? by.split(',').some(x => x.replace(/[-+\d]/g, '') === DOW[tdow]) : a.dow === tdow)) dateKey = today;
+    }
+    occ.push({ key: dateKey, title: unesc(r.SUMMARY && r.SUMMARY.val) || 'Sự kiện', start: a.min, end: Math.min(end, 1440), location: unesc(r.LOCATION && r.LOCATION.val) });
+  }
+  if (!occ.length) return { events: [], label: '' };
+  let pick = today;
+  if (!occ.some(o => o.key === pick)) {
+    const cnt = {}; occ.forEach(o => cnt[o.key] = (cnt[o.key] || 0) + 1);
+    pick = Object.keys(cnt).sort((x, y) => cnt[y] - cnt[x] || (x < y ? -1 : 1))[0];
+  }
+  const [y, mo, da] = pick.split('-');
+  return { events: occ.filter(o => o.key === pick).map(({ key, ...r }) => r), label: pick === today ? 'hôm nay' : `ngày ${da}/${mo}` };
+}
+function parseText(text) {
+  const re = /^\s*[-*•]?\s*(\d{1,2})\s*[:hH.]\s*(\d{2})\s*(?:-|–|—|~|đến|to)\s*(\d{1,2})\s*[:hH.]\s*(\d{2})\s*[-:|·]?\s*(.+?)\s*$/i;
+  const out = [];
+  for (const ln of String(text).split(/\n/)) {
+    const m = re.exec(ln); if (!m) continue;
+    const s = +m[1] * 60 + +m[2], e = +m[3] * 60 + +m[4];
+    if (m[1] > 23 || m[3] > 24 || e <= s || e > 1440) continue;
+    let title = m[5], location = '';
+    const lm = /^(.*?)\s*(?:@|\bat\b|\btại\b)\s+(.+)$/i.exec(title);
+    if (lm) { title = lm[1]; location = lm[2]; }
+    out.push({ title: title.trim(), start: s, end: e, location: location.trim() });
+  }
+  return { events: out, label: '' };
+}
+function sampleData() {
+  const E = (t, s, e, l) => ({ title: t, start: s, end: e, location: l || '' });
+  return {
+    events: [E('Họp nhóm sản phẩm', 480, 585, 'Phòng họp A'), E('Ăn trưa', 690, 750), E('Review thiết kế', 810, 900, 'Google Meet'), E('Tập gym', 1050, 1110, 'CLB Fitness'), E('Gọi điện về nhà', 1170, 1200)],
+    tasks: [
+      { title: 'Viết báo cáo quý', dur: 90, level: 'deep' }, { title: 'Lên kế hoạch tuần tới', dur: 45, level: 'deep' },
+      { title: 'Trả lời email tồn đọng', dur: 20, level: 'light' }, { title: 'Đọc tài liệu kỹ thuật', dur: 30, level: 'light' },
+      { title: 'Đặt lịch khám răng', dur: 15, level: 'light' }, { title: 'Ôn từ vựng', dur: 25, level: 'light' }
+    ]
+  };
+}
+function commitEvents(list, replace) {
+  snapshot();
+  if (replace) S.events = S.events.filter(e => e.kind !== 'fixed');
+  let n = 0;
+  for (const e of list) {
+    if (S.events.some(x => x.kind === 'fixed' && x.title === e.title && x.start === e.start)) continue;
+    S.events.push({ id: uid(), kind: 'fixed', done: false, ...e }); n++;
+  }
+  return n;
+}
+
+/* =====================================================================
+   Bottom sheet
+   ===================================================================== */
+const sh = { open: false, tab: 'task', edit: null, start: 540, end: 600, dur: 30, level: 'deep', staged: null, replace: false };
+function openSheet(tabName = 'task', opts = {}) {
+  Object.assign(sh, { open: true, tab: tabName, edit: opts.edit || null, start: opts.start ?? 540, end: opts.end ?? ((opts.start ?? 540) + 60), staged: null, replace: false });
+  if (tabName === 'task') { sh.dur = 30; sh.level = 'deep'; }
+  renderSheet();
+  const w = $('#sheetWrap'); w.classList.add('open'); w.setAttribute('aria-hidden', 'false');
+  requestAnimationFrame(placeGliders);
+  setTimeout(() => { const f = $('#shBody input.inp'); if (f && !opts.noFocus) f.focus({ preventScroll: true }); }, 380);
+}
+function closeSheet() { sh.open = false; const w = $('#sheetWrap'); w.classList.remove('open'); w.setAttribute('aria-hidden', 'true'); }
+function renderSheet() {
+  const seg = $('#shSeg');
+  seg.style.display = sh.edit ? 'none' : '';
+  setActive(seg, 'data-shtab', sh.tab);
+  let h = '';
+  if (sh.tab === 'task') {
+    h = `<h3 style="margin-top:18px">Thêm vào kho việc chờ</h3>
+    <div class="fld" style="margin-top:0"><label for="tkTitle">Tên đầu việc</label><input class="inp" id="tkTitle" placeholder="VD: Viết đề xuất dự án" maxlength="80" autocomplete="off"></div>
+    <div class="fld"><span class="lbl">Thời lượng</span>
+      <div class="cg" id="tkDur">${[15, 25, 30, 45, 60, 90, 120].map(d => `<button data-dur="${d}" class="${d === sh.dur ? 'on' : ''}">${fmtDur(d)}</button>`).join('')}</div></div>
+    <div class="fld"><span class="lbl">Mức độ</span>
+      <div class="seg" id="tkLvl"><span class="glider"></span><button data-lvl="deep" class="${sh.level === 'deep' ? 'on' : ''}">Deep Work</button><button data-lvl="light" class="${sh.level === 'light' ? 'on' : ''}">Nhẹ nhàng</button></div></div>
+    <div class="actions"><button class="btn btn-ghost" data-act="closeSheet">Hủy</button><button class="btn btn-pri" id="tkSave">Thêm vào kho</button></div>`;
+  } else if (sh.tab === 'event') {
+    const e = sh.edit ? S.events.find(x => x.id === sh.edit) : null;
+    h = `<h3 style="margin-top:${sh.edit ? 6 : 18}px">${e ? 'Sửa lịch' : 'Thêm lịch cố định'}</h3>
+    <div class="fld" style="margin-top:0"><label for="evTitle">Tên sự kiện</label><input class="inp" id="evTitle" placeholder="VD: Họp với khách hàng" maxlength="80" autocomplete="off" value="${esc(e ? e.title : '')}"></div>
+    <div class="two fld"><div><label for="evS">Bắt đầu</label><input class="inp" type="time" id="evS" value="${hm(e ? e.start : sh.start)}"></div>
+    <div><label for="evE">Kết thúc</label><input class="inp" type="time" id="evE" value="${hm(e ? e.end : sh.end)}"></div></div>
+    <div class="fld"><label for="evL">Địa điểm (tùy chọn)</label><input class="inp" id="evL" placeholder="VD: Phòng họp B" maxlength="80" autocomplete="off" value="${esc(e ? e.location : '')}"></div>
+    <div class="actions">${e ? '<button class="btn btn-ghost" id="evDel" style="color:var(--clay)">Xóa</button>' : '<button class="btn btn-ghost" data-act="closeSheet">Hủy</button>'}<button class="btn btn-pri" id="evSave">${e ? 'Lưu thay đổi' : 'Thêm vào lịch'}</button></div>`;
+  } else {
+    h = `<h3 style="margin-top:18px">Nhập lịch</h3>
+    <label class="drop" for="imFile">${ICON.file}<span>Chọn file .ics</span><input type="file" id="imFile" accept=".ics,text/calendar"></label>
+    <div class="fld"><label for="imTxt">Hoặc dán danh sách lịch</label><textarea class="inp" id="imTxt" placeholder="08:00 - 09:45 Họp nhóm\n10:30 - 11:30 Học Toán @ Phòng 204\n14:00 - 15:30 Review thiết kế"></textarea></div>
+    <div id="imPv"></div>
+    <div class="actions"><button class="btn btn-ghost" id="imParse">Phân tích văn bản</button><button class="btn btn-pri" id="imGo" disabled>Thêm vào lịch</button></div>`;
+  }
+  $('#shBody').innerHTML = h;
+  $$('#shBody .seg').forEach(placeGlider);
+  if (sh.tab === 'import') renderImportPv();
+}
+function renderImportPv() {
+  const pv = $('#imPv'), go = $('#imGo'); if (!pv) return;
+  if (!sh.staged) { pv.innerHTML = ''; go.disabled = true; return; }
+  const ev = sh.staged.events;
+  pv.innerHTML = ev.length ? `<div class="pv"><b style="font-size:12.5px">Tìm thấy ${ev.length} sự kiện${sh.staged.label ? ' (' + sh.staged.label + ')' : ''}</b>${ev.slice(0, 5).map(e => `<div><span>${hm(e.start)}–${hm(e.end)}</span><span>${esc(e.title)}</span></div>`).join('')}${ev.length > 5 ? `<div><span></span><span>… và ${ev.length - 5} sự kiện khác</span></div>` : ''}</div>
+    <label class="chk"><input type="checkbox" id="imRep" ${sh.replace ? 'checked' : ''}>Thay thế toàn bộ lịch cố định hiện có</label>`
+    : `<div class="pv">Không nhận diện được sự kiện nào. Hãy kiểm tra định dạng <b>08:00 - 09:45 Tên sự kiện</b>.</div>`;
+  go.disabled = !ev.length;
+}
+
+$('#shSeg').addEventListener('click', e => {
+  const b = e.target.closest('[data-shtab]'); if (!b) return;
+  sh.tab = b.dataset.shtab; sh.staged = null; renderSheet(); placeGliders();
+});
+$('#sheetBd').addEventListener('click', closeSheet);
+$('#shBody').addEventListener('click', e => {
+  const t = e.target;
+  const dur = t.closest('[data-dur]');
+  if (dur) { sh.dur = +dur.dataset.dur; $$('#tkDur button').forEach(b => b.classList.toggle('on', b === dur)); return; }
+  const lvl = t.closest('[data-lvl]');
+  if (lvl) { sh.level = lvl.dataset.lvl; setActive($('#tkLvl'), 'data-lvl', sh.level); return; }
+  if (t.closest('#tkSave')) {
+    const title = $('#tkTitle').value.trim();
+    if (!title) { $('#tkTitle').focus(); toast('Hãy nhập tên đầu việc'); return; }
+    snapshot(); S.tasks.push({ id: uid(), title, dur: sh.dur, level: sh.level });
+    closeSheet(); drawerOpen = true; syncDrawer(); changed(); toast(`Đã thêm “${title}” vào kho`, true); return;
+  }
+  if (t.closest('#evSave')) {
+    const title = $('#evTitle').value.trim(), s = pm($('#evS').value), en = pm($('#evE').value), loc = $('#evL').value.trim();
+    if (!title) { $('#evTitle').focus(); toast('Hãy nhập tên sự kiện'); return; }
+    if (s == null || en == null || en <= s) { toast('Giờ kết thúc phải sau giờ bắt đầu'); return; }
+    if (sh.edit) { snapshot(); const ev = S.events.find(x => x.id === sh.edit); if (ev) Object.assign(ev, { title, start: s, end: en, location: loc }); changed(); }
+    else addEvent({ title, start: s, end: en, location: loc });
+    closeSheet(); toast(sh.edit ? 'Đã cập nhật lịch' : `Đã thêm “${title}”`, !sh.edit); return;
+  }
+  if (t.closest('#evDel')) { const id = sh.edit; closeSheet(); deleteEvent(id); return; }
+  if (t.closest('#imParse')) { sh.staged = parseText($('#imTxt').value); renderImportPv(); return; }
+  if (t.closest('#imGo') && sh.staged) {
+    const n = commitEvents(sh.staged.events, sh.replace); changed(); closeSheet(); toast(`Đã nhập ${n} sự kiện`, true); return;
+  }
+});
+$('#shBody').addEventListener('change', async e => {
+  if (e.target.id === 'imFile' && e.target.files[0]) {
+    try { sh.staged = parseICS(await e.target.files[0].text()); } catch (err) { sh.staged = { events: [], label: '' }; }
+    renderImportPv();
+  }
+  if (e.target.id === 'imRep') sh.replace = e.target.checked;
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && sh.open) closeSheet(); });
+
+/* =====================================================================
+   Onboarding (3 bước)
+   ===================================================================== */
+const ob = { step: 1, d: null, staged: null, replace: true, sample: false };
+function openOnboarding() {
+  ob.step = 1; ob.d = { ...S.profile }; ob.staged = null; ob.sample = false; ob.replace = !S.events.length;
+  renderOb(); $('#ob').classList.add('open'); $('#ob').scrollTop = 0;
+}
+function renderOb() {
+  const d = ob.d, onb = S.profile.onboarded;
+  let body = '';
+  if (ob.step === 1) body = `
+    <h2>Chào bạn, mình là Aura.</h2>
+    <p class="lead">Vài thông tin về nhịp sinh học để Aura biết khi nào nên lên tiếng — và khi nào nên im lặng.</p>
+    <div class="fld"><label for="obName">Tên gọi của bạn</label><input class="inp" id="obName" placeholder="VD: Minh" maxlength="24" autocomplete="given-name" value="${esc(d.name)}"></div>
+    <div class="two fld"><div><label for="obWake">Giờ thức dậy</label><input class="inp" type="time" id="obWake" value="${esc(d.wake)}"></div>
+    <div><label for="obSleep">Giờ đi ngủ</label><input class="inp" type="time" id="obSleep" value="${esc(d.sleep)}"></div></div>
+    <div class="fld"><span class="lbl">Khung giờ bạn tỉnh táo nhất</span><div class="opts">
+      ${Object.entries(PEAKS).map(([k, p]) => `<button class="opt ${d.peak === k ? 'on' : ''}" data-peak="${k}"><span class="rd"></span><span><b>${p.label}</b><small>${p.range}</small></span></button>`).join('')}
+    </div></div>`;
+  if (ob.step === 2) body = `
+    <h2>Aura nên gợi ý theo cách nào?</h2>
+    <p class="lead">Chọn mục tiêu ưu tiên — bạn có thể đổi lại bất cứ lúc nào qua nút hồ sơ.</p>
+    <div class="opts" style="margin-top:20px">
+      ${Object.entries(GOALS).map(([k, g]) => `<button class="opt ${d.goal === k ? 'on' : ''}" data-goal="${k}"><span class="rd"></span><span><b>${g.t}</b><small>${g.d}</small></span></button>`).join('')}
+    </div>
+    <div class="fld" style="margin-top:22px"><span class="lbl">Nhắc chuẩn bị trước sự kiện</span>
+      <div class="seg" id="obLead"><span class="glider"></span><button data-lead="45" class="${+d.lead === 45 ? 'on' : ''}">45 phút</button><button data-lead="20" class="${+d.lead === 20 ? 'on' : ''}">20 phút</button></div></div>`;
+  if (ob.step === 3) body = `
+    <h2>Nạp lịch ban đầu</h2>
+    <p class="lead">Cho Aura biết lịch cố định của bạn để tìm ra các khe trống. Bạn có thể bỏ qua và thêm sau.</p>
+    <label class="drop" for="obFile" style="margin-top:20px">${ICON.file}<span>Tải file .ics</span><input type="file" id="obFile" accept=".ics,text/calendar"></label>
+    <div class="fld"><label for="obTxt">Hoặc dán thời khóa biểu</label><textarea class="inp" id="obTxt" placeholder="08:00 - 09:45 Họp nhóm\n10:30 - 11:30 Học Toán @ Phòng 204"></textarea></div>
+    <div style="display:flex;gap:10px;margin-top:10px"><button class="btn btn-line" id="obParse" style="flex:1">Phân tích văn bản</button><button class="btn btn-line" id="obSample" style="flex:1">Dùng lịch mẫu</button></div>
+    <div id="obPv"></div>`;
+  $('#obIn').innerHTML = `
+    <div class="ob-top"><span class="logo"><i></i>Aura</span>${onb ? `<button class="icon-btn" id="obClose" aria-label="Đóng">${ICON.x}</button>` : ''}</div>
+    <div class="prog">${[1, 2, 3].map(i => `<i class="${i <= ob.step ? 'on' : ''}"></i>`).join('')}</div>
+    <div class="ob-step" id="obStep">${body}</div>
+    <div class="ob-foot">${ob.step > 1 ? '<button class="btn btn-ghost" id="obBack">Quay lại</button>' : ''}<button class="btn btn-pri" id="obNext">${ob.step === 3 ? (onb ? 'Lưu hồ sơ' : 'Bắt đầu cùng Aura') : 'Tiếp tục'}</button></div>`;
+  if (ob.step === 3) renderObPv();
+  requestAnimationFrame(placeGliders);
+}
+function renderObPv() {
+  const pv = $('#obPv'); if (!pv) return;
+  if (!ob.staged) { pv.innerHTML = ''; return; }
+  const ev = ob.staged.events;
+  pv.innerHTML = ev.length ? `<div class="pv"><b style="font-size:12.5px">${ob.sample ? 'Lịch mẫu' : 'Tìm thấy'}: ${ev.length} sự kiện${ob.staged.label ? ' (' + ob.staged.label + ')' : ''}${ob.sample ? ' + 6 đầu việc chờ' : ''}</b>${ev.slice(0, 5).map(e => `<div><span>${hm(e.start)}–${hm(e.end)}</span><span>${esc(e.title)}</span></div>`).join('')}${ev.length > 5 ? `<div><span></span><span>… và ${ev.length - 5} sự kiện khác</span></div>` : ''}</div>
+    ${S.events.length ? `<label class="chk"><input type="checkbox" id="obRep" ${ob.replace ? 'checked' : ''}>Thay thế lịch cố định hiện có (${S.events.filter(e => e.kind === 'fixed').length} sự kiện)</label>` : ''}`
+    : `<div class="pv">Không nhận diện được sự kiện nào. Hãy kiểm tra định dạng <b>08:00 - 09:45 Tên sự kiện</b>.</div>`;
+}
+function readObStep() {
+  if (ob.step === 1) {
+    const g = id => { const el = $(id); return el ? el.value : null; };
+    ob.d.name = (g('#obName') ?? ob.d.name).trim();
+    ob.d.wake = g('#obWake') || ob.d.wake; ob.d.sleep = g('#obSleep') || ob.d.sleep;
+  }
+}
+$('#obIn').addEventListener('click', e => {
+  const t = e.target;
+  const pk = t.closest('[data-peak]'); if (pk) { readObStep(); ob.d.peak = pk.dataset.peak; $$('[data-peak]').forEach(b => b.classList.toggle('on', b === pk)); return; }
+  const gl = t.closest('[data-goal]'); if (gl) { ob.d.goal = gl.dataset.goal; $$('[data-goal]').forEach(b => b.classList.toggle('on', b === gl)); return; }
+  const ld = t.closest('[data-lead]'); if (ld) { ob.d.lead = +ld.dataset.lead; setActive($('#obLead'), 'data-lead', ob.d.lead); return; }
+  if (t.closest('#obClose')) { $('#ob').classList.remove('open'); return; }
+  if (t.closest('#obBack')) { readObStep(); ob.step--; renderOb(); return; }
+  if (t.closest('#obParse')) { ob.sample = false; ob.staged = parseText($('#obTxt').value); renderObPv(); return; }
+  if (t.closest('#obSample')) { ob.sample = true; ob.staged = { events: sampleData().events, label: '' }; renderObPv(); return; }
+  if (t.closest('#obNext')) {
+    readObStep();
+    if (ob.step === 1) {
+      const w = pm(ob.d.wake), s = pm(ob.d.sleep);
+      if (w == null || s == null) { toast('Hãy chọn giờ thức dậy và giờ đi ngủ'); return; }
+      if (s <= w) { toast('Giờ đi ngủ cần sau giờ thức dậy trong cùng ngày'); return; }
+    }
+    if (ob.step < 3) { ob.step++; renderOb(); $('#ob').scrollTop = 0; return; }
+    finishOb();
+  }
+});
+$('#obIn').addEventListener('change', async e => {
+  if (e.target.id === 'obFile' && e.target.files[0]) {
+    ob.sample = false;
+    try { ob.staged = parseICS(await e.target.files[0].text()); } catch (err) { ob.staged = { events: [], label: '' }; }
+    renderObPv();
+  }
+  if (e.target.id === 'obRep') ob.replace = e.target.checked;
+});
+function finishOb() {
+  snapshot();
+  S.profile = { ...ob.d, name: ob.d.name || '', onboarded: true };
+  if (ob.staged && ob.staged.events.length) {
+    commitEvents(ob.staged.events, ob.replace);
+    if (ob.sample && !S.tasks.length) sampleData().tasks.forEach(t => S.tasks.push({ id: uid(), ...t }));
+  }
+  rot = 0; sim = null;
+  $('#ob').classList.remove('open');
+  changed(); toast('Aura đã sẵn sàng đồng hành cùng bạn');
+}
+
+/* =====================================================================
+   Global actions (event delegation)
+   ===================================================================== */
+function syncDrawer() { $('#drawer').classList.toggle('open', drawerOpen); $('#drawerBtn').setAttribute('aria-expanded', drawerOpen); }
+function switchTab(t) {
+  tab = t;
+  $('#v-ai').classList.toggle('on', t === 'ai'); $('#v-cal').classList.toggle('on', t === 'cal');
+  setActive($('#tabSeg'), 'data-tab', t);
+  if (t === 'cal') {
+    renderCal();
+    const now = nowMin(), y = clamp(now, DAY0, DAY1) - DAY0 + $('#cal').getBoundingClientRect().top + window.scrollY - window.innerHeight * 0.4;
+    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+  } else window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-act]'); if (!a) return;
+  const id = a.dataset.id;
+  switch (a.dataset.act) {
+    case 'toggleEv': { const ev = S.events.find(x => x.id === id); if (ev) { ev.done = !ev.done; changed(false); } break; }
+    case 'insertGap': insertTask(a.dataset.task, +a.dataset.start); break;
+    case 'addTask': openSheet('task'); break;
+    case 'doneTask': { const t = S.tasks.find(x => x.id === id); if (t) { snapshot(); S.tasks = S.tasks.filter(x => x.id !== id); changed(); toast(`Hoàn thành “${t.title}”`, true); } break; }
+    case 'delTask': { const t = S.tasks.find(x => x.id === id); if (t) { snapshot(); S.tasks = S.tasks.filter(x => x.id !== id); changed(); toast(`Đã xóa “${t.title}”`, true); } break; }
+    case 'placeTask': placeBestGap(id); break;
+    case 'closeSheet': closeSheet(); break;
+    case 'cardGo': runCard((curCards || [])[0]); break;
+    case 'cardSkip': skipCard(); break;
+  }
+});
+$('#drawerBtn').addEventListener('click', () => { drawerOpen = !drawerOpen; syncDrawer(); });
+$('#tabSeg').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) switchTab(b.dataset.tab); });
+$('#simSeg').addEventListener('click', e => {
+  const b = e.target.closest('[data-sim]'); if (!b) return;
+  sim = b.dataset.sim === 'now' ? null : +b.dataset.sim; rot = 0; renderAll(true);
+});
+$('#pill').addEventListener('click', () => { rot = 0; renderAll(true); toast('Aura vừa quét lại ngữ cảnh của bạn'); });
+$('#fab').addEventListener('click', () => openSheet(tab === 'cal' ? 'event' : 'task'));
+$('#btnProfile').addEventListener('click', openOnboarding);
+
+/* =====================================================================
+   Swipe on proactive card (touch + mouse)
+   ===================================================================== */
+function skipCard() { if ((curCards || []).length > 1) { rot++; renderAll(true); } }
+const sw = { el: null, x0: 0, y0: 0, dx: 0, lock: null };
+function swStart(card, x, y) { sw.el = card; sw.x0 = x; sw.y0 = y; sw.dx = 0; sw.lock = null; }
+function swMove(x, y, ev) {
+  if (!sw.el) return;
+  const dx = x - sw.x0, dy = y - sw.y0;
+  if (!sw.lock) {
+    if (Math.abs(dx) < 7 && Math.abs(dy) < 7) return;
+    sw.lock = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+    if (sw.lock === 'v') { sw.el = null; return; }
+    sw.el.classList.add('dragging');
+  }
+  if (ev && ev.cancelable) ev.preventDefault();
+  sw.dx = dx;
+  sw.el.style.transform = `translateX(${dx}px) rotate(${dx / 22}deg)`;
+  const p = clamp(Math.abs(dx) / 110, 0, 1);
+  $('.hint-go', sw.el).style.opacity = dx > 0 ? p : 0;
+  $('.hint-skip', sw.el).style.opacity = dx < 0 ? p : 0;
+}
+function swEnd() {
+  const el = sw.el; if (!el) return; sw.el = null;
+  if (sw.lock !== 'h') return;
+  const dx = sw.dx, card = (curCards || [])[0];
+  el.classList.remove('dragging');
+  el.style.transition = 'transform .55s cubic-bezier(0.22,1,0.36,1), opacity .45s cubic-bezier(0.22,1,0.36,1)';
+  if (Math.abs(dx) > 100) {
+    const dir = dx > 0 ? 1 : -1;
+    el.style.transform = `translateX(${dir * 130}%) rotate(${dir * 14}deg)`; el.style.opacity = 0;
+    setTimeout(() => { if (dir > 0) runCard(card); else if ((curCards || []).length > 1) { rot++; renderAll(true); } else { el.style.transform = ''; el.style.opacity = ''; el.style.transition = ''; $$('.hint', el).forEach(h => h.style.opacity = 0); } }, 260);
+  } else {
+    el.style.transform = ''; $$('.hint', el).forEach(h => h.style.opacity = 0);
+    setTimeout(() => { el.style.transition = ''; }, 600);
+  }
+}
+const stackEl = $('#stack');
+stackEl.addEventListener('touchstart', e => { const c = e.target.closest('.card.top'); if (c && !e.target.closest('button')) swStart(c, e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+stackEl.addEventListener('mousedown', e => { const c = e.target.closest('.card.top'); if (c && !e.target.closest('button') && e.button === 0) { swStart(c, e.clientX, e.clientY); e.preventDefault(); } });
+
+/* =====================================================================
+   Calendar drag & drop / resize
+   ===================================================================== */
+const drag = { active: false, pending: null, id: null, mode: null, y0: 0, lastY: 0, o: null, cur: null, el: null, raf: 0, timer: 0, suppress: 0 };
+const calArea = $('#calArea');
+
+function conflictOf(id, s, e) { return S.events.find(x => x.id !== id && x.start < e && x.end > s) || null; }
+function beginDrag() {
+  const p = drag.pending; if (!p) return;
+  const ev = S.events.find(x => x.id === p.id); if (!ev) { drag.pending = null; return; }
+  drag.active = true; drag.id = p.id; drag.mode = p.mode; drag.y0 = p.pageY0; drag.lastY = p.clientY;
+  drag.o = { s: ev.start, e: ev.end }; drag.cur = { s: ev.start, e: ev.end };
+  drag.el = calArea.querySelector(`.blk[data-id="${p.id}"]`);
+  if (!drag.el) { drag.active = false; return; }
+  drag.el.classList.add('dragging');
+  const b = document.createElement('div'); b.className = 'badge'; drag.el.appendChild(b); drag.badge = b;
+  document.body.classList.add('no-select');
+  if (navigator.vibrate) try { navigator.vibrate(12); } catch (e) { /* bỏ qua */ }
+  updateDrag();
+  cancelAnimationFrame(drag.raf); drag.raf = requestAnimationFrame(dragTick);
+}
+function dragTick() {
+  if (!drag.active) return;
+  const vh = window.innerHeight;
+  if (drag.lastY < 90) window.scrollBy(0, -11); else if (drag.lastY > vh - 120) window.scrollBy(0, 11);
+  updateDrag();
+  drag.raf = requestAnimationFrame(dragTick);
+}
+function updateDrag() {
+  const dy = drag.lastY + window.scrollY - drag.y0;
+  const delta = Math.round(dy / SNAP) * SNAP, o = drag.o, len = o.e - o.s;
+  let s, e;
+  if (drag.mode === 'move') { s = clamp(o.s + delta, DAY0, DAY1 - len); e = s + len; }
+  else { s = o.s; e = clamp(o.e + delta, o.s + SNAP, DAY1); }
+  drag.cur = { s, e };
+  const el = drag.el, c = conflictOf(drag.id, s, e);
+  el.style.top = (s - DAY0) + 'px'; el.style.height = Math.max(e - s - 1, 18) + 'px';
+  el.classList.toggle('conflict', !!c);
+  drag.badge.classList.toggle('warn', !!c);
+  drag.badge.textContent = `${hm(s)} – ${hm(e)} · ${fmtDur(e - s)}${c ? ' · Trùng “' + c.title + '”' : ''}`;
+  const m = $('.m', el); if (m) m.textContent = `${hm(s)}–${hm(e)}`;
+}
+function endDrag(commit) {
+  clearTimeout(drag.timer); drag.timer = 0;
+  const was = drag.active;
+  if (was) {
+    cancelAnimationFrame(drag.raf);
+    const ev = S.events.find(x => x.id === drag.id), c = drag.cur;
+    drag.active = false; document.body.classList.remove('no-select'); drag.suppress = Date.now();
+    if (drag.badge) drag.badge.remove();
+    if (drag.el) drag.el.classList.remove('dragging', 'conflict');
+    if (commit && ev && (c.s !== ev.start || c.e !== ev.end)) {
+      const clash = conflictOf(ev.id, c.s, c.e);
+      snapshot(); ev.start = c.s; ev.end = c.e; changed();
+      toast(clash ? `Đã đổi sang ${hm(c.s)}–${hm(c.e)} · trùng với “${clash.title}”` : `Đã đổi sang ${hm(c.s)}–${hm(c.e)}`, true);
+    } else changed(false);
+  }
+  drag.pending = null;
+}
+function pressStart(e, touch) {
+  const t = e.target;
+  if (t.closest('.x')) return;
+  const blk = t.closest('.blk'); if (!blk) return;
+  const pt = touch ? e.touches[0] : e;
+  const grip = !!t.closest('[data-grip]');
+  drag.pending = { id: blk.dataset.id, mode: grip ? 'resize' : 'move', x0: pt.clientX, y0: pt.clientY, pageY0: pt.clientY + window.scrollY, clientY: pt.clientY, touch };
+  if (touch) {
+    if (grip) { e.preventDefault(); beginDrag(); }
+    else drag.timer = setTimeout(beginDrag, 280);
+  } else if (grip) { e.preventDefault(); beginDrag(); }
+}
+calArea.addEventListener('touchstart', e => pressStart(e, true), { passive: false });
+calArea.addEventListener('mousedown', e => { if (e.button === 0) pressStart(e, false); });
+calArea.addEventListener('contextmenu', e => { if (e.target.closest('.blk')) e.preventDefault(); });
+
+function moveGeneric(x, y, e) {
+  if (drag.active) { drag.lastY = y; if (e.cancelable) e.preventDefault(); return; }
+  const p = drag.pending; if (!p) return;
+  const moved = Math.hypot(x - p.x0, y - p.y0);
+  if (p.touch) { if (moved > 8) { clearTimeout(drag.timer); drag.timer = 0; drag.pending = null; } }   // người dùng đang cuộn trang
+  else if (moved > 4) { p.clientY = y; beginDrag(); }
+}
+document.addEventListener('touchmove', e => {
+  const t = e.touches[0];
+  if (sw.el) swMove(t.clientX, t.clientY, e);
+  moveGeneric(t.clientX, t.clientY, e);
+}, { passive: false });
+document.addEventListener('mousemove', e => { if (sw.el) swMove(e.clientX, e.clientY, e); moveGeneric(e.clientX, e.clientY, e); });
+function releaseAll(e, commit = true) {
+  if (drag.active && e && e.cancelable && e.type === 'touchend') e.preventDefault();
+  endDrag(commit); swEnd();
+}
+document.addEventListener('touchend', e => releaseAll(e));
+document.addEventListener('touchcancel', e => releaseAll(e, false));
+document.addEventListener('mouseup', e => releaseAll(e));
+
+// Chạm vào khối → sửa, chạm vào khoảng trống → tạo mới, ✕ → xóa
+calArea.addEventListener('click', e => {
+  if (Date.now() - drag.suppress < 400) return;
+  const x = e.target.closest('.x');
+  if (x) { deleteEvent(x.dataset.id); return; }
+  const blk = e.target.closest('.blk');
+  if (blk) { openSheet('event', { edit: blk.dataset.id }); return; }
+  const r = calArea.getBoundingClientRect();
+  const m = clamp(DAY0 + Math.floor((e.clientY - r.top) / SNAP) * SNAP, DAY0, DAY1 - SNAP);
+  openSheet('event', { start: m, end: Math.min(m + 60, DAY1) });
+});
+
+/* =====================================================================
+   Boot
+   ===================================================================== */
+load();
+renderAll(false);
+syncDrawer();
+if (!S.profile.onboarded) openOnboarding();
+window.addEventListener('resize', placeGliders);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeGliders);
+requestAnimationFrame(() => { placeGliders(); setTimeout(() => runShimmer(), 250); });
+
+// Nhịp thời gian thực: cập nhật khi đang dùng giờ thật
+let lastReal = realNow();
+setInterval(() => {
+  if (drag.active || sh.open || sw.el) return;
+  const n = realNow();
+  if (sim == null && n !== lastReal) {
+    lastReal = n;
+    const before = stackSig;
+    renderAll(false);
+    if (stackSig !== before) runShimmer();
+  } else if (sim == null) renderPill();
+}, 20000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && sim == null && !drag.active) renderAll(true); });
+})();
+</script>
+</body>
+</html>
